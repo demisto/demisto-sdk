@@ -16,6 +16,7 @@ Public surface:
   ``general_config_field_ids``
 - Validator: ``IsAuthProfileHasEngineValidator`` (CO125 itself)
 """
+
 from __future__ import annotations
 
 from typing import Dict, Iterable, List, Set
@@ -92,17 +93,10 @@ def normalize_integration_id(name: str) -> str:
     Lowercases and strips ``-``/``_``/whitespace so that
     ``TAXII2 Server`` == ``taxii2server`` == ``taxii2_server``.
     """
-    return (
-        name.lower()
-        .replace(" ", "")
-        .replace("-", "")
-        .replace("_", "")
-    )
+    return name.lower().replace(" ", "").replace("-", "").replace("_", "")
 
 
-APPENDIX_G_EXCLUSION: Set[str] = {
-    normalize_integration_id(n) for n in _APPENDIX_G_RAW
-}
+APPENDIX_G_EXCLUSION: Set[str] = {normalize_integration_id(n) for n in _APPENDIX_G_RAW}
 APPENDIX_H_SINGLE_ENGINE: Set[str] = {
     normalize_integration_id(n) for n in _APPENDIX_H_RAW
 }
@@ -352,9 +346,7 @@ class IsAuthProfileHasEngineValidator(ConnectorsValidator[ContentTypes]):
                 else connector.path
             )
 
-            is_grouped = bool(
-                connector.settings and connector.settings.grouped
-            )
+            is_grouped = bool(connector.settings and connector.settings.grouped)
 
             if is_grouped:
                 # Grouped: per-profile check with serializer resolution.

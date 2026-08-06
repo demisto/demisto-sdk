@@ -24,6 +24,7 @@ CO131-CO134 own their own capability/flag constants when written):
   outputs ``flag_id: true`` under a capability condition matching
   ``capability_id`` with value ``on``.
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
@@ -60,9 +61,7 @@ FETCH_ISSUES_REQUIRED_FIELDS: List[Tuple[str, str, Optional[str]]] = [
 # ============================================================
 # Helpers
 # ============================================================
-def iter_handler_capability_ids(
-    handler: HandlerData, base_id: str
-) -> Iterable[str]:
+def iter_handler_capability_ids(handler: HandlerData, base_id: str) -> Iterable[str]:
     """Yield every capability id on ``handler`` that matches ``base_id``.
 
     A handler's ``capabilities[].id`` may be:
@@ -172,9 +171,7 @@ def computed_field_emits_flag(
         return False
     for rule in serializer.computed_fields or []:
         outputs = rule.output or []
-        has_flag = any(
-            out.id == flag_id and out.value is True for out in outputs
-        )
+        has_flag = any(out.id == flag_id and out.value is True for out in outputs)
         if not has_flag:
             continue
         for group in rule.any_of or []:
@@ -259,14 +256,10 @@ class IsValidFetchValidator(ConnectorsValidator[ContentTypes]):
         checked_capability_ids: Set[str] = set()
 
         for handler in connector.xsoar_handlers:
-            for cap_id in iter_handler_capability_ids(
-                handler, FETCH_ISSUES_CAPABILITY
-            ):
+            for cap_id in iter_handler_capability_ids(handler, FETCH_ISSUES_CAPABILITY):
                 # Part 1 - serializer computed_fields must emit `isFetch`
                 # for this capability id.
-                if not computed_field_emits_flag(
-                    handler, FETCH_ISSUES_FLAG, cap_id
-                ):
+                if not computed_field_emits_flag(handler, FETCH_ISSUES_FLAG, cap_id):
                     issues.append(
                         f"handler '{handler.id}' subscribes to "
                         f"capability '{cap_id}' but its serializer.yaml "

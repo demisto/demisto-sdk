@@ -56,10 +56,7 @@ class IsValidCapabilitiesMetadataValidator(ConnectorsValidator[ContentTypes]):
                     f"got '{capabilities_metadata.title}'"
                 )
 
-            if (
-                capabilities_metadata.description
-                != EXPECTED_CAPABILITIES_DESCRIPTION
-            ):
+            if capabilities_metadata.description != EXPECTED_CAPABILITIES_DESCRIPTION:
                 details.append(
                     f"metadata.description must be "
                     f"'{EXPECTED_CAPABILITIES_DESCRIPTION}', got "
@@ -69,9 +66,7 @@ class IsValidCapabilitiesMetadataValidator(ConnectorsValidator[ContentTypes]):
             # metadata.help must be omitted, but only for grouped connectors.
             grouped = bool(connector.settings and connector.settings.grouped)
             if grouped and capabilities_metadata.help is not None:
-                details.append(
-                    "metadata.help must be omitted for grouped connectors."
-                )
+                details.append("metadata.help must be omitted for grouped connectors.")
 
             if details:
                 results.append(

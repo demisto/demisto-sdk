@@ -59,8 +59,7 @@ class IsValidGroupedConnectorAuthValidator(ConnectorsValidator[ContentTypes]):
         "fails at fetch time."
     )
     error_message = (
-        "Grouped connector '{connector_id}' profile '{profile_id}': "
-        "{detail}."
+        "Grouped connector '{connector_id}' profile '{profile_id}': " "{detail}."
     )
     related_field = "connection.profiles.metadata.xsoar.interpolation_mapping"
     is_auto_fixable = False
@@ -118,9 +117,7 @@ class IsValidGroupedConnectorAuthValidator(ConnectorsValidator[ContentTypes]):
                     continue
 
                 if mapping is None:
-                    detail = (
-                        "metadata.xsoar.interpolation_mapping is missing"
-                    )
+                    detail = "metadata.xsoar.interpolation_mapping is missing"
                 elif isinstance(mapping, str):
                     detail = (
                         "metadata.xsoar.interpolation_mapping is empty "

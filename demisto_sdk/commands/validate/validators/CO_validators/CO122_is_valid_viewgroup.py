@@ -48,8 +48,7 @@ class IsValidViewgroupValidator(ConnectorsValidator[ContentTypes]):
         "tile heading and the integration UI stay in lock-step."
     )
     error_message = (
-        "Grouped connector '{connector_id}' has invalid view_group "
-        "wiring: {issues}"
+        "Grouped connector '{connector_id}' has invalid view_group " "wiring: {issues}"
     )
     related_field = "view_groups"
     is_auto_fixable = False
@@ -88,9 +87,7 @@ class IsValidViewgroupValidator(ConnectorsValidator[ContentTypes]):
         expected_label = integration.display_name
 
         # Sub-rule C: view_group id must match the integration id.
-        matched = IsValidViewgroupValidator._find_view_group(
-            view_groups, expected_id
-        )
+        matched = IsValidViewgroupValidator._find_view_group(view_groups, expected_id)
         if matched is None:
             issues.append(
                 f"XSOAR handler '{handler.id}' expects a view_group with "

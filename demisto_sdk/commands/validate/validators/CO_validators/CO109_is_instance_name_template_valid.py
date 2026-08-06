@@ -110,9 +110,7 @@ class IsInstanceNameTemplateValidValidator(ConnectorsValidator[ContentTypes]):
 
         return results
 
-    def _find_template_problem(
-        self, file_content: Dict[str, Any]
-    ) -> Optional[str]:
+    def _find_template_problem(self, file_content: Dict[str, Any]) -> Optional[str]:
         """Return a human-readable problem string, or None when the verbatim
         instance_name template is present exactly."""
         general_configurations = file_content.get("general_configurations") or {}

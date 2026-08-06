@@ -74,8 +74,7 @@ class IsSubCapabilityIdDerivedValidator(ConnectorsValidator[ContentTypes]):
         "connector, regardless of git status."
     )
     error_message = (
-        "Grouped connector '{connector_id}' has invalid sub-capabilities: "
-        "{details}."
+        "Grouped connector '{connector_id}' has invalid sub-capabilities: " "{details}."
     )
     related_field = "capabilities"
     is_auto_fixable = False
@@ -148,7 +147,7 @@ class IsSubCapabilityIdDerivedValidator(ConnectorsValidator[ContentTypes]):
         # Structural pattern: id must be '<capability_id>_<segment>' with a
         # non-empty segment. This holds regardless of handler resolution.
         prefix = f"{capability_id}_"
-        segment = sub_id[len(prefix):] if sub_id.startswith(prefix) else None
+        segment = sub_id[len(prefix) :] if sub_id.startswith(prefix) else None
         if not segment:
             details.append(
                 f"sub-capability '{sub_id}' id must follow the pattern "
@@ -166,9 +165,7 @@ class IsSubCapabilityIdDerivedValidator(ConnectorsValidator[ContentTypes]):
 
         integration_id = handler.xsoar_integration_id
         if integration_id:
-            expected_id = (
-                f"{capability_id}_{normalize_integration_id(integration_id)}"
-            )
+            expected_id = f"{capability_id}_{normalize_integration_id(integration_id)}"
             if sub_id != expected_id:
                 details.append(
                     f"sub-capability '{sub_id}' id must be '{expected_id}' "
@@ -192,6 +189,4 @@ class IsSubCapabilityIdDerivedValidator(ConnectorsValidator[ContentTypes]):
             return None
 
         handler_id = mapping.handler_ids[0]
-        return next(
-            (h for h in connector.handlers if h.id == handler_id), None
-        )
+        return next((h for h in connector.handlers if h.id == handler_id), None)

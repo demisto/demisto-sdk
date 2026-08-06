@@ -22,9 +22,7 @@ ContentTypes = Connector
 # §2.6.2: LEFT keys in interpolation_mapping must be auth-field parameter
 # names on the profile - never engine/proxy/insecure and their aliases.
 _ENGINE_RESERVED: Set[str] = {"engine", "engine_group", "engineGroup", "engine_mode"}
-_RESERVED_LEFT_KEYS: Set[str] = (
-    _ENGINE_RESERVED | PROXY_ALIASES | INSECURE_ALIASES
-)
+_RESERVED_LEFT_KEYS: Set[str] = _ENGINE_RESERVED | PROXY_ALIASES | INSECURE_ALIASES
 
 # Suffix strippers - only allowed for XSOAR credentials (type-9) params.
 _CREDENTIALS_SUFFIXES: Tuple[str, ...] = (
@@ -80,9 +78,7 @@ class IsValidInterpolationValidator(ConnectorsValidator[ContentTypes]):
         "or wrong .identifier/.password on a non-credentials param) is a "
         "runtime auth failure the customer only discovers at fetch time."
     )
-    error_message = (
-        "Connector '{connector_id}' profile '{profile_id}': {details}."
-    )
+    error_message = "Connector '{connector_id}' profile '{profile_id}': {details}."
     related_field = "connection.profiles.metadata.xsoar.interpolation_mapping"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.CONNECTOR_CONNECTION]
@@ -204,12 +200,8 @@ class IsValidInterpolationValidator(ConnectorsValidator[ContentTypes]):
                 if not mapping:
                     continue
 
-                profile_field_names = set(
-                    self._iter_profile_field_names(profile)
-                )
-                xsoar_handlers = self._xsoar_handlers_for_profile(
-                    connector, profile.id
-                )
+                profile_field_names = set(self._iter_profile_field_names(profile))
+                xsoar_handlers = self._xsoar_handlers_for_profile(connector, profile.id)
                 resolved_xsoar_handlers = [
                     h for h in xsoar_handlers if h.related_integration is not None
                 ]

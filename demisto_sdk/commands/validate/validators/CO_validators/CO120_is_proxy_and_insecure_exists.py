@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, List, Optional, Set, Tuple
+from typing import Iterable, List, Set, Tuple
 
 from demisto_sdk.commands.content_graph.objects.connector import (
     Connector,

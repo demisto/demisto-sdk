@@ -64,9 +64,7 @@ class IsConnectorMatchesIntegrationFlagsValidator(ConnectorsValidator[ContentTyp
                     # through its sub-capabilities (each carries the
                     # "<capability-id>_<integration>" form).
                     for sub_capability in capability.sub_capabilities:
-                        details.extend(
-                            self._check_entry(connector, sub_capability.id)
-                        )
+                        details.extend(self._check_entry(connector, sub_capability.id))
                 else:
                     details.extend(self._check_entry(connector, capability.id))
 
@@ -108,9 +106,7 @@ class IsConnectorMatchesIntegrationFlagsValidator(ConnectorsValidator[ContentTyp
 
         handler_ids = self._subscribing_handler_ids(connector, entry_id)
         for handler_id in handler_ids:
-            handler = next(
-                (h for h in connector.handlers if h.id == handler_id), None
-            )
+            handler = next((h for h in connector.handlers if h.id == handler_id), None)
             if handler is None:
                 continue
 
@@ -145,9 +141,7 @@ class IsConnectorMatchesIntegrationFlagsValidator(ConnectorsValidator[ContentTyp
         return COLLECTION_CAPABILITY_TO_FLAG.get(prefix)
 
     @staticmethod
-    def _subscribing_handler_ids(
-        connector: ContentTypes, entry_id: str
-    ) -> List[str]:
+    def _subscribing_handler_ids(connector: ContentTypes, entry_id: str) -> List[str]:
         """Return the handler ids subscribing to the capability/sub-capability."""
         mapping = connector.capability_handler_map.get(entry_id)
         if not mapping:

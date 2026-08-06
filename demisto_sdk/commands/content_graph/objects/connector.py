@@ -662,7 +662,11 @@ class HandlerData(BaseModel):
     @property
     def is_xsoar(self) -> bool:
         """Identify if this handler is XSOAR-related."""
-        return self.module == "xsoar" and self.team == "xsoar"
+        return (
+            self.module == "xsoar"
+            or self.team == "xsoar"
+            or "@xsoar-content" in (self.metadata.ownership.maintainers or [])
+        )
 
     @property
     def xsoar_integration_id(self) -> Optional[str]:

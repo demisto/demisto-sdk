@@ -91,9 +91,7 @@ class IsProfileFieldsCoveredValidator(ConnectorsValidator[ContentTypes]):
                 yield field
 
     @staticmethod
-    def _has_xsoar_reference(
-        connector: Connector, profile_id: str
-    ) -> bool:
+    def _has_xsoar_reference(connector: Connector, profile_id: str) -> bool:
         """Return True iff at least one XSOAR handler references the
         profile via ``handler.capabilities[*].auth_options[*].id``."""
         for h in connector.handlers:

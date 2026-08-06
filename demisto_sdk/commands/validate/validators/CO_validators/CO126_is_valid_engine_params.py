@@ -38,12 +38,12 @@ Skip guards:
 - Fields that CO125 would flag as MISSING are silently skipped by CO126
   (nothing to check).
 """
+
 from __future__ import annotations
 
 from typing import Iterable, List, Optional, Set
 
 from demisto_sdk.commands.content_graph.objects.connector import (
-    ConnectionProfile,
     Connector,
     ConnectorField,
     FieldGroup,
@@ -228,8 +228,7 @@ class IsValidEngineParamsValidator(ConnectorsValidator[ContentTypes]):
         errors: List[str] = []
         if field.field_type != "radio":
             errors.append(
-                f"engine_mode field_type must be 'radio', got "
-                f"{field.field_type!r}"
+                f"engine_mode field_type must be 'radio', got " f"{field.field_type!r}"
             )
         opts = field.options
         if opts is None:
@@ -251,8 +250,7 @@ class IsValidEngineParamsValidator(ConnectorsValidator[ContentTypes]):
                 parts.append(f"unexpected {sorted(extra)}")
             errors.append(
                 "engine_mode.options.values keys must be "
-                f"{sorted(_EXPECTED_ENGINE_MODE_KEYS)}: "
-                + "; ".join(parts)
+                f"{sorted(_EXPECTED_ENGINE_MODE_KEYS)}: " + "; ".join(parts)
             )
         return errors
 
@@ -272,8 +270,7 @@ class IsValidEngineParamsValidator(ConnectorsValidator[ContentTypes]):
         # E. field_type
         if field.field_type != "select":
             errors.append(
-                f"{label} field_type must be 'select', got "
-                f"{field.field_type!r}"
+                f"{label} field_type must be 'select', got " f"{field.field_type!r}"
             )
 
         # F. metadata.xsoar.config_type
@@ -308,8 +305,7 @@ class IsValidEngineParamsValidator(ConnectorsValidator[ContentTypes]):
             params = dv.get("params") or {}
             if not isinstance(params, dict):
                 errors.append(
-                    f"{label} metadata.dynamic_values.params must be a "
-                    f"mapping"
+                    f"{label} metadata.dynamic_values.params must be a " f"mapping"
                 )
             else:
                 # I. dynamicField (checked even without an integration).
@@ -382,9 +378,7 @@ class IsValidEngineParamsValidator(ConnectorsValidator[ContentTypes]):
                 if connector.connection_file
                 else connector.path
             )
-            is_grouped = bool(
-                connector.settings and connector.settings.grouped
-            )
+            is_grouped = bool(connector.settings and connector.settings.grouped)
             # Appendix H: engine_mode uses a 2-option key-set, no
             # engineGroup field expected. CO128 enforces that shape.
             # CO126 skips option-set validation for those integrations
@@ -394,15 +388,11 @@ class IsValidEngineParamsValidator(ConnectorsValidator[ContentTypes]):
             if is_grouped:
                 for profile in connection.profiles:
                     resolver = _resolver_for_profile(connector, profile.id)
-                    fields = _find_engine_fields(
-                        list(profile.configurations), resolver
-                    )
+                    fields = _find_engine_fields(list(profile.configurations), resolver)
                     if not fields:
                         continue
                     location = f"profile '{profile.id}'"
-                    handlers = list(
-                        xsoar_handlers_for_profile(connector, profile.id)
-                    )
+                    handlers = list(xsoar_handlers_for_profile(connector, profile.id))
                     detail = self._validate_engine_fields(
                         fields,
                         handlers=handlers,

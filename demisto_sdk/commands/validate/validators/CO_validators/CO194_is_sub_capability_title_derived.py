@@ -66,9 +66,7 @@ class IsSubCapabilityTitleDerivedValidator(ConnectorsValidator[ContentTypes]):
             for capability in connector.capabilities:
                 for sub_capability in capability.sub_capabilities:
                     details.extend(
-                        self._check_sub_capability_title(
-                            connector, sub_capability
-                        )
+                        self._check_sub_capability_title(connector, sub_capability)
                     )
 
             if details:
@@ -175,6 +173,4 @@ class IsSubCapabilityTitleDerivedValidator(ConnectorsValidator[ContentTypes]):
             return None
 
         handler_id = mapping.handler_ids[0]
-        return next(
-            (h for h in connector.handlers if h.id == handler_id), None
-        )
+        return next((h for h in connector.handlers if h.id == handler_id), None)

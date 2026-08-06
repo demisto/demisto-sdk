@@ -1,7 +1,6 @@
 """Tests for CO (Connector) validators - CO100-CO106, CO164."""
 
 import copy
-from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -54,9 +53,6 @@ from demisto_sdk.commands.validate.validators.CO_validators.CO112_has_sub_capabi
 from demisto_sdk.commands.validate.validators.CO_validators.CO113_is_sub_capability_id_derived import (
     IsSubCapabilityIdDerivedValidator,
 )
-from demisto_sdk.commands.validate.validators.CO_validators.CO194_is_sub_capability_title_derived import (
-    IsSubCapabilityTitleDerivedValidator,
-)
 from demisto_sdk.commands.validate.validators.CO_validators.CO114_is_matching_license import (
     IsMatchingLicenseValidator,
 )
@@ -96,17 +92,56 @@ from demisto_sdk.commands.validate.validators.CO_validators.CO126_is_valid_engin
 from demisto_sdk.commands.validate.validators.CO_validators.CO129_is_valid_configurations_metadata import (
     IsValidConfigurationsMetadataValidator,
 )
-from demisto_sdk.commands.validate.validators.CO_validators.CO157_is_handler_description_templated import (
-    IsHandlerDescriptionTemplatedValidator,
+from demisto_sdk.commands.validate.validators.CO_validators.CO155_is_handler_module_xsoar import (
+    IsHandlerModuleXsoarValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO156_is_handler_ownership_fields_align import (
+    IsHandlerOwnershipFieldsAlignValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO159_is_handler_has_valid_test_connection import (
+    IsHandlerHasValidTestConnectionValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO161_is_fetch_capabilities_contain_actions import (
+    IsFetchCapabilitiesContainActionsValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO162_is_valid_workloads import (
+    IsValidWorkloadsValidator,
 )
 from demisto_sdk.commands.validate.validators.CO_validators.CO164_is_matching_integration_exist import (
     IsMatchingIntegrationExistValidator,
 )
-from demisto_sdk.commands.validate.validators.CO_validators.CO177_no_removed_capabilities import (
-    NoRemovedCapabilitiesValidator,
+from demisto_sdk.commands.validate.validators.CO_validators.CO165_is_handler_matching_pack_exist import (
+    IsHandlerMatchingPackExistValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO170_is_handler_migration_constants import (
+    IsHandlerMigrationConstantsValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO171_is_collection_sub_capability_fetch_flag_valid import (
+    IsCollectionSubCapabilityFetchFlagValidValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO172_is_fetch_flag_gated_on_own_sub_capability import (
+    IsFetchFlagGatedOnOwnSubCapabilityValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO175_no_removed_connector_params import (
+    NoRemovedConnectorParamsValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO176_no_change_connector_ids import (
+    NoChangeConnectorIDsValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO179_no_param_required_tightened import (
+    NoParamRequiredTightenedValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO181_no_removed_auth_option import (
+    NoRemovedAuthOptionValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO183_no_grouped_flag_flipped import (
+    NoGroupedFlagFlippedValidator,
 )
 from demisto_sdk.commands.validate.validators.CO_validators.CO190_no_reserved_param_names import (
     NoReservedParamNamesValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO194_is_sub_capability_title_derived import (
+    IsSubCapabilityTitleDerivedValidator,
 )
 
 VALID_CONNECTION_DESCRIPTION = (
@@ -992,6 +1027,7 @@ class TestCO107IsValidCapabilitiesMetadata:
 # CO109 - IsInstanceNameTemplateValidValidator
 # ============================================================
 
+
 def _general_configs_with_instance_name(instance_name_field):
     """Build a capabilities_data override placing the given instance_name field
     inside general_configurations.configurations."""
@@ -1113,9 +1149,7 @@ def _xsoar_handler_subscribing_to(*capability_ids):
         "capabilities": [
             {
                 "id": cap_id,
-                "auth_options": [
-                    {"id": "test-auth", "workloads": ["test-workload"]}
-                ],
+                "auth_options": [{"id": "test-auth", "workloads": ["test-workload"]}],
             }
             for cap_id in capability_ids
         ]
@@ -1227,9 +1261,7 @@ class TestCO110IsCapabilityNameValid:
                 ]
             },
             handlers=[
-                _xsoar_handler_subscribing_to(
-                    "fetch-issues", "bogus-base_myint"
-                )
+                _xsoar_handler_subscribing_to("fetch-issues", "bogus-base_myint")
             ],
         )
 
@@ -1588,7 +1620,10 @@ class TestNormalizeIntegrationId:
                 "Microsoft Management Activity API (O365 Azure Events)",
                 "microsoft-management-activity-api-o365-azure-events",
             ),
-            ("Skyhigh Secure Web Gateway (On Prem)", "skyhigh-secure-web-gateway-on-prem"),
+            (
+                "Skyhigh Secure Web Gateway (On Prem)",
+                "skyhigh-secure-web-gateway-on-prem",
+            ),
             ("Server Message Block (SMB) v2", "server-message-block-smb-v2"),
             (
                 "VMware Workspace ONE UEM (AirWatch MDM)",
@@ -2108,9 +2143,7 @@ def _connector_with_collection_sub_capability(
     )
     if resolve:
         connector.handlers[0].related_integration = (
-            integration
-            if integration is not None
-            else _stub_integration_flags()
+            integration if integration is not None else _stub_integration_flags()
         )
     else:
         connector.handlers[0].related_integration = None
@@ -2265,9 +2298,7 @@ class TestCO117IsCapabilityTitleValid:
         When: CO117 runs.
         Then: No validation errors are returned.
         """
-        connector = _connector_with_capability_title(
-            "fetch-issues", "Fetch Issues"
-        )
+        connector = _connector_with_capability_title("fetch-issues", "Fetch Issues")
 
         validator = IsCapabilityTitleValidValidator()
         results = validator.obtain_invalid_content_items([connector])
@@ -2313,9 +2344,7 @@ class TestCO117IsCapabilityTitleValid:
         When: CO117 runs.
         Then: A validation error naming the expected title is returned.
         """
-        connector = _connector_with_capability_title(
-            "fetch-issues", "fetch issues"
-        )
+        connector = _connector_with_capability_title("fetch-issues", "fetch issues")
 
         validator = IsCapabilityTitleValidValidator()
         results = validator.obtain_invalid_content_items([connector])
@@ -2578,9 +2607,7 @@ def _make_integration_with_params(*names: str):
     ``SimpleNamespace`` per param is enough - no need for real Parameter /
     Integration Pydantic construction.
     """
-    return SimpleNamespace(
-        params=[SimpleNamespace(name=n) for n in names]
-    )
+    return SimpleNamespace(params=[SimpleNamespace(name=n) for n in names])
 
 
 def _override_resolved(handler, mapping):
@@ -2633,8 +2660,8 @@ class TestCO120IsProxyAndInsecureExists:
         # Sanity: not XSOAR.
         assert not connector.handlers[0].is_xsoar
 
-        connector.handlers[0].related_integration = (
-            _make_integration_with_params("proxy", "insecure")
+        connector.handlers[0].related_integration = _make_integration_with_params(
+            "proxy", "insecure"
         )
         # Do not touch resolved_params - handler is skipped entirely anyway.
 
@@ -2651,8 +2678,8 @@ class TestCO120IsProxyAndInsecureExists:
         Then: No validation errors.
         """
         connector = create_connector_object()
-        connector.handlers[0].related_integration = (
-            _make_integration_with_params("client_id", "client_secret")
+        connector.handlers[0].related_integration = _make_integration_with_params(
+            "client_id", "client_secret"
         )
         _override_resolved(connector.handlers[0], {})
 
@@ -2690,8 +2717,8 @@ class TestCO120IsProxyAndInsecureExists:
         Then: No validation errors.
         """
         connector = create_connector_object()
-        connector.handlers[0].related_integration = (
-            _make_integration_with_params("proxy", "insecure")
+        connector.handlers[0].related_integration = _make_integration_with_params(
+            "proxy", "insecure"
         )
         _override_resolved(
             connector.handlers[0],
@@ -2713,8 +2740,8 @@ class TestCO120IsProxyAndInsecureExists:
               no errors emitted.
         """
         connector = create_connector_object()
-        connector.handlers[0].related_integration = (
-            _make_integration_with_params("proxy", "insecure")
+        connector.handlers[0].related_integration = _make_integration_with_params(
+            "proxy", "insecure"
         )
         _override_resolved(
             connector.handlers[0],
@@ -2737,8 +2764,8 @@ class TestCO120IsProxyAndInsecureExists:
         Then: Exactly one ValidationResult flags the missing 'proxy' family.
         """
         connector = create_connector_object()
-        connector.handlers[0].related_integration = (
-            _make_integration_with_params("proxy", "insecure")
+        connector.handlers[0].related_integration = _make_integration_with_params(
+            "proxy", "insecure"
         )
         _override_resolved(
             connector.handlers[0],
@@ -2763,8 +2790,8 @@ class TestCO120IsProxyAndInsecureExists:
               family.
         """
         connector = create_connector_object()
-        connector.handlers[0].related_integration = (
-            _make_integration_with_params("proxy", "insecure")
+        connector.handlers[0].related_integration = _make_integration_with_params(
+            "proxy", "insecure"
         )
         _override_resolved(
             connector.handlers[0],
@@ -2786,8 +2813,8 @@ class TestCO120IsProxyAndInsecureExists:
         Then: Two ValidationResults - one per family - are returned.
         """
         connector = create_connector_object()
-        connector.handlers[0].related_integration = (
-            _make_integration_with_params("proxy", "insecure")
+        connector.handlers[0].related_integration = _make_integration_with_params(
+            "proxy", "insecure"
         )
         _override_resolved(connector.handlers[0], {})
 
@@ -2808,8 +2835,8 @@ class TestCO120IsProxyAndInsecureExists:
         Then: Passes - detection uses the full alias set on both sides.
         """
         connector = create_connector_object()
-        connector.handlers[0].related_integration = (
-            _make_integration_with_params("unsecure")
+        connector.handlers[0].related_integration = _make_integration_with_params(
+            "unsecure"
         )
         _override_resolved(
             connector.handlers[0],
@@ -2829,8 +2856,8 @@ class TestCO120IsProxyAndInsecureExists:
         Then: Passes.
         """
         connector = create_connector_object()
-        connector.handlers[0].related_integration = (
-            _make_integration_with_params("useproxy")
+        connector.handlers[0].related_integration = _make_integration_with_params(
+            "useproxy"
         )
         _override_resolved(
             connector.handlers[0],
@@ -2855,9 +2882,7 @@ def _make_integration_with_params_objs(*name_type_pairs):
     ``name_type_pairs`` is an iterable of ``(name, type)`` tuples.
     """
     return SimpleNamespace(
-        params=[
-            SimpleNamespace(name=n, type=t) for (n, t) in name_type_pairs
-        ]
+        params=[SimpleNamespace(name=n, type=t) for (n, t) in name_type_pairs]
     )
 
 
@@ -3065,7 +3090,10 @@ class TestCO121IsValidInterpolation:
         results = validator.obtain_invalid_content_items([connector])
 
         assert len(results) == 1
-        assert "does not match any field id or metadata.auth.parameter" in results[0].message
+        assert (
+            "does not match any field id or metadata.auth.parameter"
+            in results[0].message
+        )
 
     def test_left_matches_field_id_serialized_form(self):
         """
@@ -3370,9 +3398,7 @@ class TestCO122IsValidViewgroup:
         connector = create_connector_object(
             connector_overrides={"settings": {"grouped": True}},
             connection_data={
-                "view_groups": [
-                    {"id": "my-integration", "label": "My Integration"}
-                ]
+                "view_groups": [{"id": "my-integration", "label": "My Integration"}]
             },
             handlers=[
                 # The default XSOAR handler + resolves to my-integration.
@@ -3509,7 +3535,7 @@ class TestCO122IsValidViewgroup:
 
 
 # ============================================================
-# CO177 - NoRemovedCapabilitiesValidator
+# Capabilities test helpers (shared by CO176 and other capability tests)
 # ============================================================
 
 
@@ -3546,9 +3572,7 @@ def _xsoar_handler_using_profile(handler_id: str, profile_id: str) -> dict:
         "capabilities": [
             {
                 "id": "fetch-issues",
-                "auth_options": [
-                    {"id": profile_id, "workloads": ["test-workload"]}
-                ],
+                "auth_options": [{"id": profile_id, "workloads": ["test-workload"]}],
             }
         ],
     }
@@ -3706,9 +3730,7 @@ class TestCO123IsProfileFieldsCovered:
                 "profiles": [
                     _profile_with_fields(
                         "plain.myint",
-                        [
-                            {"id": "engine_mode", "field_type": "select"}
-                        ],
+                        [{"id": "engine_mode", "field_type": "select"}],
                     )
                 ]
             },
@@ -3840,134 +3862,6 @@ class TestCO123IsProfileFieldsCovered:
 
 
 # ============================================================
-# CO177 - NoRemovedCapabilitiesValidator
-# ============================================================
-
-
-class TestCO177NoRemovedCapabilities:
-    """Tests for CO177: capabilities/sub-capabilities must not be removed."""
-
-    def test_no_change_is_valid(self):
-        """
-        Given: A modified connector whose capabilities equal the prior version.
-        When: CO177 runs.
-        Then: No validation errors are returned.
-        """
-        connector = create_connector_object()
-        old_connector = create_connector_object()
-        connector.old_base_content_object = old_connector
-
-        validator = NoRemovedCapabilitiesValidator()
-        results = validator.obtain_invalid_content_items([connector])
-
-        assert len(results) == 0
-
-    def test_added_capability_is_valid(self):
-        """
-        Given: A connector that ADDS a capability relative to the prior version.
-        When: CO177 runs.
-        Then: No validation errors (additions are allowed).
-        """
-        old_connector = create_connector_object(
-            capabilities_data=_capabilities_payload([{"id": "cap-a", "title": "Cap A"}])
-        )
-        connector = create_connector_object(
-            capabilities_data=_capabilities_payload(
-                [
-                    {"id": "cap-a", "title": "Cap A"},
-                    {"id": "cap-b", "title": "Cap B"},
-                ]
-            )
-        )
-        connector.old_base_content_object = old_connector
-
-        validator = NoRemovedCapabilitiesValidator()
-        results = validator.obtain_invalid_content_items([connector])
-
-        assert len(results) == 0
-
-    def test_removed_capability_flagged(self):
-        """
-        Given: A connector that REMOVES a capability present in the prior version.
-        When: CO177 runs.
-        Then: A validation error listing the removed capability is returned.
-        """
-        old_connector = create_connector_object(
-            capabilities_data=_capabilities_payload(
-                [
-                    {"id": "cap-a", "title": "Cap A"},
-                    {"id": "cap-b", "title": "Cap B"},
-                ]
-            )
-        )
-        connector = create_connector_object(
-            capabilities_data=_capabilities_payload([{"id": "cap-a", "title": "Cap A"}])
-        )
-        connector.old_base_content_object = old_connector
-
-        validator = NoRemovedCapabilitiesValidator()
-        results = validator.obtain_invalid_content_items([connector])
-
-        assert len(results) == 1
-        assert "cap-b" in results[0].message
-
-    def test_removed_sub_capability_flagged(self):
-        """
-        Given: A connector that removes a SUB-capability from a kept capability.
-        When: CO177 runs.
-        Then: A validation error listing the removed sub-capability is returned.
-        """
-        old_connector = create_connector_object(
-            capabilities_data=_capabilities_payload(
-                [
-                    {
-                        "id": "cap-a",
-                        "title": "Cap A",
-                        "sub_capabilities": [
-                            {"id": "sub-1", "title": "Sub 1"},
-                            {"id": "sub-2", "title": "Sub 2"},
-                        ],
-                    }
-                ]
-            )
-        )
-        connector = create_connector_object(
-            capabilities_data=_capabilities_payload(
-                [
-                    {
-                        "id": "cap-a",
-                        "title": "Cap A",
-                        "sub_capabilities": [
-                            {"id": "sub-1", "title": "Sub 1"},
-                        ],
-                    }
-                ]
-            )
-        )
-        connector.old_base_content_object = old_connector
-
-        validator = NoRemovedCapabilitiesValidator()
-        results = validator.obtain_invalid_content_items([connector])
-
-        assert len(results) == 1
-        assert "sub-2" in results[0].message
-
-    def test_no_old_object_skipped(self):
-        """
-        Given: A connector with no old_base_content_object.
-        When: CO177 runs.
-        Then: No validation errors (nothing to compare against).
-        """
-        connector = create_connector_object()
-        assert connector.old_base_content_object is None
-
-        validator = NoRemovedCapabilitiesValidator()
-        results = validator.obtain_invalid_content_items([connector])
-
-        assert len(results) == 0
-
-
-# ============================================================
 # CO190 - NoReservedParamNamesValidator
 # ============================================================
 
@@ -4040,233 +3934,6 @@ class TestCO190NoReservedParamNames:
 
 
 # ============================================================
-# CO157 - IsHandlerDescriptionTemplatedValidator
-# ============================================================
-
-
-class TestCO157IsHandlerDescriptionTemplated:
-    """Tests for CO157: each XSOAR handler's metadata.description must follow
-    the template 'XSOAR handler for <name>.', where <name> is the
-    resolved related integration's name. One error is emitted per failing
-    handler (not per connector).
-    """
-
-    def test_valid_handler_description(self):
-        """
-        Given: A connector whose XSOAR handler has a resolved integration and a
-               description matching 'XSOAR handler for <name>.'.
-        When: CO157 runs.
-        Then: No validation errors are returned.
-        """
-        integration = create_integration_object()
-        connector = create_connector_object(
-            handlers=[
-                {
-                    "id": "xsoar-test",
-                    "metadata": {
-                        "description": (f"XSOAR handler for {integration.name}."),
-                    },
-                },
-            ]
-        )
-        connector.handlers[0].related_integration = integration
-
-        validator = IsHandlerDescriptionTemplatedValidator()
-        results = validator.obtain_invalid_content_items([connector])
-
-        assert len(results) == 0
-
-    def test_invalid_handler_description(self):
-        """
-        Given: A connector whose XSOAR handler has a resolved integration but a
-               description that does not match the template.
-        When: CO157 runs.
-        Then: A single validation error is returned referencing the handler and
-              the expected description.
-        """
-        integration = create_integration_object()
-        connector = create_connector_object(
-            handlers=[
-                {
-                    "id": "xsoar-test",
-                    "metadata": {
-                        "description": "Some other description",
-                    },
-                },
-            ]
-        )
-        connector.handlers[0].related_integration = integration
-
-        validator = IsHandlerDescriptionTemplatedValidator()
-        results = validator.obtain_invalid_content_items([connector])
-
-        assert len(results) == 1
-        msg = results[0].message
-        assert "xsoar-test" in msg
-        assert f"XSOAR handler for {integration.name}." in msg
-        # The handler.yaml path is surfaced via ValidationResult.path (like CO118),
-        # sourced from the reusable HandlerData.file_path property.
-        assert results[0].path is not None
-        assert results[0].path == connector.handlers[0].file_path
-        expected_suffix = (
-            Path("components") / "handlers" / "xsoar_test" / "handler.yaml"
-        )
-        assert str(results[0].path).endswith(str(expected_suffix))
-
-    def test_handler_file_path_property_is_stamped(self):
-        """
-        Given: A connector parsed from disk.
-        When: Accessing handler.file_path on its handlers.
-        Then: Each handler resolves its own handler.yaml under the connector,
-              proving the connector stamps connector_path onto every handler
-              (reusable by all handler-level validators).
-        """
-        connector = create_connector_object(
-            handlers=[{"id": "xsoar-test", "metadata": {"description": "x"}}]
-        )
-
-        handler = connector.handlers[0]
-        assert handler.connector_path == connector.path
-        assert handler.file_path == (
-            connector.path
-            / "components"
-            / "handlers"
-            / handler.handler_dir_name
-            / "handler.yaml"
-        )
-
-    def test_handler_file_path_none_without_connector(self):
-        """
-        Given: A HandlerData constructed in isolation (no connector).
-        When: Accessing file_path.
-        Then: It returns None rather than raising.
-        """
-        from demisto_sdk.commands.content_graph.objects.connector import (
-            HandlerData,
-        )
-
-        handler = HandlerData(id="lonely", handler_dir_name="lonely")
-        assert handler.connector_path is None
-        assert handler.file_path is None
-
-    def test_error_per_handler_not_per_connector(self):
-        """
-        Given: A connector with two XSOAR handlers, both with invalid
-               descriptions.
-        When: CO157 runs.
-        Then: Two validation errors are returned (one per failing handler),
-              not a single connector-level error.
-        """
-        integration = create_integration_object()
-        connector = create_connector_object(
-            handlers=[
-                {
-                    "id": "xsoar-handler-a",
-                    "metadata": {"description": "wrong A"},
-                },
-                {
-                    "id": "xsoar-handler-b",
-                    "metadata": {"description": "wrong B"},
-                },
-            ]
-        )
-        for handler in connector.handlers:
-            handler.related_integration = integration
-
-        validator = IsHandlerDescriptionTemplatedValidator()
-        results = validator.obtain_invalid_content_items([connector])
-
-        assert len(results) == 2
-        handler_ids_in_messages = {
-            hid
-            for hid in ("xsoar-handler-a", "xsoar-handler-b")
-            if any(hid in r.message for r in results)
-        }
-        assert handler_ids_in_messages == {"xsoar-handler-a", "xsoar-handler-b"}
-
-    def test_mixed_valid_and_invalid_handlers(self):
-        """
-        Given: A connector with one valid handler description and one invalid.
-        When: CO157 runs.
-        Then: Only the invalid handler produces an error.
-        """
-        integration = create_integration_object()
-        connector = create_connector_object(
-            handlers=[
-                {
-                    "id": "xsoar-good",
-                    "metadata": {
-                        "description": (f"XSOAR handler for {integration.name}."),
-                    },
-                },
-                {
-                    "id": "xsoar-bad",
-                    "metadata": {"description": "nope"},
-                },
-            ]
-        )
-        for handler in connector.handlers:
-            handler.related_integration = integration
-
-        validator = IsHandlerDescriptionTemplatedValidator()
-        results = validator.obtain_invalid_content_items([connector])
-
-        assert len(results) == 1
-        assert "xsoar-bad" in results[0].message
-        assert "xsoar-good" not in results[0].message
-
-    def test_non_xsoar_handler_ignored(self):
-        """
-        Given: A connector with a non-XSOAR handler (module != 'xsoar').
-        When: CO157 runs.
-        Then: No validation errors - non-XSOAR handlers are not checked.
-        """
-        connector = create_connector_object(
-            handlers=[
-                {
-                    "id": "other-handler",
-                    "metadata": {
-                        "module": "other",
-                        "description": "arbitrary description",
-                        "ownership": {"team": "other-team"},
-                    },
-                    "triggering": {"labels": None},
-                },
-            ]
-        )
-        assert len(connector.xsoar_handlers) == 0
-
-        validator = IsHandlerDescriptionTemplatedValidator()
-        results = validator.obtain_invalid_content_items([connector])
-
-        assert len(results) == 0
-
-    def test_handler_without_resolved_integration_skipped(self):
-        """
-        Given: A connector whose XSOAR handler has no resolved
-               related_integration.
-        When: CO157 runs.
-        Then: No error is produced for that handler - the template <name>
-              cannot be determined without a resolved integration (CO164
-              covers the unresolved-integration case).
-        """
-        connector = create_connector_object(
-            handlers=[
-                {
-                    "id": "xsoar-test",
-                    "metadata": {"description": "whatever"},
-                },
-            ]
-        )
-        assert connector.handlers[0].related_integration is None
-
-        validator = IsHandlerDescriptionTemplatedValidator()
-        results = validator.obtain_invalid_content_items([connector])
-
-        assert len(results) == 0
-
-
-# ============================================================
 # CO124 - IsValidGroupedConnectorAuthValidator
 # ============================================================
 
@@ -4282,16 +3949,12 @@ def _profile_with_mapping(profile_id: str, mapping_value):
         "id": profile_id,
         "type": "plain",
         "title": "T",
-        "configurations": [
-            {"fields": [{"id": "u", "field_type": "input"}]}
-        ],
+        "configurations": [{"fields": [{"id": "u", "field_type": "input"}]}],
     }
     if mapping_value is _OMIT:
         profile["metadata"] = {"xsoar": {}}
     else:
-        profile["metadata"] = {
-            "xsoar": {"interpolation_mapping": mapping_value}
-        }
+        profile["metadata"] = {"xsoar": {"interpolation_mapping": mapping_value}}
     return profile
 
 
@@ -4308,9 +3971,7 @@ class TestCO124IsValidGroupedConnectorAuth:
         Then: No errors - CO124 is grouped-only.
         """
         connector = create_connector_object(
-            connection_data={
-                "profiles": [_profile_with_mapping("plain.x", _OMIT)]
-            }
+            connection_data={"profiles": [_profile_with_mapping("plain.x", _OMIT)]}
         )
 
         validator = IsValidGroupedConnectorAuthValidator()
@@ -4329,9 +3990,7 @@ class TestCO124IsValidGroupedConnectorAuth:
             connector_overrides={"settings": {"grouped": True}},
             connection_data={
                 "profiles": [
-                    _profile_with_mapping(
-                        "plain.x", "username:credentials.identifier"
-                    )
+                    _profile_with_mapping("plain.x", "username:credentials.identifier")
                 ]
             },
         )
@@ -4350,9 +4009,7 @@ class TestCO124IsValidGroupedConnectorAuth:
         """
         connector = create_connector_object(
             connector_overrides={"settings": {"grouped": True}},
-            connection_data={
-                "profiles": [_profile_with_mapping("plain.x", _OMIT)]
-            },
+            connection_data={"profiles": [_profile_with_mapping("plain.x", _OMIT)]},
         )
 
         validator = IsValidGroupedConnectorAuthValidator()
@@ -4371,9 +4028,7 @@ class TestCO124IsValidGroupedConnectorAuth:
         """
         connector = create_connector_object(
             connector_overrides={"settings": {"grouped": True}},
-            connection_data={
-                "profiles": [_profile_with_mapping("plain.x", "")]
-            },
+            connection_data={"profiles": [_profile_with_mapping("plain.x", "")]},
         )
 
         validator = IsValidGroupedConnectorAuthValidator()
@@ -4392,9 +4047,7 @@ class TestCO124IsValidGroupedConnectorAuth:
         """
         connector = create_connector_object(
             connector_overrides={"settings": {"grouped": True}},
-            connection_data={
-                "profiles": [_profile_with_mapping("plain.x", "   ")]
-            },
+            connection_data={"profiles": [_profile_with_mapping("plain.x", "   ")]},
         )
 
         validator = IsValidGroupedConnectorAuthValidator()
@@ -4438,9 +4091,7 @@ class TestCO124IsValidGroupedConnectorAuth:
         """
         connector = create_connector_object(
             connector_overrides={"settings": {"grouped": True}},
-            connection_data={
-                "profiles": [_profile_with_mapping("plain.x", _OMIT)]
-            },
+            connection_data={"profiles": [_profile_with_mapping("plain.x", _OMIT)]},
         )
 
         validator = IsValidGroupedConnectorAuthValidator()
@@ -4702,9 +4353,7 @@ class TestCO125IsAuthProfileHasEngine:
         connector = create_connector_object(
             connector_overrides={"settings": {"grouped": True}},
             connection_data={
-                "profiles": [
-                    _grouped_profile("plain.myint", ["username", "password"])
-                ]
+                "profiles": [_grouped_profile("plain.myint", ["username", "password"])]
             },
         )
 
@@ -4987,9 +4636,7 @@ def _canonical_engine_triplet(integration_id: str = "MyInt") -> list:
     """The three engine fields in the order they appear on disk."""
     return [
         _canonical_engine_mode_field(),
-        _canonical_engine_field(
-            "engine", integration_id, "engine", hidden=True
-        ),
+        _canonical_engine_field("engine", integration_id, "engine", hidden=True),
         _canonical_engine_field(
             "engineGroup", integration_id, "engine-group", hidden=True
         ),
@@ -5310,9 +4957,7 @@ class TestCO126IsValidEngineParams:
     def test_engine_wrong_integration_id_fails(self):
         """H: params.integrationID must match handler's integration."""
         triplet = _canonical_engine_triplet("MyInt")
-        triplet[1]["metadata"]["dynamic_values"]["params"]["integrationID"] = (
-            "OtherInt"
-        )
+        triplet[1]["metadata"]["dynamic_values"]["params"]["integrationID"] = "OtherInt"
         connector = create_connector_object(
             connection_data={
                 "general_configurations": _standard_engine_gc(triplet),
@@ -5332,9 +4977,7 @@ class TestCO126IsValidEngineParams:
     def test_engine_group_wrong_dynamic_field_fails(self):
         """I: engineGroup.dynamicField must be 'engine-group'."""
         triplet = _canonical_engine_triplet("MyInt")
-        triplet[2]["metadata"]["dynamic_values"]["params"]["dynamicField"] = (
-            "engine"
-        )
+        triplet[2]["metadata"]["dynamic_values"]["params"]["dynamicField"] = "engine"
         connector = create_connector_object(
             connection_data={
                 "general_configurations": _standard_engine_gc(triplet),
@@ -5405,6 +5048,7 @@ class TestCO126IsValidEngineParams:
             ConnectorField,
             FieldGroup,
         )
+
         connector.connection.profiles[0].configurations = [
             FieldGroup(fields=[ConnectorField(**f) for f in triplet])
         ]
@@ -5497,10 +5141,8 @@ class TestCO129IsValidConfigurationsMetadata:
         """
         connector = create_connector_object()
         _write_configurations_yaml(connector)
-        results = (
-            IsValidConfigurationsMetadataValidator().obtain_invalid_content_items(
-                [connector]
-            )
+        results = IsValidConfigurationsMetadataValidator().obtain_invalid_content_items(
+            [connector]
         )
         assert results == []
 
@@ -5513,10 +5155,8 @@ class TestCO129IsValidConfigurationsMetadata:
         """
         connector = create_connector_object()
         # Explicitly do NOT write configurations.yaml.
-        results = (
-            IsValidConfigurationsMetadataValidator().obtain_invalid_content_items(
-                [connector]
-            )
+        results = IsValidConfigurationsMetadataValidator().obtain_invalid_content_items(
+            [connector]
         )
         assert results == []
 
@@ -5524,10 +5164,8 @@ class TestCO129IsValidConfigurationsMetadata:
         """B: title is wrong."""
         connector = create_connector_object()
         _write_configurations_yaml(connector, title="Config")
-        results = (
-            IsValidConfigurationsMetadataValidator().obtain_invalid_content_items(
-                [connector]
-            )
+        results = IsValidConfigurationsMetadataValidator().obtain_invalid_content_items(
+            [connector]
         )
         assert len(results) == 1
         msg = results[0].message
@@ -5549,10 +5187,8 @@ class TestCO129IsValidConfigurationsMetadata:
             connector,
             description="Adjust and refine your configuration",
         )
-        results = (
-            IsValidConfigurationsMetadataValidator().obtain_invalid_content_items(
-                [connector]
-            )
+        results = IsValidConfigurationsMetadataValidator().obtain_invalid_content_items(
+            [connector]
         )
         assert len(results) == 1
         msg = results[0].message
@@ -5573,10 +5209,8 @@ class TestCO129IsValidConfigurationsMetadata:
             title="Wrong Title",
             description="Wrong description",
         )
-        results = (
-            IsValidConfigurationsMetadataValidator().obtain_invalid_content_items(
-                [connector]
-            )
+        results = IsValidConfigurationsMetadataValidator().obtain_invalid_content_items(
+            [connector]
         )
         assert len(results) == 1
         msg = results[0].message
@@ -5593,10 +5227,8 @@ class TestCO129IsValidConfigurationsMetadata:
         """
         connector = create_connector_object()
         _write_configurations_yaml(connector, include_metadata=False)
-        results = (
-            IsValidConfigurationsMetadataValidator().obtain_invalid_content_items(
-                [connector]
-            )
+        results = IsValidConfigurationsMetadataValidator().obtain_invalid_content_items(
+            [connector]
         )
         assert len(results) == 1
         assert "metadata block is missing or not a mapping" in results[0].message
@@ -5605,10 +5237,8 @@ class TestCO129IsValidConfigurationsMetadata:
         """Message includes the connector id (per CO118 pattern)."""
         connector = create_connector_object()
         _write_configurations_yaml(connector, title="Wrong")
-        results = (
-            IsValidConfigurationsMetadataValidator().obtain_invalid_content_items(
-                [connector]
-            )
+        results = IsValidConfigurationsMetadataValidator().obtain_invalid_content_items(
+            [connector]
         )
         assert len(results) == 1
         assert connector.object_id in results[0].message
@@ -5836,18 +5466,23 @@ class TestCO130IsValidFetch:
         assert results == []
 
     def test_non_xsoar_handler_is_skipped(self):
-        """A handler with module != 'xsoar' subscribing to fetch-issues
-        is NOT checked (CO130 targets XSOAR-owned handlers only)."""
-        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
-            IsValidFetchValidator,
-        )
+        """A fully non-XSOAR handler subscribing to fetch-issues is
+        NOT checked. ``is_xsoar`` is an OR of {module, team,
+        maintainers} — all three signals must be non-xsoar for the
+        handler to be treated as non-XSOAR."""
         from demisto_sdk.commands.content_graph.objects.connector import (
             HandlerCapability,
+        )
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
         )
 
         connector = create_connector_object()
         handler = connector.handlers[0]
+        # Override all three xsoar signals so is_xsoar is False.
         handler.metadata.module = "third_party"
+        handler.metadata.ownership.team = "third_party"
+        handler.metadata.ownership.maintainers = ["@third-party-content"]
         handler.capabilities = [
             HandlerCapability(
                 id="fetch-issues", auth_options=[], workloads=[], actions=[]
@@ -5912,11 +5547,11 @@ class TestCO130IsValidFetch:
 
     def test_serializer_computed_fields_flag_missing_fails(self):
         """Serializer exists but has no isFetch computed rule."""
-        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
-            IsValidFetchValidator,
-        )
         from demisto_sdk.commands.content_graph.objects.connector import (
             SerializerData,
+        )
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
         )
 
         connector = create_connector_object()
@@ -5948,15 +5583,15 @@ class TestCO130IsValidFetch:
 
     def test_serializer_computed_flag_value_false_fails(self):
         """Rule structure exists but value is False (must be True)."""
-        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
-            IsValidFetchValidator,
-        )
         from demisto_sdk.commands.content_graph.objects.connector import (
             ComputedCondition,
             ComputedConditionGroup,
             ComputedFieldRule,
             ComputedOutput,
             SerializerData,
+        )
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
         )
 
         connector = create_connector_object()
@@ -6002,7 +5637,9 @@ class TestCO130IsValidFetch:
         # Do NOT write configurations.yaml
         results = IsValidFetchValidator().obtain_invalid_content_items([connector])
         assert len(results) == 1
-        assert "no `configurations[]` entry with id 'fetch-issues'" in results[0].message
+        assert (
+            "no `configurations[]` entry with id 'fetch-issues'" in results[0].message
+        )
 
     def test_capability_configurations_entry_missing_fails(self):
         """configurations.yaml exists but has no entry for fetch-issues."""
@@ -6021,14 +5658,14 @@ class TestCO130IsValidFetch:
                     "description": "Adjust and refine your configuration settings",
                 },
                 "view_groups": [],
-                "configurations": [
-                    {"id": "other-capability", "configurations": []}
-                ],
+                "configurations": [{"id": "other-capability", "configurations": []}],
             },
         )
         results = IsValidFetchValidator().obtain_invalid_content_items([connector])
         assert len(results) == 1
-        assert "no `configurations[]` entry with id 'fetch-issues'" in results[0].message
+        assert (
+            "no `configurations[]` entry with id 'fetch-issues'" in results[0].message
+        )
 
     def test_missing_incidentType_field_fails(self):
         """Required field `incidentType` absent."""
@@ -6038,9 +5675,7 @@ class TestCO130IsValidFetch:
 
         connector = create_connector_object()
         _wire_handler_for_fetch_issues(connector)
-        _write_configurations_with_fetch_issues(
-            connector, include_incidentType=False
-        )
+        _write_configurations_with_fetch_issues(connector, include_incidentType=False)
         results = IsValidFetchValidator().obtain_invalid_content_items([connector])
         assert len(results) == 1
         assert "missing required field 'incidentType'" in results[0].message
@@ -6080,9 +5715,7 @@ class TestCO130IsValidFetch:
 
         connector = create_connector_object()
         _wire_handler_for_fetch_issues(connector)
-        _write_configurations_with_fetch_issues(
-            connector, include_mappingId=False
-        )
+        _write_configurations_with_fetch_issues(connector, include_mappingId=False)
         results = IsValidFetchValidator().obtain_invalid_content_items([connector])
         assert len(results) == 1
         assert "missing required field 'mappingId'" in results[0].message
@@ -6113,9 +5746,7 @@ class TestCO130IsValidFetch:
 
         connector = create_connector_object()
         _wire_handler_for_fetch_issues(connector)
-        _write_configurations_with_fetch_issues(
-            connector, incidentType_type="input"
-        )
+        _write_configurations_with_fetch_issues(connector, incidentType_type="input")
         results = IsValidFetchValidator().obtain_invalid_content_items([connector])
         assert len(results) == 1
         msg = results[0].message
@@ -6148,9 +5779,7 @@ class TestCO130IsValidFetch:
 
         connector = create_connector_object()
         _wire_handler_for_fetch_issues(connector)
-        _write_configurations_with_fetch_issues(
-            connector, mappingId_dyn="mapping"
-        )
+        _write_configurations_with_fetch_issues(connector, mappingId_dyn="mapping")
         results = IsValidFetchValidator().obtain_invalid_content_items([connector])
         assert len(results) == 1
         assert "dynamicField='mapping'" in results[0].message
@@ -6184,9 +5813,7 @@ class TestCO130IsValidFetch:
         connector = create_connector_object()
         _wire_handler_for_fetch_issues(connector)
         connector.handlers[0].serializer = None
-        _write_configurations_with_fetch_issues(
-            connector, include_mappingId=False
-        )
+        _write_configurations_with_fetch_issues(connector, include_mappingId=False)
         results = IsValidFetchValidator().obtain_invalid_content_items([connector])
         assert len(results) == 1
         msg = results[0].message
@@ -6201,9 +5828,7241 @@ class TestCO130IsValidFetch:
 
         connector = create_connector_object()
         _wire_handler_for_fetch_issues(connector)
-        _write_configurations_with_fetch_issues(
-            connector, include_incidentType=False
-        )
+        _write_configurations_with_fetch_issues(connector, include_incidentType=False)
         results = IsValidFetchValidator().obtain_invalid_content_items([connector])
         assert len(results) == 1
         assert str(results[0].path).endswith("configurations.yaml")
+
+
+# ============================================================
+# CO136 test helpers
+# ============================================================
+def _default_ignore_field(
+    raw_id: str = "defaultIgnore",
+    field_type: str = "checkbox",
+    config_type: str = "backend",
+) -> dict:
+    """Build a raw `defaultIgnore` field dict for configurations.yaml."""
+    return {
+        "id": raw_id,
+        "title": "Do not use in CLI by default",
+        "field_type": field_type,
+        "metadata": {"xsoar": {"config_type": config_type}},
+        "options": {
+            "default_value": False,
+            "create_modifiers": {"required": False, "hidden": False},
+            "edit_modifiers": {"required": False, "hidden": False},
+        },
+    }
+
+
+def _automation_capability_entry(
+    capability_id: str = "automation-and-remediation",
+    include_default_ignore: bool = True,
+    **field_overrides,
+) -> dict:
+    """Build a raw configurations.yaml `configurations[]` entry dict
+    for the automation capability. When ``include_default_ignore`` is
+    False, the entry has NO fields (used for the missing-field case)."""
+    fields = []
+    if include_default_ignore:
+        fields.append(_default_ignore_field(**field_overrides))
+    return {
+        "id": capability_id,
+        "configurations": [{"advanced": True, "fields": fields}] if fields else [],
+    }
+
+
+def _write_configurations_with_automation(
+    connector,
+    capability_id: str = "automation-and-remediation",
+    include_default_ignore: bool = True,
+    **field_overrides,
+) -> None:
+    entry = _automation_capability_entry(
+        capability_id=capability_id,
+        include_default_ignore=include_default_ignore,
+        **field_overrides,
+    )
+    _write_connector_yaml_file(
+        connector,
+        "configurations.yaml",
+        {
+            "metadata": {
+                "title": "Configuration",
+                "description": "Adjust and refine your configuration settings",
+            },
+            "view_groups": [],
+            "configurations": [entry],
+        },
+    )
+
+
+def _wire_handler_for_automation(
+    connector,
+    capability_id: str = "automation-and-remediation",
+    handler_index: int = 0,
+    serializer=None,
+) -> None:
+    """Point the connector's handler at the automation capability.
+    Optionally attach a serializer for field-mappings resolution
+    testing."""
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        HandlerCapability,
+    )
+
+    handler = connector.handlers[handler_index]
+    handler.metadata.module = "xsoar"
+    handler.capabilities = [
+        HandlerCapability(
+            id=capability_id,
+            auth_options=[],
+            workloads=[],
+            actions=[],
+        )
+    ]
+    handler.serializer = serializer
+
+
+def _make_serializer_with_field_mapping(raw_id: str, runtime_name: str):
+    """Build a SerializerData that renames ``raw_id`` -> ``runtime_name``."""
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        FieldMapping,
+        SerializerData,
+    )
+
+    return SerializerData(
+        field_mappings=[FieldMapping(id=raw_id, field_name=runtime_name)],
+        computed_fields=[],
+    )
+
+
+class TestCO136IsValidAutomationCapability:
+    """Tests for CO136: automation-and-remediation capability wiring.
+
+    For each XSOAR handler subscribing to the capability (bare id or
+    grouped-namespaced variant), the corresponding configurations
+    entry must contain a `defaultIgnore` field (post-serializer
+    field_mappings resolution) with:
+    - field_type: checkbox
+    - metadata.xsoar.config_type: backend
+    """
+
+    # ------------------------------------------------------------
+    # Skip cases
+    # ------------------------------------------------------------
+    def test_no_automation_capability_short_circuits(self):
+        """A connector whose handlers don't subscribe to automation
+        produces no results (even if configurations.yaml is absent)."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO136_is_valid_automation_capability import (
+            IsValidAutomationCapabilityValidator,
+        )
+
+        connector = create_connector_object()
+        # default handler subscribes to "test-capability", not automation
+        results = IsValidAutomationCapabilityValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_non_xsoar_handler_is_skipped(self):
+        """A fully non-XSOAR handler subscribing to automation is
+        NOT checked. ``is_xsoar`` is an OR of {module, team,
+        maintainers} — all three signals must be non-xsoar for the
+        handler to be treated as non-XSOAR."""
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            HandlerCapability,
+        )
+        from demisto_sdk.commands.validate.validators.CO_validators.CO136_is_valid_automation_capability import (
+            IsValidAutomationCapabilityValidator,
+        )
+
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        # Override all three xsoar signals so is_xsoar is False.
+        handler.metadata.module = "third_party"
+        handler.metadata.ownership.team = "third_party"
+        handler.metadata.ownership.maintainers = ["@third-party-content"]
+        handler.capabilities = [
+            HandlerCapability(
+                id="automation-and-remediation",
+                auth_options=[],
+                workloads=[],
+                actions=[],
+            )
+        ]
+        handler.serializer = None
+        # No configurations.yaml either — would fail if XSOAR-owned
+        results = IsValidAutomationCapabilityValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    # ------------------------------------------------------------
+    # Happy paths
+    # ------------------------------------------------------------
+    def test_valid_automation_wiring_passes(self):
+        """Bare capability id, defaultIgnore present with correct shape."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO136_is_valid_automation_capability import (
+            IsValidAutomationCapabilityValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_automation(connector)
+        _write_configurations_with_automation(connector)
+        results = IsValidAutomationCapabilityValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_valid_grouped_namespaced_capability_id_passes(self):
+        """Grouped connectors namespace capability ids (e.g.
+        `automation-and-remediation_qualysv2`). CO136 matches by
+        prefix."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO136_is_valid_automation_capability import (
+            IsValidAutomationCapabilityValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_automation(
+            connector, capability_id="automation-and-remediation_myprofile"
+        )
+        _write_configurations_with_automation(
+            connector, capability_id="automation-and-remediation_myprofile"
+        )
+        results = IsValidAutomationCapabilityValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_grouped_namespaced_default_ignore_resolved_via_serializer_passes(self):
+        """Grouped connector where connection.yaml uses a namespaced
+        raw id (`xsoar-qualys_fim_defaultIgnore`) that the serializer
+        renames back to `defaultIgnore`. Post-resolution the check
+        should pass."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO136_is_valid_automation_capability import (
+            IsValidAutomationCapabilityValidator,
+        )
+
+        connector = create_connector_object()
+        serializer = _make_serializer_with_field_mapping(
+            raw_id="xsoar-qualys_fim_defaultIgnore",
+            runtime_name="defaultIgnore",
+        )
+        _wire_handler_for_automation(
+            connector,
+            capability_id="automation-and-remediation_qualys_fim",
+            serializer=serializer,
+        )
+        _write_configurations_with_automation(
+            connector,
+            capability_id="automation-and-remediation_qualys_fim",
+            raw_id="xsoar-qualys_fim_defaultIgnore",
+        )
+        results = IsValidAutomationCapabilityValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_grouped_namespaced_default_ignore_without_serializer_fails(self):
+        """Same grouped connector but WITHOUT the serializer rename -
+        the raw namespaced id doesn't resolve to `defaultIgnore` so
+        the check fails with 'missing defaultIgnore field'."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO136_is_valid_automation_capability import (
+            IsValidAutomationCapabilityValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_automation(
+            connector,
+            capability_id="automation-and-remediation_qualys_fim",
+            serializer=None,
+        )
+        _write_configurations_with_automation(
+            connector,
+            capability_id="automation-and-remediation_qualys_fim",
+            raw_id="xsoar-qualys_fim_defaultIgnore",
+        )
+        results = IsValidAutomationCapabilityValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "missing the required `defaultIgnore` field" in results[0].message
+
+    # ------------------------------------------------------------
+    # Failure paths - missing entry / missing field
+    # ------------------------------------------------------------
+    def test_configurations_file_missing_fails(self):
+        """XSOAR handler subscribes to automation but no
+        configurations.yaml on disk."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO136_is_valid_automation_capability import (
+            IsValidAutomationCapabilityValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_automation(connector)
+        # Do NOT write configurations.yaml
+        results = IsValidAutomationCapabilityValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert (
+            "no `configurations[]` entry with id 'automation-and-remediation'"
+            in results[0].message
+        )
+
+    def test_capability_entry_missing_fails(self):
+        """configurations.yaml exists but has no entry for automation."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO136_is_valid_automation_capability import (
+            IsValidAutomationCapabilityValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_automation(connector)
+        _write_connector_yaml_file(
+            connector,
+            "configurations.yaml",
+            {
+                "metadata": {
+                    "title": "Configuration",
+                    "description": "Adjust and refine your configuration settings",
+                },
+                "view_groups": [],
+                "configurations": [{"id": "other-capability", "configurations": []}],
+            },
+        )
+        results = IsValidAutomationCapabilityValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert (
+            "no `configurations[]` entry with id 'automation-and-remediation'"
+            in results[0].message
+        )
+
+    def test_default_ignore_field_missing_fails(self):
+        """The automation entry exists but has no `defaultIgnore`
+        field."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO136_is_valid_automation_capability import (
+            IsValidAutomationCapabilityValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_automation(connector)
+        _write_configurations_with_automation(connector, include_default_ignore=False)
+        results = IsValidAutomationCapabilityValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "missing the required `defaultIgnore` field" in results[0].message
+
+    # ------------------------------------------------------------
+    # Failure paths - wrong field shape
+    # ------------------------------------------------------------
+    def test_default_ignore_wrong_field_type_fails(self):
+        """`defaultIgnore` present but field_type is not `checkbox`."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO136_is_valid_automation_capability import (
+            IsValidAutomationCapabilityValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_automation(connector)
+        _write_configurations_with_automation(connector, field_type="input")
+        results = IsValidAutomationCapabilityValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "field_type='input'" in msg
+        assert "must be 'checkbox'" in msg
+
+    def test_default_ignore_wrong_config_type_fails(self):
+        """`defaultIgnore` present but metadata.xsoar.config_type is
+        not `backend`."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO136_is_valid_automation_capability import (
+            IsValidAutomationCapabilityValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_automation(connector)
+        _write_configurations_with_automation(connector, config_type="frontend")
+        results = IsValidAutomationCapabilityValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "config_type='frontend'" in msg
+        assert "must be 'backend'" in msg
+
+    def test_default_ignore_missing_config_type_fails(self):
+        """`defaultIgnore` field has no metadata.xsoar block at all."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO136_is_valid_automation_capability import (
+            IsValidAutomationCapabilityValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_automation(connector)
+        # Custom write: field without metadata
+        entry = {
+            "id": "automation-and-remediation",
+            "configurations": [
+                {
+                    "advanced": True,
+                    "fields": [
+                        {
+                            "id": "defaultIgnore",
+                            "title": "Do not use in CLI by default",
+                            "field_type": "checkbox",
+                            # NO metadata block
+                        }
+                    ],
+                }
+            ],
+        }
+        _write_connector_yaml_file(
+            connector,
+            "configurations.yaml",
+            {
+                "metadata": {
+                    "title": "Configuration",
+                    "description": "Adjust and refine your configuration settings",
+                },
+                "view_groups": [],
+                "configurations": [entry],
+            },
+        )
+        results = IsValidAutomationCapabilityValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "config_type='None'" in results[0].message
+
+    def test_multiple_shape_issues_aggregate(self):
+        """Both wrong field_type AND wrong config_type - both reported."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO136_is_valid_automation_capability import (
+            IsValidAutomationCapabilityValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_automation(connector)
+        _write_configurations_with_automation(
+            connector, field_type="input", config_type="frontend"
+        )
+        results = IsValidAutomationCapabilityValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "field_type='input'" in msg
+        assert "must be 'checkbox'" in msg
+        assert "config_type='frontend'" in msg
+        assert "must be 'backend'" in msg
+
+    def test_error_path_points_to_configurations_yaml(self):
+        """Result.path should point at configurations.yaml."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO136_is_valid_automation_capability import (
+            IsValidAutomationCapabilityValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_automation(connector)
+        _write_configurations_with_automation(connector, include_default_ignore=False)
+        results = IsValidAutomationCapabilityValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert str(results[0].path).endswith("configurations.yaml")
+
+
+# ============================================================
+# CO137 test helpers
+# ============================================================
+def _valid_duration_field(field_id: str = "incidentFetchInterval", **overrides) -> dict:
+    """Build a canonical-shape duration field dict. Override any leaf via
+    kwargs, e.g. ``units=['minutes']`` to make it fail sub-rule A."""
+    options = {
+        "units": ["days", "hours", "minutes"],
+        "output_format": "minutes",
+        "default_value": {"minutes": 1},
+        "create_modifiers": {"hidden": False},
+        "edit_modifiers": {"hidden": False},
+    }
+    options.update(overrides)
+    return {
+        "id": field_id,
+        "title": "Fetch Interval",
+        "field_type": "duration",
+        "options": options,
+    }
+
+
+def _write_connection_with_duration_in_general(connector, field: dict) -> None:
+    """Write a connection.yaml that has ONE duration field under
+    top-level general_configurations."""
+    payload = {
+        "metadata": {"title": "Connection", "description": "desc"},
+        "general_configurations": {
+            "description": "gc",
+            "configurations": [{"fields": [field]}],
+        },
+        "profiles": [],
+    }
+    _write_connector_yaml_file(connector, "connection.yaml", payload)
+
+
+def _write_connection_with_duration_in_profile(connector, field: dict) -> None:
+    """Write a connection.yaml with a duration field inside a profile."""
+    payload = {
+        "metadata": {"title": "Connection", "description": "desc"},
+        "general_configurations": {"description": "gc", "configurations": []},
+        "profiles": [
+            {
+                "id": "plain.test",
+                "type": "plain",
+                "title": "Test",
+                "configurations": [{"fields": [field]}],
+            }
+        ],
+    }
+    _write_connector_yaml_file(connector, "connection.yaml", payload)
+
+
+def _write_configurations_with_duration_in_general(connector, field: dict) -> None:
+    """Write a configurations.yaml with a duration field under top-level
+    general_configurations."""
+    payload = {
+        "metadata": {
+            "title": "Configuration",
+            "description": "Adjust and refine your configuration settings",
+        },
+        "view_groups": [],
+        "general_configurations": {
+            "description": "gc",
+            "configurations": [{"fields": [field]}],
+        },
+        "configurations": [],
+    }
+    _write_connector_yaml_file(connector, "configurations.yaml", payload)
+
+
+def _write_configurations_with_duration_in_capability(
+    connector, field: dict, capability_id: str = "log-collection"
+) -> None:
+    """Write a configurations.yaml with a duration field inside a
+    per-capability configurations entry."""
+    payload = {
+        "metadata": {
+            "title": "Configuration",
+            "description": "Adjust and refine your configuration settings",
+        },
+        "view_groups": [],
+        "configurations": [
+            {
+                "id": capability_id,
+                "configurations": [{"fields": [field]}],
+            }
+        ],
+    }
+    _write_connector_yaml_file(connector, "configurations.yaml", payload)
+
+
+class TestCO137IsValidDurationTypeParam:
+    """Tests for CO137: every duration field must satisfy the canonical
+    shape (units, output_format, per-unit default caps)."""
+
+    # ------------------------------------------------------------
+    # Skip case
+    # ------------------------------------------------------------
+    def test_no_duration_fields_short_circuits(self):
+        """A connector with no duration fields anywhere produces no
+        results."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO137_is_valid_duration_type_param import (
+            IsValidDurationTypeParamValidator,
+        )
+
+        connector = create_connector_object()
+        # default template has no duration fields
+        results = IsValidDurationTypeParamValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    # ------------------------------------------------------------
+    # Happy paths - each of the 4 locations
+    # ------------------------------------------------------------
+    def test_valid_duration_in_connection_general_configurations_passes(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO137_is_valid_duration_type_param import (
+            IsValidDurationTypeParamValidator,
+        )
+
+        connector = create_connector_object()
+        _write_connection_with_duration_in_general(connector, _valid_duration_field())
+        results = IsValidDurationTypeParamValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_valid_duration_in_connection_profile_passes(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO137_is_valid_duration_type_param import (
+            IsValidDurationTypeParamValidator,
+        )
+
+        connector = create_connector_object()
+        _write_connection_with_duration_in_profile(connector, _valid_duration_field())
+        results = IsValidDurationTypeParamValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_valid_duration_in_configurations_general_passes(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO137_is_valid_duration_type_param import (
+            IsValidDurationTypeParamValidator,
+        )
+
+        connector = create_connector_object()
+        _write_configurations_with_duration_in_general(
+            connector, _valid_duration_field()
+        )
+        results = IsValidDurationTypeParamValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_valid_duration_in_configurations_capability_passes(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO137_is_valid_duration_type_param import (
+            IsValidDurationTypeParamValidator,
+        )
+
+        connector = create_connector_object()
+        _write_configurations_with_duration_in_capability(
+            connector, _valid_duration_field(), capability_id="log-collection"
+        )
+        results = IsValidDurationTypeParamValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    # ------------------------------------------------------------
+    # Sub-rule A: units mismatch
+    # ------------------------------------------------------------
+    def test_units_missing_fails(self):
+        """options.units absent."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO137_is_valid_duration_type_param import (
+            IsValidDurationTypeParamValidator,
+        )
+
+        connector = create_connector_object()
+        bad_field = _valid_duration_field()
+        del bad_field["options"]["units"]
+        _write_configurations_with_duration_in_capability(connector, bad_field)
+        results = IsValidDurationTypeParamValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "options.units=None" in msg
+        assert "['days', 'hours', 'minutes']" in msg
+
+    def test_units_wrong_order_fails(self):
+        """units contains right keys but in the wrong order."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO137_is_valid_duration_type_param import (
+            IsValidDurationTypeParamValidator,
+        )
+
+        connector = create_connector_object()
+        _write_configurations_with_duration_in_capability(
+            connector,
+            _valid_duration_field(units=["minutes", "hours", "days"]),
+        )
+        results = IsValidDurationTypeParamValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "options.units=['minutes', 'hours', 'days']" in results[0].message
+
+    def test_units_subset_fails(self):
+        """units missing a required key (only minutes)."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO137_is_valid_duration_type_param import (
+            IsValidDurationTypeParamValidator,
+        )
+
+        connector = create_connector_object()
+        _write_configurations_with_duration_in_capability(
+            connector,
+            _valid_duration_field(units=["minutes"]),
+        )
+        results = IsValidDurationTypeParamValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "options.units=['minutes']" in results[0].message
+
+    # ------------------------------------------------------------
+    # Sub-rule B: output_format mismatch
+    # ------------------------------------------------------------
+    def test_output_format_wrong_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO137_is_valid_duration_type_param import (
+            IsValidDurationTypeParamValidator,
+        )
+
+        connector = create_connector_object()
+        _write_configurations_with_duration_in_capability(
+            connector,
+            _valid_duration_field(output_format="seconds"),
+        )
+        results = IsValidDurationTypeParamValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "options.output_format='seconds'" in results[0].message
+        assert "must be 'minutes'" in results[0].message
+
+    def test_output_format_missing_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO137_is_valid_duration_type_param import (
+            IsValidDurationTypeParamValidator,
+        )
+
+        connector = create_connector_object()
+        bad_field = _valid_duration_field()
+        del bad_field["options"]["output_format"]
+        _write_configurations_with_duration_in_capability(connector, bad_field)
+        results = IsValidDurationTypeParamValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "options.output_format=None" in results[0].message
+
+    # ------------------------------------------------------------
+    # Sub-rule C: hours > 23
+    # ------------------------------------------------------------
+    def test_hours_over_cap_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO137_is_valid_duration_type_param import (
+            IsValidDurationTypeParamValidator,
+        )
+
+        connector = create_connector_object()
+        _write_configurations_with_duration_in_capability(
+            connector,
+            _valid_duration_field(default_value={"hours": 24}),
+        )
+        results = IsValidDurationTypeParamValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "options.default_value.hours=24" in msg
+        assert "must be <= 23" in msg
+
+    def test_hours_boundary_23_passes(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO137_is_valid_duration_type_param import (
+            IsValidDurationTypeParamValidator,
+        )
+
+        connector = create_connector_object()
+        _write_configurations_with_duration_in_capability(
+            connector,
+            _valid_duration_field(default_value={"hours": 23}),
+        )
+        results = IsValidDurationTypeParamValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    # ------------------------------------------------------------
+    # Sub-rule D: minutes > 59
+    # ------------------------------------------------------------
+    def test_minutes_over_cap_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO137_is_valid_duration_type_param import (
+            IsValidDurationTypeParamValidator,
+        )
+
+        connector = create_connector_object()
+        _write_configurations_with_duration_in_capability(
+            connector,
+            _valid_duration_field(default_value={"minutes": 60}),
+        )
+        results = IsValidDurationTypeParamValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "options.default_value.minutes=60" in msg
+        assert "must be <= 59" in msg
+
+    def test_minutes_boundary_59_passes(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO137_is_valid_duration_type_param import (
+            IsValidDurationTypeParamValidator,
+        )
+
+        connector = create_connector_object()
+        _write_configurations_with_duration_in_capability(
+            connector,
+            _valid_duration_field(default_value={"minutes": 59}),
+        )
+        results = IsValidDurationTypeParamValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    # ------------------------------------------------------------
+    # Aggregation + path + edge cases
+    # ------------------------------------------------------------
+    def test_multiple_issues_aggregate(self):
+        """Wrong units + wrong output_format + over-cap hours in one field."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO137_is_valid_duration_type_param import (
+            IsValidDurationTypeParamValidator,
+        )
+
+        connector = create_connector_object()
+        _write_configurations_with_duration_in_capability(
+            connector,
+            _valid_duration_field(
+                units=["minutes"],
+                output_format="seconds",
+                default_value={"hours": 30, "minutes": 80},
+            ),
+        )
+        results = IsValidDurationTypeParamValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "options.units=['minutes']" in msg
+        assert "options.output_format='seconds'" in msg
+        assert "options.default_value.hours=30" in msg
+        assert "options.default_value.minutes=80" in msg
+
+    def test_missing_options_dict_fails(self):
+        """Field has no `options` at all."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO137_is_valid_duration_type_param import (
+            IsValidDurationTypeParamValidator,
+        )
+
+        connector = create_connector_object()
+        bad_field = {
+            "id": "somedur",
+            "title": "Some Duration",
+            "field_type": "duration",
+        }
+        _write_configurations_with_duration_in_capability(connector, bad_field)
+        results = IsValidDurationTypeParamValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "has no `options` mapping" in results[0].message
+
+    def test_non_duration_field_is_ignored(self):
+        """A `checkbox`/`input`/`select` field with wrong `units` in options is
+        NOT flagged - CO137 only walks fields whose `field_type == duration`."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO137_is_valid_duration_type_param import (
+            IsValidDurationTypeParamValidator,
+        )
+
+        connector = create_connector_object()
+        non_duration_field = {
+            "id": "somecheck",
+            "title": "some checkbox",
+            "field_type": "checkbox",
+            "options": {"units": ["nonsense"], "output_format": "garbage"},
+        }
+        _write_configurations_with_duration_in_capability(connector, non_duration_field)
+        results = IsValidDurationTypeParamValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+
+# ============================================================
+# CO139 test helpers
+# ============================================================
+def _valid_log_level_field(raw_id: str = "integrationLogLevel", **overrides) -> dict:
+    """Build a canonical-shape integrationLogLevel field dict. Override
+    any leaf via kwargs to intentionally break individual sub-rules."""
+    field_type = overrides.pop("field_type", "select")
+    config_type = overrides.pop("config_type", "backend")
+    searchable = overrides.pop("searchable", True)
+    clearable = overrides.pop("clearable", True)
+    values = overrides.pop(
+        "values",
+        [
+            {"key": "Off", "label": "Off"},
+            {"key": "Debug", "label": "Debug"},
+            {"key": "Verbose", "label": "Verbose"},
+        ],
+    )
+    metadata = overrides.pop("metadata", None)
+    if metadata is None:
+        metadata = {"xsoar": {"config_type": config_type}}
+    return {
+        "id": raw_id,
+        "title": "Log Level",
+        "field_type": field_type,
+        "metadata": metadata,
+        "options": {
+            "searchable": searchable,
+            "clearable": clearable,
+            "values": values,
+        },
+    }
+
+
+def _standard_log_level_configurations(
+    required_for_capabilities,
+    field=None,
+    include_field=True,
+):
+    """Build a standard-connector `general_configurations.configurations`
+    list containing ONE field-group entry with the log-level field."""
+    fields = []
+    if include_field:
+        fields.append(field or _valid_log_level_field())
+    return [
+        {
+            "required_for_capabilities": list(required_for_capabilities),
+            "fields": fields,
+        }
+    ]
+
+
+def _grouped_log_level_configurations(
+    view_group_id: str,
+    field=None,
+    advanced: bool = True,
+    include_field: bool = True,
+):
+    """Build a grouped-connector `general_configurations.configurations`
+    entry for ONE view_group with the log-level field."""
+    fields = []
+    if include_field:
+        fields.append(field or _valid_log_level_field())
+    entry = {
+        "view_group": view_group_id,
+        "fields": fields,
+    }
+    if advanced:
+        entry["advanced"] = True
+    return entry
+
+
+def _write_configurations_with_log_level(
+    connector,
+    general_config_entries,
+    other_configurations=None,
+):
+    """Write a configurations.yaml with the given general_configurations
+    entries. Other top-level 'configurations' entries can be provided
+    for aggregation tests."""
+    payload = {
+        "metadata": {
+            "title": "Configuration",
+            "description": "Adjust and refine your configuration settings",
+        },
+        "view_groups": [],
+        "general_configurations": {
+            "configurations": general_config_entries,
+        },
+        "configurations": other_configurations or [],
+    }
+    _write_connector_yaml_file(connector, "configurations.yaml", payload)
+
+
+def _wire_xsoar_handler_with_caps(
+    connector,
+    capability_ids,
+    handler_index: int = 0,
+    serializer=None,
+):
+    """Point the connector's handler at XSOAR + subscribe it to the
+    given capability ids (may be a single id string or a list)."""
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        HandlerCapability,
+    )
+
+    if isinstance(capability_ids, str):
+        capability_ids = [capability_ids]
+    handler = connector.handlers[handler_index]
+    handler.metadata.module = "xsoar"
+    handler.capabilities = [
+        HandlerCapability(id=cid, auth_options=[], workloads=[], actions=[])
+        for cid in capability_ids
+    ]
+    handler.serializer = serializer
+
+
+class TestCO139IsHandlerContainLoglevel:
+    """Tests for CO139: every XSOAR handler must be reachable by an
+    `integrationLogLevel` (select, config_type=backend) field under
+    `configurations.yaml` `general_configurations`. Standard connectors
+    aggregate `required_for_capabilities` across matching entries;
+    grouped connectors index entries by `view_group` and require
+    `advanced: true`.
+    """
+
+    # ------------------------------------------------------------
+    # Skip cases
+    # ------------------------------------------------------------
+    def test_no_xsoar_handlers_short_circuits(self):
+        """Connector with only non-XSOAR handlers is skipped even if
+        no configurations.yaml is present."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
+            IsHandlerContainLoglevelValidator,
+        )
+
+        connector = create_connector_object()
+        # Turn the default XSOAR handler into a non-XSOAR handler.
+        connector.handlers[0].metadata.module = "cwp"
+        connector.handlers[0].metadata.ownership.team = "cwp"
+        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_no_configurations_file_short_circuits(self):
+        """XSOAR handler present but no configurations.yaml -> other
+        validators cover the missing-file case; CO139 skips."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
+            IsHandlerContainLoglevelValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_xsoar_handler_with_caps(connector, ["automation-and-remediation"])
+        # No configurations.yaml written.
+        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    # ------------------------------------------------------------
+    # Hard failure: XSOAR handlers present but no integrationLogLevel
+    # ------------------------------------------------------------
+    def test_no_integration_log_level_field_at_all_fails(self):
+        """configurations.yaml exists but has NO integrationLogLevel
+        field anywhere -> hard failure (not silent skip)."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
+            IsHandlerContainLoglevelValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_xsoar_handler_with_caps(connector, ["automation-and-remediation"])
+        _write_configurations_with_log_level(
+            connector,
+            general_config_entries=[
+                # A group with a completely unrelated field.
+                {
+                    "required_for_capabilities": ["automation-and-remediation"],
+                    "fields": [{"id": "someOtherField", "field_type": "input"}],
+                }
+            ],
+        )
+        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "no `integrationLogLevel` field is declared" in msg
+
+    # ------------------------------------------------------------
+    # Standard happy path + failures
+    # ------------------------------------------------------------
+    def test_standard_valid_covering_all_caps_passes(self):
+        """Standard connector: single general_configurations entry
+        whose required_for_capabilities covers every XSOAR handler
+        capability -> passes."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
+            IsHandlerContainLoglevelValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_xsoar_handler_with_caps(
+            connector,
+            ["automation-and-remediation", "fetch-issues"],
+        )
+        _write_configurations_with_log_level(
+            connector,
+            general_config_entries=_standard_log_level_configurations(
+                required_for_capabilities=[
+                    "automation-and-remediation",
+                    "fetch-issues",
+                ]
+            ),
+        )
+        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_standard_missing_capability_in_rfc_fails(self):
+        """Standard connector: required_for_capabilities doesn't cover
+        one of the handler's capabilities -> fails."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
+            IsHandlerContainLoglevelValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_xsoar_handler_with_caps(
+            connector,
+            ["automation-and-remediation", "fetch-issues"],
+        )
+        _write_configurations_with_log_level(
+            connector,
+            general_config_entries=_standard_log_level_configurations(
+                required_for_capabilities=["automation-and-remediation"]
+            ),
+        )
+        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "does not cover" in msg
+        assert "fetch-issues" in msg
+
+    def test_standard_union_across_multiple_entries_passes(self):
+        """Standard connector: two general_configurations entries each
+        with the log-level field, whose combined
+        `required_for_capabilities` covers everything -> passes."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
+            IsHandlerContainLoglevelValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_xsoar_handler_with_caps(
+            connector,
+            ["automation-and-remediation", "fetch-issues"],
+        )
+        _write_configurations_with_log_level(
+            connector,
+            general_config_entries=[
+                {
+                    "required_for_capabilities": ["automation-and-remediation"],
+                    "fields": [_valid_log_level_field()],
+                },
+                {
+                    "required_for_capabilities": ["fetch-issues"],
+                    "fields": [_valid_log_level_field()],
+                },
+            ],
+        )
+        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    # ------------------------------------------------------------
+    # Standard: field-shape sub-rule failures
+    # ------------------------------------------------------------
+    def test_standard_wrong_field_type_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
+            IsHandlerContainLoglevelValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_xsoar_handler_with_caps(connector, ["automation-and-remediation"])
+        _write_configurations_with_log_level(
+            connector,
+            general_config_entries=_standard_log_level_configurations(
+                required_for_capabilities=["automation-and-remediation"],
+                field=_valid_log_level_field(field_type="input"),
+            ),
+        )
+        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "field_type='input'" in msg
+        assert "must be 'select'" in msg
+
+    def test_standard_wrong_config_type_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
+            IsHandlerContainLoglevelValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_xsoar_handler_with_caps(connector, ["automation-and-remediation"])
+        _write_configurations_with_log_level(
+            connector,
+            general_config_entries=_standard_log_level_configurations(
+                required_for_capabilities=["automation-and-remediation"],
+                field=_valid_log_level_field(config_type="frontend"),
+            ),
+        )
+        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "config_type='frontend'" in results[0].message
+
+    def test_standard_missing_options_dict_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
+            IsHandlerContainLoglevelValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_xsoar_handler_with_caps(connector, ["automation-and-remediation"])
+        bad_field = {
+            "id": "integrationLogLevel",
+            "title": "Log Level",
+            "field_type": "select",
+            "metadata": {"xsoar": {"config_type": "backend"}},
+            # NO options
+        }
+        _write_configurations_with_log_level(
+            connector,
+            general_config_entries=[
+                {
+                    "required_for_capabilities": ["automation-and-remediation"],
+                    "fields": [bad_field],
+                }
+            ],
+        )
+        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "`options` mapping is missing" in results[0].message
+
+    def test_standard_searchable_false_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
+            IsHandlerContainLoglevelValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_xsoar_handler_with_caps(connector, ["automation-and-remediation"])
+        _write_configurations_with_log_level(
+            connector,
+            general_config_entries=_standard_log_level_configurations(
+                required_for_capabilities=["automation-and-remediation"],
+                field=_valid_log_level_field(searchable=False),
+            ),
+        )
+        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "options.searchable" in results[0].message
+
+    def test_standard_clearable_false_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
+            IsHandlerContainLoglevelValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_xsoar_handler_with_caps(connector, ["automation-and-remediation"])
+        _write_configurations_with_log_level(
+            connector,
+            general_config_entries=_standard_log_level_configurations(
+                required_for_capabilities=["automation-and-remediation"],
+                field=_valid_log_level_field(clearable=False),
+            ),
+        )
+        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "options.clearable" in results[0].message
+
+    def test_standard_missing_values_key_fails(self):
+        """options.values missing one of the required keys (Off /
+        Debug / Verbose) -> fails."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
+            IsHandlerContainLoglevelValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_xsoar_handler_with_caps(connector, ["automation-and-remediation"])
+        _write_configurations_with_log_level(
+            connector,
+            general_config_entries=_standard_log_level_configurations(
+                required_for_capabilities=["automation-and-remediation"],
+                field=_valid_log_level_field(
+                    values=[
+                        {"key": "Off", "label": "Off"},
+                        {"key": "Debug", "label": "Debug"},
+                        # Missing Verbose
+                    ]
+                ),
+            ),
+        )
+        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "options.values is missing keys" in results[0].message
+        assert "'Verbose'" in results[0].message
+
+    # ------------------------------------------------------------
+    # Grouped happy path + failures
+    # ------------------------------------------------------------
+    def test_grouped_valid_per_view_group_passes(self):
+        """Grouped connector: each XSOAR handler's view_group has its
+        own general_configurations entry with `advanced: true` and the
+        canonical log-level field -> passes."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
+            IsHandlerContainLoglevelValidator,
+        )
+
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+        )
+        _wire_xsoar_handler_with_caps(connector, ["automation-and-remediation"])
+        connector.handlers[0].related_integration = _stub_related_integration(
+            "qualysfim", "Qualys FIM"
+        )
+        _write_configurations_with_log_level(
+            connector,
+            general_config_entries=[
+                _grouped_log_level_configurations(view_group_id="qualysfim")
+            ],
+        )
+        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_grouped_missing_view_group_entry_fails(self):
+        """Grouped connector: handler's view_group has no matching
+        general_configurations entry -> fails."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
+            IsHandlerContainLoglevelValidator,
+        )
+
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+        )
+        _wire_xsoar_handler_with_caps(connector, ["automation-and-remediation"])
+        connector.handlers[0].related_integration = _stub_related_integration(
+            "qualysfim", "Qualys FIM"
+        )
+        _write_configurations_with_log_level(
+            connector,
+            general_config_entries=[
+                # entry exists but for a different view_group
+                _grouped_log_level_configurations(view_group_id="qualysv2")
+            ],
+        )
+        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "no" in msg and "view_group='qualysfim'" in msg
+
+    def test_grouped_missing_advanced_true_fails(self):
+        """Grouped connector: view_group entry present but missing
+        `advanced: true` -> fails."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
+            IsHandlerContainLoglevelValidator,
+        )
+
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+        )
+        _wire_xsoar_handler_with_caps(connector, ["automation-and-remediation"])
+        connector.handlers[0].related_integration = _stub_related_integration(
+            "qualysfim", "Qualys FIM"
+        )
+        _write_configurations_with_log_level(
+            connector,
+            general_config_entries=[
+                _grouped_log_level_configurations(
+                    view_group_id="qualysfim", advanced=False
+                )
+            ],
+        )
+        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "`advanced: true`" in results[0].message
+
+    def test_grouped_unresolved_integration_fails(self):
+        """Grouped connector: XSOAR handler has no related_integration
+        -> fails (cannot determine view_group)."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
+            IsHandlerContainLoglevelValidator,
+        )
+
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+        )
+        _wire_xsoar_handler_with_caps(connector, ["automation-and-remediation"])
+        connector.handlers[0].related_integration = None
+        _write_configurations_with_log_level(
+            connector,
+            general_config_entries=[
+                _grouped_log_level_configurations(view_group_id="qualysfim")
+            ],
+        )
+        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "no resolved integration" in results[0].message
+
+    def test_grouped_namespaced_field_id_resolved_via_serializer_passes(self):
+        """Grouped connector where configurations.yaml uses a
+        namespaced raw id (`xsoar-qualys_fim_integrationLogLevel`)
+        that the serializer renames back to `integrationLogLevel`.
+        Post-resolution the check should pass."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
+            IsHandlerContainLoglevelValidator,
+        )
+
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+        )
+        serializer = _make_serializer_with_field_mapping(
+            raw_id="xsoar-qualys_fim_integrationLogLevel",
+            runtime_name="integrationLogLevel",
+        )
+        _wire_xsoar_handler_with_caps(
+            connector,
+            ["automation-and-remediation_qualys_fim"],
+            serializer=serializer,
+        )
+        connector.handlers[0].related_integration = _stub_related_integration(
+            "qualysfim", "Qualys FIM"
+        )
+        _write_configurations_with_log_level(
+            connector,
+            general_config_entries=[
+                _grouped_log_level_configurations(
+                    view_group_id="qualysfim",
+                    field=_valid_log_level_field(
+                        raw_id="xsoar-qualys_fim_integrationLogLevel"
+                    ),
+                )
+            ],
+        )
+        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_grouped_namespaced_field_without_serializer_fails(self):
+        """Same grouped connector but WITHOUT the serializer rename -
+        the raw namespaced id doesn't resolve to `integrationLogLevel`
+        so the check fails with the 'no field declared' message."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
+            IsHandlerContainLoglevelValidator,
+        )
+
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+        )
+        _wire_xsoar_handler_with_caps(
+            connector,
+            ["automation-and-remediation_qualys_fim"],
+            serializer=None,
+        )
+        connector.handlers[0].related_integration = _stub_related_integration(
+            "qualysfim", "Qualys FIM"
+        )
+        _write_configurations_with_log_level(
+            connector,
+            general_config_entries=[
+                _grouped_log_level_configurations(
+                    view_group_id="qualysfim",
+                    field=_valid_log_level_field(
+                        raw_id="xsoar-qualys_fim_integrationLogLevel"
+                    ),
+                )
+            ],
+        )
+        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "no `integrationLogLevel` field is declared" in results[0].message
+
+    # ------------------------------------------------------------
+    # Aggregation + result path
+    # ------------------------------------------------------------
+    def test_multiple_issues_aggregate_into_one_result(self):
+        """Multiple shape sub-rule failures aggregate into a single
+        ValidationResult per connector."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
+            IsHandlerContainLoglevelValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_xsoar_handler_with_caps(connector, ["automation-and-remediation"])
+        _write_configurations_with_log_level(
+            connector,
+            general_config_entries=_standard_log_level_configurations(
+                required_for_capabilities=["automation-and-remediation"],
+                field=_valid_log_level_field(
+                    field_type="input",
+                    config_type="frontend",
+                    searchable=False,
+                ),
+            ),
+        )
+        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "field_type='input'" in msg
+        assert "config_type='frontend'" in msg
+        assert "options.searchable" in msg
+
+    def test_error_path_points_to_configurations_yaml(self):
+        """Result.path should point at configurations.yaml."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
+            IsHandlerContainLoglevelValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_xsoar_handler_with_caps(connector, ["automation-and-remediation"])
+        _write_configurations_with_log_level(
+            connector,
+            general_config_entries=_standard_log_level_configurations(
+                required_for_capabilities=["automation-and-remediation"],
+                field=_valid_log_level_field(field_type="input"),
+            ),
+        )
+        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert str(results[0].path).endswith("configurations.yaml")
+
+
+# ============================================================
+# CO144 test helpers
+# ============================================================
+def _grouped_connector_with_capabilities(capability_specs):
+    """Build a grouped connector with a set of parent capabilities +
+    sub-capabilities. ``capability_specs`` is a list of
+    (parent_id, [sub_ids...]) tuples.
+    """
+    return create_connector_object(
+        connector_overrides={"settings": {"grouped": True}},
+        capabilities_data={
+            "capabilities": [
+                _capability(parent_id, sub_ids=sub_ids)
+                for parent_id, sub_ids in capability_specs
+            ]
+        },
+    )
+
+
+def _write_configurations_yaml_with_entries(connector, entries):
+    """Write configurations.yaml with the given top-level
+    `configurations[]` entries."""
+    _write_connector_yaml_file(
+        connector,
+        "configurations.yaml",
+        {
+            "metadata": {
+                "title": "Configuration",
+                "description": "Adjust and refine your configuration settings",
+            },
+            "view_groups": [],
+            "configurations": entries,
+        },
+    )
+
+
+class TestCO144IsConfigOnSubCapability:
+    """Tests for CO144: in grouped connectors, `configurations.yaml`
+    `configurations[]` entries must use sub-capability ids (never bare
+    parent capability ids), and every declared sub-capability must
+    have a matching `configurations[]` entry.
+    """
+
+    # ------------------------------------------------------------
+    # Skip cases
+    # ------------------------------------------------------------
+    def test_non_grouped_short_circuits(self):
+        """Non-grouped connector -> CO144 does not fire even if
+        configurations.yaml has parent-capability ids."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO144_is_config_on_sub_capability import (
+            IsConfigOnSubCapabilityValidator,
+        )
+
+        connector = create_connector_object(
+            capabilities_data={"capabilities": [_capability("fetch-issues")]},
+        )
+        _write_configurations_yaml_with_entries(
+            connector,
+            entries=[{"id": "fetch-issues", "configurations": []}],
+        )
+        results = IsConfigOnSubCapabilityValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_grouped_no_configurations_and_no_sub_caps_short_circuits(self):
+        """Grouped connector with no sub-caps declared AND no
+        configurations.yaml -> nothing to check."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO144_is_config_on_sub_capability import (
+            IsConfigOnSubCapabilityValidator,
+        )
+
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+            capabilities_data={"capabilities": []},
+        )
+        # No configurations.yaml written.
+        results = IsConfigOnSubCapabilityValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    # ------------------------------------------------------------
+    # Rule 3 - entry.id must be a sub-cap id
+    # ------------------------------------------------------------
+    def test_grouped_valid_sub_capability_entries_pass(self):
+        """Grouped connector: each entry id is a declared sub-capability
+        id -> passes."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO144_is_config_on_sub_capability import (
+            IsConfigOnSubCapabilityValidator,
+        )
+
+        connector = _grouped_connector_with_capabilities(
+            [
+                (
+                    "automation-and-remediation",
+                    [
+                        "automation-and-remediation_qualysv2",
+                        "automation-and-remediation_qualys_fim",
+                    ],
+                ),
+            ]
+        )
+        _write_configurations_yaml_with_entries(
+            connector,
+            entries=[
+                {
+                    "id": "automation-and-remediation_qualysv2",
+                    "configurations": [],
+                },
+                {
+                    "id": "automation-and-remediation_qualys_fim",
+                    "configurations": [],
+                },
+            ],
+        )
+        results = IsConfigOnSubCapabilityValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_grouped_bare_parent_capability_id_fails(self):
+        """Grouped connector: entry.id is a bare parent capability id
+        (e.g. `automation-and-remediation`) instead of a sub-cap id
+        -> fails."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO144_is_config_on_sub_capability import (
+            IsConfigOnSubCapabilityValidator,
+        )
+
+        connector = _grouped_connector_with_capabilities(
+            [
+                ("automation-and-remediation", ["automation-and-remediation_qualysv2"]),
+            ]
+        )
+        _write_configurations_yaml_with_entries(
+            connector,
+            entries=[
+                {"id": "automation-and-remediation", "configurations": []},
+                # Also include the correct sub-cap entry so rule 4 doesn't
+                # add a second finding here (this test focuses on rule 3).
+                {
+                    "id": "automation-and-remediation_qualysv2",
+                    "configurations": [],
+                },
+            ],
+        )
+        results = IsConfigOnSubCapabilityValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "'automation-and-remediation'" in msg
+        assert "bare parent capability id" in msg
+
+    def test_grouped_unknown_entry_id_fails(self):
+        """Grouped connector: entry.id is neither a sub-cap id nor a
+        parent cap id -> fails."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO144_is_config_on_sub_capability import (
+            IsConfigOnSubCapabilityValidator,
+        )
+
+        connector = _grouped_connector_with_capabilities(
+            [
+                ("automation-and-remediation", ["automation-and-remediation_qualysv2"]),
+            ]
+        )
+        _write_configurations_yaml_with_entries(
+            connector,
+            entries=[
+                {"id": "some-random-id", "configurations": []},
+                {
+                    "id": "automation-and-remediation_qualysv2",
+                    "configurations": [],
+                },
+            ],
+        )
+        results = IsConfigOnSubCapabilityValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "'some-random-id'" in results[0].message
+        assert "does not match any declared sub-capability id" in results[0].message
+
+    def test_grouped_entry_missing_id_fails(self):
+        """Grouped connector: `configurations[]` entry has no `id`
+        key -> fails."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO144_is_config_on_sub_capability import (
+            IsConfigOnSubCapabilityValidator,
+        )
+
+        connector = _grouped_connector_with_capabilities(
+            [
+                ("automation-and-remediation", ["automation-and-remediation_qualysv2"]),
+            ]
+        )
+        _write_configurations_yaml_with_entries(
+            connector,
+            entries=[
+                {"configurations": []},  # no id
+                {
+                    "id": "automation-and-remediation_qualysv2",
+                    "configurations": [],
+                },
+            ],
+        )
+        results = IsConfigOnSubCapabilityValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "missing or non-string `id`" in results[0].message
+
+    # ------------------------------------------------------------
+    # Rule 4 - every sub-cap must have a matching entry
+    # ------------------------------------------------------------
+    def test_grouped_missing_sub_capability_entry_fails(self):
+        """Grouped connector: a declared sub-cap has no matching
+        `configurations[]` entry -> fails."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO144_is_config_on_sub_capability import (
+            IsConfigOnSubCapabilityValidator,
+        )
+
+        connector = _grouped_connector_with_capabilities(
+            [
+                (
+                    "automation-and-remediation",
+                    [
+                        "automation-and-remediation_qualysv2",
+                        "automation-and-remediation_qualys_fim",
+                    ],
+                ),
+            ]
+        )
+        _write_configurations_yaml_with_entries(
+            connector,
+            entries=[
+                # Only qualysv2 is covered; qualys_fim is missing.
+                {
+                    "id": "automation-and-remediation_qualysv2",
+                    "configurations": [],
+                },
+            ],
+        )
+        results = IsConfigOnSubCapabilityValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "declared sub-capabilities have no matching" in msg
+        assert "'automation-and-remediation_qualys_fim'" in msg
+
+    def test_grouped_all_sub_capabilities_missing_fails(self):
+        """Grouped connector: configurations.yaml exists but has NO
+        entries and multiple sub-caps declared -> fails, listing all
+        missing sub-caps."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO144_is_config_on_sub_capability import (
+            IsConfigOnSubCapabilityValidator,
+        )
+
+        connector = _grouped_connector_with_capabilities(
+            [
+                (
+                    "automation-and-remediation",
+                    [
+                        "automation-and-remediation_qualysv2",
+                        "automation-and-remediation_qualys_fim",
+                    ],
+                ),
+            ]
+        )
+        _write_configurations_yaml_with_entries(
+            connector,
+            entries=[],
+        )
+        results = IsConfigOnSubCapabilityValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "'automation-and-remediation_qualysv2'" in msg
+        assert "'automation-and-remediation_qualys_fim'" in msg
+
+    def test_grouped_empty_entry_carries_view_group_passes(self):
+        """§3.7 rule 4 lets a sub-cap emit an empty
+        `configurations: []` entry to carry only the view_group. That
+        should PASS CO144 (entry exists for the sub-cap)."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO144_is_config_on_sub_capability import (
+            IsConfigOnSubCapabilityValidator,
+        )
+
+        connector = _grouped_connector_with_capabilities(
+            [
+                ("fetch-issues", ["fetch-issues_qualysv2"]),
+            ]
+        )
+        _write_configurations_yaml_with_entries(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues_qualysv2",
+                    "view_group": "qualysv2",
+                    "configurations": [],
+                },
+            ],
+        )
+        results = IsConfigOnSubCapabilityValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    # ------------------------------------------------------------
+    # Aggregation + result path
+    # ------------------------------------------------------------
+    def test_grouped_multiple_issues_aggregate_into_one_result(self):
+        """Multiple violations (bare parent id used + missing sub-cap
+        + unknown id) all aggregate into a single ValidationResult."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO144_is_config_on_sub_capability import (
+            IsConfigOnSubCapabilityValidator,
+        )
+
+        connector = _grouped_connector_with_capabilities(
+            [
+                (
+                    "automation-and-remediation",
+                    [
+                        "automation-and-remediation_qualysv2",
+                        "automation-and-remediation_qualys_fim",
+                    ],
+                ),
+            ]
+        )
+        _write_configurations_yaml_with_entries(
+            connector,
+            entries=[
+                # violation A: bare parent id
+                {"id": "automation-and-remediation", "configurations": []},
+                # violation B: unknown id
+                {"id": "unknown-id", "configurations": []},
+                # note: neither qualysv2 nor qualys_fim entries present,
+                # so violation C: both sub-caps missing.
+            ],
+        )
+        results = IsConfigOnSubCapabilityValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1  # aggregated into ONE result
+        msg = results[0].message
+        assert "bare parent capability id" in msg
+        assert "unknown-id" in msg
+        assert "declared sub-capabilities have no matching" in msg
+
+    def test_error_path_points_to_configurations_yaml(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO144_is_config_on_sub_capability import (
+            IsConfigOnSubCapabilityValidator,
+        )
+
+        connector = _grouped_connector_with_capabilities(
+            [
+                ("automation-and-remediation", ["automation-and-remediation_qualysv2"]),
+            ]
+        )
+        _write_configurations_yaml_with_entries(
+            connector,
+            entries=[
+                {"id": "automation-and-remediation", "configurations": []},
+                {
+                    "id": "automation-and-remediation_qualysv2",
+                    "configurations": [],
+                },
+            ],
+        )
+        results = IsConfigOnSubCapabilityValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert str(results[0].path).endswith("configurations.yaml")
+
+
+# ============================================================
+# CO146 (merged CO146 + CO147) test helpers
+# ============================================================
+def _write_summary_yaml(connector, payload) -> None:
+    """Write summary.yaml to the connector's on-disk directory."""
+    _write_connector_yaml_file(connector, "summary.yaml", payload)
+
+
+class TestCO146IsSummaryPresentAndValidMetadata:
+    """Tests for the merged CO146/CO147: `summary.yaml` must exist,
+    and its `metadata.title` must equal 'Summary' and
+    `metadata.description` must equal 'Review your instance
+    configuration'."""
+
+    # ------------------------------------------------------------
+    # Presence (was CO146)
+    # ------------------------------------------------------------
+    def test_missing_summary_yaml_fails(self):
+        """No summary.yaml on disk -> hard fail."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO146_is_summary_present_and_valid_metadata import (
+            IsSummaryPresentAndValidMetadataValidator,
+        )
+
+        connector = create_connector_object()
+        # do NOT write summary.yaml
+        results = (
+            IsSummaryPresentAndValidMetadataValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        assert "summary.yaml is missing" in results[0].message
+
+    # ------------------------------------------------------------
+    # Metadata contents (was CO147)
+    # ------------------------------------------------------------
+    def test_valid_metadata_passes(self):
+        """Canonical title + description -> passes."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO146_is_summary_present_and_valid_metadata import (
+            IsSummaryPresentAndValidMetadataValidator,
+        )
+
+        connector = create_connector_object()
+        _write_summary_yaml(
+            connector,
+            {
+                "metadata": {
+                    "title": "Summary",
+                    "description": "Review your instance configuration",
+                },
+            },
+        )
+        results = (
+            IsSummaryPresentAndValidMetadataValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert results == []
+
+    def test_wrong_title_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO146_is_summary_present_and_valid_metadata import (
+            IsSummaryPresentAndValidMetadataValidator,
+        )
+
+        connector = create_connector_object()
+        _write_summary_yaml(
+            connector,
+            {
+                "metadata": {
+                    "title": "Nope",
+                    "description": "Review your instance configuration",
+                },
+            },
+        )
+        results = (
+            IsSummaryPresentAndValidMetadataValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "metadata.title='Nope'" in msg
+        assert "must be 'Summary'" in msg
+
+    def test_wrong_description_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO146_is_summary_present_and_valid_metadata import (
+            IsSummaryPresentAndValidMetadataValidator,
+        )
+
+        connector = create_connector_object()
+        _write_summary_yaml(
+            connector,
+            {
+                "metadata": {
+                    "title": "Summary",
+                    "description": "View documentation for this connector",
+                },
+            },
+        )
+        results = (
+            IsSummaryPresentAndValidMetadataValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "metadata.description=" in msg
+        assert "must be 'Review your instance configuration'" in msg
+
+    def test_missing_metadata_block_fails(self):
+        """summary.yaml exists but has no `metadata` mapping."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO146_is_summary_present_and_valid_metadata import (
+            IsSummaryPresentAndValidMetadataValidator,
+        )
+
+        connector = create_connector_object()
+        _write_summary_yaml(connector, {"other_key": {}})
+        results = (
+            IsSummaryPresentAndValidMetadataValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        assert "missing the required `metadata`" in results[0].message
+
+    def test_missing_title_and_description_both_flagged(self):
+        """metadata.title AND metadata.description both missing -> BOTH
+        reported in a single aggregated ValidationResult."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO146_is_summary_present_and_valid_metadata import (
+            IsSummaryPresentAndValidMetadataValidator,
+        )
+
+        connector = create_connector_object()
+        _write_summary_yaml(connector, {"metadata": {}})
+        results = (
+            IsSummaryPresentAndValidMetadataValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1  # aggregated
+        msg = results[0].message
+        assert "metadata.title=None" in msg
+        assert "metadata.description=None" in msg
+        assert "must be 'Summary'" in msg
+        assert "must be 'Review your instance configuration'" in msg
+
+    def test_top_level_not_mapping_fails(self):
+        """summary.yaml content is a list (or some other non-dict)."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO146_is_summary_present_and_valid_metadata import (
+            IsSummaryPresentAndValidMetadataValidator,
+        )
+
+        connector = create_connector_object()
+        _write_summary_yaml(connector, ["not", "a", "dict"])
+        results = (
+            IsSummaryPresentAndValidMetadataValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        assert "not a mapping" in results[0].message
+
+    def test_error_path_points_to_summary_yaml(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO146_is_summary_present_and_valid_metadata import (
+            IsSummaryPresentAndValidMetadataValidator,
+        )
+
+        connector = create_connector_object()
+        _write_summary_yaml(
+            connector,
+            {"metadata": {"title": "Nope", "description": "Nope"}},
+        )
+        results = (
+            IsSummaryPresentAndValidMetadataValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        assert str(results[0].path).endswith("summary.yaml")
+
+
+# ============================================================
+# HandlerData.is_xsoar semantics
+# ============================================================
+class TestHandlerIsXsoarSemantics:
+    """Tests locking the widened `HandlerData.is_xsoar` semantics.
+
+    `is_xsoar` is an OR of {module=="xsoar", team=="xsoar",
+    "@xsoar-content" in maintainers}. Any single matching signal is
+    sufficient. This ensures misconfigured XSOAR handlers (module
+    correct but team wrong, or vice versa) still surface to
+    XSOAR-scoped validators — so CO155/CO156/CO158 can own the fix
+    rather than the handler being silently invisible.
+    """
+
+    def _fresh_handler(self):
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        # Clear every xsoar signal so each test starts from a clean
+        # non-xsoar baseline.
+        handler.metadata.module = "third_party"
+        handler.metadata.ownership.team = "third_party"
+        handler.metadata.ownership.maintainers = ["@third-party-content"]
+        return handler
+
+    def test_only_module_xsoar_is_true(self):
+        handler = self._fresh_handler()
+        handler.metadata.module = "xsoar"
+        assert handler.is_xsoar
+
+    def test_only_team_xsoar_is_true(self):
+        handler = self._fresh_handler()
+        handler.metadata.ownership.team = "xsoar"
+        assert handler.is_xsoar
+
+    def test_only_maintainers_xsoar_is_true(self):
+        handler = self._fresh_handler()
+        handler.metadata.ownership.maintainers = ["@xsoar-content"]
+        assert handler.is_xsoar
+
+    def test_no_xsoar_signal_is_false(self):
+        handler = self._fresh_handler()
+        # All three signals overridden to non-xsoar values in _fresh_handler.
+        assert not handler.is_xsoar
+
+
+# ============================================================
+# CO148 test helpers
+# ============================================================
+def _hide_engine_trigger(prefix: str = "") -> dict:
+    """Canonical 'hide <prefix>engine when engine_mode != engine' trigger."""
+    return {
+        "conditions": {
+            "id": f"{prefix}engine_mode",
+            "behavior": "value",
+            "operator": "neq",
+            "value": "engine",
+        },
+        "effects": [
+            {"id": f"{prefix}engine", "action": {"hidden": True}},
+        ],
+    }
+
+
+def _hide_engine_group_trigger(prefix: str = "") -> dict:
+    """Canonical 'hide <prefix>engineGroup when engine_mode != engineGroup'."""
+    return {
+        "conditions": {
+            "id": f"{prefix}engine_mode",
+            "behavior": "value",
+            "operator": "neq",
+            "value": "engineGroup",
+        },
+        "effects": [
+            {"id": f"{prefix}engineGroup", "action": {"hidden": True}},
+        ],
+    }
+
+
+def _unlock_proxy_trigger(prefix: str = "") -> dict:
+    """Canonical 'unlock <prefix>proxy when engine or engineGroup is set'."""
+    return {
+        "conditions": {
+            "operator": "OR",
+            "children": [
+                {
+                    "id": f"{prefix}engine",
+                    "behavior": "value",
+                    "operator": "is_not_empty",
+                },
+                {
+                    "id": f"{prefix}engineGroup",
+                    "behavior": "value",
+                    "operator": "is_not_empty",
+                },
+            ],
+        },
+        "effects": [
+            {"id": f"{prefix}proxy", "action": {"read_only": False}},
+        ],
+    }
+
+
+def _canonical_engine_trigger_set(prefix: str = "") -> list:
+    """The 3 canonical engine triggers for a given prefix."""
+    return [
+        _hide_engine_trigger(prefix),
+        _hide_engine_group_trigger(prefix),
+        _unlock_proxy_trigger(prefix),
+    ]
+
+
+def _write_triggers_yaml(connector, triggers: list) -> None:
+    _write_connector_yaml_file(connector, "triggers.yaml", {"triggers": triggers})
+
+
+def _connector_with_standard_engine_fields():
+    """Standard connector with bare engine triplet in
+    connection.general_configurations."""
+    return create_connector_object(
+        connection_data={
+            "general_configurations": _standard_engine_gc(_canonical_engine_triplet()),
+        },
+    )
+
+
+def _connector_with_prefixed_engine_fields(prefix: str = "plain_myint_"):
+    """Grouped-style connector with prefixed engine triplet in a profile."""
+    return create_connector_object(
+        connector_overrides={"settings": {"grouped": True}},
+        connection_data={
+            "profiles": [
+                {
+                    "id": "plain",
+                    "type": "plain",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _canonical_engine_mode_field(
+                                    field_id=f"{prefix}engine_mode"
+                                ),
+                                _canonical_engine_field(
+                                    field_id=f"{prefix}engine",
+                                    integration_id="MyInt",
+                                    dynamic_field="engine",
+                                    hidden=True,
+                                ),
+                                _canonical_engine_field(
+                                    field_id=f"{prefix}engineGroup",
+                                    integration_id="MyInt",
+                                    dynamic_field="engine-group",
+                                    hidden=True,
+                                ),
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+
+class TestCO148IsValidEngineTriggers:
+    """Tests for CO148: triggers.yaml must contain the 3 canonical
+    engine triggers for every `<prefix>engine_mode` field declared in
+    connection.yaml."""
+
+    # ------------------------------------------------------------
+    # Skip cases
+    # ------------------------------------------------------------
+    def test_no_engine_mode_field_short_circuits(self):
+        """Connector without any engine_mode field -> skip (Appendix G)."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO148_is_valid_engine_triggers import (
+            IsValidEngineTriggersValidator,
+        )
+
+        connector = create_connector_object()  # default has no engine fields
+        results = IsValidEngineTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_no_connection_yaml_short_circuits(self):
+        """Connector whose connection is missing entirely -> skip."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO148_is_valid_engine_triggers import (
+            IsValidEngineTriggersValidator,
+        )
+
+        connector = create_connector_object()
+        connector.connection = None
+        results = IsValidEngineTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    # ------------------------------------------------------------
+    # Standard connector (bare ids) happy path + failures
+    # ------------------------------------------------------------
+    def test_standard_valid_all_three_triggers_pass(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO148_is_valid_engine_triggers import (
+            IsValidEngineTriggersValidator,
+        )
+
+        connector = _connector_with_standard_engine_fields()
+        _write_triggers_yaml(connector, _canonical_engine_trigger_set(""))
+        results = IsValidEngineTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_standard_missing_triggers_yaml_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO148_is_valid_engine_triggers import (
+            IsValidEngineTriggersValidator,
+        )
+
+        connector = _connector_with_standard_engine_fields()
+        # do NOT write triggers.yaml
+        results = IsValidEngineTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "triggers.yaml is missing" in results[0].message
+
+    def test_standard_missing_hide_engine_trigger_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO148_is_valid_engine_triggers import (
+            IsValidEngineTriggersValidator,
+        )
+
+        connector = _connector_with_standard_engine_fields()
+        # Ship only the two OTHER triggers.
+        _write_triggers_yaml(
+            connector,
+            [_hide_engine_group_trigger(""), _unlock_proxy_trigger("")],
+        )
+        results = IsValidEngineTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "missing 'hide engine when engine_mode != engine'" in results[0].message
+
+    def test_standard_missing_hide_engine_group_trigger_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO148_is_valid_engine_triggers import (
+            IsValidEngineTriggersValidator,
+        )
+
+        connector = _connector_with_standard_engine_fields()
+        _write_triggers_yaml(
+            connector,
+            [_hide_engine_trigger(""), _unlock_proxy_trigger("")],
+        )
+        results = IsValidEngineTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert (
+            "missing 'hide engineGroup when engine_mode != engineGroup'"
+            in results[0].message
+        )
+
+    def test_standard_missing_unlock_proxy_trigger_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO148_is_valid_engine_triggers import (
+            IsValidEngineTriggersValidator,
+        )
+
+        connector = _connector_with_standard_engine_fields()
+        _write_triggers_yaml(
+            connector,
+            [_hide_engine_trigger(""), _hide_engine_group_trigger("")],
+        )
+        results = IsValidEngineTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert (
+            "missing 'unlock proxy when engine or engineGroup is selected'"
+            in results[0].message
+        )
+
+    # ------------------------------------------------------------
+    # Malformed variants
+    # ------------------------------------------------------------
+    def test_standard_hide_engine_wrong_action_hidden_fails(self):
+        """Trigger exists but action.hidden is missing / not True -> fail."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO148_is_valid_engine_triggers import (
+            IsValidEngineTriggersValidator,
+        )
+
+        connector = _connector_with_standard_engine_fields()
+        broken_hide_engine = _hide_engine_trigger("")
+        broken_hide_engine["effects"][0]["action"] = {"hidden": False}
+        _write_triggers_yaml(
+            connector,
+            [
+                broken_hide_engine,
+                _hide_engine_group_trigger(""),
+                _unlock_proxy_trigger(""),
+            ],
+        )
+        results = IsValidEngineTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "missing 'hide engine" in results[0].message
+
+    def test_standard_unlock_proxy_wrong_readonly_true_fails(self):
+        """Unlock proxy trigger present but read_only is True (wrong)."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO148_is_valid_engine_triggers import (
+            IsValidEngineTriggersValidator,
+        )
+
+        connector = _connector_with_standard_engine_fields()
+        broken = _unlock_proxy_trigger("")
+        broken["effects"][0]["action"] = {"read_only": True}
+        _write_triggers_yaml(
+            connector,
+            [
+                _hide_engine_trigger(""),
+                _hide_engine_group_trigger(""),
+                broken,
+            ],
+        )
+        results = IsValidEngineTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "unlock proxy" in results[0].message
+
+    def test_standard_unlock_proxy_missing_child_fails(self):
+        """Unlock proxy trigger has only 1 child (missing engineGroup)."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO148_is_valid_engine_triggers import (
+            IsValidEngineTriggersValidator,
+        )
+
+        connector = _connector_with_standard_engine_fields()
+        broken = _unlock_proxy_trigger("")
+        broken["conditions"]["children"] = [
+            broken["conditions"]["children"][0]
+        ]  # keep only 1 child
+        _write_triggers_yaml(
+            connector,
+            [
+                _hide_engine_trigger(""),
+                _hide_engine_group_trigger(""),
+                broken,
+            ],
+        )
+        results = IsValidEngineTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "unlock proxy" in results[0].message
+
+    # ------------------------------------------------------------
+    # Grouped connector (prefixed ids) happy path + failures
+    # ------------------------------------------------------------
+    def test_grouped_valid_prefixed_triggers_pass(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO148_is_valid_engine_triggers import (
+            IsValidEngineTriggersValidator,
+        )
+
+        connector = _connector_with_prefixed_engine_fields("plain_myint_")
+        _write_triggers_yaml(
+            connector,
+            _canonical_engine_trigger_set("plain_myint_"),
+        )
+        results = IsValidEngineTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_grouped_missing_all_triggers_for_prefix_fails(self):
+        """Prefixed connection.yaml fields but bare-id triggers only ->
+        fails all 3 for the prefix."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO148_is_valid_engine_triggers import (
+            IsValidEngineTriggersValidator,
+        )
+
+        connector = _connector_with_prefixed_engine_fields("plain_myint_")
+        _write_triggers_yaml(
+            connector, _canonical_engine_trigger_set("")
+        )  # bare, wrong prefix
+        results = IsValidEngineTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "'plain_myint_'" in msg
+        # All 3 sub-triggers should be reported missing.
+        assert "hide engine when engine_mode" in msg
+        assert "hide engineGroup" in msg
+        assert "unlock proxy" in msg
+
+    def test_grouped_multiple_prefixes_aggregate(self):
+        """Grouped connector with 2 profiles → both prefixes checked
+        independently; issues aggregate into 1 result."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO148_is_valid_engine_triggers import (
+            IsValidEngineTriggersValidator,
+        )
+
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+            connection_data={
+                "profiles": [
+                    {
+                        "id": "plain",
+                        "type": "plain",
+                        "configurations": [
+                            {
+                                "fields": [
+                                    _canonical_engine_mode_field(
+                                        field_id="plain_myint_engine_mode"
+                                    ),
+                                    _canonical_engine_field(
+                                        field_id="plain_myint_engine",
+                                        integration_id="MyInt",
+                                        dynamic_field="engine",
+                                    ),
+                                    _canonical_engine_field(
+                                        field_id="plain_myint_engineGroup",
+                                        integration_id="MyInt",
+                                        dynamic_field="engine-group",
+                                    ),
+                                ],
+                            },
+                        ],
+                    },
+                    {
+                        "id": "oauth",
+                        "type": "oauth",
+                        "configurations": [
+                            {
+                                "fields": [
+                                    _canonical_engine_mode_field(
+                                        field_id="oauth_myint_engine_mode"
+                                    ),
+                                    _canonical_engine_field(
+                                        field_id="oauth_myint_engine",
+                                        integration_id="MyInt",
+                                        dynamic_field="engine",
+                                    ),
+                                    _canonical_engine_field(
+                                        field_id="oauth_myint_engineGroup",
+                                        integration_id="MyInt",
+                                        dynamic_field="engine-group",
+                                    ),
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        )
+        # Ship triggers ONLY for the plain_myint_ prefix; oauth_myint_ is
+        # completely missing -> the 3 oauth triggers should all be flagged.
+        _write_triggers_yaml(connector, _canonical_engine_trigger_set("plain_myint_"))
+        results = IsValidEngineTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1  # aggregated
+        msg = results[0].message
+        assert "'oauth_myint_'" in msg
+        assert "'plain_myint_'" not in msg  # plain_myint_ is fine
+
+    # ------------------------------------------------------------
+    # Aggregation + path
+    # ------------------------------------------------------------
+    def test_standard_multiple_missing_triggers_aggregate(self):
+        """Missing 2 out of 3 triggers -> both reported in 1 result."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO148_is_valid_engine_triggers import (
+            IsValidEngineTriggersValidator,
+        )
+
+        connector = _connector_with_standard_engine_fields()
+        _write_triggers_yaml(connector, [_hide_engine_trigger("")])  # only 1
+        results = IsValidEngineTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "hide engineGroup" in msg
+        assert "unlock proxy" in msg
+
+    def test_error_path_points_to_triggers_yaml(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO148_is_valid_engine_triggers import (
+            IsValidEngineTriggersValidator,
+        )
+
+        connector = _connector_with_standard_engine_fields()
+        _write_triggers_yaml(connector, [])  # empty triggers list
+        results = IsValidEngineTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert str(results[0].path).endswith("triggers.yaml")
+
+
+# ============================================================
+# CO149 test helpers
+# ============================================================
+def _mutex_trigger(condition_id: str, effect_id: str) -> dict:
+    """Canonical mutex trigger: condition_id selected -> lock effect_id."""
+    return {
+        "conditions": {
+            "id": condition_id,
+            "behavior": "selected",
+            "operator": "eq",
+            "value": True,
+        },
+        "effects": [
+            {
+                "id": effect_id,
+                "action": {"read_only": True},
+                "message": "Select only one fetch option.",
+            }
+        ],
+    }
+
+
+def _mutex_trigger_set(cap_ids: list) -> list:
+    """All n × (n-1) canonical mutex triggers among cap_ids."""
+    return [_mutex_trigger(a, b) for a in cap_ids for b in cap_ids if a != b]
+
+
+def _fetch_computed_rule(flag_id: str, capability_id: str):
+    """Build one ComputedFieldRule that emits ``flag_id: true`` under
+    the capability condition ``capability_id == "on"`` (the canonical
+    serializer shape used by the platform)."""
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        ComputedCondition,
+        ComputedConditionGroup,
+        ComputedFieldRule,
+        ComputedOutput,
+    )
+
+    return ComputedFieldRule(
+        output=[ComputedOutput(id=flag_id, value=True)],
+        any_of=[
+            ComputedConditionGroup(
+                conditions=[
+                    ComputedCondition(
+                        type="capability",
+                        options={
+                            "capability_id": capability_id,
+                            "value": "on",
+                        },
+                    )
+                ]
+            )
+        ],
+    )
+
+
+def _serializer_with_fetch_flags(flag_to_cap: dict):
+    """Build a SerializerData with one computed_fields rule per
+    ``{flag_id: capability_id}`` entry."""
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        SerializerData,
+    )
+
+    return SerializerData(
+        field_mappings=[],
+        computed_fields=[
+            _fetch_computed_rule(flag, cap) for flag, cap in flag_to_cap.items()
+        ],
+    )
+
+
+def _connector_with_multi_fetch(
+    handler_flag_map: dict,
+    handler_prefix: str = "xsoar-myint",
+):
+    """Create a connector whose handlers[i] serializer emits the fetch
+    flags specified by ``handler_flag_map[i]`` (a dict
+    ``{flag_id: capability_id}``). Handlers beyond the default are
+    added to the connector; the first handler is the default one from
+    ``create_connector_object``."""
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        HandlerCapability,
+        HandlerData,
+        HandlerMetadata,
+        HandlerOwnership,
+        HandlerTriggering,
+    )
+
+    connector = create_connector_object()
+    needed = max(len(handler_flag_map), 1)
+    while len(connector.handlers) < needed:
+        i = len(connector.handlers)
+        connector.handlers.append(
+            HandlerData(
+                id=f"{handler_prefix}-{i}",
+                handler_dir_name=f"{handler_prefix}-{i}",
+                metadata=HandlerMetadata(
+                    module="xsoar",
+                    ownership=HandlerOwnership(
+                        team="xsoar", maintainers=["@xsoar-content"]
+                    ),
+                ),
+                triggering=HandlerTriggering(),
+                capabilities=[],
+            )
+        )
+    for i, flag_map in enumerate(handler_flag_map):
+        handler = connector.handlers[i]
+        handler.serializer = _serializer_with_fetch_flags(flag_map)
+        # Wire cap ids onto handler.capabilities too so tests that
+        # inspect handler capabilities work; this is not strictly
+        # required by CO149 but keeps fixtures consistent.
+        handler.capabilities = [
+            HandlerCapability(id=cid, auth_options=[], workloads=[], actions=[])
+            for cid in flag_map.values()
+        ]
+    return connector
+
+
+class TestCO149IsFetchMutexTriggers:
+    """Tests for CO149: for any handler emitting ≥2 fetch capabilities
+    (discovered via serializer computed_fields), triggers.yaml must
+    contain the n × (n-1) canonical mutex triggers."""
+
+    # ------------------------------------------------------------
+    # Skip cases
+    # ------------------------------------------------------------
+    def test_no_fetch_capabilities_short_circuits(self):
+        """Connector with no serializer / no fetch flags -> skip."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO149_is_fetch_mutex_triggers import (
+            IsFetchMutexTriggersValidator,
+        )
+
+        connector = create_connector_object()
+        # No serializer at all on the default handler.
+        results = IsFetchMutexTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_single_fetch_capability_short_circuits(self):
+        """A handler with only 1 fetch flag needs no mutex triggers."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO149_is_fetch_mutex_triggers import (
+            IsFetchMutexTriggersValidator,
+        )
+
+        connector = _connector_with_multi_fetch([{"isFetch": "fetch-issues"}])
+        # No triggers.yaml either — still passes.
+        results = IsFetchMutexTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_non_fetch_serializer_flag_is_ignored(self):
+        """A rule that emits a non-fetch flag (e.g. isMappable) doesn't
+        count toward the fetch bucket."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO149_is_fetch_mutex_triggers import (
+            IsFetchMutexTriggersValidator,
+        )
+
+        connector = _connector_with_multi_fetch(
+            [
+                {
+                    "isMappable": "mapping-support",  # not a fetch flag
+                    "isFetch": "fetch-issues",  # only 1 real fetch flag
+                }
+            ]
+        )
+        results = IsFetchMutexTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    # ------------------------------------------------------------
+    # Valid cases
+    # ------------------------------------------------------------
+    def test_two_fetch_caps_with_full_mutex_passes(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO149_is_fetch_mutex_triggers import (
+            IsFetchMutexTriggersValidator,
+        )
+
+        connector = _connector_with_multi_fetch(
+            [
+                {
+                    "isFetch": "fetch-issues",
+                    "isFetchEvents": "log-collection",
+                }
+            ]
+        )
+        _write_triggers_yaml(
+            connector,
+            _mutex_trigger_set(["fetch-issues", "log-collection"]),
+        )
+        results = IsFetchMutexTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_grouped_namespaced_cap_ids_pass(self):
+        """Grouped connectors namespace cap ids by integration suffix;
+        the mutex triggers use the same namespaced ids."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO149_is_fetch_mutex_triggers import (
+            IsFetchMutexTriggersValidator,
+        )
+
+        cap_ids = [
+            "fetch-issues_akamai-waf-siem",
+            "log-collection_akamai-waf-siem",
+        ]
+        connector = _connector_with_multi_fetch(
+            [
+                {
+                    "isFetch": cap_ids[0],
+                    "isFetchEvents": cap_ids[1],
+                }
+            ]
+        )
+        _write_triggers_yaml(connector, _mutex_trigger_set(cap_ids))
+        results = IsFetchMutexTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_all_five_fetch_flags_full_mutex_passes(self):
+        """A handler that emits every fetch flag needs 5×4=20 triggers."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO149_is_fetch_mutex_triggers import (
+            IsFetchMutexTriggersValidator,
+        )
+
+        flag_map = {
+            "isFetch": "fetch-issues",
+            "feed": "threat-intelligence-and-enrichment",
+            "isFetchEvents": "log-collection",
+            "isFetchAssets": "fetch-assets-and-vulnerabilities",
+            "isFetchCredentials": "fetch-secrets",
+        }
+        connector = _connector_with_multi_fetch([flag_map])
+        _write_triggers_yaml(
+            connector,
+            _mutex_trigger_set(list(flag_map.values())),
+        )
+        results = IsFetchMutexTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    # ------------------------------------------------------------
+    # Hard-fail cases
+    # ------------------------------------------------------------
+    def test_missing_triggers_yaml_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO149_is_fetch_mutex_triggers import (
+            IsFetchMutexTriggersValidator,
+        )
+
+        connector = _connector_with_multi_fetch(
+            [
+                {
+                    "isFetch": "fetch-issues",
+                    "isFetchEvents": "log-collection",
+                }
+            ]
+        )
+        # No _write_triggers_yaml call → triggers.yaml missing.
+        results = IsFetchMutexTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "triggers.yaml is missing" in results[0].message
+
+    def test_missing_single_mutex_trigger_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO149_is_fetch_mutex_triggers import (
+            IsFetchMutexTriggersValidator,
+        )
+
+        connector = _connector_with_multi_fetch(
+            [
+                {
+                    "isFetch": "fetch-issues",
+                    "isFetchEvents": "log-collection",
+                }
+            ]
+        )
+        # Only 1 of the 2 required triggers.
+        _write_triggers_yaml(
+            connector,
+            [_mutex_trigger("fetch-issues", "log-collection")],
+        )
+        results = IsFetchMutexTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "log-collection" in results[0].message
+        assert "fetch-issues" in results[0].message
+
+    def test_wrong_message_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO149_is_fetch_mutex_triggers import (
+            IsFetchMutexTriggersValidator,
+        )
+
+        connector = _connector_with_multi_fetch(
+            [
+                {
+                    "isFetch": "fetch-issues",
+                    "isFetchEvents": "log-collection",
+                }
+            ]
+        )
+        bad = _mutex_trigger_set(["fetch-issues", "log-collection"])
+        # Corrupt the message on the first trigger.
+        bad[0]["effects"][0]["message"] = "Wrong message"
+        _write_triggers_yaml(connector, bad)
+        results = IsFetchMutexTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+
+    def test_wrong_action_extra_key_fails(self):
+        """Strict action shape: extra keys beyond ``read_only`` fail."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO149_is_fetch_mutex_triggers import (
+            IsFetchMutexTriggersValidator,
+        )
+
+        connector = _connector_with_multi_fetch(
+            [
+                {
+                    "isFetch": "fetch-issues",
+                    "isFetchEvents": "log-collection",
+                }
+            ]
+        )
+        bad = _mutex_trigger_set(["fetch-issues", "log-collection"])
+        bad[0]["effects"][0]["action"] = {"read_only": True, "hidden": False}
+        _write_triggers_yaml(connector, bad)
+        results = IsFetchMutexTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+
+    def test_wrong_readonly_false_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO149_is_fetch_mutex_triggers import (
+            IsFetchMutexTriggersValidator,
+        )
+
+        connector = _connector_with_multi_fetch(
+            [
+                {
+                    "isFetch": "fetch-issues",
+                    "isFetchEvents": "log-collection",
+                }
+            ]
+        )
+        bad = _mutex_trigger_set(["fetch-issues", "log-collection"])
+        bad[0]["effects"][0]["action"] = {"read_only": False}
+        _write_triggers_yaml(connector, bad)
+        results = IsFetchMutexTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+
+    def test_wrong_condition_value_false_fails(self):
+        """The trigger fires on ``value: true`` — ``value: false`` is
+        the wrong shape."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO149_is_fetch_mutex_triggers import (
+            IsFetchMutexTriggersValidator,
+        )
+
+        connector = _connector_with_multi_fetch(
+            [
+                {
+                    "isFetch": "fetch-issues",
+                    "isFetchEvents": "log-collection",
+                }
+            ]
+        )
+        bad = _mutex_trigger_set(["fetch-issues", "log-collection"])
+        bad[0]["conditions"]["value"] = False
+        _write_triggers_yaml(connector, bad)
+        results = IsFetchMutexTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+
+    # ------------------------------------------------------------
+    # Aggregation and independent scoping
+    # ------------------------------------------------------------
+    def test_multi_handler_independent_scoping(self):
+        """Two handlers each contribute their OWN fetch set — mutex is
+        required WITHIN each handler, NOT across handlers."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO149_is_fetch_mutex_triggers import (
+            IsFetchMutexTriggersValidator,
+        )
+
+        connector = _connector_with_multi_fetch(
+            [
+                {
+                    "isFetch": "fetch-issues_akamai-waf-siem",
+                    "isFetchEvents": "log-collection_akamai-waf-siem",
+                },
+                {
+                    "isFetch": "fetch-issues_guardicore-v2",
+                    "isFetchEvents": "log-collection_guardicore-v2",
+                },
+            ]
+        )
+        # Provide mutex triggers for BOTH integration groups.
+        triggers = _mutex_trigger_set(
+            [
+                "fetch-issues_akamai-waf-siem",
+                "log-collection_akamai-waf-siem",
+            ]
+        ) + _mutex_trigger_set(
+            [
+                "fetch-issues_guardicore-v2",
+                "log-collection_guardicore-v2",
+            ]
+        )
+        _write_triggers_yaml(connector, triggers)
+        results = IsFetchMutexTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_multi_handler_one_missing_aggregates(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO149_is_fetch_mutex_triggers import (
+            IsFetchMutexTriggersValidator,
+        )
+
+        connector = _connector_with_multi_fetch(
+            [
+                {
+                    "isFetch": "fetch-issues_akamai-waf-siem",
+                    "isFetchEvents": "log-collection_akamai-waf-siem",
+                },
+                {
+                    "isFetch": "fetch-issues_guardicore-v2",
+                    "isFetchEvents": "log-collection_guardicore-v2",
+                },
+            ]
+        )
+        # Only provide mutex triggers for the FIRST integration.
+        triggers = _mutex_trigger_set(
+            [
+                "fetch-issues_akamai-waf-siem",
+                "log-collection_akamai-waf-siem",
+            ]
+        )
+        _write_triggers_yaml(connector, triggers)
+        results = IsFetchMutexTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "fetch-issues_guardicore-v2" in msg
+        assert "log-collection_guardicore-v2" in msg
+        # akamai integration should NOT appear in the error.
+        assert "fetch-issues_akamai-waf-siem" not in msg
+
+    def test_multiple_missing_aggregate_into_single_result(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO149_is_fetch_mutex_triggers import (
+            IsFetchMutexTriggersValidator,
+        )
+
+        connector = _connector_with_multi_fetch(
+            [
+                {
+                    "isFetch": "fetch-issues",
+                    "isFetchEvents": "log-collection",
+                    "isFetchAssets": "fetch-assets-and-vulnerabilities",
+                }
+            ]
+        )
+        # Provide 0 triggers — all 3×2=6 pairs are missing.
+        _write_triggers_yaml(connector, [])
+        results = IsFetchMutexTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        # All 6 pairs should be reported.
+        msg = results[0].message
+        for pair in [
+            ("fetch-issues", "log-collection"),
+            ("log-collection", "fetch-issues"),
+            ("fetch-issues", "fetch-assets-and-vulnerabilities"),
+            ("fetch-assets-and-vulnerabilities", "fetch-issues"),
+            ("log-collection", "fetch-assets-and-vulnerabilities"),
+            ("fetch-assets-and-vulnerabilities", "log-collection"),
+        ]:
+            assert f"'{pair[0]}' → lock '{pair[1]}'" in msg
+
+    def test_error_path_points_to_triggers_yaml(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO149_is_fetch_mutex_triggers import (
+            IsFetchMutexTriggersValidator,
+        )
+
+        connector = _connector_with_multi_fetch(
+            [
+                {
+                    "isFetch": "fetch-issues",
+                    "isFetchEvents": "log-collection",
+                }
+            ]
+        )
+        _write_triggers_yaml(connector, [])
+        results = IsFetchMutexTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert str(results[0].path).endswith("triggers.yaml")
+
+
+# ============================================================
+# CO150 test helpers
+# ============================================================
+CO150_MESSAGE = (
+    "A selected capability enables this setting. "
+    "Clear the active dependency to disable it"
+)
+
+
+def _auto_enable_trigger(fetch_cap_ids: list, automation_cap_id: str) -> dict:
+    """Canonical CO150 auto-enable trigger for a handler."""
+    return {
+        "conditions": {
+            "operator": "OR",
+            "children": [
+                {
+                    "id": cid,
+                    "behavior": "selected",
+                    "operator": "eq",
+                    "value": True,
+                }
+                for cid in fetch_cap_ids
+            ],
+        },
+        "effects": [
+            {
+                "id": automation_cap_id,
+                "action": {"read_only": True, "enabled": True},
+                "message": CO150_MESSAGE,
+            }
+        ],
+    }
+
+
+def _stamp_connector_capabilities(connector, cap_ids: list) -> None:
+    """Set ``connector.capabilities`` to a list of CapabilityData
+    stubs with the given ids (top-level, no sub-capabilities). Used
+    to advertise the ``automation-and-remediation`` cap so CO150
+    knows the handler has a lock target."""
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        CapabilityData,
+    )
+
+    connector.capabilities = [CapabilityData(id=cid) for cid in cap_ids]
+
+
+class TestCO150IsCollectionAutoEnablesAutomation:
+    """Tests for CO150: for each handler emitting a fetch flag (via
+    serializer computed_fields) that also has an
+    ``automation-and-remediation`` cap on the connector, triggers.yaml
+    must contain the canonical auto-enable trigger."""
+
+    # ------------------------------------------------------------
+    # Skip cases
+    # ------------------------------------------------------------
+    def test_no_fetch_handlers_short_circuits(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO150_is_collection_auto_enables_automation import (
+            IsCollectionAutoEnablesAutomationValidator,
+        )
+
+        connector = create_connector_object()
+        results = (
+            IsCollectionAutoEnablesAutomationValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert results == []
+
+    def test_fetch_handler_without_automation_cap_short_circuits(self):
+        """A handler with a fetch cap but no automation-and-remediation
+        cap declared on the connector → nothing to lock → skip."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO150_is_collection_auto_enables_automation import (
+            IsCollectionAutoEnablesAutomationValidator,
+        )
+
+        connector = _connector_with_multi_fetch([{"isFetch": "fetch-issues"}])
+        # No automation-and-remediation declared → skip.
+        results = (
+            IsCollectionAutoEnablesAutomationValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert results == []
+
+    def test_non_fetch_serializer_flag_ignored(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO150_is_collection_auto_enables_automation import (
+            IsCollectionAutoEnablesAutomationValidator,
+        )
+
+        connector = _connector_with_multi_fetch(
+            [{"isMappable": "mapping-support"}]  # not a fetch flag
+        )
+        _stamp_connector_capabilities(connector, ["automation-and-remediation"])
+        results = (
+            IsCollectionAutoEnablesAutomationValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert results == []
+
+    # ------------------------------------------------------------
+    # Valid cases
+    # ------------------------------------------------------------
+    def test_single_fetch_cap_with_or_wrapper_passes(self):
+        """Single fetch cap still requires the OR wrapper (children of
+        length 1)."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO150_is_collection_auto_enables_automation import (
+            IsCollectionAutoEnablesAutomationValidator,
+        )
+
+        connector = _connector_with_multi_fetch([{"isFetch": "fetch-issues"}])
+        _stamp_connector_capabilities(connector, ["automation-and-remediation"])
+        _write_triggers_yaml(
+            connector,
+            [_auto_enable_trigger(["fetch-issues"], "automation-and-remediation")],
+        )
+        results = (
+            IsCollectionAutoEnablesAutomationValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert results == []
+
+    def test_two_fetch_caps_full_or_passes(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO150_is_collection_auto_enables_automation import (
+            IsCollectionAutoEnablesAutomationValidator,
+        )
+
+        connector = _connector_with_multi_fetch(
+            [
+                {
+                    "isFetch": "fetch-issues",
+                    "isFetchEvents": "log-collection",
+                }
+            ]
+        )
+        _stamp_connector_capabilities(connector, ["automation-and-remediation"])
+        _write_triggers_yaml(
+            connector,
+            [
+                _auto_enable_trigger(
+                    ["fetch-issues", "log-collection"],
+                    "automation-and-remediation",
+                )
+            ],
+        )
+        results = (
+            IsCollectionAutoEnablesAutomationValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert results == []
+
+    def test_grouped_namespaced_ids_pass(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO150_is_collection_auto_enables_automation import (
+            IsCollectionAutoEnablesAutomationValidator,
+        )
+
+        suffix = "akamai-waf-siem"
+        fetch_ids = [
+            f"fetch-issues_{suffix}",
+            f"log-collection_{suffix}",
+        ]
+        automation_id = f"automation-and-remediation_{suffix}"
+        connector = _connector_with_multi_fetch(
+            [{"isFetch": fetch_ids[0], "isFetchEvents": fetch_ids[1]}]
+        )
+        _stamp_connector_capabilities(connector, [automation_id])
+        _write_triggers_yaml(
+            connector, [_auto_enable_trigger(fetch_ids, automation_id)]
+        )
+        results = (
+            IsCollectionAutoEnablesAutomationValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert results == []
+
+    # ------------------------------------------------------------
+    # Hard-fail cases
+    # ------------------------------------------------------------
+    def test_missing_triggers_yaml_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO150_is_collection_auto_enables_automation import (
+            IsCollectionAutoEnablesAutomationValidator,
+        )
+
+        connector = _connector_with_multi_fetch([{"isFetch": "fetch-issues"}])
+        _stamp_connector_capabilities(connector, ["automation-and-remediation"])
+        # No _write_triggers_yaml call.
+        results = (
+            IsCollectionAutoEnablesAutomationValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        assert "triggers.yaml is missing" in results[0].message
+
+    def test_missing_auto_enable_trigger_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO150_is_collection_auto_enables_automation import (
+            IsCollectionAutoEnablesAutomationValidator,
+        )
+
+        connector = _connector_with_multi_fetch([{"isFetch": "fetch-issues"}])
+        _stamp_connector_capabilities(connector, ["automation-and-remediation"])
+        _write_triggers_yaml(connector, [])  # empty triggers
+        results = (
+            IsCollectionAutoEnablesAutomationValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        assert "fetch-issues" in results[0].message
+        assert "automation-and-remediation" in results[0].message
+
+    def test_wrong_message_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO150_is_collection_auto_enables_automation import (
+            IsCollectionAutoEnablesAutomationValidator,
+        )
+
+        connector = _connector_with_multi_fetch([{"isFetch": "fetch-issues"}])
+        _stamp_connector_capabilities(connector, ["automation-and-remediation"])
+        bad = _auto_enable_trigger(["fetch-issues"], "automation-and-remediation")
+        bad["effects"][0]["message"] = "Wrong message"
+        _write_triggers_yaml(connector, [bad])
+        results = (
+            IsCollectionAutoEnablesAutomationValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+
+    def test_action_missing_enabled_key_fails(self):
+        """Action must have BOTH read_only and enabled."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO150_is_collection_auto_enables_automation import (
+            IsCollectionAutoEnablesAutomationValidator,
+        )
+
+        connector = _connector_with_multi_fetch([{"isFetch": "fetch-issues"}])
+        _stamp_connector_capabilities(connector, ["automation-and-remediation"])
+        bad = _auto_enable_trigger(["fetch-issues"], "automation-and-remediation")
+        bad["effects"][0]["action"] = {"read_only": True}  # missing enabled
+        _write_triggers_yaml(connector, [bad])
+        results = (
+            IsCollectionAutoEnablesAutomationValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+
+    def test_action_extra_key_fails(self):
+        """Strict action shape: extra keys beyond read_only+enabled fail."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO150_is_collection_auto_enables_automation import (
+            IsCollectionAutoEnablesAutomationValidator,
+        )
+
+        connector = _connector_with_multi_fetch([{"isFetch": "fetch-issues"}])
+        _stamp_connector_capabilities(connector, ["automation-and-remediation"])
+        bad = _auto_enable_trigger(["fetch-issues"], "automation-and-remediation")
+        bad["effects"][0]["action"] = {
+            "read_only": True,
+            "enabled": True,
+            "hidden": False,
+        }
+        _write_triggers_yaml(connector, [bad])
+        results = (
+            IsCollectionAutoEnablesAutomationValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+
+    def test_missing_child_in_or_fails(self):
+        """OR children must EXACTLY match the fetch cap set."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO150_is_collection_auto_enables_automation import (
+            IsCollectionAutoEnablesAutomationValidator,
+        )
+
+        connector = _connector_with_multi_fetch(
+            [
+                {
+                    "isFetch": "fetch-issues",
+                    "isFetchEvents": "log-collection",
+                }
+            ]
+        )
+        _stamp_connector_capabilities(connector, ["automation-and-remediation"])
+        # Provide a trigger with only one child instead of two.
+        bad = _auto_enable_trigger(["fetch-issues"], "automation-and-remediation")
+        _write_triggers_yaml(connector, [bad])
+        results = (
+            IsCollectionAutoEnablesAutomationValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+
+    def test_extra_child_in_or_fails(self):
+        """OR children must EXACTLY match the fetch cap set — extras fail."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO150_is_collection_auto_enables_automation import (
+            IsCollectionAutoEnablesAutomationValidator,
+        )
+
+        connector = _connector_with_multi_fetch([{"isFetch": "fetch-issues"}])
+        _stamp_connector_capabilities(connector, ["automation-and-remediation"])
+        bad = _auto_enable_trigger(
+            ["fetch-issues", "log-collection"],
+            "automation-and-remediation",
+        )
+        _write_triggers_yaml(connector, [bad])
+        results = (
+            IsCollectionAutoEnablesAutomationValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+
+    def test_child_value_false_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO150_is_collection_auto_enables_automation import (
+            IsCollectionAutoEnablesAutomationValidator,
+        )
+
+        connector = _connector_with_multi_fetch([{"isFetch": "fetch-issues"}])
+        _stamp_connector_capabilities(connector, ["automation-and-remediation"])
+        bad = _auto_enable_trigger(["fetch-issues"], "automation-and-remediation")
+        bad["conditions"]["children"][0]["value"] = False
+        _write_triggers_yaml(connector, [bad])
+        results = (
+            IsCollectionAutoEnablesAutomationValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+
+    def test_non_or_condition_fails(self):
+        """Even for single fetch cap, the wrapping must be OR."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO150_is_collection_auto_enables_automation import (
+            IsCollectionAutoEnablesAutomationValidator,
+        )
+
+        connector = _connector_with_multi_fetch([{"isFetch": "fetch-issues"}])
+        _stamp_connector_capabilities(connector, ["automation-and-remediation"])
+        # Bare non-OR condition — CO150 rejects.
+        bad = {
+            "conditions": {
+                "id": "fetch-issues",
+                "behavior": "selected",
+                "operator": "eq",
+                "value": True,
+            },
+            "effects": [
+                {
+                    "id": "automation-and-remediation",
+                    "action": {"read_only": True, "enabled": True},
+                    "message": CO150_MESSAGE,
+                }
+            ],
+        }
+        _write_triggers_yaml(connector, [bad])
+        results = (
+            IsCollectionAutoEnablesAutomationValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+
+    # ------------------------------------------------------------
+    # Multi-handler independence + aggregation
+    # ------------------------------------------------------------
+    def test_multi_handler_independent(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO150_is_collection_auto_enables_automation import (
+            IsCollectionAutoEnablesAutomationValidator,
+        )
+
+        connector = _connector_with_multi_fetch(
+            [
+                {
+                    "isFetch": "fetch-issues_akamai-waf-siem",
+                    "isFetchEvents": "log-collection_akamai-waf-siem",
+                },
+                {
+                    "isFetch": "fetch-issues_guardicore-v2",
+                },
+            ]
+        )
+        _stamp_connector_capabilities(
+            connector,
+            [
+                "automation-and-remediation_akamai-waf-siem",
+                "automation-and-remediation_guardicore-v2",
+            ],
+        )
+        _write_triggers_yaml(
+            connector,
+            [
+                _auto_enable_trigger(
+                    [
+                        "fetch-issues_akamai-waf-siem",
+                        "log-collection_akamai-waf-siem",
+                    ],
+                    "automation-and-remediation_akamai-waf-siem",
+                ),
+                _auto_enable_trigger(
+                    ["fetch-issues_guardicore-v2"],
+                    "automation-and-remediation_guardicore-v2",
+                ),
+            ],
+        )
+        results = (
+            IsCollectionAutoEnablesAutomationValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert results == []
+
+    def test_multi_handler_one_missing_aggregates(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO150_is_collection_auto_enables_automation import (
+            IsCollectionAutoEnablesAutomationValidator,
+        )
+
+        connector = _connector_with_multi_fetch(
+            [
+                {"isFetch": "fetch-issues_akamai-waf-siem"},
+                {"isFetch": "fetch-issues_guardicore-v2"},
+            ]
+        )
+        _stamp_connector_capabilities(
+            connector,
+            [
+                "automation-and-remediation_akamai-waf-siem",
+                "automation-and-remediation_guardicore-v2",
+            ],
+        )
+        # Only provide trigger for the first integration.
+        _write_triggers_yaml(
+            connector,
+            [
+                _auto_enable_trigger(
+                    ["fetch-issues_akamai-waf-siem"],
+                    "automation-and-remediation_akamai-waf-siem",
+                )
+            ],
+        )
+        results = (
+            IsCollectionAutoEnablesAutomationValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "guardicore-v2" in msg
+        # akamai should NOT appear in the error.
+        assert "akamai-waf-siem" not in msg
+
+    def test_error_path_points_to_triggers_yaml(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO150_is_collection_auto_enables_automation import (
+            IsCollectionAutoEnablesAutomationValidator,
+        )
+
+        connector = _connector_with_multi_fetch([{"isFetch": "fetch-issues"}])
+        _stamp_connector_capabilities(connector, ["automation-and-remediation"])
+        _write_triggers_yaml(connector, [])
+        results = (
+            IsCollectionAutoEnablesAutomationValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        assert str(results[0].path).endswith("triggers.yaml")
+
+
+# ---------------------------------------------------------------------------
+# CO155 tests
+# ---------------------------------------------------------------------------
+
+
+def _clear_xsoar_signals(handler) -> None:
+    """Reset every XSOAR signal on a handler to non-xsoar defaults."""
+    handler.metadata.module = "third_party"
+    handler.metadata.ownership.team = "third_party"
+    handler.metadata.ownership.maintainers = ["@third-party-content"]
+
+
+class TestCO155IsHandlerModuleXsoar:
+    """Tests for CO155: every XSOAR-classified handler (via HandlerData.is_xsoar
+    — OR of {module=="xsoar", team=="xsoar", "@xsoar-content" in maintainers})
+    must carry the canonical self-declaring signal ``metadata.module: xsoar``.
+    """
+
+    def test_module_xsoar_passes(self):
+        """
+        Given: A default connector whose handler has metadata.module == "xsoar".
+        When: CO155 runs.
+        Then: No validation errors.
+        """
+        connector = create_connector_object()
+        # Sanity: the default template sets module=xsoar.
+        assert connector.handlers[0].metadata.module == "xsoar"
+
+        results = IsHandlerModuleXsoarValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_xsoar_by_team_missing_module_fails(self):
+        """
+        Given: An xsoar-classified handler (team == "xsoar") whose
+               metadata.module is missing.
+        When: CO155 runs.
+        Then: One error is emitted referencing the handler.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        # Clear maintainers signal so team is the only xsoar-classifying flag.
+        handler.metadata.ownership.maintainers = ["@third-party-content"]
+        # Break module while leaving team == "xsoar" (still is_xsoar via team).
+        handler.metadata.module = None
+        assert handler.is_xsoar is True
+
+        results = IsHandlerModuleXsoarValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert handler.id in results[0].message
+        assert "expected 'xsoar'" in results[0].message
+
+    def test_xsoar_by_maintainers_missing_module_fails(self):
+        """
+        Given: An xsoar-classified handler (maintainers contains
+               "@xsoar-content") whose metadata.module is missing.
+        When: CO155 runs.
+        Then: One error is emitted referencing the handler.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.metadata.ownership.team = "third_party"
+        handler.metadata.ownership.maintainers = ["@xsoar-content"]
+        handler.metadata.module = None
+        assert handler.is_xsoar is True
+
+        results = IsHandlerModuleXsoarValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert handler.id in results[0].message
+
+    def test_xsoar_by_maintainers_wrong_module_fails(self):
+        """
+        Given: An xsoar-classified handler whose metadata.module is set to a
+               non-xsoar value (e.g. "third_party").
+        When: CO155 runs.
+        Then: One error is emitted; the actual (wrong) module value is
+              surfaced in the message.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.metadata.ownership.team = "third_party"
+        handler.metadata.ownership.maintainers = ["@xsoar-content"]
+        handler.metadata.module = "third_party"
+        assert handler.is_xsoar is True
+
+        results = IsHandlerModuleXsoarValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "third_party" in results[0].message
+
+    def test_non_xsoar_handler_ignored(self):
+        """
+        Given: A handler with no xsoar signals whatsoever (module/team/
+               maintainers all non-xsoar).
+        When: CO155 runs.
+        Then: No error — the handler is not xsoar-classified so the rule
+              does not apply.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        _clear_xsoar_signals(handler)
+        assert handler.is_xsoar is False
+
+        results = IsHandlerModuleXsoarValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_error_per_handler_not_per_connector(self):
+        """
+        Given: A connector with two xsoar-classified handlers, both with
+               non-xsoar module values.
+        When: CO155 runs.
+        Then: Two errors are emitted (one per failing handler), not a single
+              connector-level aggregate.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-handler-a",
+                    "metadata": {
+                        "module": "third_party",
+                        # Keep team=xsoar (template default) so is_xsoar is True.
+                    },
+                },
+                {
+                    "id": "xsoar-handler-b",
+                    "metadata": {
+                        "module": None,
+                    },
+                },
+            ]
+        )
+        assert all(h.is_xsoar for h in connector.handlers)
+
+        results = IsHandlerModuleXsoarValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 2
+        offenders = {
+            hid
+            for hid in ("xsoar-handler-a", "xsoar-handler-b")
+            if any(hid in r.message for r in results)
+        }
+        assert offenders == {"xsoar-handler-a", "xsoar-handler-b"}
+
+    def test_mixed_valid_and_invalid_handlers(self):
+        """
+        Given: One valid xsoar handler and one invalid xsoar handler in the
+               same connector.
+        When: CO155 runs.
+        Then: Only the invalid handler produces an error.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-good",
+                    "metadata": {"module": "xsoar"},
+                },
+                {
+                    "id": "xsoar-bad",
+                    "metadata": {"module": "third_party"},
+                },
+            ]
+        )
+        results = IsHandlerModuleXsoarValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "xsoar-bad" in results[0].message
+        assert "xsoar-good" not in results[0].message
+
+    def test_error_path_points_to_handler_yaml(self):
+        """
+        Given: An xsoar-classified handler with a wrong module.
+        When: CO155 runs.
+        Then: The ValidationResult.path points at the handler.yaml
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-test",
+                    "metadata": {"module": "third_party"},
+                },
+            ]
+        )
+        results = IsHandlerModuleXsoarValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert results[0].path is not None
+        assert results[0].path == connector.handlers[0].file_path
+        assert str(results[0].path).endswith("handler.yaml")
+
+
+# ---------------------------------------------------------------------------
+# CO156 tests
+# ---------------------------------------------------------------------------
+
+
+class TestCO156IsHandlerOwnershipFieldsAlign:
+    """Tests for CO156: every XSOAR-classified handler (via HandlerData.is_xsoar)
+    must have `metadata.ownership.team == "xsoar"` AND `"@xsoar-content"` in
+    `metadata.ownership.maintainers` (contains-check, mirroring CO100).
+    Both problems on the same handler are aggregated into a single result.
+    """
+
+    def test_aligned_ownership_passes(self):
+        """
+        Given: A default connector whose handler has team=xsoar and
+               maintainers contains '@xsoar-content'.
+        When: CO156 runs.
+        Then: No validation errors.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        # Sanity: template default is aligned.
+        handler.metadata.ownership.team = "xsoar"
+        handler.metadata.ownership.maintainers = ["@xsoar-content"]
+
+        results = IsHandlerOwnershipFieldsAlignValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_wrong_team_fails(self):
+        """
+        Given: An xsoar-classified handler (via maintainers) whose
+               team != 'xsoar'.
+        When: CO156 runs.
+        Then: One error citing the team problem.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.metadata.ownership.team = "third_party"
+        handler.metadata.ownership.maintainers = ["@xsoar-content"]
+        assert handler.is_xsoar is True
+
+        results = IsHandlerOwnershipFieldsAlignValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert handler.id in msg
+        assert "team" in msg
+        assert "third_party" in msg
+        # Should NOT complain about maintainers.
+        assert "maintainers must contain" not in msg
+
+    def test_missing_maintainer_fails(self):
+        """
+        Given: An xsoar-classified handler (via team) whose maintainers does
+               NOT contain '@xsoar-content'.
+        When: CO156 runs.
+        Then: One error citing the maintainers problem.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.metadata.ownership.team = "xsoar"
+        handler.metadata.ownership.maintainers = ["@some-other-team"]
+        assert handler.is_xsoar is True
+
+        results = IsHandlerOwnershipFieldsAlignValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert handler.id in msg
+        assert "maintainers must contain '@xsoar-content'" in msg
+        assert "@some-other-team" in msg
+
+    def test_empty_maintainers_fails(self):
+        """
+        Given: An xsoar-classified handler (via team) whose maintainers list
+               is empty.
+        When: CO156 runs.
+        Then: One error citing the maintainers problem; current-list rendered
+              as '[]'.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.metadata.ownership.team = "xsoar"
+        handler.metadata.ownership.maintainers = []
+        assert handler.is_xsoar is True
+
+        results = IsHandlerOwnershipFieldsAlignValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "maintainers must contain '@xsoar-content'" in msg
+        assert "[]" in msg
+
+    def test_both_problems_aggregate_into_single_result(self):
+        """
+        Given: An xsoar-classified handler (via module) with BOTH wrong team
+               AND missing maintainer.
+        When: CO156 runs.
+        Then: A single result carrying both problem sentences (joined by
+              '; ') — no double-emission per handler.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        # is_xsoar via module only.
+        handler.metadata.module = "xsoar"
+        handler.metadata.ownership.team = "third_party"
+        handler.metadata.ownership.maintainers = ["@third-party-content"]
+        assert handler.is_xsoar is True
+
+        results = IsHandlerOwnershipFieldsAlignValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "team" in msg
+        assert "maintainers must contain" in msg
+        # Both problem sentences joined by '; '.
+        assert "; " in msg
+
+    def test_co_maintainers_permitted(self):
+        """
+        Given: An xsoar-classified handler whose maintainers contains
+               '@xsoar-content' PLUS additional co-maintainers.
+        When: CO156 runs.
+        Then: No error — CO156 uses a contains-check (mirroring CO100), so
+              co-maintainers are permitted.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.metadata.ownership.team = "xsoar"
+        handler.metadata.ownership.maintainers = [
+            "@xsoar-content",
+            "@partner-team",
+            "@another-team",
+        ]
+
+        results = IsHandlerOwnershipFieldsAlignValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_non_xsoar_handler_ignored(self):
+        """
+        Given: A handler with no xsoar signals (all three cleared).
+        When: CO156 runs.
+        Then: No error — the rule does not apply to non-xsoar handlers.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        _clear_xsoar_signals(handler)
+        assert handler.is_xsoar is False
+
+        results = IsHandlerOwnershipFieldsAlignValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_error_per_handler_not_per_connector(self):
+        """
+        Given: A connector with two xsoar-classified handlers, both
+               misaligned.
+        When: CO156 runs.
+        Then: Two results (one per failing handler), not a single aggregated
+              connector-level result.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-handler-a",
+                    "metadata": {
+                        "ownership": {
+                            "team": "third_party",
+                            "maintainers": ["@xsoar-content"],
+                        }
+                    },
+                },
+                {
+                    "id": "xsoar-handler-b",
+                    "metadata": {
+                        "ownership": {
+                            "team": "xsoar",
+                            "maintainers": ["@other"],
+                        }
+                    },
+                },
+            ]
+        )
+        assert all(h.is_xsoar for h in connector.handlers)
+
+        results = IsHandlerOwnershipFieldsAlignValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 2
+        offenders = {
+            hid
+            for hid in ("xsoar-handler-a", "xsoar-handler-b")
+            if any(hid in r.message for r in results)
+        }
+        assert offenders == {"xsoar-handler-a", "xsoar-handler-b"}
+
+    def test_mixed_valid_and_invalid_handlers(self):
+        """
+        Given: One aligned xsoar handler + one misaligned.
+        When: CO156 runs.
+        Then: Only the misaligned one produces a result.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-good",
+                    "metadata": {
+                        "ownership": {
+                            "team": "xsoar",
+                            "maintainers": ["@xsoar-content"],
+                        }
+                    },
+                },
+                {
+                    "id": "xsoar-bad",
+                    "metadata": {
+                        "ownership": {
+                            "team": "wrong",
+                            "maintainers": ["@xsoar-content"],
+                        }
+                    },
+                },
+            ]
+        )
+        results = IsHandlerOwnershipFieldsAlignValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "xsoar-bad" in results[0].message
+        assert "xsoar-good" not in results[0].message
+
+    def test_error_path_points_to_handler_yaml(self):
+        """
+        Given: A misaligned xsoar handler.
+        When: CO156 runs.
+        Then: The ValidationResult.path is the offending handler.yaml
+              (mirroring CO155 handler-scoped path behaviour).
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-test",
+                    "metadata": {
+                        "ownership": {
+                            "team": "third_party",
+                            "maintainers": [],
+                        }
+                    },
+                },
+            ]
+        )
+        results = IsHandlerOwnershipFieldsAlignValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert results[0].path is not None
+        assert results[0].path == connector.handlers[0].file_path
+        assert str(results[0].path).endswith("handler.yaml")
+
+
+# ---------------------------------------------------------------------------
+# CO165 tests
+# ---------------------------------------------------------------------------
+
+
+def _stub_integration_with_pack(
+    object_id: str = "TestIntegration", pack_id: str = "TestPack"
+) -> SimpleNamespace:
+    """Build a lightweight integration stub carrying the two fields CO165 uses.
+
+    CO165 only touches ``related_integration.pack_id`` and
+    ``related_integration.object_id``. The heavy ``create_integration_object``
+    helper returns a real Integration whose ``pack_id`` is a computed property
+    hard to override in-place, so tests use this stub instead.
+    """
+    return SimpleNamespace(object_id=object_id, pack_id=pack_id)
+
+
+class TestCO165IsHandlerMatchingPackExist:
+    """Tests for CO165: every XSOAR handler's `xsoar-pack-id` triggering label
+    must match the pack that owns the handler's resolved integration
+    (``handler.related_integration.pack_id``). Consistency-based; uses only
+    already-resolved data.
+    """
+
+    def test_matching_pack_id_passes(self):
+        """
+        Given: An XSOAR handler with xsoar-pack-id='TestPack' (template
+               default) and a resolved integration whose pack_id is 'TestPack'.
+        When: CO165 runs.
+        Then: No validation errors.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        # Sanity: template default is xsoar-pack-id: TestPack.
+        assert handler.xsoar_pack_id == "TestPack"
+        handler.related_integration = _stub_integration_with_pack(
+            object_id="TestIntegration", pack_id="TestPack"
+        )
+
+        results = IsHandlerMatchingPackExistValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_missing_pack_id_label_fails(self):
+        """
+        Given: A handler whose triggering.labels omits xsoar-pack-id
+               entirely (only xsoar-integration-id is present).
+        When: CO165 runs.
+        Then: One error citing the missing label.
+        """
+        connector = create_connector_object(handlers=[{"id": "xsoar-nopack"}])
+        handler = connector.handlers[0]
+        # The connector template's default labels include xsoar-pack-id,
+        # and `handlers=[{...}]` merges rather than replaces, so overwrite
+        # the labels dict directly to actually remove the pack-id label.
+        handler.triggering.labels = {"xsoar-integration-id": "TestIntegration"}
+        assert handler.xsoar_pack_id is None
+        handler.related_integration = _stub_integration_with_pack()
+
+        results = IsHandlerMatchingPackExistValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert handler.id in msg
+        assert "missing xsoar-pack-id" in msg
+
+    def test_unresolved_integration_fails(self):
+        """
+        Given: A handler with an xsoar-pack-id label but no resolved
+               related_integration (integration missing from content graph).
+        When: CO165 runs.
+        Then: One error indicating the pack-id cannot be verified; message
+              points at CO164 as the underlying cause.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        assert handler.xsoar_pack_id == "TestPack"
+        assert handler.related_integration is None
+
+        results = IsHandlerMatchingPackExistValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert handler.id in msg
+        assert "TestPack" in msg
+        assert "cannot be verified" in msg
+        assert "CO164" in msg
+
+    def test_mismatched_pack_id_fails(self):
+        """
+        Given: A handler with xsoar-pack-id='DeclaredPack' but the resolved
+               integration lives in a pack called 'ActualPack'.
+        When: CO165 runs.
+        Then: One error naming the declared, actual, and integration ids.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-mismatched",
+                    "triggering": {
+                        "labels": {
+                            "xsoar-integration-id": "TestIntegration",
+                            "xsoar-pack-id": "DeclaredPack",
+                        }
+                    },
+                },
+            ]
+        )
+        handler = connector.handlers[0]
+        handler.related_integration = _stub_integration_with_pack(
+            object_id="TestIntegration", pack_id="ActualPack"
+        )
+
+        results = IsHandlerMatchingPackExistValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert handler.id in msg
+        assert "DeclaredPack" in msg
+        assert "ActualPack" in msg
+        assert "TestIntegration" in msg
+        assert "does not match" in msg
+
+    def test_non_xsoar_handler_ignored(self):
+        """
+        Given: A handler with no xsoar signals (module/team/maintainers all
+               non-xsoar) and no pack-id label.
+        When: CO165 runs.
+        Then: No error \u2014 the handler is not xsoar-classified so the rule does
+              not apply.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        _clear_xsoar_signals(handler)
+        # Even if we clear pack-id, the handler shouldn't produce an error
+        # because it's not xsoar-scoped.
+        assert handler.is_xsoar is False
+
+        results = IsHandlerMatchingPackExistValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_error_per_handler_not_per_connector(self):
+        """
+        Given: A connector with two xsoar handlers - one missing the label,
+               one with a mismatched pack.
+        When: CO165 runs.
+        Then: Two results (one per failing handler), not aggregated.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {"id": "xsoar-nopack"},
+                {"id": "xsoar-mismatched"},
+            ]
+        )
+        # Address handlers by id (the connector may sort them alphabetically
+        # so index-based access is unsafe).
+        by_id = {h.id: h for h in connector.handlers}
+        nopack = by_id["xsoar-nopack"]
+        mismatched = by_id["xsoar-mismatched"]
+
+        # Nopack: strip pack-id from the (merged) template labels.
+        nopack.triggering.labels = {"xsoar-integration-id": "TestIntegration"}
+        nopack.related_integration = _stub_integration_with_pack()
+
+        # Mismatched: label says WrongPack, actual owner is ActualPack.
+        mismatched.triggering.labels = {
+            "xsoar-integration-id": "TestIntegration",
+            "xsoar-pack-id": "WrongPack",
+        }
+        mismatched.related_integration = _stub_integration_with_pack(
+            pack_id="ActualPack"
+        )
+
+        results = IsHandlerMatchingPackExistValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 2
+        offenders = {
+            hid
+            for hid in ("xsoar-nopack", "xsoar-mismatched")
+            if any(hid in r.message for r in results)
+        }
+        assert offenders == {"xsoar-nopack", "xsoar-mismatched"}
+
+    def test_mixed_valid_and_invalid_handlers(self):
+        """
+        Given: One valid handler (matching pack) + one invalid (mismatched).
+        When: CO165 runs.
+        Then: Only the invalid one produces a result.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {"id": "xsoar-good"},
+                {"id": "xsoar-bad"},
+            ]
+        )
+        # Address handlers by id (connector may sort them alphabetically).
+        by_id = {h.id: h for h in connector.handlers}
+        good = by_id["xsoar-good"]
+        bad = by_id["xsoar-bad"]
+
+        good.triggering.labels = {
+            "xsoar-integration-id": "TestIntegration",
+            "xsoar-pack-id": "MatchingPack",
+        }
+        good.related_integration = _stub_integration_with_pack(pack_id="MatchingPack")
+
+        bad.triggering.labels = {
+            "xsoar-integration-id": "TestIntegration",
+            "xsoar-pack-id": "WrongPack",
+        }
+        bad.related_integration = _stub_integration_with_pack(pack_id="ActualPack")
+
+        results = IsHandlerMatchingPackExistValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "xsoar-bad" in results[0].message
+        assert "xsoar-good" not in results[0].message
+
+    def test_error_path_points_to_handler_yaml(self):
+        """
+        Given: An xsoar handler with a mismatched pack-id.
+        When: CO165 runs.
+        Then: ValidationResult.path is the offending handler.yaml (mirrors
+              CO155/156/157 handler-scoped path behaviour).
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-test",
+                    "triggering": {
+                        "labels": {
+                            "xsoar-integration-id": "TestIntegration",
+                            "xsoar-pack-id": "WrongPack",
+                        }
+                    },
+                },
+            ]
+        )
+        connector.handlers[0].related_integration = _stub_integration_with_pack(
+            pack_id="ActualPack"
+        )
+
+        results = IsHandlerMatchingPackExistValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert results[0].path is not None
+        assert results[0].path == connector.handlers[0].file_path
+        assert str(results[0].path).endswith("handler.yaml")
+
+
+# ---------------------------------------------------------------------------
+# CO159 tests
+# ---------------------------------------------------------------------------
+
+
+def _canonical_test_connection():
+    """Return a fresh canonical HandlerTestConnection block matching the
+    manifest requirement.
+    """
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        HandlerTestConnection,
+    )
+
+    return HandlerTestConnection(
+        type="service",
+        service="xsoar",
+        endpoint="/settings/integration/connector/verification",
+    )
+
+
+def _stamp_canonical_tc(handler) -> None:
+    """Overwrite both test_connection and test_connection_metro on a handler
+    with fresh canonical blocks so CO159 passes for the baseline handler.
+    """
+    handler.test_connection = _canonical_test_connection()
+    handler.test_connection_metro = _canonical_test_connection()
+
+
+class TestCO159IsHandlerHasValidTestConnection:
+    """Tests for CO159: every XSOAR handler must carry both `test_connection`
+    and `test_connection_metro` equal to exactly
+    `{type: service, service: xsoar, endpoint: /settings/integration/connector/verification}`.
+    """
+
+    def test_canonical_both_blocks_passes(self):
+        """
+        Given: A handler whose test_connection and test_connection_metro
+               both equal the canonical block.
+        When: CO159 runs.
+        Then: No validation errors.
+        """
+        connector = create_connector_object()
+        _stamp_canonical_tc(connector.handlers[0])
+
+        results = (
+            IsHandlerHasValidTestConnectionValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 0
+
+    def test_default_empty_test_connection_fails(self):
+        """
+        Given: The template default handler where both blocks are empty
+               (test_connection has all-None fields; test_connection_metro is
+               None).
+        When: CO159 runs.
+        Then: One result aggregating problems from both blocks.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+
+        results = (
+            IsHandlerHasValidTestConnectionValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert handler.id in msg
+        assert "test_connection.type" in msg
+        assert "test_connection.service" in msg
+        assert "test_connection.endpoint" in msg
+        assert "test_connection_metro block is missing" in msg
+
+    def test_metro_missing_fails(self):
+        """
+        Given: A handler with a valid test_connection but no
+               test_connection_metro.
+        When: CO159 runs.
+        Then: One result citing only the missing-metro problem (base block
+              is fine).
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.test_connection = _canonical_test_connection()
+        handler.test_connection_metro = None
+
+        results = (
+            IsHandlerHasValidTestConnectionValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "test_connection_metro block is missing" in msg
+        # base block should not appear as a problem
+        assert "test_connection.type" not in msg
+        assert "test_connection.service" not in msg
+        assert "test_connection.endpoint" not in msg
+
+    def test_wrong_type_fails(self):
+        """
+        Given: test_connection.type == 'endpoint' (not 'service').
+        When: CO159 runs.
+        Then: A single result citing the type mismatch in the base block.
+        """
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            HandlerTestConnection,
+        )
+
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.test_connection = HandlerTestConnection(
+            type="endpoint",
+            service="xsoar",
+            endpoint="/settings/integration/connector/verification",
+        )
+        handler.test_connection_metro = _canonical_test_connection()
+
+        results = (
+            IsHandlerHasValidTestConnectionValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "test_connection.type is 'endpoint'" in msg
+        assert "expected 'service'" in msg
+
+    def test_wrong_service_fails(self):
+        """
+        Given: test_connection.service == 'other' (not 'xsoar').
+        """
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            HandlerTestConnection,
+        )
+
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.test_connection = HandlerTestConnection(
+            type="service",
+            service="other",
+            endpoint="/settings/integration/connector/verification",
+        )
+        handler.test_connection_metro = _canonical_test_connection()
+
+        results = (
+            IsHandlerHasValidTestConnectionValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        assert "test_connection.service is 'other'" in results[0].message
+        assert "expected 'xsoar'" in results[0].message
+
+    def test_wrong_endpoint_fails(self):
+        """
+        Given: test_connection.endpoint is a different path.
+        """
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            HandlerTestConnection,
+        )
+
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.test_connection = HandlerTestConnection(
+            type="service",
+            service="xsoar",
+            endpoint="/wrong/endpoint",
+        )
+        handler.test_connection_metro = _canonical_test_connection()
+
+        results = (
+            IsHandlerHasValidTestConnectionValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        assert "test_connection.endpoint is '/wrong/endpoint'" in results[0].message
+
+    def test_extra_host_fails(self):
+        """
+        Given: A canonical test_connection that additionally sets `host`.
+        When: CO159 runs.
+        Then: One result citing the extra host field.
+        """
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            HandlerTestConnection,
+        )
+
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.test_connection = HandlerTestConnection(
+            type="service",
+            service="xsoar",
+            endpoint="/settings/integration/connector/verification",
+            host="example.com",
+        )
+        handler.test_connection_metro = _canonical_test_connection()
+
+        results = (
+            IsHandlerHasValidTestConnectionValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        assert "test_connection.host must be omitted" in results[0].message
+        assert "example.com" in results[0].message
+
+    def test_extra_headers_fails(self):
+        """
+        Given: A canonical test_connection that additionally sets `headers`.
+        """
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            HandlerTestConnection,
+        )
+
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.test_connection = HandlerTestConnection(
+            type="service",
+            service="xsoar",
+            endpoint="/settings/integration/connector/verification",
+            headers={"X-Custom": "yes"},
+        )
+        handler.test_connection_metro = _canonical_test_connection()
+
+        results = (
+            IsHandlerHasValidTestConnectionValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        assert "test_connection.headers must be omitted" in results[0].message
+
+    def test_both_blocks_wrong_aggregates(self):
+        """
+        Given: Both blocks are wrong (different types).
+        When: CO159 runs.
+        Then: A single result covering both blocks (aggregated by '; ').
+        """
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            HandlerTestConnection,
+        )
+
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.test_connection = HandlerTestConnection(
+            type="endpoint",
+            service="xsoar",
+            endpoint="/settings/integration/connector/verification",
+        )
+        handler.test_connection_metro = HandlerTestConnection(
+            type="service",
+            service="other",
+            endpoint="/settings/integration/connector/verification",
+        )
+
+        results = (
+            IsHandlerHasValidTestConnectionValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "test_connection.type is 'endpoint'" in msg
+        assert "test_connection_metro.service is 'other'" in msg
+        assert "; " in msg
+
+    def test_non_xsoar_handler_ignored(self):
+        """
+        Given: A non-xsoar handler with a completely broken test_connection.
+        When: CO159 runs.
+        Then: No error - the rule does not apply to non-xsoar handlers.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        _clear_xsoar_signals(handler)
+        assert handler.is_xsoar is False
+
+        results = (
+            IsHandlerHasValidTestConnectionValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 0
+
+    def test_error_per_handler_not_per_connector(self):
+        """
+        Given: Two xsoar handlers, both broken.
+        When: CO159 runs.
+        Then: Two results (one per failing handler).
+        """
+        connector = create_connector_object(
+            handlers=[
+                {"id": "xsoar-handler-a"},
+                {"id": "xsoar-handler-b"},
+            ]
+        )
+        # Both handlers keep the template default (empty blocks) -> both fail.
+        assert all(h.is_xsoar for h in connector.handlers)
+
+        results = (
+            IsHandlerHasValidTestConnectionValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 2
+        offenders = {
+            hid
+            for hid in ("xsoar-handler-a", "xsoar-handler-b")
+            if any(hid in r.message for r in results)
+        }
+        assert offenders == {"xsoar-handler-a", "xsoar-handler-b"}
+
+    def test_mixed_valid_and_invalid_handlers(self):
+        """
+        Given: One valid xsoar handler + one invalid.
+        When: CO159 runs.
+        Then: Only the invalid one produces a result.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {"id": "xsoar-good"},
+                {"id": "xsoar-bad"},
+            ]
+        )
+        by_id = {h.id: h for h in connector.handlers}
+        _stamp_canonical_tc(by_id["xsoar-good"])
+        # xsoar-bad keeps default empty blocks.
+
+        results = (
+            IsHandlerHasValidTestConnectionValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        assert "xsoar-bad" in results[0].message
+        assert "xsoar-good" not in results[0].message
+
+    def test_error_path_points_to_handler_yaml(self):
+        """
+        Given: An xsoar handler with broken test_connection wiring.
+        When: CO159 runs.
+        Then: ValidationResult.path is the offending handler.yaml
+              (mirrors CO155/156/165 handler-scoped path behaviour).
+        """
+        connector = create_connector_object()
+        # Template defaults leave both blocks empty/None -> failure.
+
+        results = (
+            IsHandlerHasValidTestConnectionValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        assert results[0].path is not None
+        assert results[0].path == connector.handlers[0].file_path
+        assert str(results[0].path).endswith("handler.yaml")
+
+
+# ---------------------------------------------------------------------------
+# CO161 tests
+# ---------------------------------------------------------------------------
+
+
+def _cap_with_actions(cap_id: str, action_types: list, **extras):
+    """Build a HandlerCapability dict-shaped block that create_connector_object
+    can consume, with the given cap id and a list of action.type strings.
+    """
+    entry = {
+        "id": cap_id,
+        "auth_options": [
+            {
+                "id": "plain.test",
+                "workloads": ["xsoar-pod", "xsoar-automationhub-runner"],
+            }
+        ],
+        "actions": [{"type": t} for t in action_types],
+    }
+    entry.update(extras)
+    return entry
+
+
+class TestCO161IsFetchCapabilitiesContainActions:
+    """Tests for CO161: every subscribed fetch/automation capability must
+    declare its required reset-state action.
+    """
+
+    def test_no_fetch_capabilities_passes(self):
+        """
+        Given: A handler whose only capability is a non-fetch/non-automation
+               capability (e.g. 'incident-response').
+        When: CO161 runs.
+        Then: No errors - the mapping doesn't apply.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-generic",
+                    "capabilities": [_cap_with_actions("incident-response", [])],
+                }
+            ]
+        )
+        results = (
+            IsFetchCapabilitiesContainActionsValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 0
+
+    def test_fetch_secrets_has_no_required_action(self):
+        """
+        Given: fetch-secrets capability with no actions.
+        When: CO161 runs.
+        Then: No error - fetch-secrets is stateless per the mapping.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-secrets",
+                    "capabilities": [_cap_with_actions("fetch-secrets", [])],
+                }
+            ]
+        )
+        results = (
+            IsFetchCapabilitiesContainActionsValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 0
+
+    def test_fetch_issues_with_correct_action_passes(self):
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-fetchissues",
+                    "capabilities": [
+                        _cap_with_actions("fetch-issues", ["reset_incidents_last_run"])
+                    ],
+                }
+            ]
+        )
+        results = (
+            IsFetchCapabilitiesContainActionsValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 0
+
+    def test_fetch_issues_missing_action_fails(self):
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-fetchissues",
+                    "capabilities": [_cap_with_actions("fetch-issues", [])],
+                }
+            ]
+        )
+        results = (
+            IsFetchCapabilitiesContainActionsValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "fetch-issues" in msg
+        assert "reset_incidents_last_run" in msg
+
+    def test_namespaced_capability_id_stripped_to_base(self):
+        """
+        Given: A namespaced cap id 'fetch-issues_akamai-waf-siem' with
+               the correct action.
+        When: CO161 runs.
+        Then: No error - the base id is stripped before mapping lookup.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-nsissues",
+                    "capabilities": [
+                        _cap_with_actions(
+                            "fetch-issues_akamai-waf-siem",
+                            ["reset_incidents_last_run"],
+                        )
+                    ],
+                }
+            ]
+        )
+        results = (
+            IsFetchCapabilitiesContainActionsValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 0
+
+    def test_wrong_action_type_fails(self):
+        """
+        Given: fetch-issues capability with an action but of the wrong type.
+        When: CO161 runs.
+        Then: One error citing the required-vs-found types.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-fetchissues",
+                    "capabilities": [
+                        _cap_with_actions("fetch-issues", ["reset_events_last_run"])
+                    ],
+                }
+            ]
+        )
+        results = (
+            IsFetchCapabilitiesContainActionsValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "reset_incidents_last_run" in msg
+        assert "reset_events_last_run" in msg
+
+    def test_all_families_valid_passes(self):
+        """
+        Given: A handler with one capability from each fetch/automation
+               family, each with its correct action, plus fetch-secrets and
+               a non-fetch cap.
+        When: CO161 runs.
+        Then: No error.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-multi",
+                    "capabilities": [
+                        _cap_with_actions("fetch-issues", ["reset_incidents_last_run"]),
+                        _cap_with_actions("log-collection", ["reset_events_last_run"]),
+                        _cap_with_actions(
+                            "fetch-assets-and-vulnerabilities",
+                            ["reset_assets_last_run"],
+                        ),
+                        _cap_with_actions(
+                            "threat-intelligence-and-enrichment",
+                            ["reset_feed_last_run"],
+                        ),
+                        _cap_with_actions(
+                            "automation-and-remediation",
+                            ["reset_integration_context"],
+                        ),
+                        _cap_with_actions("fetch-secrets", []),
+                        _cap_with_actions("incident-response", []),
+                    ],
+                }
+            ]
+        )
+        results = (
+            IsFetchCapabilitiesContainActionsValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 0
+
+    def test_multiple_capabilities_aggregate_into_single_result(self):
+        """
+        Given: Multiple fetch/automation capabilities all missing their
+               required actions.
+        When: CO161 runs.
+        Then: A single per-handler result listing all offenders.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-broken",
+                    "capabilities": [
+                        _cap_with_actions("fetch-issues", []),
+                        _cap_with_actions("log-collection", []),
+                        _cap_with_actions("automation-and-remediation", []),
+                    ],
+                }
+            ]
+        )
+        results = (
+            IsFetchCapabilitiesContainActionsValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "fetch-issues" in msg
+        assert "log-collection" in msg
+        assert "automation-and-remediation" in msg
+        assert "reset_incidents_last_run" in msg
+        assert "reset_events_last_run" in msg
+        assert "reset_integration_context" in msg
+        # Aggregation separator.
+        assert "; " in msg
+
+    def test_non_xsoar_handler_ignored(self):
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-nx",
+                    "capabilities": [_cap_with_actions("fetch-issues", [])],
+                }
+            ]
+        )
+        _clear_xsoar_signals(connector.handlers[0])
+
+        results = (
+            IsFetchCapabilitiesContainActionsValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 0
+
+    def test_error_path_points_to_handler_yaml(self):
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-broken",
+                    "capabilities": [_cap_with_actions("fetch-issues", [])],
+                }
+            ]
+        )
+        results = (
+            IsFetchCapabilitiesContainActionsValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        assert results[0].path is not None
+        assert results[0].path == connector.handlers[0].file_path
+        assert str(results[0].path).endswith("handler.yaml")
+
+
+# ---------------------------------------------------------------------------
+# CO162 tests
+# ---------------------------------------------------------------------------
+
+
+def _cap_with_workloads(
+    cap_id: str,
+    auth_options_workloads: list,
+    cap_level_workloads: list = None,
+):
+    """Build a HandlerCapability dict where:
+    - Each entry in ``auth_options_workloads`` produces one auth_option with
+      that specific ``workloads`` list.
+    - ``cap_level_workloads`` (optional) sets the anonymous capability-level
+      ``workloads``.
+    """
+    entry: dict = {
+        "id": cap_id,
+        "auth_options": [
+            {"id": f"plain.{i}", "workloads": list(w)}
+            for i, w in enumerate(auth_options_workloads)
+        ],
+    }
+    if cap_level_workloads is not None:
+        entry["workloads"] = list(cap_level_workloads)
+    return entry
+
+
+class TestCO162IsValidWorkloads:
+    """Tests for CO162: every auth_options[].workloads must equal the
+    canonical set {xsoar-automationhub-runner, xsoar-pod} (order-insensitive),
+    and no capability may declare the anonymous capability-level workloads
+    shape.
+    """
+
+    def test_canonical_workloads_passes(self):
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-wl",
+                    "capabilities": [
+                        _cap_with_workloads(
+                            "fetch-issues",
+                            [["xsoar-pod", "xsoar-automationhub-runner"]],
+                        )
+                    ],
+                }
+            ]
+        )
+        results = IsValidWorkloadsValidator().obtain_invalid_content_items([connector])
+        assert len(results) == 0
+
+    def test_reverse_order_passes(self):
+        """Order-insensitive: reverse order still equals the canonical set."""
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-wl-rev",
+                    "capabilities": [
+                        _cap_with_workloads(
+                            "fetch-issues",
+                            [["xsoar-automationhub-runner", "xsoar-pod"]],
+                        )
+                    ],
+                }
+            ]
+        )
+        results = IsValidWorkloadsValidator().obtain_invalid_content_items([connector])
+        assert len(results) == 0
+
+    def test_missing_workload_fails(self):
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-wl-missing",
+                    "capabilities": [
+                        _cap_with_workloads("fetch-issues", [["xsoar-pod"]])
+                    ],
+                }
+            ]
+        )
+        results = IsValidWorkloadsValidator().obtain_invalid_content_items([connector])
+        assert len(results) == 1
+        msg = results[0].message
+        assert "fetch-issues" in msg
+        assert "plain.0" in msg
+        assert "xsoar-automationhub-runner" in msg
+
+    def test_extra_workload_fails(self):
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-wl-extra",
+                    "capabilities": [
+                        _cap_with_workloads(
+                            "fetch-issues",
+                            [
+                                [
+                                    "xsoar-pod",
+                                    "xsoar-automationhub-runner",
+                                    "xsoar-extra",
+                                ]
+                            ],
+                        )
+                    ],
+                }
+            ]
+        )
+        results = IsValidWorkloadsValidator().obtain_invalid_content_items([connector])
+        assert len(results) == 1
+        assert "xsoar-extra" in results[0].message
+
+    def test_empty_workloads_fails(self):
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-wl-empty",
+                    "capabilities": [_cap_with_workloads("fetch-issues", [[]])],
+                }
+            ]
+        )
+        results = IsValidWorkloadsValidator().obtain_invalid_content_items([connector])
+        assert len(results) == 1
+        assert "[]" in results[0].message
+
+    def test_capability_level_workloads_fails(self):
+        """
+        Given: A capability that carries capability-level workloads (the
+               anonymous auth: none shape) alongside auth_options.
+        When: CO162 runs.
+        Then: The capability-level workloads presence is flagged
+              (regardless of whether auth_options themselves are valid).
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-cap-wl",
+                    "capabilities": [
+                        _cap_with_workloads(
+                            "fetch-issues",
+                            [["xsoar-pod", "xsoar-automationhub-runner"]],
+                            cap_level_workloads=[
+                                "xsoar-pod",
+                                "xsoar-automationhub-runner",
+                            ],
+                        )
+                    ],
+                }
+            ]
+        )
+        results = IsValidWorkloadsValidator().obtain_invalid_content_items([connector])
+        assert len(results) == 1
+        msg = results[0].message
+        assert "capability-level workloads" in msg
+        assert "auth_options" in msg
+
+    def test_multiple_auth_options_aggregate(self):
+        """
+        Given: A capability with 2 auth_options, both with broken workloads.
+        When: CO162 runs.
+        Then: One aggregated result citing both auth_options.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-multi-ao",
+                    "capabilities": [
+                        _cap_with_workloads(
+                            "fetch-issues",
+                            [["xsoar-pod"], []],
+                        )
+                    ],
+                }
+            ]
+        )
+        results = IsValidWorkloadsValidator().obtain_invalid_content_items([connector])
+        assert len(results) == 1
+        msg = results[0].message
+        assert "plain.0" in msg
+        assert "plain.1" in msg
+        assert "; " in msg
+
+    def test_non_xsoar_handler_ignored(self):
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-nx",
+                    "capabilities": [
+                        _cap_with_workloads("fetch-issues", [["xsoar-pod"]])
+                    ],
+                }
+            ]
+        )
+        _clear_xsoar_signals(connector.handlers[0])
+
+        results = IsValidWorkloadsValidator().obtain_invalid_content_items([connector])
+        assert len(results) == 0
+
+    def test_error_path_points_to_handler_yaml(self):
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-wl-broken",
+                    "capabilities": [
+                        _cap_with_workloads("fetch-issues", [["xsoar-pod"]])
+                    ],
+                }
+            ]
+        )
+        results = IsValidWorkloadsValidator().obtain_invalid_content_items([connector])
+        assert len(results) == 1
+        assert results[0].path is not None
+        assert results[0].path == connector.handlers[0].file_path
+        assert str(results[0].path).endswith("handler.yaml")
+
+
+# ---------------------------------------------------------------------------
+# CO170 tests
+# ---------------------------------------------------------------------------
+
+
+class TestCO170IsHandlerMigrationConstants:
+    """Tests for CO170: every XSOAR handler must carry
+    ``triggering.type: "PUB_SUB"`` (per DESIGN §3.8).
+    """
+
+    def test_default_pub_sub_passes(self):
+        """
+        Given: The default connector template (triggering.type == "PUB_SUB").
+        When: CO170 runs.
+        Then: No validation errors.
+        """
+        connector = create_connector_object()
+        # Sanity: the default template sets triggering.type = "PUB_SUB".
+        assert connector.handlers[0].triggering.type == "PUB_SUB"
+
+        results = IsHandlerMigrationConstantsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_wrong_triggering_type_fails(self):
+        """
+        Given: An XSOAR handler with triggering.type set to a non-PUB_SUB value
+               (e.g. "ZERO_SCALE").
+        When: CO170 runs.
+        Then: One error is emitted; both the expected and the actual value are
+              surfaced in the message.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.triggering.type = "ZERO_SCALE"
+
+        results = IsHandlerMigrationConstantsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert handler.id in results[0].message
+        assert "'PUB_SUB'" in results[0].message
+        assert "'ZERO_SCALE'" in results[0].message
+
+    def test_missing_triggering_type_fails(self):
+        """
+        Given: An XSOAR handler whose triggering.type is unset (None).
+        When: CO170 runs.
+        Then: One error is emitted; ``None`` is surfaced as the actual value.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.triggering.type = None
+
+        results = IsHandlerMigrationConstantsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert handler.id in results[0].message
+        assert "None" in results[0].message
+
+    def test_non_xsoar_handler_ignored(self):
+        """
+        Given: A non-xsoar handler (all three xsoar signals cleared) with a
+               broken triggering.type.
+        When: CO170 runs.
+        Then: No error - the validator only inspects XSOAR handlers.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        _clear_xsoar_signals(handler)
+        handler.triggering.type = "ZERO_SCALE"
+        assert handler.is_xsoar is False
+
+        results = IsHandlerMigrationConstantsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_error_per_handler_not_per_connector(self):
+        """
+        Given: A connector with multiple XSOAR handlers, all with wrong
+               triggering.type.
+        When: CO170 runs.
+        Then: One error per offending handler (not one per connector), each
+              carrying the corresponding handler.id in the message.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {"id": "xsoar-a"},
+                {"id": "xsoar-b"},
+            ]
+        )
+        # Address handlers by id to survive alphabetical sorting.
+        by_id = {h.id: h for h in connector.handlers}
+        by_id["xsoar-a"].triggering.type = "ZERO_SCALE"
+        by_id["xsoar-b"].triggering.type = None
+
+        results = IsHandlerMigrationConstantsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 2
+        offenders = {"xsoar-a", "xsoar-b"}
+        assert {
+            h_id for h_id in offenders if any(h_id in r.message for r in results)
+        } == offenders
+
+    def test_mixed_valid_and_invalid_handlers(self):
+        """
+        Given: A connector where one XSOAR handler is valid and another is
+               invalid.
+        When: CO170 runs.
+        Then: Only the offending handler is flagged.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {"id": "xsoar-good"},
+                {"id": "xsoar-bad"},
+            ]
+        )
+        by_id = {h.id: h for h in connector.handlers}
+        # xsoar-good keeps the default PUB_SUB; xsoar-bad is broken.
+        by_id["xsoar-bad"].triggering.type = "ZERO_SCALE"
+
+        results = IsHandlerMigrationConstantsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "xsoar-bad" in results[0].message
+        assert "xsoar-good" not in results[0].message
+
+    def test_error_path_points_to_handler_yaml(self):
+        """
+        Given: A connector with one offending XSOAR handler.
+        When: CO170 runs.
+        Then: The result's path points at that handler's ``handler.yaml``.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.triggering.type = "ZERO_SCALE"
+
+        results = IsHandlerMigrationConstantsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert results[0].path is not None
+        assert results[0].path == handler.file_path
+        assert str(results[0].path).endswith("handler.yaml")
+
+
+# ---------------------------------------------------------------------------
+# CO171 / CO172 tests
+# ---------------------------------------------------------------------------
+
+
+def _serializer_with_rules(rules):
+    """Build a SerializerData with the given ComputedFieldRule list."""
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        SerializerData,
+    )
+
+    return SerializerData(field_mappings=[], computed_fields=rules)
+
+
+def _fetch_flag_rule(
+    flag_id: str,
+    capability_id: str,
+    value=True,
+    condition_value: str = "on",
+    condition_type: str = "capability",
+):
+    """Build one ComputedFieldRule that outputs ``flag_id: value`` gated on
+    the given capability condition."""
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        ComputedCondition,
+        ComputedConditionGroup,
+        ComputedFieldRule,
+        ComputedOutput,
+    )
+
+    return ComputedFieldRule(
+        output=[ComputedOutput(id=flag_id, value=value)],
+        any_of=[
+            ComputedConditionGroup(
+                conditions=[
+                    ComputedCondition(
+                        type=condition_type,
+                        options={
+                            "capability_id": capability_id,
+                            "value": condition_value,
+                        },
+                    )
+                ]
+            )
+        ],
+    )
+
+
+def _handler_capability(cap_id: str):
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        HandlerCapability,
+    )
+
+    return HandlerCapability(id=cap_id, auth_options=[], workloads=[], actions=[])
+
+
+class TestCO171IsCollectionSubCapabilityFetchFlagValid:
+    """Tests for CO171: every subscribed collection sub-capability
+    must have a matching fetch-flag emission in the handler's
+    serializer.yaml, gated on the right capability+value.
+    """
+
+    def test_no_collection_cap_short_circuits(self):
+        """
+        Given: A handler that subscribes to no collection sub-capability
+               (e.g. only 'incident-response') and has no serializer.
+        When: CO171 runs.
+        Then: No error - nothing to enforce.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.capabilities = [_handler_capability("incident-response")]
+        handler.serializer = None
+
+        results = IsCollectionSubCapabilityFetchFlagValidValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_canonical_fetch_issues_wiring_passes(self):
+        """
+        Given: A handler subscribing to fetch-issues with the canonical
+               serializer rule emitting isFetch: true gated correctly.
+        When: CO171 runs.
+        Then: No error.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.capabilities = [_handler_capability("fetch-issues")]
+        handler.serializer = _serializer_with_rules(
+            [_fetch_flag_rule("isFetch", "fetch-issues")]
+        )
+
+        results = IsCollectionSubCapabilityFetchFlagValidValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_grouped_namespaced_cap_passes(self):
+        """
+        Given: Grouped connector cap id 'fetch-issues_akamai-waf-siem' with
+               a matching serializer rule.
+        When: CO171 runs.
+        Then: No error - base id is stripped for the mapping lookup.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        cap_id = "fetch-issues_akamai-waf-siem"
+        handler.capabilities = [_handler_capability(cap_id)]
+        handler.serializer = _serializer_with_rules(
+            [_fetch_flag_rule("isFetch", cap_id)]
+        )
+
+        results = IsCollectionSubCapabilityFetchFlagValidValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_missing_serializer_fails(self):
+        """
+        Given: Handler subscribes to fetch-issues but has no serializer.
+        When: CO171 runs.
+        Then: One error citing the missing serializer file.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.capabilities = [_handler_capability("fetch-issues")]
+        handler.serializer = None
+
+        results = IsCollectionSubCapabilityFetchFlagValidValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "serializer.yaml is missing" in results[0].message
+
+    def test_wrong_flag_id_fails(self):
+        """
+        Given: fetch-issues subscribed, but serializer emits isFetchEvents
+               (wrong mapping) instead of isFetch.
+        When: CO171 runs.
+        Then: One error - no rule emits the expected isFetch.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.capabilities = [_handler_capability("fetch-issues")]
+        handler.serializer = _serializer_with_rules(
+            [_fetch_flag_rule("isFetchEvents", "fetch-issues")]
+        )
+
+        results = IsCollectionSubCapabilityFetchFlagValidValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "isFetch" in results[0].message
+
+    def test_wrong_condition_value_fails(self):
+        """
+        Given: isFetch emitted but gated on value 'off' (not 'on').
+        When: CO171 runs.
+        Then: One error - the gate is wrong.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.capabilities = [_handler_capability("fetch-issues")]
+        handler.serializer = _serializer_with_rules(
+            [_fetch_flag_rule("isFetch", "fetch-issues", condition_value="off")]
+        )
+
+        results = IsCollectionSubCapabilityFetchFlagValidValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+
+    def test_gate_targets_different_cap_fails(self):
+        """
+        Given: Handler subscribes to fetch-issues, but the isFetch rule is
+               gated on a different capability id.
+        When: CO171 runs.
+        Then: One error - the rule doesn't gate on THIS subscribed cap.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.capabilities = [_handler_capability("fetch-issues")]
+        handler.serializer = _serializer_with_rules(
+            [_fetch_flag_rule("isFetch", "some-other-cap")]
+        )
+
+        results = IsCollectionSubCapabilityFetchFlagValidValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+
+    def test_all_five_families_pass(self):
+        """
+        Given: A handler subscribing to all 5 collection sub-caps with a
+               correct rule per flag.
+        When: CO171 runs.
+        Then: No error.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.capabilities = [
+            _handler_capability("fetch-issues"),
+            _handler_capability("log-collection"),
+            _handler_capability("fetch-assets-and-vulnerabilities"),
+            _handler_capability("fetch-secrets"),
+            _handler_capability("threat-intelligence-and-enrichment"),
+        ]
+        handler.serializer = _serializer_with_rules(
+            [
+                _fetch_flag_rule("isFetch", "fetch-issues"),
+                _fetch_flag_rule("isFetchEvents", "log-collection"),
+                _fetch_flag_rule("isFetchAssets", "fetch-assets-and-vulnerabilities"),
+                _fetch_flag_rule("isFetchCredentials", "fetch-secrets"),
+                _fetch_flag_rule("feed", "threat-intelligence-and-enrichment"),
+            ]
+        )
+
+        results = IsCollectionSubCapabilityFetchFlagValidValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_multiple_missing_aggregate(self):
+        """
+        Given: Handler subscribes to two collection caps and the serializer
+               is missing rules for both.
+        When: CO171 runs.
+        Then: One aggregated result citing both offenders.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.capabilities = [
+            _handler_capability("fetch-issues"),
+            _handler_capability("log-collection"),
+        ]
+        handler.serializer = _serializer_with_rules([])
+
+        results = IsCollectionSubCapabilityFetchFlagValidValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "fetch-issues" in results[0].message
+        assert "log-collection" in results[0].message
+
+    def test_non_xsoar_handler_ignored(self):
+        """
+        Given: A non-xsoar handler subscribed to fetch-issues with a broken
+               serializer.
+        When: CO171 runs.
+        Then: No error - the validator only inspects XSOAR handlers.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        _clear_xsoar_signals(handler)
+        handler.capabilities = [_handler_capability("fetch-issues")]
+        handler.serializer = None
+        assert handler.is_xsoar is False
+
+        results = IsCollectionSubCapabilityFetchFlagValidValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_error_path_points_to_serializer_yaml(self):
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.capabilities = [_handler_capability("fetch-issues")]
+        handler.serializer = _serializer_with_rules([])
+
+        results = IsCollectionSubCapabilityFetchFlagValidValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert results[0].path is not None
+        assert str(results[0].path).endswith("serializer.yaml")
+
+
+class TestCO172IsFetchFlagGatedOnOwnSubCapability:
+    """Tests for CO172: every fetch-flag emission in the serializer
+    must be gated on a cap this handler subscribes to AND whose base id
+    matches the emitted flag's family.
+    """
+
+    def test_no_serializer_short_circuits(self):
+        """
+        Given: A handler with no serializer.
+        When: CO172 runs.
+        Then: No error - CO171 covers the missing serializer case.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.capabilities = [_handler_capability("fetch-issues")]
+        handler.serializer = None
+
+        results = (
+            IsFetchFlagGatedOnOwnSubCapabilityValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 0
+
+    def test_no_fetch_flag_output_short_circuits(self):
+        """
+        Given: A serializer that emits only a non-fetch flag (e.g.
+               incidentFetchInterval).
+        When: CO172 runs.
+        Then: No error - only fetch flags are validated by this rule.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.capabilities = [_handler_capability("fetch-issues")]
+        handler.serializer = _serializer_with_rules(
+            [_fetch_flag_rule("incidentFetchInterval", "fetch-issues", value="1")]
+        )
+
+        results = (
+            IsFetchFlagGatedOnOwnSubCapabilityValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 0
+
+    def test_valid_wiring_passes(self):
+        """
+        Given: isFetch gated on the subscribed fetch-issues cap.
+        When: CO172 runs.
+        Then: No error.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.capabilities = [_handler_capability("fetch-issues")]
+        handler.serializer = _serializer_with_rules(
+            [_fetch_flag_rule("isFetch", "fetch-issues")]
+        )
+
+        results = (
+            IsFetchFlagGatedOnOwnSubCapabilityValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 0
+
+    def test_grouped_namespaced_id_passes(self):
+        """
+        Given: isFetch gated on 'fetch-issues_akamai-waf-siem' and the
+               handler subscribes to that exact id.
+        When: CO172 runs.
+        Then: No error - namespaced id matches after base-id derivation.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        cap_id = "fetch-issues_akamai-waf-siem"
+        handler.capabilities = [_handler_capability(cap_id)]
+        handler.serializer = _serializer_with_rules(
+            [_fetch_flag_rule("isFetch", cap_id)]
+        )
+
+        results = (
+            IsFetchFlagGatedOnOwnSubCapabilityValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 0
+
+    def test_gate_on_non_subscribed_cap_fails(self):
+        """
+        Given: isFetch gated on 'fetch-issues_other' but handler subscribes
+               only to 'fetch-issues_ours'.
+        When: CO172 runs.
+        Then: One error - the gate references a cap this handler doesn't
+              subscribe to.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.capabilities = [_handler_capability("fetch-issues_ours")]
+        handler.serializer = _serializer_with_rules(
+            [_fetch_flag_rule("isFetch", "fetch-issues_other")]
+        )
+
+        results = (
+            IsFetchFlagGatedOnOwnSubCapabilityValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        assert "isFetch" in results[0].message
+
+    def test_gate_on_wrong_family_fails(self):
+        """
+        Given: isFetch (fetch-issues family) gated on a cap of a different
+               family (log-collection) that IS subscribed.
+        When: CO172 runs.
+        Then: One error - base id family doesn't match the flag.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.capabilities = [
+            _handler_capability("fetch-issues"),
+            _handler_capability("log-collection"),
+        ]
+        handler.serializer = _serializer_with_rules(
+            [_fetch_flag_rule("isFetch", "log-collection")]
+        )
+
+        results = (
+            IsFetchFlagGatedOnOwnSubCapabilityValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+
+    def test_automation_cap_gate_fails_subsumes_co173(self):
+        """
+        Given: A fetch flag gated on 'automation-and-remediation' - the
+               CO173 negative rule.
+        When: CO172 runs.
+        Then: One error - automation-and-remediation is not in the mapping,
+              so it fails the family check.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.capabilities = [
+            _handler_capability("automation-and-remediation"),
+        ]
+        handler.serializer = _serializer_with_rules(
+            [_fetch_flag_rule("isFetch", "automation-and-remediation")]
+        )
+
+        results = (
+            IsFetchFlagGatedOnOwnSubCapabilityValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+
+    def test_no_capability_gate_fails(self):
+        """
+        Given: A fetch-flag rule with only a `type: field` condition,
+               no capability gate.
+        When: CO172 runs.
+        Then: One error citing the missing capability gate.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.capabilities = [_handler_capability("fetch-issues")]
+        handler.serializer = _serializer_with_rules(
+            [
+                _fetch_flag_rule(
+                    "isFetch",
+                    "fetch-issues",
+                    condition_type="field",
+                )
+            ]
+        )
+
+        results = (
+            IsFetchFlagGatedOnOwnSubCapabilityValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        assert "no `type: capability` gate" in results[0].message
+
+    def test_non_xsoar_handler_ignored(self):
+        """
+        Given: A non-xsoar handler with a broken fetch-flag emission.
+        When: CO172 runs.
+        Then: No error - only XSOAR handlers are inspected.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        _clear_xsoar_signals(handler)
+        handler.capabilities = [_handler_capability("fetch-issues")]
+        handler.serializer = _serializer_with_rules(
+            [_fetch_flag_rule("isFetch", "unrelated-cap")]
+        )
+        assert handler.is_xsoar is False
+
+        results = (
+            IsFetchFlagGatedOnOwnSubCapabilityValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 0
+
+    def test_multiple_bad_rules_aggregate(self):
+        """
+        Given: Two fetch-flag rules, both mis-gated on the same handler.
+        When: CO172 runs.
+        Then: One aggregated result listing both problems.
+        """
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.capabilities = [_handler_capability("fetch-issues")]
+        handler.serializer = _serializer_with_rules(
+            [
+                _fetch_flag_rule("isFetch", "wrong-cap"),
+                _fetch_flag_rule("isFetchEvents", "other-wrong-cap"),
+            ]
+        )
+
+        results = (
+            IsFetchFlagGatedOnOwnSubCapabilityValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        assert "isFetch" in results[0].message
+        assert "isFetchEvents" in results[0].message
+
+    def test_error_path_points_to_serializer_yaml(self):
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.capabilities = [_handler_capability("fetch-issues")]
+        handler.serializer = _serializer_with_rules(
+            [_fetch_flag_rule("isFetch", "wrong-cap")]
+        )
+
+        results = (
+            IsFetchFlagGatedOnOwnSubCapabilityValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        assert results[0].path is not None
+        assert str(results[0].path).endswith("serializer.yaml")
+
+
+# ---------------------------------------------------------------------------
+# CO175 tests
+# ---------------------------------------------------------------------------
+
+
+def _resolved_param(name: str, source_file: str = "connection.yaml"):
+    """Build a ResolvedParamMapping mimicking parser output."""
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        ResolvedParamMapping,
+    )
+
+    return ResolvedParamMapping(
+        connector_param_name=name,
+        content_param_name=name,
+        is_serialized=False,
+        source_file=source_file,
+    )
+
+
+def _set_resolved_params(handler, names):
+    """Overwrite handler.resolved_params with the given connector-side names."""
+    handler.resolved_params = [_resolved_param(n) for n in names]
+
+
+class TestCO175NoRemovedConnectorParams:
+    """Tests for CO175: no `connector_param_name` in a handler's prior
+    resolved_params may be missing in the new version.
+    """
+
+    def test_no_change_is_valid(self):
+        """
+        Given: A connector whose handler resolved_params equal the prior
+               version's set.
+        When: CO175 runs.
+        Then: No validation errors.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_resolved_params(connector.handlers[0], ["proxy", "insecure", "url"])
+        _set_resolved_params(old_connector.handlers[0], ["proxy", "insecure", "url"])
+        connector.old_base_content_object = old_connector
+
+        results = NoRemovedConnectorParamsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_added_param_is_valid(self):
+        """
+        Given: New version adds a param that wasn't in the prior version.
+        When: CO175 runs.
+        Then: No error - additions are allowed.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_resolved_params(old_connector.handlers[0], ["proxy", "insecure"])
+        _set_resolved_params(connector.handlers[0], ["proxy", "insecure", "new_param"])
+        connector.old_base_content_object = old_connector
+
+        results = NoRemovedConnectorParamsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_removed_param_flagged(self):
+        """
+        Given: New version drops a param present in the prior version.
+        When: CO175 runs.
+        Then: One validation error listing the removed param.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_resolved_params(old_connector.handlers[0], ["proxy", "insecure", "url"])
+        _set_resolved_params(connector.handlers[0], ["proxy", "insecure"])
+        connector.old_base_content_object = old_connector
+
+        results = NoRemovedConnectorParamsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "url" in results[0].message
+        assert connector.handlers[0].id in results[0].message
+
+    def test_multiple_removed_params_aggregate(self):
+        """
+        Given: Two params removed from the same handler.
+        When: CO175 runs.
+        Then: One aggregated result citing both removed params.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_resolved_params(
+            old_connector.handlers[0], ["proxy", "insecure", "url", "port"]
+        )
+        _set_resolved_params(connector.handlers[0], ["proxy", "insecure"])
+        connector.old_base_content_object = old_connector
+
+        results = NoRemovedConnectorParamsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "url" in results[0].message
+        assert "port" in results[0].message
+
+    def test_no_old_object_skipped(self):
+        """
+        Given: A connector with no old_base_content_object.
+        When: CO175 runs.
+        Then: No error - nothing to compare against.
+        """
+        connector = create_connector_object()
+        _set_resolved_params(connector.handlers[0], ["proxy", "insecure"])
+        assert connector.old_base_content_object is None
+
+        results = NoRemovedConnectorParamsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_non_xsoar_handler_ignored(self):
+        """
+        Given: A non-xsoar handler with removed params.
+        When: CO175 runs.
+        Then: No error - only XSOAR handlers are diffed.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _clear_xsoar_signals(connector.handlers[0])
+        _clear_xsoar_signals(old_connector.handlers[0])
+
+        _set_resolved_params(old_connector.handlers[0], ["proxy", "insecure"])
+        _set_resolved_params(connector.handlers[0], [])
+        connector.old_base_content_object = old_connector
+
+        results = NoRemovedConnectorParamsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_newly_added_handler_skipped(self):
+        """
+        Given: The new version has an additional handler that wasn't in the
+               prior version (so has no prior resolved_params to compare).
+        When: CO175 runs.
+        Then: No error for the newly-added handler.
+        """
+        connector = create_connector_object(
+            handlers=[{"id": "xsoar-old"}, {"id": "xsoar-new"}]
+        )
+        old_connector = create_connector_object(handlers=[{"id": "xsoar-old"}])
+
+        # Match the shared handler's params exactly so it doesn't flag.
+        old_by_id = {h.id: h for h in old_connector.handlers}
+        new_by_id = {h.id: h for h in connector.handlers}
+        _set_resolved_params(old_by_id["xsoar-old"], ["shared"])
+        _set_resolved_params(new_by_id["xsoar-old"], ["shared"])
+        _set_resolved_params(new_by_id["xsoar-new"], ["only_new"])
+
+        connector.old_base_content_object = old_connector
+
+        results = NoRemovedConnectorParamsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_error_per_handler_not_per_connector(self):
+        """
+        Given: Two XSOAR handlers each remove a different param.
+        When: CO175 runs.
+        Then: One result per offending handler, each carrying its own
+              handler.id and its own removed param.
+        """
+        connector = create_connector_object(
+            handlers=[{"id": "xsoar-a"}, {"id": "xsoar-b"}]
+        )
+        old_connector = create_connector_object(
+            handlers=[{"id": "xsoar-a"}, {"id": "xsoar-b"}]
+        )
+
+        old_by_id = {h.id: h for h in old_connector.handlers}
+        new_by_id = {h.id: h for h in connector.handlers}
+        _set_resolved_params(old_by_id["xsoar-a"], ["url", "proxy"])
+        _set_resolved_params(new_by_id["xsoar-a"], ["proxy"])
+        _set_resolved_params(old_by_id["xsoar-b"], ["port", "insecure"])
+        _set_resolved_params(new_by_id["xsoar-b"], ["insecure"])
+
+        connector.old_base_content_object = old_connector
+
+        results = NoRemovedConnectorParamsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 2
+        offenders = {r.message for r in results}
+        assert any("xsoar-a" in m and "'url'" in m for m in offenders)
+        assert any("xsoar-b" in m and "'port'" in m for m in offenders)
+
+    def test_error_path_points_to_handler_yaml(self):
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_resolved_params(old_connector.handlers[0], ["url"])
+        _set_resolved_params(connector.handlers[0], [])
+        connector.old_base_content_object = old_connector
+
+        results = NoRemovedConnectorParamsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert results[0].path is not None
+        assert results[0].path == connector.handlers[0].file_path
+        assert str(results[0].path).endswith("handler.yaml")
+
+
+# ---------------------------------------------------------------------------
+# CO176 tests
+# ---------------------------------------------------------------------------
+
+
+def _stub_profile(profile_id: str):
+    """Build a minimal ConnectionProfile-shaped object addressable by id."""
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        ConnectionProfile,
+    )
+
+    return ConnectionProfile(
+        id=profile_id,
+        type=None,
+        title=None,
+        description=None,
+        view_group=None,
+        vault_support=None,
+        vault_mappings=[],
+        discovery_url=None,
+        token_endpoint=None,
+        authorization_endpoint=None,
+        client_id=None,
+        client_secret=None,
+        refresh_token_scope=None,
+        options=None,
+        metadata=None,
+        configurations=[],
+    )
+
+
+def _set_profile_ids(connector, profile_ids):
+    """Overwrite connector.connection.profiles with the given ids."""
+    if connector.connection is None:
+        return
+    connector.connection.profiles = [_stub_profile(pid) for pid in profile_ids]
+
+
+def _set_view_group_ids(connector, view_group_ids):
+    """Overwrite connector.connection.view_groups with stubs carrying the
+    given ids. Non-grouped connectors typically have an empty list here.
+    """
+    from demisto_sdk.commands.content_graph.objects.connector import ViewGroup
+
+    if connector.connection is None:
+        return
+    connector.connection.view_groups = [ViewGroup(id=vgid) for vgid in view_group_ids]
+
+
+class TestCO176NoChangeConnectorIDs:
+    """Tests for CO176: the prior set of ids in each of the 6 id families
+    (connector_id, handler_id, capability_id, sub_capability_id, profile_id,
+    view_group_id) must be a subset of the new set (renames and removals
+    both fail; additions are allowed).
+    """
+
+    def test_no_change_is_valid(self):
+        """
+        Given: A connector whose id families equal the prior version's.
+        When: CO176 runs.
+        Then: No validation errors.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+        connector.old_base_content_object = old_connector
+
+        results = NoChangeConnectorIDsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_no_old_object_skipped(self):
+        """
+        Given: A connector with no old_base_content_object.
+        When: CO176 runs.
+        Then: No error - nothing to compare against.
+        """
+        connector = create_connector_object()
+        assert connector.old_base_content_object is None
+
+        results = NoChangeConnectorIDsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_added_handler_is_valid(self):
+        """
+        Given: New version adds a new handler; every prior id is preserved.
+        When: CO176 runs.
+        Then: No error - additions are allowed.
+        """
+        old_connector = create_connector_object(handlers=[{"id": "xsoar-a"}])
+        connector = create_connector_object(
+            handlers=[{"id": "xsoar-a"}, {"id": "xsoar-b"}]
+        )
+        connector.old_base_content_object = old_connector
+
+        results = NoChangeConnectorIDsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_removed_handler_flagged(self):
+        """
+        Given: New version drops a handler present in the prior version.
+        When: CO176 runs.
+        Then: One error citing the missing handler_id.
+        """
+        old_connector = create_connector_object(
+            handlers=[{"id": "xsoar-a"}, {"id": "xsoar-b"}]
+        )
+        connector = create_connector_object(handlers=[{"id": "xsoar-a"}])
+        connector.old_base_content_object = old_connector
+
+        results = NoChangeConnectorIDsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "handler_id" in results[0].message
+        assert "xsoar-b" in results[0].message
+
+    def test_renamed_handler_flagged(self):
+        """
+        Given: A handler renamed between versions (id changed).
+        When: CO176 runs.
+        Then: One error - the prior id is missing from the new set.
+        """
+        old_connector = create_connector_object(handlers=[{"id": "xsoar-old-name"}])
+        connector = create_connector_object(handlers=[{"id": "xsoar-new-name"}])
+        connector.old_base_content_object = old_connector
+
+        results = NoChangeConnectorIDsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "handler_id" in results[0].message
+        assert "xsoar-old-name" in results[0].message
+
+    def test_renamed_connector_id_flagged(self):
+        """
+        Given: The top-level connector id changed between versions.
+        When: CO176 runs.
+        Then: One error citing the missing connector_id.
+        """
+        old_connector = create_connector_object(connector_id="orig-connector")
+        connector = create_connector_object(connector_id="renamed-connector")
+        connector.old_base_content_object = old_connector
+
+        results = NoChangeConnectorIDsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "connector_id" in results[0].message
+        assert "orig-connector" in results[0].message
+
+    def test_removed_capability_flagged(self):
+        """
+        Given: A capability present in the prior version is removed.
+        When: CO176 runs.
+        Then: One error citing the missing capability_id.
+        """
+        old_connector = create_connector_object(
+            capabilities_data=_capabilities_payload(
+                [
+                    {"id": "cap-a", "title": "Cap A"},
+                    {"id": "cap-b", "title": "Cap B"},
+                ]
+            )
+        )
+        connector = create_connector_object(
+            capabilities_data=_capabilities_payload([{"id": "cap-a", "title": "Cap A"}])
+        )
+        connector.old_base_content_object = old_connector
+
+        results = NoChangeConnectorIDsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "capability_id" in results[0].message
+        assert "cap-b" in results[0].message
+
+    def test_removed_sub_capability_flagged(self):
+        """
+        Given: A sub-capability present in the prior version is removed.
+        When: CO176 runs.
+        Then: One error citing the missing sub_capability_id.
+        """
+        old_connector = create_connector_object(
+            capabilities_data=_capabilities_payload(
+                [
+                    {
+                        "id": "cap-a",
+                        "title": "Cap A",
+                        "sub_capabilities": [
+                            {"id": "sub-1", "title": "Sub 1"},
+                            {"id": "sub-2", "title": "Sub 2"},
+                        ],
+                    }
+                ]
+            )
+        )
+        connector = create_connector_object(
+            capabilities_data=_capabilities_payload(
+                [
+                    {
+                        "id": "cap-a",
+                        "title": "Cap A",
+                        "sub_capabilities": [
+                            {"id": "sub-1", "title": "Sub 1"},
+                        ],
+                    }
+                ]
+            )
+        )
+        connector.old_base_content_object = old_connector
+
+        results = NoChangeConnectorIDsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "sub_capability_id" in results[0].message
+        assert "sub-2" in results[0].message
+
+    def test_removed_profile_id_flagged(self):
+        """
+        Given: A profile id present in the prior version is removed.
+        When: CO176 runs.
+        Then: One error citing the missing profile_id.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_profile_ids(old_connector, ["basic-auth", "oauth2"])
+        _set_profile_ids(connector, ["basic-auth"])
+        connector.old_base_content_object = old_connector
+
+        results = NoChangeConnectorIDsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "profile_id" in results[0].message
+        assert "oauth2" in results[0].message
+
+    def test_removed_view_group_id_flagged(self):
+        """
+        Given: A view_group id present in the prior version is removed
+               (grouped-connector scenario).
+        When: CO176 runs.
+        Then: One error citing the missing view_group_id.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_view_group_ids(old_connector, ["service-a", "service-b"])
+        _set_view_group_ids(connector, ["service-a"])
+        connector.old_base_content_object = old_connector
+
+        results = NoChangeConnectorIDsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "view_group_id" in results[0].message
+        assert "service-b" in results[0].message
+
+    def test_non_grouped_no_view_groups_is_valid(self):
+        """
+        Given: A non-grouped connector - both old and new have no view_groups.
+        When: CO176 runs.
+        Then: No error - the family is naturally a no-op for non-grouped.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        # Neither side declares any view_groups.
+        assert not (old_connector.connection and old_connector.connection.view_groups)
+        assert not (connector.connection and connector.connection.view_groups)
+        connector.old_base_content_object = old_connector
+
+        results = NoChangeConnectorIDsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_multiple_families_aggregate_into_one_result(self):
+        """
+        Given: A handler AND a capability are both removed in the new version.
+        When: CO176 runs.
+        Then: A single aggregated result per connector citing both families.
+        """
+        old_connector = create_connector_object(
+            handlers=[{"id": "xsoar-a"}, {"id": "xsoar-b"}],
+            capabilities_data=_capabilities_payload(
+                [
+                    {"id": "cap-a", "title": "Cap A"},
+                    {"id": "cap-b", "title": "Cap B"},
+                ]
+            ),
+        )
+        connector = create_connector_object(
+            handlers=[{"id": "xsoar-a"}],
+            capabilities_data=_capabilities_payload(
+                [{"id": "cap-a", "title": "Cap A"}]
+            ),
+        )
+        connector.old_base_content_object = old_connector
+
+        results = NoChangeConnectorIDsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "handler_id" in results[0].message
+        assert "xsoar-b" in results[0].message
+        assert "capability_id" in results[0].message
+        assert "cap-b" in results[0].message
+
+    def test_error_path_points_to_connector_root(self):
+        old_connector = create_connector_object(
+            handlers=[{"id": "xsoar-a"}, {"id": "xsoar-b"}]
+        )
+        connector = create_connector_object(handlers=[{"id": "xsoar-a"}])
+        connector.old_base_content_object = old_connector
+
+        results = NoChangeConnectorIDsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert results[0].path is not None
+        assert results[0].path == connector.path
+
+
+# ---------------------------------------------------------------------------
+# CO179 tests
+# ---------------------------------------------------------------------------
+
+
+def _field(
+    field_id: str,
+    create_required=None,
+    edit_required=None,
+):
+    """Build a ConnectorField carrying the given create/edit `required`
+    modifier values. Passing ``None`` for a modifier omits the modifier
+    block entirely, which the validator treats as False.
+    """
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        ConnectorField,
+        FieldModifiers,
+        FieldOptions,
+    )
+
+    create_mod = (
+        FieldModifiers(required=create_required)
+        if create_required is not None
+        else None
+    )
+    edit_mod = (
+        FieldModifiers(required=edit_required) if edit_required is not None else None
+    )
+    return ConnectorField(
+        id=field_id,
+        title=field_id,
+        options=FieldOptions(
+            create_modifiers=create_mod,
+            edit_modifiers=edit_mod,
+        ),
+    )
+
+
+def _connection_with_general_fields(fields):
+    """Build a ConnectorConnectionData whose general_configurations
+    exposes the given ConnectorField list under a single FieldGroup.
+    """
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        ConnectorConnectionData,
+        FieldGroup,
+        GeneralConfigurations,
+    )
+
+    return ConnectorConnectionData(
+        general_configurations=GeneralConfigurations(
+            configurations=[FieldGroup(fields=list(fields))]
+        ),
+        profiles=[],
+    )
+
+
+def _set_connection_general_fields(connector, fields):
+    """Attach a connection.general_configurations block with the given
+    ConnectorField list to the connector.
+    """
+    connector.connection = _connection_with_general_fields(fields)
+
+
+class TestCO179NoParamRequiredTightened:
+    """Tests for CO179: no XSOAR-visible field on an XSOAR handler may have
+    `options.create_modifiers.required` OR `options.edit_modifiers.required`
+    transition from false/unset to `true` between the prior and new versions.
+    """
+
+    def test_no_change_is_valid(self):
+        """
+        Given: A connector whose field modifiers are identical to the
+               prior version.
+        When: CO179 runs.
+        Then: No validation errors.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_connection_general_fields(
+            old_connector, [_field("url", create_required=False, edit_required=False)]
+        )
+        _set_connection_general_fields(
+            connector, [_field("url", create_required=False, edit_required=False)]
+        )
+        connector.old_base_content_object = old_connector
+
+        results = NoParamRequiredTightenedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_create_modifier_tightened_flagged(self):
+        """
+        Given: A field whose `create_modifiers.required` flips false → true.
+        When: CO179 runs.
+        Then: One validation error mentioning the field and 'create'.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_connection_general_fields(
+            old_connector, [_field("url", create_required=False, edit_required=False)]
+        )
+        _set_connection_general_fields(
+            connector, [_field("url", create_required=True, edit_required=False)]
+        )
+        connector.old_base_content_object = old_connector
+
+        results = NoParamRequiredTightenedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "url" in results[0].message
+        assert "create" in results[0].message
+        assert "edit" not in results[0].message
+
+    def test_edit_modifier_tightened_flagged(self):
+        """
+        Given: A field whose `edit_modifiers.required` flips false → true.
+        When: CO179 runs.
+        Then: One validation error mentioning the field and 'edit'.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_connection_general_fields(
+            old_connector, [_field("url", create_required=False, edit_required=False)]
+        )
+        _set_connection_general_fields(
+            connector, [_field("url", create_required=False, edit_required=True)]
+        )
+        connector.old_base_content_object = old_connector
+
+        results = NoParamRequiredTightenedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "url" in results[0].message
+        assert "edit" in results[0].message
+
+    def test_both_modifiers_tightened_flagged(self):
+        """
+        Given: Both create AND edit modifiers flip false → true on same field.
+        When: CO179 runs.
+        Then: One validation error mentioning both.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_connection_general_fields(
+            old_connector, [_field("url", create_required=False, edit_required=False)]
+        )
+        _set_connection_general_fields(
+            connector, [_field("url", create_required=True, edit_required=True)]
+        )
+        connector.old_base_content_object = old_connector
+
+        results = NoParamRequiredTightenedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "url" in results[0].message
+        assert "create" in results[0].message
+        assert "edit" in results[0].message
+
+    def test_unset_to_true_treated_as_tightening(self):
+        """
+        Given: Old field had no modifier block (None); new field explicitly
+               sets create_modifiers.required=True.
+        When: CO179 runs.
+        Then: Flagged - missing/unset counts as False, so any explicit True
+              is a tightening.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_connection_general_fields(
+            old_connector,
+            [_field("url")],  # no modifiers at all
+        )
+        _set_connection_general_fields(connector, [_field("url", create_required=True)])
+        connector.old_base_content_object = old_connector
+
+        results = NoParamRequiredTightenedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "url" in results[0].message
+
+    def test_relaxation_true_to_false_is_valid(self):
+        """
+        Given: Old field was required; new field is optional.
+        When: CO179 runs.
+        Then: No error - relaxation is always allowed.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_connection_general_fields(
+            old_connector, [_field("url", create_required=True, edit_required=True)]
+        )
+        _set_connection_general_fields(
+            connector, [_field("url", create_required=False, edit_required=False)]
+        )
+        connector.old_base_content_object = old_connector
+
+        results = NoParamRequiredTightenedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_added_required_field_is_valid(self):
+        """
+        Given: A brand-new field that is required (not present in prior version).
+        When: CO179 runs.
+        Then: No error - only field ids present in BOTH versions are checked.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_connection_general_fields(old_connector, [])
+        _set_connection_general_fields(
+            connector, [_field("new_field", create_required=True, edit_required=True)]
+        )
+        connector.old_base_content_object = old_connector
+
+        results = NoParamRequiredTightenedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_removed_field_is_ignored(self):
+        """
+        Given: A required field present in old but absent from new.
+        When: CO179 runs.
+        Then: No error from CO179 (CO175 handles removals).
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_connection_general_fields(
+            old_connector, [_field("gone", create_required=True)]
+        )
+        _set_connection_general_fields(connector, [])
+        connector.old_base_content_object = old_connector
+
+        results = NoParamRequiredTightenedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_no_old_object_skipped(self):
+        """
+        Given: A connector with no old_base_content_object.
+        When: CO179 runs.
+        Then: No error - nothing to compare against.
+        """
+        connector = create_connector_object()
+        _set_connection_general_fields(connector, [_field("url", create_required=True)])
+        assert connector.old_base_content_object is None
+
+        results = NoParamRequiredTightenedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_non_xsoar_handler_ignored(self):
+        """
+        Given: A non-xsoar handler where a field tightens.
+        When: CO179 runs.
+        Then: No error - only XSOAR handlers are diffed.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _clear_xsoar_signals(connector.handlers[0])
+        _clear_xsoar_signals(old_connector.handlers[0])
+
+        _set_connection_general_fields(
+            old_connector, [_field("url", create_required=False)]
+        )
+        _set_connection_general_fields(connector, [_field("url", create_required=True)])
+        connector.old_base_content_object = old_connector
+
+        results = NoParamRequiredTightenedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_multiple_tightened_fields_aggregate(self):
+        """
+        Given: Two fields on the same handler both tighten.
+        When: CO179 runs.
+        Then: One aggregated result citing both field ids.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_connection_general_fields(
+            old_connector,
+            [
+                _field("url", create_required=False),
+                _field("port", create_required=False),
+            ],
+        )
+        _set_connection_general_fields(
+            connector,
+            [
+                _field("url", create_required=True),
+                _field("port", create_required=True),
+            ],
+        )
+        connector.old_base_content_object = old_connector
+
+        results = NoParamRequiredTightenedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "url" in results[0].message
+        assert "port" in results[0].message
+
+    def test_error_path_points_to_handler_yaml(self):
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_connection_general_fields(
+            old_connector, [_field("url", create_required=False)]
+        )
+        _set_connection_general_fields(connector, [_field("url", create_required=True)])
+        connector.old_base_content_object = old_connector
+
+        results = NoParamRequiredTightenedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert results[0].path is not None
+        assert results[0].path == connector.handlers[0].file_path
+        assert str(results[0].path).endswith("handler.yaml")
+
+
+# ---------------------------------------------------------------------------
+# CO181 tests
+# ---------------------------------------------------------------------------
+
+
+def _handler_capability_with_auth_options(cap_id: str, auth_options: list):
+    """Build a HandlerCapability with the given auth_options list.
+
+    Each entry in ``auth_options`` is a dict ``{id, methods?}`` where
+    ``methods`` may contain plain strings or ``{id, scopes?}`` dicts.
+    """
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        HandlerAuthMethod,
+        HandlerAuthOption,
+        HandlerCapability,
+    )
+
+    built_aos = []
+    for ao in auth_options:
+        methods_raw = ao.get("methods", []) or []
+        methods = []
+        for m in methods_raw:
+            if isinstance(m, dict):
+                methods.append(
+                    HandlerAuthMethod(id=m["id"], scopes=m.get("scopes", []))
+                )
+            else:
+                methods.append(m)  # keep as string
+        built_aos.append(
+            HandlerAuthOption(
+                id=ao["id"],
+                scopes=ao.get("scopes", []),
+                workloads=ao.get("workloads", []),
+                methods=methods,
+            )
+        )
+    return HandlerCapability(id=cap_id, auth_options=built_aos)
+
+
+def _set_handler_capabilities(handler, caps):
+    """Overwrite ``handler.capabilities`` with the given list of
+    HandlerCapability objects.
+    """
+    handler.capabilities = list(caps)
+
+
+class TestCO181NoRemovedAuthOption:
+    """Tests for CO181: no auth_options[].id (per handler+cap) or
+    auth_options[].methods[].id (per handler+cap+auth_option) present in
+    the prior version may be removed.
+    """
+
+    def test_no_change_is_valid(self):
+        """
+        Given: A connector whose handler auth_options and methods equal the
+               prior version's set.
+        When: CO181 runs.
+        Then: No validation errors.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        cap = _handler_capability_with_auth_options(
+            "cap-a", [{"id": "oauth2", "methods": ["client_credentials"]}]
+        )
+        _set_handler_capabilities(connector.handlers[0], [cap])
+        _set_handler_capabilities(old_connector.handlers[0], [cap])
+        connector.old_base_content_object = old_connector
+
+        results = NoRemovedAuthOptionValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_added_auth_option_is_valid(self):
+        """
+        Given: A new auth_option added to an existing capability.
+        When: CO181 runs.
+        Then: No error - additions are allowed.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_handler_capabilities(
+            old_connector.handlers[0],
+            [_handler_capability_with_auth_options("cap-a", [{"id": "oauth2"}])],
+        )
+        _set_handler_capabilities(
+            connector.handlers[0],
+            [
+                _handler_capability_with_auth_options(
+                    "cap-a", [{"id": "oauth2"}, {"id": "api_key"}]
+                )
+            ],
+        )
+        connector.old_base_content_object = old_connector
+
+        results = NoRemovedAuthOptionValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_removed_auth_option_flagged(self):
+        """
+        Given: An auth_option present in the prior version is dropped.
+        When: CO181 runs.
+        Then: One validation error citing the capability and removed auth_option.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_handler_capabilities(
+            old_connector.handlers[0],
+            [
+                _handler_capability_with_auth_options(
+                    "cap-a", [{"id": "oauth2"}, {"id": "api_key"}]
+                )
+            ],
+        )
+        _set_handler_capabilities(
+            connector.handlers[0],
+            [_handler_capability_with_auth_options("cap-a", [{"id": "oauth2"}])],
+        )
+        connector.old_base_content_object = old_connector
+
+        results = NoRemovedAuthOptionValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "cap-a" in results[0].message
+        assert "api_key" in results[0].message
+
+    def test_renamed_auth_option_flagged(self):
+        """
+        Given: An auth_option id is renamed (same cap, different id).
+        When: CO181 runs.
+        Then: The old id is reported as removed.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_handler_capabilities(
+            old_connector.handlers[0],
+            [_handler_capability_with_auth_options("cap-a", [{"id": "oauth2"}])],
+        )
+        _set_handler_capabilities(
+            connector.handlers[0],
+            [_handler_capability_with_auth_options("cap-a", [{"id": "oauth2_v2"}])],
+        )
+        connector.old_base_content_object = old_connector
+
+        results = NoRemovedAuthOptionValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "'oauth2'" in results[0].message
+        assert "oauth2_v2" not in results[0].message
+
+    def test_removed_method_flagged(self):
+        """
+        Given: An auth_option survives but one of its methods is removed.
+        When: CO181 runs.
+        Then: One validation error citing cap+auth_option and removed method.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_handler_capabilities(
+            old_connector.handlers[0],
+            [
+                _handler_capability_with_auth_options(
+                    "cap-a",
+                    [{"id": "oauth2", "methods": ["client_credentials", "auth_code"]}],
+                )
+            ],
+        )
+        _set_handler_capabilities(
+            connector.handlers[0],
+            [
+                _handler_capability_with_auth_options(
+                    "cap-a", [{"id": "oauth2", "methods": ["client_credentials"]}]
+                )
+            ],
+        )
+        connector.old_base_content_object = old_connector
+
+        results = NoRemovedAuthOptionValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "cap-a" in results[0].message
+        assert "oauth2" in results[0].message
+        assert "auth_code" in results[0].message
+
+    def test_object_form_method_supported(self):
+        """
+        Given: Methods declared in object form ``{id, scopes}`` (not plain str).
+        When: CO181 runs on a removed object-form method.
+        Then: The method id is extracted from the object and reported.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_handler_capabilities(
+            old_connector.handlers[0],
+            [
+                _handler_capability_with_auth_options(
+                    "cap-a",
+                    [
+                        {
+                            "id": "oauth2",
+                            "methods": [
+                                {"id": "client_credentials", "scopes": ["a"]},
+                                {"id": "auth_code", "scopes": ["b"]},
+                            ],
+                        }
+                    ],
+                )
+            ],
+        )
+        _set_handler_capabilities(
+            connector.handlers[0],
+            [
+                _handler_capability_with_auth_options(
+                    "cap-a",
+                    [
+                        {
+                            "id": "oauth2",
+                            "methods": [{"id": "client_credentials", "scopes": ["a"]}],
+                        }
+                    ],
+                )
+            ],
+        )
+        connector.old_base_content_object = old_connector
+
+        results = NoRemovedAuthOptionValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "auth_code" in results[0].message
+
+    def test_capability_dropped_is_not_reported_here(self):
+        """
+        Given: A whole capability is dropped between versions (CO176's
+               capability_id family covers this).
+        When: CO181 runs.
+        Then: No CO181 error - it only fires for auth_options on capabilities
+              that survive.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_handler_capabilities(
+            old_connector.handlers[0],
+            [
+                _handler_capability_with_auth_options("cap-a", [{"id": "oauth2"}]),
+                _handler_capability_with_auth_options("cap-b", [{"id": "api_key"}]),
+            ],
+        )
+        _set_handler_capabilities(
+            connector.handlers[0],
+            [_handler_capability_with_auth_options("cap-a", [{"id": "oauth2"}])],
+        )
+        connector.old_base_content_object = old_connector
+
+        results = NoRemovedAuthOptionValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_no_old_object_skipped(self):
+        """
+        Given: A connector with no old_base_content_object.
+        When: CO181 runs.
+        Then: No error - nothing to compare against.
+        """
+        connector = create_connector_object()
+        _set_handler_capabilities(
+            connector.handlers[0],
+            [_handler_capability_with_auth_options("cap-a", [{"id": "oauth2"}])],
+        )
+        assert connector.old_base_content_object is None
+
+        results = NoRemovedAuthOptionValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_non_xsoar_handler_ignored(self):
+        """
+        Given: A non-xsoar handler with removed auth_options.
+        When: CO181 runs.
+        Then: No error - only XSOAR handlers are diffed.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _clear_xsoar_signals(connector.handlers[0])
+        _clear_xsoar_signals(old_connector.handlers[0])
+
+        _set_handler_capabilities(
+            old_connector.handlers[0],
+            [
+                _handler_capability_with_auth_options(
+                    "cap-a", [{"id": "oauth2"}, {"id": "api_key"}]
+                )
+            ],
+        )
+        _set_handler_capabilities(
+            connector.handlers[0],
+            [_handler_capability_with_auth_options("cap-a", [{"id": "oauth2"}])],
+        )
+        connector.old_base_content_object = old_connector
+
+        results = NoRemovedAuthOptionValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_multiple_offenders_aggregate(self):
+        """
+        Given: Two capabilities on the same handler each lose an auth_option.
+        When: CO181 runs.
+        Then: One aggregated result citing both capabilities.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_handler_capabilities(
+            old_connector.handlers[0],
+            [
+                _handler_capability_with_auth_options(
+                    "cap-a", [{"id": "oauth2"}, {"id": "api_key"}]
+                ),
+                _handler_capability_with_auth_options(
+                    "cap-b", [{"id": "oauth2"}, {"id": "basic"}]
+                ),
+            ],
+        )
+        _set_handler_capabilities(
+            connector.handlers[0],
+            [
+                _handler_capability_with_auth_options("cap-a", [{"id": "oauth2"}]),
+                _handler_capability_with_auth_options("cap-b", [{"id": "oauth2"}]),
+            ],
+        )
+        connector.old_base_content_object = old_connector
+
+        results = NoRemovedAuthOptionValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "cap-a" in results[0].message
+        assert "cap-b" in results[0].message
+        assert "api_key" in results[0].message
+        assert "basic" in results[0].message
+
+    def test_error_path_points_to_handler_yaml(self):
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_handler_capabilities(
+            old_connector.handlers[0],
+            [
+                _handler_capability_with_auth_options(
+                    "cap-a", [{"id": "oauth2"}, {"id": "api_key"}]
+                )
+            ],
+        )
+        _set_handler_capabilities(
+            connector.handlers[0],
+            [_handler_capability_with_auth_options("cap-a", [{"id": "oauth2"}])],
+        )
+        connector.old_base_content_object = old_connector
+
+        results = NoRemovedAuthOptionValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert results[0].path is not None
+        assert results[0].path == connector.handlers[0].file_path
+        assert str(results[0].path).endswith("handler.yaml")
+
+
+# ---------------------------------------------------------------------------
+# CO183 tests
+# ---------------------------------------------------------------------------
+
+
+def _set_grouped(connector, value):
+    """Set ``connector.settings.grouped`` to ``value``, materializing a
+    default ConnectorSettings if the connector had none.
+    """
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        ConnectorSettings,
+    )
+
+    if connector.settings is None:
+        connector.settings = ConnectorSettings()
+    connector.settings.grouped = value
+
+
+class TestCO183NoGroupedFlagFlipped:
+    """Tests for CO183: ``settings.grouped`` must not change value between
+    the prior and new versions of a connector.
+    """
+
+    def test_no_change_false_to_false_valid(self):
+        """
+        Given: Both old and new connectors have `settings.grouped == False`.
+        When: CO183 runs.
+        Then: No validation errors.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_grouped(old_connector, False)
+        _set_grouped(connector, False)
+        connector.old_base_content_object = old_connector
+
+        results = NoGroupedFlagFlippedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_no_change_true_to_true_valid(self):
+        """
+        Given: Both old and new have `settings.grouped == True`.
+        When: CO183 runs.
+        Then: No validation errors.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_grouped(old_connector, True)
+        _set_grouped(connector, True)
+        connector.old_base_content_object = old_connector
+
+        results = NoGroupedFlagFlippedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_false_to_true_flagged(self):
+        """
+        Given: Old grouped=False, new grouped=True.
+        When: CO183 runs.
+        Then: One validation error citing the old and new values.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_grouped(old_connector, False)
+        _set_grouped(connector, True)
+        connector.old_base_content_object = old_connector
+
+        results = NoGroupedFlagFlippedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "False" in results[0].message
+        assert "True" in results[0].message
+
+    def test_true_to_false_flagged(self):
+        """
+        Given: Old grouped=True, new grouped=False.
+        When: CO183 runs.
+        Then: One validation error citing the old and new values.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_grouped(old_connector, True)
+        _set_grouped(connector, False)
+        connector.old_base_content_object = old_connector
+
+        results = NoGroupedFlagFlippedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "True" in results[0].message
+        assert "False" in results[0].message
+
+    def test_missing_settings_treated_as_false(self):
+        """
+        Given: Old version has no `settings` block (equivalent to False);
+               new version explicitly sets grouped=False.
+        When: CO183 runs.
+        Then: No error - both sides resolve to False.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        old_connector.settings = None
+        _set_grouped(connector, False)
+        connector.old_base_content_object = old_connector
+
+        results = NoGroupedFlagFlippedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_missing_settings_to_true_flagged(self):
+        """
+        Given: Old version has no `settings` block (resolves to False);
+               new version explicitly sets grouped=True.
+        When: CO183 runs.
+        Then: One error - False → True is still a flip.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        old_connector.settings = None
+        _set_grouped(connector, True)
+        connector.old_base_content_object = old_connector
+
+        results = NoGroupedFlagFlippedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "True" in results[0].message
+
+    def test_no_old_object_skipped(self):
+        """
+        Given: A connector with no old_base_content_object.
+        When: CO183 runs.
+        Then: No error - nothing to compare against.
+        """
+        connector = create_connector_object()
+        _set_grouped(connector, True)
+        assert connector.old_base_content_object is None
+
+        results = NoGroupedFlagFlippedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_error_path_points_to_connector_root(self):
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_grouped(old_connector, False)
+        _set_grouped(connector, True)
+        connector.old_base_content_object = old_connector
+
+        results = NoGroupedFlagFlippedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert results[0].path is not None
+        assert results[0].path == connector.path

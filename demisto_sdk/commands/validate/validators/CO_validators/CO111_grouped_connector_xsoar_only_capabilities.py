@@ -12,9 +12,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Connector
 
 
-class GroupedConnectorXSOAROnlyCapabilitiesValidator(
-    ConnectorsValidator[ContentTypes]
-):
+class GroupedConnectorXSOAROnlyCapabilitiesValidator(ConnectorsValidator[ContentTypes]):
     error_code = "CO111"
     description = (
         "Validates that a grouped connector contains only XSOAR-owned handlers "
@@ -56,9 +54,7 @@ class GroupedConnectorXSOAROnlyCapabilitiesValidator(
                         validator=self,
                         message=self.error_message.format(
                             connector_id=connector.object_id,
-                            handlers=", ".join(
-                                map(repr, sorted(non_xsoar_handlers))
-                            ),
+                            handlers=", ".join(map(repr, sorted(non_xsoar_handlers))),
                         ),
                         content_object=connector,
                         path=connector.capabilities_file.file_path,

@@ -45,8 +45,7 @@ class IsValidConfigurationsMetadataValidator(ConnectorsValidator[ContentTypes]):
         "fixed strings so operators recognize the page instantly."
     )
     error_message = (
-        "Connector '{connector_id}' configurations metadata is invalid: "
-        "{details}."
+        "Connector '{connector_id}' configurations metadata is invalid: " "{details}."
     )
     related_field = "metadata"
     is_auto_fixable = False
@@ -75,10 +74,7 @@ class IsValidConfigurationsMetadataValidator(ConnectorsValidator[ContentTypes]):
                         validator=self,
                         message=self.error_message.format(
                             connector_id=connector.object_id,
-                            details=(
-                                "metadata block is missing or not a "
-                                "mapping"
-                            ),
+                            details=("metadata block is missing or not a " "mapping"),
                         ),
                         content_object=connector,
                         path=configurations_file.file_path,

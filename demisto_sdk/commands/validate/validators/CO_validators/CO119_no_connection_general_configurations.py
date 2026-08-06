@@ -12,9 +12,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Connector
 
 
-class NoConnectionGeneralConfigurationsValidator(
-    ConnectorsValidator[ContentTypes]
-):
+class NoConnectionGeneralConfigurationsValidator(ConnectorsValidator[ContentTypes]):
     error_code = "CO119"
     description = (
         "Validates that grouped connectors do not declare a "

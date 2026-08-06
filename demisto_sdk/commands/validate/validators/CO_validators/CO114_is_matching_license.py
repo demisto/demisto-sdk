@@ -51,9 +51,7 @@ class IsMatchingLicenseValidator(ConnectorsValidator[ContentTypes]):
                 # CapabilityData exposes its licenses via ``config``, not a
                 # top-level ``required_license`` field.
                 capability_license = (
-                    capability.config.required_license
-                    if capability.config
-                    else []
+                    capability.config.required_license if capability.config else []
                 )
                 details.extend(
                     self._check_entry(
@@ -130,9 +128,7 @@ class IsMatchingLicenseValidator(ConnectorsValidator[ContentTypes]):
 
         # No required_license => the entry claims support under ALL licenses.
         required_set: Set[str] = (
-            set(required_license)
-            if required_license
-            else set(ALL_SUPPORTED_MODULES)
+            set(required_license) if required_license else set(ALL_SUPPORTED_MODULES)
         )
 
         handler_ids = self._subscribing_handler_ids(connector, entry_id)
@@ -142,9 +138,7 @@ class IsMatchingLicenseValidator(ConnectorsValidator[ContentTypes]):
             return details
 
         for handler_id in handler_ids:
-            handler = next(
-                (h for h in connector.handlers if h.id == handler_id), None
-            )
+            handler = next((h for h in connector.handlers if h.id == handler_id), None)
             if handler is None:
                 continue
 
@@ -204,9 +198,7 @@ class IsMatchingLicenseValidator(ConnectorsValidator[ContentTypes]):
         return details
 
     @staticmethod
-    def _subscribing_handler_ids(
-        connector: ContentTypes, entry_id: str
-    ) -> List[str]:
+    def _subscribing_handler_ids(connector: ContentTypes, entry_id: str) -> List[str]:
         """Return the handler ids subscribing to the capability/sub-capability."""
         mapping = connector.capability_handler_map.get(entry_id)
         if not mapping:

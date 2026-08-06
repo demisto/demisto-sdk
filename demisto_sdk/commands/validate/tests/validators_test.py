@@ -50,6 +50,7 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equa
 from demisto_sdk.commands.validate.validators.base_validator import (
     VALIDATION_CATEGORIES,
     BaseValidator,
+    ConnectorsValidator,
     FixResult,
     ValidationResult,
     get_all_validators,
@@ -1196,10 +1197,10 @@ class TestConnectorAwareInitializerCrossMatch:
 
         with (
             patch.object(
-                ConnectorAwareInitializer, "_graph_search_integration"
+                ConnectorAwareInitializer, "_all_graph_integrations"
             ) as mock_graph,
             patch.object(
-                ConnectorAwareInitializer, "_graph_search_connectors", return_value=[]
+                ConnectorAwareInitializer, "_all_graph_connectors", return_value=[]
             ),
         ):
             initializer._cross_match_and_expand({integration}, {connector})
@@ -1223,7 +1224,7 @@ class TestConnectorAwareInitializerCrossMatch:
         initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
 
         with patch.object(
-            ConnectorAwareInitializer, "_graph_search_connectors", return_value=[]
+            ConnectorAwareInitializer, "_all_graph_connectors", return_value=[]
         ):
             result = initializer._cross_match_and_expand({integration}, set())
 
@@ -1244,7 +1245,7 @@ class TestConnectorAwareInitializerCrossMatch:
 
         with patch.object(
             ConnectorAwareInitializer,
-            "_graph_search_connectors",
+            "_all_graph_connectors",
             return_value=[discovered_connector],
         ):
             result = initializer._cross_match_and_expand({integration}, set())
@@ -1268,17 +1269,18 @@ class TestConnectorAwareInitializerCrossMatch:
         with (
             patch.object(
                 ConnectorAwareInitializer,
-                "_graph_search_connectors",
+                "_all_graph_connectors",
                 return_value=[],
             ),
             patch.object(
                 ConnectorAwareInitializer,
-                "_graph_search_integration",
+                "_all_graph_integrations",
                 return_value=[graph_integration],
             ) as mock_graph,
         ):
             result = initializer._cross_match_and_expand(set(), {connector})
-            mock_graph.assert_called_once_with("TestIntegration")
+            # Batched: the whole integration table is fetched once, not per handler.
+            mock_graph.assert_called_once()
 
         handler = connector.xsoar_handlers[0]
         assert handler.related_integration is graph_integration
@@ -1303,12 +1305,12 @@ class TestConnectorAwareInitializerCrossMatch:
         with (
             patch.object(
                 ConnectorAwareInitializer,
-                "_graph_search_connectors",
+                "_all_graph_connectors",
                 return_value=[],
             ),
             patch.object(
                 ConnectorAwareInitializer,
-                "_graph_search_integration",
+                "_all_graph_integrations",
                 return_value=[deprecated_integration],
             ),
         ):
@@ -1340,12 +1342,12 @@ class TestConnectorAwareInitializerCrossMatch:
         with (
             patch.object(
                 ConnectorAwareInitializer,
-                "_graph_search_connectors",
+                "_all_graph_connectors",
                 return_value=[],
             ),
             patch.object(
                 ConnectorAwareInitializer,
-                "_graph_search_integration",
+                "_all_graph_integrations",
                 return_value=[non_platform_integration],
             ),
         ):
@@ -1399,10 +1401,10 @@ class TestConnectorAwareInitializerCrossMatch:
 
         with (
             patch.object(
-                ConnectorAwareInitializer, "_graph_search_integration"
+                ConnectorAwareInitializer, "_all_graph_integrations"
             ) as mock_graph,
             patch.object(
-                ConnectorAwareInitializer, "_graph_search_connectors", return_value=[]
+                ConnectorAwareInitializer, "_all_graph_connectors", return_value=[]
             ),
         ):
             initializer._cross_match_and_expand(
@@ -1417,6 +1419,84 @@ class TestConnectorAwareInitializerCrossMatch:
         )
         assert sf_handler.related_integration is integration1
         assert iam_handler.related_integration is integration2
+
+    def test_graph_queries_are_batched_across_many_unmatched_items(self):
+        """
+        Given: Several connectors whose handlers reference integrations that are
+               NOT in the working set (so both graph-expand phases run), and an
+               unmatched integration with no connector in the set.
+        When: _cross_match_and_expand is called.
+        Then: The whole connector table and the whole integration table are each
+              fetched exactly once (batched), regardless of how many unmatched
+              integrations/handlers there are - proving the per-item query
+              explosion is gone.
+        """
+        connector_a = create_connector_object(
+            connector_id="conn-a",
+            handlers=[
+                {
+                    "id": "xsoar-a",
+                    "triggering": {
+                        "labels": {
+                            "xsoar-integration-id": "IntA",
+                            "xsoar-pack-id": "IntA",
+                            "xsoar-content-id": "conn-a",
+                        },
+                    },
+                },
+            ],
+        )
+        connector_b = create_connector_object(
+            connector_id="conn-b",
+            handlers=[
+                {
+                    "id": "xsoar-b",
+                    "triggering": {
+                        "labels": {
+                            "xsoar-integration-id": "IntB",
+                            "xsoar-pack-id": "IntB",
+                            "xsoar-content-id": "conn-b",
+                        },
+                    },
+                },
+            ],
+        )
+        graph_int_a = create_integration_object(
+            paths=["commonfields.id", "name"], values=["IntA", "IntA"]
+        )
+        graph_int_b = create_integration_object(
+            paths=["commonfields.id", "name"], values=["IntB", "IntB"]
+        )
+        # An integration in the set with no matching connector handler present.
+        unmatched_integration = create_integration_object(
+            paths=["commonfields.id", "name"], values=["Orphan", "Orphan"]
+        )
+
+        initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
+
+        with (
+            patch.object(
+                ConnectorAwareInitializer,
+                "_all_graph_connectors",
+                return_value=[],
+            ) as mock_connectors,
+            patch.object(
+                ConnectorAwareInitializer,
+                "_all_graph_integrations",
+                return_value=[graph_int_a, graph_int_b],
+            ) as mock_integrations,
+        ):
+            initializer._cross_match_and_expand(
+                {unmatched_integration}, {connector_a, connector_b}
+            )
+
+        # Batched: one query for all connectors, one for all integrations,
+        # no matter how many unmatched integrations/handlers exist.
+        mock_connectors.assert_called_once()
+        mock_integrations.assert_called_once()
+
+        assert connector_a.xsoar_handlers[0].related_integration is graph_int_a
+        assert connector_b.xsoar_handlers[0].related_integration is graph_int_b
 
 
 class TestConnectorAwareInitializerGatherObjects:
@@ -2025,3 +2105,75 @@ class TestConnectorHandlerIgnoreFiltering:
         filtered = manager.filter_validation_results([result])
 
         assert result in filtered
+
+
+class TestImplicitGraphInitialization:
+    """Tests for the implicit graph-initialization behavior (Issue 1).
+
+    Covers:
+    * ``BaseValidator.requires_graph`` correctly detecting graph-dependent
+      validators (GR/PA/SC/AG graph validators and ConnectorsValidator) while
+      leaving pure file-based validators alone.
+    * ``BaseValidator.ensure_graph_initialized`` being idempotent - it never
+      rebuilds when the graph interface is already wired (the connect-only
+      ``--graph`` CI path).
+    """
+
+    def teardown_method(self):
+        # Never leak a wired graph interface between tests.
+        BaseValidator.graph_interface = None
+
+    def test_requires_graph_true_for_graph_validator(self):
+        """A GR validator (overrides obtain_invalid_content_items_using_graph)
+        is detected as needing the graph."""
+        assert MarketplacesFieldValidatorAllFiles.requires_graph() is True
+
+    def test_requires_graph_true_for_connectors_validator(self):
+        """ConnectorsValidator opts in via uses_graph even though it does not
+        override obtain_invalid_content_items_using_graph."""
+        assert ConnectorsValidator.uses_graph is True
+        assert ConnectorsValidator.requires_graph() is True
+
+    def test_requires_graph_false_for_file_based_validator(self):
+        """A pure file-based validator does not need the graph."""
+        assert PackMetadataNameValidator.requires_graph() is False
+
+    def test_ensure_graph_initialized_is_idempotent(self, mocker):
+        """When the graph interface is already wired (e.g. connect-only via
+        --graph), ensure_graph_initialized must NOT rebuild the graph."""
+        sentinel = object()
+        BaseValidator.graph_interface = sentinel  # type: ignore[assignment]
+
+        update_spy = mocker.patch(
+            "demisto_sdk.commands.validate.validators.base_validator.update_content_graph"
+        )
+        interface_spy = mocker.patch(
+            "demisto_sdk.commands.validate.validators.base_validator.ContentGraphInterface"
+        )
+
+        result = BaseValidator.ensure_graph_initialized()
+
+        assert result is sentinel
+        update_spy.assert_not_called()
+        interface_spy.assert_not_called()
+
+    def test_ensure_graph_initialized_builds_when_missing(self, mocker):
+        """When no graph interface is wired, ensure_graph_initialized builds and
+        updates it via the shared update_content_graph path (the same one used
+        for regular and private content)."""
+        BaseValidator.graph_interface = None
+
+        fake_interface = object()
+        interface_spy = mocker.patch(
+            "demisto_sdk.commands.validate.validators.base_validator.ContentGraphInterface",
+            return_value=fake_interface,
+        )
+        update_spy = mocker.patch(
+            "demisto_sdk.commands.validate.validators.base_validator.update_content_graph"
+        )
+
+        result = BaseValidator.ensure_graph_initialized()
+
+        assert result is fake_interface
+        interface_spy.assert_called_once()
+        update_spy.assert_called_once()

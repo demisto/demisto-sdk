@@ -116,6 +116,12 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     related_file_type: ClassVar[Optional[List[RelatedFileType]]] = None
     expected_execution_mode: ClassVar[Optional[List[ExecutionMode]]] = None
     create_graph_from_scratch: ClassVar[bool] = False
+    # Explicit opt-in marker for validators that read the content graph outside
+    # of ``obtain_invalid_content_items_using_graph`` (e.g. ConnectorsValidator,
+    # which relies on graph-resolved handler<->integration links). Graph-based
+    # validators that override ``obtain_invalid_content_items_using_graph`` are
+    # detected automatically by ``requires_graph`` and do not need to set this.
+    uses_graph: ClassVar[bool] = False
 
     def get_content_types(self):
         args = (get_args(self.__orig_bases__[0]) or get_args(self.__orig_bases__[1]))[0]  # type: ignore
@@ -183,18 +189,57 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     ) -> FixResult:
         raise NotImplementedError
 
+    @classmethod
+    def requires_graph(cls) -> bool:
+        """Whether this validator needs the content graph to run.
+
+        True when the validator either explicitly sets ``uses_graph`` (e.g.
+        ``ConnectorsValidator``) or overrides
+        ``obtain_invalid_content_items_using_graph`` (every GR/PA/SC/AG graph
+        validator). This lets the validate flow decide up-front whether the
+        graph must be built/updated - without the caller needing the ``--graph``
+        flag.
+        """
+        if cls.uses_graph:
+            return True
+        return (
+            getattr(cls, "obtain_invalid_content_items_using_graph", None)
+            is not getattr(
+                BaseValidator, "obtain_invalid_content_items_using_graph", None
+            )
+        )
+
+    @classmethod
+    def ensure_graph_initialized(cls) -> ContentGraphInterface:
+        """Build/update the content graph once and wire it onto ``BaseValidator``.
+
+        This is the single, shared graph-initialization path used by the lazy
+        ``graph`` property, the connectors flow, and the general validate flow.
+        It runs the same ``update_content_graph`` machinery as the standalone
+        ``graph update`` command, so it: imports the existing graph, updates only
+        what changed (unless ``create_graph_from_scratch`` forces a rebuild),
+        includes private content via ``private_content_path``, and skips work
+        entirely when the graph is already up-to-date.
+
+        Idempotent: if the graph interface is already wired (e.g. connect-only
+        via ``--graph`` in CI, or a previous call), it is returned as-is without
+        rebuilding.
+        """
+        if BaseValidator.graph_interface:
+            return BaseValidator.graph_interface
+        logger.info("Graph validations were selected, will init graph")
+        BaseValidator.graph_interface = ContentGraphInterface()
+        update_content_graph(
+            BaseValidator.graph_interface,
+            use_git=True,
+            private_content_path=BaseValidator.private_content_path,
+            create_graph_from_scratch=BaseValidator.create_graph_from_scratch,
+        )
+        return BaseValidator.graph_interface
+
     @property
     def graph(self) -> ContentGraphInterface:
-        if not self.graph_interface:
-            logger.info("Graph validations were selected, will init graph")
-            BaseValidator.graph_interface = ContentGraphInterface()
-            update_content_graph(
-                BaseValidator.graph_interface,
-                use_git=True,
-                private_content_path=BaseValidator.private_content_path,
-                create_graph_from_scratch=BaseValidator.create_graph_from_scratch,
-            )
-        return self.graph_interface
+        return self.ensure_graph_initialized()
 
     @classmethod
     def set_private_content_path(cls, private_content_path: Optional[Path]) -> None:
@@ -244,6 +289,11 @@ class ConnectorsValidator(BaseValidator[ContentTypes], ABC):
     against `connectors_type_to_validate` based on the connector's `grouped`
     setting.
     """
+
+    # Connector validators rely on handler<->integration links that are
+    # resolved from the content graph during initialization, so the graph must
+    # be built/updated even though these validators do not query it directly.
+    uses_graph: ClassVar[bool] = True
 
     connectors_type_to_validate: List[ConnectorType] = Field(
         default_factory=lambda: list(ConnectorType)

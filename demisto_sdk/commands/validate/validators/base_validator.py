@@ -202,11 +202,10 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         """
         if cls.uses_graph:
             return True
-        return (
-            getattr(cls, "obtain_invalid_content_items_using_graph", None)
-            is not getattr(
-                BaseValidator, "obtain_invalid_content_items_using_graph", None
-            )
+        return getattr(
+            cls, "obtain_invalid_content_items_using_graph", None
+        ) is not getattr(
+            BaseValidator, "obtain_invalid_content_items_using_graph", None
         )
 
     @classmethod

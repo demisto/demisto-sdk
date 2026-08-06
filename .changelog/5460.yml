@@ -1,8 +1,0 @@
-changes:
-- description: Added a new graph validation (GR116) that verifies an AgentixAgent's total context (its own name, description, system instructions and conversation starters, plus the name and description of every action, skill, and collection it depends on) does not exceed the maximum allowed character budget.
-  type: feature
-- description: Added a new validation (AG118) that enforces an evaluator test file ('<ActionName>_test.yml') exists next to each AgentixAction.
-  type: feature
-- description: Updated the AG105 validation to align the AgentixAction argument/output valid types (removed 'keyValue' and 'textArea') and to compare types case-sensitively.
-  type: fix
-pr_number: 5460

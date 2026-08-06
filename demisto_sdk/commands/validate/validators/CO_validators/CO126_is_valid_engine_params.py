@@ -148,7 +148,12 @@ def _key_set(values: Optional[List[dict]]) -> Set[str]:
     """Extract the ``key`` values from an ``options.values`` list."""
     if not values:
         return set()
-    return {v.get("key") for v in values if v.get("key") is not None}
+    keys: Set[str] = set()
+    for v in values:
+        k = v.get("key")
+        if isinstance(k, str):
+            keys.add(k)
+    return keys
 
 
 def _dynamic_values(field: ConnectorField) -> Optional[dict]:

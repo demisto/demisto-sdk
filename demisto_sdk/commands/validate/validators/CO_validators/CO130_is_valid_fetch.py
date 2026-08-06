@@ -299,15 +299,15 @@ class IsValidFetchValidator(ConnectorsValidator[ContentTypes]):
 
         issues: List[str] = []
         for expected_id, expected_type, expected_dyn in FETCH_ISSUES_REQUIRED_FIELDS:
-            field = fields_by_id.get(expected_id)
-            if field is None:
+            found_field = fields_by_id.get(expected_id)
+            if found_field is None:
                 issues.append(
                     f"capability '{capability_id}' is missing required "
                     f"field '{expected_id}'"
                 )
                 continue
 
-            actual_type = field.get("field_type")
+            actual_type = found_field.get("field_type")
             if actual_type != expected_type:
                 issues.append(
                     f"capability '{capability_id}' field '{expected_id}' "
@@ -316,7 +316,7 @@ class IsValidFetchValidator(ConnectorsValidator[ContentTypes]):
                 )
 
             if expected_dyn is not None:
-                actual_dyn = _field_dynamic_field(field)
+                actual_dyn = _field_dynamic_field(found_field)
                 if actual_dyn != expected_dyn:
                     issues.append(
                         f"capability '{capability_id}' field "

@@ -22,7 +22,7 @@ jobs:
     if: github.ref_name != 'master' && github.actor != 'dependabot[bot]'
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -53,7 +53,7 @@ jobs:
     name: Pre Commit Checks
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
@@ -83,7 +83,7 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -136,7 +136,7 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -175,7 +175,7 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -208,7 +208,7 @@ jobs:
     if: github.ref_name != 'master'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Set up Python 3.12
         uses: actions/setup-python@v6
         with:
@@ -241,7 +241,7 @@ jobs:
     name: Test Pre-Commit Command
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
@@ -249,7 +249,7 @@ jobs:
           python-version: "3.11"  # CIAC-11940
 
       - name: Checkout Content
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           repository: demisto/content
@@ -312,7 +312,7 @@ jobs:
     name: Test validate-content-path
     steps:
       - name: Checkout SDK
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -326,7 +326,7 @@ jobs:
 
       - name: Checkout Content
         if: steps.files-changed.outputs.any_changed == 'true'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
           repository: demisto/content
@@ -352,7 +352,7 @@ jobs:
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
@@ -360,7 +360,7 @@ jobs:
           python-version: "3.12"
 
       - name: Checkout content
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: demisto/content
           path: content
@@ -397,7 +397,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run Validate
         uses: ./.github/actions/validate
@@ -421,7 +421,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
@@ -443,7 +443,7 @@ jobs:
     name: Generate Validate Docs
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 1
 
@@ -469,7 +469,7 @@ jobs:
     name: Verify SDK Pip Installation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 1
 

@@ -4,15 +4,15 @@ from typing import Iterable, List
 
 from demisto_sdk.commands.content_graph.objects.connector import Connector
 from demisto_sdk.commands.validate.validators.base_validator import (
-    BaseValidator,
+    ConnectorsValidator,
     ValidationResult,
 )
 
 ContentTypes = Connector
 
 
-class IsMatchingIntegrationExistValidator(BaseValidator[ContentTypes]):
-    error_code = "CO100"
+class IsMatchingIntegrationExistValidator(ConnectorsValidator[ContentTypes]):
+    error_code = "CO164"
     description = (
         "Validates that each XSOAR handler in a connector has an "
         "xsoar-integration-id label and that the referenced integration "

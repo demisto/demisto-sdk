@@ -41,6 +41,7 @@ from demisto_sdk.commands.common.tools import (
     find_type_by_path,
     get_content_path,
     get_file_by_status,
+    get_relative_path_from_connectors_dir,
     get_relative_path_from_packs_dir,
     is_external_repo,
     is_private_content_file,
@@ -61,6 +62,56 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
     InvalidContentItemException,
     NotAContentItemException,
 )
+
+# Precedence for merging conflicting git statuses that collapse onto the same
+# content item (e.g. several files inside a single connector directory). A lower
+# number means higher precedence. The rationale:
+#   - MODIFIED wins over everything: if a content item that already exists gets
+#     any change, the item as a whole is "modified".
+#   - RENAMED outranks ADDED because a rename implies the item pre-existed.
+#   - ADDED outranks a bare None (an implicitly-collected related file).
+#   - None (implicitly collected) has the lowest precedence.
+# DELETED is intentionally not part of this precedence: a deleted file that
+# collapses onto an otherwise present item should never mask a real change, and
+# fully-deleted items are handled separately.
+_GIT_STATUS_PRECEDENCE: Dict[Union[GitStatuses, None], int] = {
+    GitStatuses.MODIFIED: 0,
+    GitStatuses.RENAMED: 1,
+    GitStatuses.ADDED: 2,
+    None: 3,
+}
+
+
+def _merge_git_statuses(
+    existing: Union[GitStatuses, None], incoming: Union[GitStatuses, None]
+) -> Union[GitStatuses, None]:
+    """Merge two git statuses that resolve to the same content item.
+
+    When multiple changed files collapse onto a single content item (most
+    notably a connector directory where, for example, ``handler.yaml`` is
+    MODIFIED while ``.connector-ignore`` is ADDED), the item must be represented
+    by a single status. Choosing the first-seen status is order-dependent and
+    can incorrectly mark an existing, modified connector as ADDED.
+
+    This helper resolves such conflicts deterministically using
+    ``_GIT_STATUS_PRECEDENCE`` so that, for instance, ``ADDED`` + ``MODIFIED``
+    always yields ``MODIFIED``.
+
+    Args:
+        existing: The status already recorded for the item (or ``None`` if the
+            item has not been seen yet / was only implicitly collected).
+        incoming: The status of the newly-processed file.
+
+    Returns:
+        The status with the highest precedence between the two.
+    """
+    if existing is None and incoming is None:
+        return None
+    # Treat an "unseen" item (not yet a key in the dict) the same as None so the
+    # incoming status is adopted on first sight.
+    existing_rank = _GIT_STATUS_PRECEDENCE.get(existing, len(_GIT_STATUS_PRECEDENCE))
+    incoming_rank = _GIT_STATUS_PRECEDENCE.get(incoming, len(_GIT_STATUS_PRECEDENCE))
+    return existing if existing_rank <= incoming_rank else incoming
 
 
 def _process_status_file(
@@ -232,6 +283,7 @@ class Initializer:
         execution_mode: Optional[ExecutionMode] = None,
         handling_private_repositories: bool = False,
         private_content_path: Optional[Path] = None,
+        connectors_content_path: Optional[Path] = None,
     ):
         self.staged = staged
         self.file_path = file_path
@@ -243,6 +295,13 @@ class Initializer:
             Path(private_content_path) if private_content_path else None
         )
         self.private_content_files: set[Path] = set()
+        # Unified Connector Content (UCC) repo path. When set (via -ccp with -g),
+        # the UCC repo is git-diffed directly so only connectors actually changed
+        # there are collected - mirroring the private_content_path handling.
+        self.connectors_content_path = (
+            Path(connectors_content_path) if connectors_content_path else None
+        )
+        self.connectors_content_files: set[Path] = set()
 
         # Set environment variable to enable private repo mode when handling private repositories
         if handling_private_repositories:
@@ -331,6 +390,20 @@ class Initializer:
             added_files = added_files.union(private_added_files)
             renamed_files = renamed_files.union(private_renamed_files)
 
+        if self.connectors_content_path:
+            (
+                connectors_modified_files,
+                connectors_added_files,
+                connectors_renamed_files,
+            ) = self.get_unfiltered_changed_files_from_git(self.connectors_content_path)
+            self.connectors_content_files = connectors_modified_files.union(
+                connectors_added_files
+            ).union(connectors_renamed_files)
+
+            modified_files = modified_files.union(connectors_modified_files)
+            added_files = added_files.union(connectors_added_files)
+            renamed_files = renamed_files.union(connectors_renamed_files)
+
         # filter to only specified paths if given
         if file_path:
             (modified_files, added_files, renamed_files) = self.specify_files_by_status(
@@ -352,6 +425,16 @@ class Initializer:
             )
             self.private_content_files.update(private_deleted_files)
             deleted_files = deleted_files.union(private_deleted_files)
+
+        if self.connectors_content_path:
+            connectors_git_util = GitUtil(self.connectors_content_path)
+            connectors_deleted_files = connectors_git_util.deleted_files(
+                prev_ver=self.prev_ver,
+                committed_only=self.committed_only,
+                staged_only=self.staged,
+            )
+            self.connectors_content_files.update(connectors_deleted_files)
+            deleted_files = deleted_files.union(connectors_deleted_files)
 
         # Handle deleted files for private repositories
         if self.handling_private_repositories:
@@ -581,7 +664,13 @@ class Initializer:
             content_dto = ContentDTO.from_path()
             if not isinstance(content_dto, ContentDTO):
                 raise Exception("no content found")
-            content_objects_to_run = set(content_dto.packs)
+            # Include connectors alongside packs so connector-only validators
+            # (e.g. CO100) run under -a exactly as they do under -g. Without
+            # this, content_dto.connectors would be silently discarded and no
+            # Connector object would ever reach the validation loop.
+            content_objects_to_run = set(content_dto.packs) | set(
+                content_dto.connectors
+            )
         else:
             self.execution_mode = ExecutionMode.USE_GIT
             self.committed_only = True
@@ -745,8 +834,15 @@ class Initializer:
                 is_private = is_private_content_file(
                     file_path, self.private_content_path
                 )
+                is_connector = bool(
+                    self.connectors_content_path
+                    and path.is_relative_to(self.connectors_content_path)
+                    and _is_connector_path(path)
+                )
                 if is_private and self.private_content_path:
                     chdir_path = self.private_content_path
+                elif is_connector and self.connectors_content_path:
+                    chdir_path = self.connectors_content_path
                 else:
                     chdir_path = Path(get_content_path())
 
@@ -759,6 +855,8 @@ class Initializer:
                     else:
                         if is_private and self.private_content_path:
                             temp_obj.path_to_read = self.private_content_path / path
+                        elif is_connector and self.connectors_content_path:
+                            temp_obj.path_to_read = path
                         basecontent_with_path_set.add(temp_obj)
             except NotAContentItemException:
                 non_content_items.add(file_path)  # type: ignore[arg-type]
@@ -797,6 +895,11 @@ class Initializer:
                     and self.private_content_path
                 ):
                     chdir_path = self.private_content_path
+                elif (
+                    file_path in self.connectors_content_files
+                    and self.connectors_content_path
+                ):
+                    chdir_path = self.connectors_content_path
                 else:
                     chdir_path = Path(get_content_path())
 
@@ -812,6 +915,13 @@ class Initializer:
                         ):
                             obj.path_to_read = (
                                 Path(self.private_content_path) / file_path
+                            )
+                        elif (
+                            file_path in self.connectors_content_files
+                            and self.connectors_content_path
+                        ):
+                            obj.path_to_read = (
+                                Path(self.connectors_content_path) / file_path
                             )
 
                         obj.git_sha = current_git_sha
@@ -944,6 +1054,31 @@ class Initializer:
             elif PACKS_PACK_META_FILE_NAME in path_str:
                 # If the file is a pack metadata, collect it.
                 statuses_dict[path] = git_status
+            elif _is_connector_path(path):
+                # Map any connector-related file (connector.yaml, handler.yaml,
+                # capabilities.yaml, connector image, etc.) to the parent
+                # connector.yaml so the parser is never handed a non-content file
+                # (e.g. a renamed .png). Multiple connector files collapse to a
+                # single connector.yaml entry.
+                connector_dir = _get_connector_dir(path)
+                path = connector_dir / "connector.yaml"
+                # A single connector directory may contain files with different
+                # git statuses (e.g. a modified handler.yaml alongside a newly
+                # added .connector-ignore). All of them collapse to the same
+                # connector.yaml key, so we must merge the statuses with a
+                # deterministic precedence instead of letting the first-seen
+                # status win. A connector that is both ADDED and MODIFIED should
+                # be treated as MODIFIED (the connector already exists and is
+                # being changed).
+                resolved_status = (
+                    git_status if git_status != GitStatuses.RENAMED else None
+                )
+                statuses_dict[path] = _merge_git_statuses(
+                    statuses_dict.get(path), resolved_status
+                )
+                # Connectors do not live under Packs/, so there is no
+                # pack_metadata.json to collect for them.
+                continue
             elif not self.is_pack_item(path_str):
                 # If the file is not a pack item, collect it as well.
                 statuses_dict[path] = git_status
@@ -971,15 +1106,17 @@ class Initializer:
         """Recursively load all files from a given list of paths.
 
         This method resolves each path to determine if it belongs to the private
-        content directory. If a directory exists in both the standard and
-        private content locations, the files from both locations are merged.
+        content directory or the Unified Connector Content (UCC) directory. If a
+        directory exists in both the standard and an external content location,
+        the files from both locations are merged.
 
         Args:
             files (List[str]): A list of file or directory paths (relative or absolute).
 
         Returns:
             Set[Path]: A unique set of Path objects for all discovered files.
-                    Private files are also tracked in `self.private_content_files`.
+                    Private files are also tracked in `self.private_content_files`
+                    and connector files in `self.connectors_content_files`.
         """
         loaded_files: Set[Path] = set()
 
@@ -989,7 +1126,19 @@ class Initializer:
 
             file_level = detect_file_level(resolved_file_str)
 
-            if file_level in {PathLevel.FILE, PathLevel.PACK}:
+            # A plain FILE that resolves to an existing path is added as-is.
+            # PACK-level inputs are only shortcut here when there is no external
+            # repo to consult; otherwise they must fall through so the
+            # private/connector merge blocks below can resolve them against the
+            # external repo (e.g. `-i Packs/CommonScripts --private-content-path`
+            # or `-i connectors/foo -ccp <ucc>`, where the relative path does not
+            # exist in the main content checkout).
+            has_external_repo = bool(
+                self.private_content_path or self.connectors_content_path
+            )
+            if file_level == PathLevel.FILE or (
+                file_level == PathLevel.PACK and not has_external_repo
+            ):
                 loaded_files.add(file_path)
                 continue
 
@@ -1012,7 +1161,42 @@ class Initializer:
                     loaded_files.update(private_found)
                     self.private_content_files.update(private_found)
 
+            if self.connectors_content_path:
+                connector_found = self._load_connector_files_from_ucc(resolved_file_str)
+                loaded_files.update(connector_found)
+                self.connectors_content_files.update(connector_found)
+
         return loaded_files
+
+    def _load_connector_files_from_ucc(self, resolved_file_str: str) -> Set[Path]:
+        """Resolve a (possibly relative) connectors path against the UCC repo.
+
+        Supports inputs such as ``connectors/foo`` or
+        ``connectors/foo/connector.yaml`` that do not exist in the main content
+        checkout but do exist under ``<connectors_content_path>/connectors/``.
+
+        Args:
+            resolved_file_str (str): The user-provided input path.
+
+        Returns:
+            Set[Path]: The set of connector files found under the UCC repo
+                (empty if the path is not a connectors path or does not exist
+                there).
+        """
+        if not self.connectors_content_path:
+            return set()
+
+        rel_path = get_relative_path_from_connectors_dir(resolved_file_str)
+        if rel_path is None:
+            return set()
+
+        connector_obj = self.connectors_content_path / rel_path
+        if not connector_obj.exists():
+            return set()
+
+        if connector_obj.is_file():
+            return {connector_obj}
+        return {p for p in connector_obj.rglob("*") if p.is_file()}
 
     def collect_related_files_main_items(self, file_paths: Set[Path]) -> Set[Path]:
         """Convert the given file path to the main item its related to.
@@ -1237,6 +1421,16 @@ class ConnectorAwareInitializer(Initializer):
             # ALL_FILES or fallback -- use parent as-is
             all_objects, invalid_items = super().gather_objects_to_run_on()
 
+        # 1b. De-duplicate objects that share the same content type + object_id.
+        # A single connector directory can yield more than one BaseContent object
+        # when its files carry different git statuses (e.g. a modified handler
+        # plus a newly added .connector-ignore). Because BaseContent equality is
+        # field-based, two such objects differ only by ``git_status`` and both
+        # survive the ``set`` in ``git_paths_to_basecontent_set``. Collapse them
+        # into a single object, preferring the higher-precedence status
+        # (MODIFIED over ADDED) so a modified connector is never reported twice.
+        all_objects = self._dedup_by_object_id(all_objects)
+
         # 2. Post-filter: keep only Integration and Connector objects
         filtered_integrations: Set[Integration] = set()
         filtered_connectors: Set[Connector] = set()
@@ -1268,6 +1462,57 @@ class ConnectorAwareInitializer(Initializer):
         )
 
         return filtered, invalid_items
+
+    @staticmethod
+    def _dedup_by_object_id(objects: Set[BaseContent]) -> Set[BaseContent]:
+        """Collapse objects sharing the same content type and object_id.
+
+        Two ``BaseContent`` objects that represent the same content item but were
+        built from files with different git statuses (e.g. a connector whose
+        handler is MODIFIED while its ``.connector-ignore`` is ADDED) are not
+        equal under Pydantic's field-based equality and therefore both remain in
+        the input ``set``. This method keeps a single object per
+        ``(content_type, object_id)`` pair, choosing the one whose ``git_status``
+        has the highest precedence via :func:`_merge_git_statuses` (so MODIFIED
+        beats ADDED).
+
+        Args:
+            objects: The set of collected content objects, possibly containing
+                duplicates that differ only by ``git_status``.
+
+        Returns:
+            A new set with at most one object per ``(content_type, object_id)``.
+        """
+        best_by_key: Dict[Tuple[Any, str], BaseContent] = {}
+        for obj in objects:
+            key = (getattr(obj, "content_type", type(obj)), obj.object_id)
+            current = best_by_key.get(key)
+            if current is None:
+                best_by_key[key] = obj
+                continue
+            # Both objects share the same identity; keep the one whose status
+            # wins the precedence merge. If the merged (winning) status matches
+            # the incoming object's status, prefer the incoming one; otherwise
+            # keep the current one.
+            merged_status = _merge_git_statuses(
+                getattr(current, "git_status", None),
+                getattr(obj, "git_status", None),
+            )
+            if merged_status == getattr(
+                obj, "git_status", None
+            ) and merged_status != getattr(current, "git_status", None):
+                logger.debug(
+                    f"De-duplicating '{obj.object_id}': replacing status "
+                    f"{getattr(current, 'git_status', None)} with {merged_status}."
+                )
+                best_by_key[key] = obj
+            else:
+                logger.debug(
+                    f"De-duplicating '{obj.object_id}': keeping status "
+                    f"{getattr(current, 'git_status', None)} over "
+                    f"{getattr(obj, 'git_status', None)}."
+                )
+        return set(best_by_key.values())
 
     def _cross_match_and_expand(
         self, integrations: Set[Integration], connectors: Set[Connector]
@@ -1450,17 +1695,33 @@ class ConnectorAwareInitializer(Initializer):
         """Phase 2b: Find integrations for handlers that still have no match.
 
         After Phase 2a, recalculate which handlers are still unmatched.  For
-        each, search the content graph for the referenced integration.  Skip
-        deprecated integrations and those not in the ``PLATFORM`` marketplace.
+        each, search the content graph for the referenced integration.
 
-        Found integrations are added to the *integrations* set in-place and
-        linked to their handler.
+        A graph-found integration is *always* linked to its handler (so
+        ``handler.related_integration`` is populated) when the referenced
+        integration exists in the graph -- **including deprecated
+        integrations**. This is deliberate: connector-aware validators such as
+        CO164 must be able to tell "the referenced integration exists" apart
+        from "it is missing", and a handler that references a deprecated
+        integration should still resolve rather than be reported as *not
+        found*.
+
+        The distinction is between *link resolution* and *validation target
+        selection*:
+
+        * **Deprecated** integrations are linked to the handler but are **not**
+          added to the ``integrations`` validation set, so integration-level
+          validators do not run on them.
+        * **Non-PLATFORM** integrations are considered out of scope for the
+          connector flow entirely and are neither linked nor added.
+        * All other (active, PLATFORM) integrations are both linked and added
+          to the validation set.
 
         Args:
             connectors: The (possibly expanded) set of connectors whose
                 unmatched handlers will be inspected.
             integrations: Mutable set of integrations - new graph-discovered
-                integrations are added here.
+                (active, PLATFORM) integrations are added here.
         """
         unmatched_handlers = [
             (c, h)
@@ -1482,12 +1743,8 @@ class ConnectorAwareInitializer(Initializer):
             results = self._graph_search_integration(int_id)
             if results:
                 integration = results[0]
-                if getattr(integration, "deprecated", False):
-                    logger.debug(
-                        f"Skipping graph-found integration "
-                        f"'{integration.object_id}' -- deprecated."
-                    )
-                    continue
+                # Non-PLATFORM integrations are out of scope for the connector
+                # flow -- do not link and do not add them.
                 if hasattr(integration, "marketplaces") and (
                     MarketplaceVersions.PLATFORM not in integration.marketplaces
                 ):
@@ -1496,9 +1753,27 @@ class ConnectorAwareInitializer(Initializer):
                         f"'{integration.object_id}' -- not PLATFORM."
                     )
                     continue
+
+                # Always resolve the link so the handler's related_integration
+                # is populated, even for deprecated integrations. This lets
+                # connector validators (e.g. CO164) distinguish "exists" from
+                # "missing".
                 handler.related_integration = integration
                 if hasattr(integration, "related_content"):
                     integration.related_content = handler
+
+                is_deprecated = getattr(integration, "deprecated", False)
+                if is_deprecated:
+                    # Linked, but NOT added to the validation set: integration
+                    # validators must not run on a deprecated integration.
+                    logger.debug(
+                        f"Linked handler '{handler.id}' (connector "
+                        f"'{connector.object_id}') -> deprecated integration "
+                        f"'{integration.object_id}' (graph); not adding it as a "
+                        f"validation target."
+                    )
+                    continue
+
                 integrations.add(integration)
                 logger.debug(
                     f"Matched handler '{handler.id}' (connector "

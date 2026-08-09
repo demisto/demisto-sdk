@@ -23,6 +23,7 @@ from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
+from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.content_graph.tests.test_tools import load_yaml
 from demisto_sdk.commands.validate.config_reader import (
     ConfigReader,
@@ -651,6 +652,31 @@ def test_object_collection_with_pack_path(repo):
     assert obj_types == {ContentType.INTEGRATION, ContentType.PACK}
 
 
+def test_all_files_gather_includes_connectors(mocker):
+    """
+    Given:
+    - ALL_FILES (-a) execution mode where ContentDTO.from_path parses both a
+      pack and a connector from the repository.
+    When:
+    - Calling the base Initializer.gather_objects_to_run_on.
+    Then:
+    - Make sure the parsed Connector object is included in the returned set and
+      is not discarded (so connector-only validators such as CO100 run under -a
+      exactly as they do under -g).
+    """
+    from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
+
+    pack = create_pack_object()
+    connector = create_connector_object()
+    fake_dto = ContentDTO.construct(packs=[pack], connectors=[connector])
+    mocker.patch.object(ContentDTO, "from_path", return_value=fake_dto)
+
+    initializer = Initializer(execution_mode=ExecutionMode.ALL_FILES)
+    obj_set, _ = initializer.gather_objects_to_run_on()
+
+    assert connector in obj_set
+
+
 def test_load_files_with_pack_path(repo):
     """
     Given:
@@ -692,6 +718,68 @@ def test_load_files_with_integration_dir(repo):
             integration.description.path,
         )
     )
+
+
+def test_load_files_with_private_pack_path(repo, tmp_path):
+    """
+    Given:
+    - A relative PACK-level path (e.g. ``Packs/MyPack``) that only exists under
+      an external ``--private-content-path`` repository (not in the main
+      checkout).
+    When:
+    - Calling load_files with ``private_content_path`` set.
+    Then:
+    - The files are resolved from the private repo and tracked in
+      ``private_content_files`` (regression for pack-level private input that
+      was previously short-circuited).
+    """
+    private_root = tmp_path / "content-private"
+    pack_dir = private_root / "Packs" / "MyPack" / "Scripts" / "MyScript"
+    pack_dir.mkdir(parents=True)
+    script_yml = pack_dir / "MyScript.yml"
+    script_yml.write_text("commonfields:\n  id: MyScript\n")
+
+    initializer = Initializer(private_content_path=private_root)
+    loaded = initializer.load_files(["Packs/MyPack"])
+
+    assert script_yml in loaded
+    assert script_yml in initializer.private_content_files
+
+
+def test_load_files_with_relative_connectors_path(tmp_path):
+    """
+    Given:
+    - A relative connectors path (e.g. ``connectors/foo`` or
+      ``connectors/foo/connector.yaml``) that only exists under an external
+      ``--connectors-content-path`` (UCC) repository.
+    When:
+    - Calling load_files with ``connectors_content_path`` set.
+    Then:
+    - The connector files are resolved from the UCC repo and tracked in
+      ``connectors_content_files`` (regression for the -ccp relative-path case).
+    """
+    ucc_root = tmp_path / "unified-connectors-content"
+    connector_dir = ucc_root / "connectors" / "foo"
+    connector_dir.mkdir(parents=True)
+    connector_yaml = connector_dir / "connector.yaml"
+    connector_yaml.write_text("name: foo\n")
+    handler = connector_dir / "components" / "handlers" / "xsoar"
+    handler.mkdir(parents=True)
+    handler_yaml = handler / "handler.yaml"
+    handler_yaml.write_text("handler: foo\n")
+
+    # Relative directory input.
+    initializer = Initializer(connectors_content_path=ucc_root)
+    loaded = initializer.load_files(["connectors/foo"])
+    assert connector_yaml in loaded
+    assert handler_yaml in loaded
+    assert connector_yaml in initializer.connectors_content_files
+
+    # Relative single-file input.
+    initializer_file = Initializer(connectors_content_path=ucc_root)
+    loaded_file = initializer_file.load_files(["connectors/foo/connector.yaml"])
+    assert loaded_file == {connector_yaml}
+    assert connector_yaml in initializer_file.connectors_content_files
 
 
 def test_collect_related_files_main_items(repo):
@@ -833,6 +921,84 @@ def test_get_unfiltered_changed_files_from_git_case_untracked_files_identify(moc
     finally:
         if Path.exists(temp_file):
             Path.unlink(temp_file)
+
+
+def test_collect_files_to_run_merges_connectors_content_repo_diff(mocker):
+    """
+    Given:
+        An Initializer with ``connectors_content_path`` set (the -ccp flag used
+        together with -g), where the main content repo has one changed file and
+        the UCC repo has its own changed connector files.
+    When:
+        Calling collect_files_to_run.
+    Then:
+        Ensure the UCC repo is git-diffed directly (via
+        get_unfiltered_changed_files_from_git on the UCC path) and its changed
+        connector files are merged into the returned modified/added/renamed sets
+        and tracked in ``connectors_content_files`` - so only the connectors
+        actually changed in the UCC repo are collected, mirroring the
+        content-private behavior.
+    """
+    ucc_path = Path("/tmp/ucc")
+    content_modified = {Path("Packs/MyPack/Integrations/MyInt/MyInt.yml")}
+    ucc_modified = {Path("connectors/datadog/connector.yaml")}
+    ucc_added = {Path("connectors/okta/connector.yaml")}
+
+    initializer = Initializer(connectors_content_path=ucc_path)
+    initializer.validate_git_installed()
+
+    # First call: main content repo diff. Second call: UCC repo diff.
+    mocker.patch.object(
+        initializer,
+        "get_unfiltered_changed_files_from_git",
+        side_effect=[
+            (content_modified, set(), set()),
+            (ucc_modified, ucc_added, set()),
+        ],
+    )
+    mocker.patch.object(GitUtil, "deleted_files", return_value=set())
+    # The UCC deleted-files branch constructs a fresh GitUtil on the UCC path.
+    mocker.patch(
+        "demisto_sdk.commands.validate.initializer.GitUtil",
+        return_value=mocker.MagicMock(deleted_files=lambda **_: set()),
+    )
+
+    modified_files, added_files, renamed_files, deleted_files = (
+        initializer.collect_files_to_run(file_path="")
+    )
+
+    # UCC changes merged into the combined result.
+    assert ucc_modified.issubset(modified_files)
+    assert content_modified.issubset(modified_files)
+    assert ucc_added.issubset(added_files)
+    # UCC changes tracked separately so path redirection can target the UCC repo.
+    assert initializer.connectors_content_files == ucc_modified | ucc_added
+
+
+def test_collect_files_to_run_skips_connectors_diff_when_no_ccp(mocker):
+    """
+    Given:
+        An Initializer WITHOUT ``connectors_content_path`` set.
+    When:
+        Calling collect_files_to_run.
+    Then:
+        Ensure the UCC repo is never git-diffed (the content repo is diffed
+        exactly once) and ``connectors_content_files`` stays empty - a
+        regression guard that -ccp has no effect unless provided.
+    """
+    initializer = Initializer()
+    initializer.validate_git_installed()
+    diff_mock = mocker.patch.object(
+        initializer,
+        "get_unfiltered_changed_files_from_git",
+        return_value=(set(), set(), set()),
+    )
+    mocker.patch.object(GitUtil, "deleted_files", return_value=set())
+
+    initializer.collect_files_to_run(file_path="")
+
+    diff_mock.assert_called_once_with()
+    assert initializer.connectors_content_files == set()
 
 
 def test_ignored_with_run_all(mocker):
@@ -1118,6 +1284,77 @@ class TestConnectorAwareInitializerCrossMatch:
         assert handler.related_integration is graph_integration
         assert graph_integration in result
 
+    def test_graph_found_deprecated_integration_is_linked_but_not_validated(self):
+        """
+        Given: A connector handler whose referenced integration is found in the
+               graph but is DEPRECATED.
+        When: _cross_match_and_expand runs the graph-expand phase.
+        Then: The handler's related_integration is populated (so CO164 sees it
+              as existing), but the deprecated integration is NOT added to the
+              returned validation set (integration validators must not run on
+              it).
+        """
+        connector = create_connector_object()
+        deprecated_integration = create_integration_object()
+        deprecated_integration.deprecated = True
+
+        initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
+
+        with (
+            patch.object(
+                ConnectorAwareInitializer,
+                "_graph_search_connectors",
+                return_value=[],
+            ),
+            patch.object(
+                ConnectorAwareInitializer,
+                "_graph_search_integration",
+                return_value=[deprecated_integration],
+            ),
+        ):
+            result = initializer._cross_match_and_expand(set(), {connector})
+
+        handler = connector.xsoar_handlers[0]
+        # Linked so CO164 can distinguish "exists" from "missing".
+        assert handler.related_integration is deprecated_integration
+        # But NOT a validation target.
+        assert deprecated_integration not in result
+
+    def test_graph_found_non_platform_integration_is_neither_linked_nor_added(self):
+        """
+        Given: A connector handler whose referenced integration is found in the
+               graph but is NOT in the PLATFORM marketplace.
+        When: _cross_match_and_expand runs the graph-expand phase.
+        Then: The integration is treated as out of scope: it is neither linked
+              to the handler nor added to the validation set.
+        """
+        from demisto_sdk.commands.common.constants import MarketplaceVersions
+
+        connector = create_connector_object()
+        non_platform_integration = create_integration_object()
+        non_platform_integration.deprecated = False
+        non_platform_integration.marketplaces = [MarketplaceVersions.XSOAR]
+
+        initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
+
+        with (
+            patch.object(
+                ConnectorAwareInitializer,
+                "_graph_search_connectors",
+                return_value=[],
+            ),
+            patch.object(
+                ConnectorAwareInitializer,
+                "_graph_search_integration",
+                return_value=[non_platform_integration],
+            ),
+        ):
+            result = initializer._cross_match_and_expand(set(), {connector})
+
+        handler = connector.xsoar_handlers[0]
+        assert handler.related_integration is None
+        assert non_platform_integration not in result
+
     def test_multiple_handlers_each_matched_independently(self):
         """
         Given: A connector with 2 XSOAR handlers referencing different integrations,
@@ -1326,6 +1563,190 @@ class TestConnectorRelatedFileDeduplication:
         assert result == {Path("connectors/salesforce/connector.yaml")}
         assert len(result) == 1
 
+    def test_get_items_status_maps_connector_files_to_connector_yaml(self):
+        """
+        Given: Connector-related files collected by the git flow -- a renamed
+            connector image (png) and a modified handler.yaml.
+        When: get_items_status (the ``-g`` reducer) is called.
+        Then: Both resolve to the single connectors/<name>/connector.yaml path,
+            the raw png is NOT collected (so it is never handed to the parser),
+            and no pack_metadata.json is added for connector paths.
+        """
+        initializer = Initializer()
+
+        png_path = Path(
+            "connectors/aws-automation-and-collection/"
+            "aws-automation-and-collection.png"
+        )
+        handler_path = Path(
+            "connectors/aws-automation-and-collection/"
+            "components/handlers/xsoar/handler.yaml"
+        )
+        connector_yaml = Path("connectors/aws-automation-and-collection/connector.yaml")
+
+        with (
+            patch(
+                "demisto_sdk.commands.validate.initializer._is_connector_path",
+                return_value=True,
+            ),
+            patch(
+                "demisto_sdk.commands.validate.initializer._get_connector_dir",
+                return_value=Path("connectors/aws-automation-and-collection"),
+            ),
+            patch.object(initializer, "is_unrelated_path", return_value=False),
+            patch.object(initializer, "is_pack_item", return_value=False),
+        ):
+            results = initializer.get_items_status(
+                {
+                    png_path: GitStatuses.RENAMED,
+                    handler_path: GitStatuses.MODIFIED,
+                }
+            )
+
+        # Only the connector.yaml is collected.
+        assert set(results.keys()) == {connector_yaml}
+        # The raw png must never reach the parser.
+        assert png_path not in results
+        # No bogus pack_metadata.json is produced for connector paths.
+        assert not any("pack_metadata.json" in str(p) for p in results)
+
+
+class TestConnectorStatusMergePrecedence:
+    """Tests that a connector changed under multiple git statuses is reported once."""
+
+    @pytest.mark.parametrize(
+        "existing, incoming, expected",
+        [
+            (GitStatuses.MODIFIED, GitStatuses.ADDED, GitStatuses.MODIFIED),
+            (GitStatuses.ADDED, GitStatuses.MODIFIED, GitStatuses.MODIFIED),
+            (GitStatuses.ADDED, GitStatuses.RENAMED, GitStatuses.RENAMED),
+            (GitStatuses.ADDED, None, GitStatuses.ADDED),
+            (None, GitStatuses.ADDED, GitStatuses.ADDED),
+            (None, None, None),
+            (GitStatuses.MODIFIED, GitStatuses.RENAMED, GitStatuses.MODIFIED),
+        ],
+    )
+    def test_merge_git_statuses_precedence(self, existing, incoming, expected):
+        """
+        Given: Two git statuses that collapse onto the same content item.
+        When: _merge_git_statuses resolves them.
+        Then: The higher-precedence status is returned (MODIFIED always wins).
+        """
+        from demisto_sdk.commands.validate.initializer import _merge_git_statuses
+
+        assert _merge_git_statuses(existing, incoming) == expected
+
+    @pytest.mark.parametrize(
+        "file_statuses",
+        [
+            # MODIFIED handler first, then ADDED .connector-ignore
+            [
+                (
+                    Path("connectors/zoom/components/handlers/xsoar/handler.yaml"),
+                    GitStatuses.MODIFIED,
+                ),
+                (Path("connectors/zoom/.connector-ignore"), GitStatuses.ADDED),
+            ],
+            # Reversed order: ADDED .connector-ignore first, then MODIFIED handler
+            [
+                (Path("connectors/zoom/.connector-ignore"), GitStatuses.ADDED),
+                (
+                    Path("connectors/zoom/components/handlers/xsoar/handler.yaml"),
+                    GitStatuses.MODIFIED,
+                ),
+            ],
+        ],
+    )
+    def test_added_and_modified_connector_collapses_to_modified(self, file_statuses):
+        """
+        Given: A connector with a MODIFIED handler.yaml and a newly ADDED
+            .connector-ignore file (the exact scenario reported for zoom).
+        When: get_items_status reduces the changed files -- in either iteration
+            order.
+        Then: A single connector.yaml entry is produced, and its status is
+            MODIFIED (never ADDED), because the connector already exists.
+        """
+        initializer = Initializer()
+        connector_yaml = Path("connectors/zoom/connector.yaml")
+
+        with (
+            patch(
+                "demisto_sdk.commands.validate.initializer._is_connector_path",
+                return_value=True,
+            ),
+            patch(
+                "demisto_sdk.commands.validate.initializer._get_connector_dir",
+                return_value=Path("connectors/zoom"),
+            ),
+            patch.object(initializer, "is_unrelated_path", return_value=False),
+            patch.object(initializer, "is_pack_item", return_value=False),
+        ):
+            results = initializer.get_items_status(dict(file_statuses))
+
+        assert set(results.keys()) == {connector_yaml}
+        assert results[connector_yaml] == GitStatuses.MODIFIED
+
+
+class TestDedupByObjectId:
+    """Tests for ConnectorAwareInitializer._dedup_by_object_id."""
+
+    class _FakeObj:
+        """Minimal stand-in for BaseContent with object identity fields.
+
+        Real BaseContent objects that differ only by ``git_status`` are unequal
+        under Pydantic field-based equality, so both survive a ``set``. This fake
+        reproduces that behavior deterministically for the dedup test.
+        """
+
+        def __init__(self, content_type, object_id, git_status):
+            self.content_type = content_type
+            self.object_id = object_id
+            self.git_status = git_status
+
+    def test_dedup_prefers_modified_over_added(self):
+        """
+        Given: Two objects with the same content_type and object_id, one ADDED
+            and one MODIFIED (as produced when a connector's files carry
+            different git statuses).
+        When: _dedup_by_object_id collapses them.
+        Then: Exactly one object remains, with status MODIFIED.
+        """
+        added = self._FakeObj("connector", "zoom", GitStatuses.ADDED)
+        modified = self._FakeObj("connector", "zoom", GitStatuses.MODIFIED)
+
+        result = ConnectorAwareInitializer._dedup_by_object_id({added, modified})
+
+        assert len(result) == 1
+        assert next(iter(result)).git_status == GitStatuses.MODIFIED
+
+    def test_dedup_keeps_distinct_object_ids(self):
+        """
+        Given: Objects with different object_ids.
+        When: _dedup_by_object_id runs.
+        Then: All objects are preserved (nothing is collapsed).
+        """
+        a = self._FakeObj("connector", "zoom", GitStatuses.MODIFIED)
+        b = self._FakeObj("connector", "okta", GitStatuses.ADDED)
+
+        result = ConnectorAwareInitializer._dedup_by_object_id({a, b})
+
+        assert len(result) == 2
+        assert {o.object_id for o in result} == {"zoom", "okta"}
+
+    def test_dedup_distinguishes_by_content_type(self):
+        """
+        Given: Two objects sharing an object_id but with different content types
+            (e.g. an Integration and a Connector both named "zoom").
+        When: _dedup_by_object_id runs.
+        Then: Both are kept because they are different content items.
+        """
+        integration = self._FakeObj("integration", "zoom", GitStatuses.MODIFIED)
+        connector = self._FakeObj("connector", "zoom", GitStatuses.ADDED)
+
+        result = ConnectorAwareInitializer._dedup_by_object_id({integration, connector})
+
+        assert len(result) == 2
+
 
 # ============================================================
 # ConnectorAwareInitializer - filter / gather behavior
@@ -1381,3 +1802,226 @@ class TestConnectorAwareInitializerFilter:
         kept = self._run_filter({connector})
 
         assert kept == set()
+
+
+class TestConnectorHandlerIgnoreFiltering:
+    """Tests for filtering ignored connector handler/serializer results.
+
+    Covers:
+    * ``ConnectorsValidator.resolve_ignore_key_from_path`` path -> key mapping.
+    * ``ConnectorsValidator.is_error_ignored`` honoring ALWAYS_RUN_ON_ERROR_CODE.
+    * ``ValidateManager.filter_validation_results`` per-handler / per-serializer
+      filtering, including keeping non-ignored handlers and honoring the
+      content object's main ``ignored_errors`` list.
+    """
+
+    @staticmethod
+    def _make_result(
+        error_code: str,
+        path: Optional[Path],
+        ignored_map: Dict[str, List[str]],
+        main_ignored: Optional[List[str]] = None,
+        related_file_type: Optional[list] = None,
+    ):
+        """Build a lightweight stand-in for a ValidationResult.
+
+        ``filter_validation_results`` only reads
+        ``result.validator.error_code``, ``result.validator.related_file_type``,
+        ``result.path``, ``result.content_object.ignored_errors`` and
+        ``result.content_object.is_handler_error_ignored(error_code, path)``, so
+        a SimpleNamespace fake avoids the cost of constructing a full connector
+        fixture. The fake reuses the real ``Connector.resolve_handler_ignore_key``
+        logic to map paths to ``.connector-ignore`` keys.
+        """
+        from types import SimpleNamespace
+
+        from demisto_sdk.commands.content_graph.objects.connector import Connector
+
+        def is_handler_error_ignored(code: str, file_path: Optional[Path]) -> bool:
+            key = Connector.resolve_handler_ignore_key(file_path)
+            if key is None:
+                return False
+            return code in ignored_map.get(key, [])
+
+        return SimpleNamespace(
+            validator=SimpleNamespace(
+                error_code=error_code,
+                related_file_type=related_file_type,
+            ),
+            path=path,
+            content_object=SimpleNamespace(
+                ignored_errors=main_ignored or [],
+                is_handler_error_ignored=is_handler_error_ignored,
+            ),
+        )
+
+    @pytest.mark.parametrize(
+        "path, expected_key",
+        [
+            (
+                Path(
+                    "/repo/connectors/foo/components/handlers/my_handler/handler.yaml"
+                ),
+                "my_handler/handler.yaml",
+            ),
+            (
+                Path(
+                    "/repo/connectors/foo/components/handlers/my_handler/serializer.yaml"
+                ),
+                "my_handler/serializer.yaml",
+            ),
+            (Path("/repo/connectors/foo/connector.yaml"), None),
+            (Path("/repo/connectors/foo/components/handlers/my_handler"), None),
+            (None, None),
+        ],
+    )
+    def test_resolve_handler_ignore_key(self, path, expected_key):
+        """
+        Given: A ValidationResult path.
+        When: Connector.resolve_handler_ignore_key maps it to a .connector-ignore key.
+        Then: Handler/serializer paths yield '<folder>/handler.yaml' /
+              '<folder>/serializer.yaml'; anything else yields None.
+        """
+        from demisto_sdk.commands.content_graph.objects.connector import Connector
+
+        assert Connector.resolve_handler_ignore_key(path) == expected_key
+
+    def test_is_error_ignored_respects_always_run_on_error_code(self, mocker):
+        """
+        Given: An error code that is in ALWAYS_RUN_ON_ERROR_CODE and is also
+               listed in the connector's ignore file for a handler.
+        When: ConnectorsValidator.is_error_ignored is called.
+        Then: It returns False - the error must always run.
+        """
+        from demisto_sdk.commands.common.constants import ALWAYS_RUN_ON_ERROR_CODE
+        from demisto_sdk.commands.content_graph.parsers.related_files import (
+            RelatedFileType,
+        )
+        from demisto_sdk.commands.validate.validators.CO_validators.CO157_is_handler_description_templated import (
+            IsHandlerDescriptionTemplatedValidator,
+        )
+
+        validator = IsHandlerDescriptionTemplatedValidator()
+        always_run_code = ALWAYS_RUN_ON_ERROR_CODE[0]
+
+        content_item = mocker.Mock()
+        content_item.get_ignored_errors.return_value = [always_run_code]
+
+        assert (
+            validator.is_error_ignored(
+                always_run_code,
+                [always_run_code],
+                content_item,
+                [RelatedFileType.CONNECTOR_HANDLER],
+            )
+            is False
+        )
+
+    def test_filter_keeps_non_ignored_handler_and_drops_ignored_one(self, mocker):
+        """
+        Given: Two per-handler results (handler_a and handler_b) for the same
+               error code, where only handler_a is ignored in .connector-ignore.
+        When: filter_validation_results runs.
+        Then: handler_a's result is dropped and handler_b's result is kept.
+        """
+        manager = get_validate_manager(mocker)
+
+        ignored_map = {"handler_a/handler.yaml": ["CO157"]}
+        result_a = self._make_result(
+            "CO157",
+            Path("/repo/connectors/foo/components/handlers/handler_a/handler.yaml"),
+            ignored_map,
+            related_file_type=[RelatedFileType.CONNECTOR_HANDLER],
+        )
+        result_b = self._make_result(
+            "CO157",
+            Path("/repo/connectors/foo/components/handlers/handler_b/handler.yaml"),
+            ignored_map,
+            related_file_type=[RelatedFileType.CONNECTOR_HANDLER],
+        )
+
+        filtered = manager.filter_validation_results([result_a, result_b])
+
+        assert result_a not in filtered
+        assert result_b in filtered
+
+    def test_filter_drops_ignored_serializer(self, mocker):
+        """
+        Given: A per-serializer result whose error code is ignored via the
+               '<folder>/serializer.yaml' key.
+        When: filter_validation_results runs.
+        Then: The serializer result is dropped.
+        """
+        manager = get_validate_manager(mocker)
+
+        ignored_map = {"handler_a/serializer.yaml": ["CO157"]}
+        result = self._make_result(
+            "CO157",
+            Path("/repo/connectors/foo/components/handlers/handler_a/serializer.yaml"),
+            ignored_map,
+            related_file_type=[RelatedFileType.CONNECTOR_SERIALIZER],
+        )
+
+        filtered = manager.filter_validation_results([result])
+
+        assert filtered == []
+
+    def test_filter_drops_result_ignored_via_main_ignored_errors(self, mocker):
+        """
+        Given: A result whose error code is in the content object's main
+               ``ignored_errors`` list (the pre-existing filter behavior).
+        When: filter_validation_results runs.
+        Then: The result is dropped.
+        """
+        manager = get_validate_manager(mocker)
+
+        result = self._make_result(
+            "GR107",
+            Path("/repo/connectors/foo/connector.yaml"),
+            {},
+            main_ignored=["GR107"],
+        )
+
+        filtered = manager.filter_validation_results([result])
+
+        assert filtered == []
+
+    def test_filter_keeps_result_when_no_ignore_file(self, mocker):
+        """
+        Given: A per-handler result but the connector has no matching ignore
+               entry (empty ignore map, mimicking a missing .connector-ignore).
+        When: filter_validation_results runs.
+        Then: The result is kept.
+        """
+        manager = get_validate_manager(mocker)
+
+        result = self._make_result(
+            "CO157",
+            Path("/repo/connectors/foo/components/handlers/handler_a/handler.yaml"),
+            {},
+            related_file_type=[RelatedFileType.CONNECTOR_HANDLER],
+        )
+
+        filtered = manager.filter_validation_results([result])
+
+        assert result in filtered
+
+    def test_filter_keeps_non_handler_result_not_in_main_ignored(self, mocker):
+        """
+        Given: A result whose path is not a handler/serializer file and whose
+               error code is not in the main ``ignored_errors`` list.
+        When: filter_validation_results runs.
+        Then: The result is left untouched (kept) - the handler/serializer key
+              lookup does not apply to non-handler paths.
+        """
+        manager = get_validate_manager(mocker)
+
+        result = self._make_result(
+            "CO157",
+            Path("/repo/connectors/foo/connector.yaml"),
+            {"connector.yaml": ["CO157"]},
+        )
+
+        filtered = manager.filter_validation_results([result])
+
+        assert result in filtered

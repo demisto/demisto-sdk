@@ -16,12 +16,14 @@ from demisto_sdk.commands.common.tools import (
     filter_out_falsy_values,
     get_approved_tags_from_branch,
 )
+from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_action_test import (
     AgentixActionTest,
 )
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.collection import Collection
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.integration import (
@@ -427,3 +429,78 @@ def skill_text_fragments(skill: AgentixSkill) -> List[str]:
         pass
     fragments.append(body or "")
     return fragments
+
+
+def dependency_text_fragments(node: dict) -> List[str]:
+    """Collect the char-bearing fragments of one agent dependency graph node.
+
+    ``node`` is a full dependency node as returned by GR116's structure query
+    (its keys are graph property names, e.g. ``content_type``/``path``). What the
+    agent char budget needs per dependency kind differs:
+
+    - AgentixAction: its args/outputs schema is excluded from the graph, so the
+      action is re-parsed from ``node['path']`` and scored via
+      :func:`action_text_fragments`. If the path cannot be parsed into an
+      AgentixAction, it falls back to the node's name + description.
+    - AgentixSkill / Collection: only their name + description count toward an
+      agent's budget (a skill's body is deliberately excluded), and both are
+      plain properties on the graph node - so they are read straight from the
+      node. Reconstructing the full object via ``parse_obj`` is avoided on
+      purpose: it triggers a filesystem ``from_path`` lookup (pack resolution)
+      per dependency and yields nothing beyond name + description here.
+
+    Any other/unknown type contributes nothing.
+
+    Args:
+        node: A full dependency graph node.
+
+    Returns:
+        A flat list of text fragments contributing to the agent's char budget.
+    """
+    content_type = node.get("content_type")
+    name_description = [node.get("name") or "", node.get("description") or ""]
+    if content_type == ContentType.AGENTIX_ACTION.value:
+        path = node.get("path")
+        if path:
+            try:
+                parsed = BaseContent.from_path(Path(path))
+            except Exception:  # unreadable/invalid path -> fall back below
+                parsed = None
+            if isinstance(parsed, AgentixAction):
+                return action_text_fragments(parsed)
+        # No path or unparseable: fall back to the node's name + description.
+        return name_description
+    if content_type in (
+        ContentType.AGENTIX_SKILL.value,
+        ContentType.COLLECTION.value,
+    ):
+        return name_description
+    logger.opt(colors=False).debug(
+        f"[GR116] Ignoring dependency of unhandled type '{content_type}'."
+    )
+    return []
+
+
+def agent_text_fragments(agent: AgentixAgent) -> List[str]:
+    """Collect the AgentixAgent's own character-bearing text fragments.
+
+    Includes the agent name, description, and system instructions. The system
+    instructions are read from the related file when available, falling back to
+    the model's ``systeminstructions`` field. This does NOT include the agent's
+    graph dependencies (dependent actions/skills/collections); the full,
+    dependency-aware char budget is computed by the GR116 validator.
+
+    Args:
+        agent: The AgentixAgent to inspect.
+
+    Returns:
+        A flat list of the agent's own text fragments.
+    """
+    instructions = agent.systeminstructions
+    try:
+        related = agent.system_instructions_file
+        if related is not None and related.file_content:
+            instructions = related.file_content
+    except Exception:  # missing/unreadable related file -> use model field
+        pass
+    return [agent.name, agent.description, instructions]

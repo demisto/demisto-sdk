@@ -63,6 +63,7 @@ from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR,
     COLLECTIONS_DIR,
     CONF_JSON_FILE_NAME,
+    CONNECTORS_FOLDER,
     CONTENT_ENTITIES_DIRS,
     CORRELATION_RULES_DIR,
     DASHBOARDS_DIR,
@@ -3175,6 +3176,28 @@ def get_relative_path_from_packs_dir(file_path: str) -> str:
     return file_path[file_path.find(PACKS_DIR) :]
 
 
+def get_relative_path_from_connectors_dir(file_path: str) -> Optional[str]:
+    """Get the relative path for a given file_path starting in the connectors directory.
+
+    Args:
+        file_path (str): The (possibly relative or absolute) path to normalize.
+
+    Returns:
+        Optional[str]: The path starting from the ``connectors/`` segment (e.g.
+            ``connectors/foo/connector.yaml``), or None if the path is not a
+            connectors path.
+    """
+    connectors_segment = f"{CONNECTORS_FOLDER}/"
+    if file_path.startswith(connectors_segment) or file_path == CONNECTORS_FOLDER:
+        return file_path
+
+    idx = file_path.find(f"/{connectors_segment}")
+    if idx != -1:
+        return file_path[idx + 1 :]
+
+    return None
+
+
 def is_uuid(s: str) -> Optional[Match]:
     """Checks whether given string is a UUID
 
@@ -4681,7 +4704,16 @@ def get_relative_path(file_path: Union[str, Path], relative_to: Path) -> Path:
     """
     file_path = Path(file_path)
     if file_path.is_absolute():
-        file_path = file_path.relative_to(relative_to)
+        try:
+            file_path = file_path.relative_to(relative_to)
+        except ValueError:
+            if CONNECTORS_FOLDER in file_path.parts:
+                return file_path
+            # The path is absolute but not under ``relative_to`` - e.g. content
+            # that lives in a separate repository (connectors in
+            # unified-connectors-content). Return the path unchanged rather than
+            # raising, so callers degrade gracefully.
+            raise
     return file_path
 
 

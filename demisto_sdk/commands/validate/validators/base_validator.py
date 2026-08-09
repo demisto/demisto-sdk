@@ -456,8 +456,7 @@ def is_error_ignored(
         4. If a ``related_file_type`` is provided -> ignore when the code is
            listed under any of the related files' per-file sections. If none
            of the related files match (e.g. the related file does not exist
-           for this content type, such as an AgentixAction which has no
-           SKILL_CONTENT), fall through to rule 5.
+           for this content type), fall through to rule 5.
         5. Ignore when the code is listed under the content item's own
            per-file section.
 
@@ -497,7 +496,10 @@ def is_error_ignored(
                     related_file_object.file_path
                 ):
                     return True
-            except Exception:
+            except Exception as e:
+                logger.debug(
+                    f"is_error_ignored: skipped related_file={related_file.value!r} on {content_item!r}: {e!r}"
+                )
                 continue
         # None of the related files carried the ignore (e.g. the related file
         # does not exist for this content type, such as an AgentixAction which

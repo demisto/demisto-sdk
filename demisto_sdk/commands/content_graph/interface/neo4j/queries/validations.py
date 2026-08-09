@@ -279,7 +279,7 @@ AND {is_target_available('a', 'b')}
     if file_paths:
         query += f"AND a.path in {file_paths}"
     query += """
-AND elementId(a) <> elementId(b)
+AND a.object_id <> b.object_id
 RETURN a.object_id AS a_object_id, collect(b.object_id) AS b_object_ids
 """
     return [

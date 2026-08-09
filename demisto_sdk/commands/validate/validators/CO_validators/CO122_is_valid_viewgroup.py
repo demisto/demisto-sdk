@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import Iterable, List, Optional
 
 from demisto_sdk.commands.content_graph.objects.connector import (
@@ -16,16 +17,34 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Connector
 
 
+def _normalize_id(value: str) -> str:
+    """Normalize an id/name for lenient comparison.
+
+    Lowercases and drops every non-alphanumeric character so that
+    ``"Palo Alto Networks Threat Vault v2"``,
+    ``"palo-alto-networks-threat-vault-v2"``,
+    ``"palo_alto_networks_threat_vault_v2"``,
+    ``"MITRE ATT&CK v2"`` vs ``"mitreattackv2"``, and
+    ``"Mail Sender (New)"`` vs ``"mailsendernew"`` all collapse to the
+    same canonical form.
+    """
+    return re.sub(r"[^a-z0-9]+", "", value.strip().lower())
+
+
 class IsValidViewgroupValidator(ConnectorsValidator[ContentTypes]):
     """CO122 - grouped-only. For each XSOAR handler:
 
     A. Short-circuit if the connector is not grouped.
     B. Unresolved XSOAR handler (``related_integration is None``) is an
        error (never silent-skip - matches CO120/CO121 directive).
-    C. ``connection.view_groups[*].id`` MUST include
-       ``handler.related_integration.object_id``.
+    C. ``connection.view_groups[*].id`` MUST match
+       ``handler.related_integration.object_id`` after normalization
+       (lowercased with every non-alphanumeric character stripped).
+       View-group ids are developer-facing so we tolerate stylistic
+       drift as long as the ids collapse to the same canonical form.
     D. The matched view_group's ``label`` MUST equal
-       ``handler.related_integration.display_name``.
+       ``handler.related_integration.display_name`` VERBATIM - the
+       label is customer-facing (shown as the tile heading).
 
     Non-XSOAR handlers are skipped (out of team scope). Orphan
     view_groups (declared but not referenced by any XSOAR handler) are
@@ -35,17 +54,20 @@ class IsValidViewgroupValidator(ConnectorsValidator[ContentTypes]):
     error_code = "CO122"
     description = (
         "Grouped-only. For each XSOAR handler in the connector, verify "
-        "that connection.yaml declares a view_group whose id matches the "
-        "handler's resolved integration id AND whose label equals the "
-        "integration's display_name."
+        "that connection.yaml declares a view_group whose id matches "
+        "the handler's resolved integration id after alphanumeric-only "
+        "normalization AND whose label equals the integration's "
+        "display_name verbatim."
     )
     rationale = (
         "In grouped connectors, each XSOAR handler surfaces to users "
         "through a view_group (tile) on the connection page. The "
-        "view_group id must match the handler's integration id (that's "
-        "how field / profile bindings resolve at runtime), and the "
-        "view_group label must match the integration display_name so the "
-        "tile heading and the integration UI stay in lock-step."
+        "view_group label is customer-facing and MUST equal the "
+        "integration display_name so the tile heading stays in "
+        "lock-step with the integration UI. The view_group id is "
+        "developer-facing and only needs to match the integration id "
+        "after alphanumeric-only normalization (lowercased, every "
+        "non-alphanumeric character stripped)."
     )
     error_message = (
         "Grouped connector '{connector_id}' has invalid view_group " "wiring: {issues}"
@@ -59,11 +81,14 @@ class IsValidViewgroupValidator(ConnectorsValidator[ContentTypes]):
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _find_view_group(
-        view_groups: List[ViewGroup], vg_id: str
+    def _find_view_group_lenient(
+        view_groups: List[ViewGroup], integration_id: str
     ) -> Optional[ViewGroup]:
+        """Return the view_group whose id matches ``integration_id`` after
+        normalization (case/space/dash/underscore/dot insensitive)."""
+        target = _normalize_id(integration_id)
         for vg in view_groups:
-            if vg.id == vg_id:
+            if _normalize_id(vg.id) == target:
                 return vg
         return None
 
@@ -86,22 +111,28 @@ class IsValidViewgroupValidator(ConnectorsValidator[ContentTypes]):
         expected_id = integration.object_id
         expected_label = integration.display_name
 
-        # Sub-rule C: view_group id must match the integration id.
-        matched = IsValidViewgroupValidator._find_view_group(view_groups, expected_id)
+        # Sub-rule C: view_group id must match the integration id
+        # after normalization (case/space/dash/underscore/dot).
+        matched = IsValidViewgroupValidator._find_view_group_lenient(
+            view_groups, expected_id
+        )
         if matched is None:
             issues.append(
-                f"XSOAR handler '{handler.id}' expects a view_group with "
-                f"id='{expected_id}' (integration id) in "
-                f"connection.yaml view_groups, but none was found."
+                f"XSOAR handler '{handler.id}' expects a view_group whose "
+                f"id normalizes to '{_normalize_id(expected_id)}' "
+                f"(integration id '{expected_id}') in connection.yaml "
+                f"view_groups, but none was found."
             )
             return issues
 
-        # Sub-rule D: matched view_group's label must equal display_name.
+        # Sub-rule D: matched view_group's label MUST equal
+        # display_name verbatim (customer-facing).
         if expected_label and matched.label != expected_label:
             issues.append(
-                f"view_group '{expected_id}' has label='{matched.label}' "
+                f"view_group '{matched.id}' has label='{matched.label}' "
                 f"but must equal integration display_name "
-                f"'{expected_label}' (XSOAR handler '{handler.id}')."
+                f"'{expected_label}' verbatim (XSOAR handler "
+                f"'{handler.id}')."
             )
 
         return issues

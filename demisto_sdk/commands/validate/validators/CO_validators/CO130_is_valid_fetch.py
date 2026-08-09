@@ -189,6 +189,34 @@ def computed_field_emits_flag(
     return False
 
 
+def _serializer_rename_map(handler: HandlerData) -> Dict[str, str]:
+    """Return the ``connector_id -> runtime_name`` map built from
+    ``handler.serializer.field_mappings``. Empty when no serializer or
+    no ``field_mappings`` entries.
+
+    A grouped connector namespaces its ``configurations.yaml`` field
+    ids per view_group (e.g. ``xsoar-fireeyehelix_incidentType``) and
+    renames them back to their canonical runtime name (e.g.
+    ``incidentType``) via a serializer entry:
+
+        field_mappings:
+          - id: xsoar-fireeyehelix_incidentType
+            field_name: incidentType
+
+    Duplicated in CO130 (rather than imported from CO136) because
+    CO136 already imports helpers from CO130; introducing the reverse
+    edge would create a circular import.
+    """
+    mapping: Dict[str, str] = {}
+    ser = handler.serializer
+    if ser is None:
+        return mapping
+    for fm in ser.field_mappings or []:
+        if fm.field_name:
+            mapping[fm.id] = fm.field_name
+    return mapping
+
+
 # ============================================================
 # CO130 validator
 # ============================================================
@@ -253,9 +281,16 @@ class IsValidFetchValidator(ConnectorsValidator[ContentTypes]):
         """Return a list of issue strings for the fetch-issues wiring on
         ``connector``. Empty list means "all good"."""
         issues: List[str] = []
+        # (capability_id, frozenset(rename_map.items())) -> already-checked.
+        # A capability's field-shape depends on the subscribing handler's
+        # serializer rename map, so we key the "already checked" set by
+        # (cap_id, rename_map) to avoid re-emitting identical issues while
+        # still re-checking when different handlers bring different rename
+        # maps.
         checked_capability_ids: Set[str] = set()
 
         for handler in connector.xsoar_handlers:
+            rename_map = _serializer_rename_map(handler)
             for cap_id in iter_handler_capability_ids(handler, FETCH_ISSUES_CAPABILITY):
                 # Part 1 - serializer computed_fields must emit `isFetch`
                 # for this capability id.
@@ -275,12 +310,17 @@ class IsValidFetchValidator(ConnectorsValidator[ContentTypes]):
                 if cap_id in checked_capability_ids:
                     continue
                 checked_capability_ids.add(cap_id)
-                issues.extend(self._check_capability_fields(connector, cap_id))
+                issues.extend(
+                    self._check_capability_fields(connector, cap_id, rename_map)
+                )
 
         return issues
 
     def _check_capability_fields(
-        self, connector: Connector, capability_id: str
+        self,
+        connector: Connector,
+        capability_id: str,
+        rename_map: Dict[str, str],
     ) -> List[str]:
         entry = find_capability_config_entry(connector, capability_id)
         if entry is None:
@@ -291,15 +331,24 @@ class IsValidFetchValidator(ConnectorsValidator[ContentTypes]):
                 f"required fields"
             ]
 
-        fields_by_id: Dict[str, Dict[str, Any]] = {}
+        # Grouped connectors namespace their configurations.yaml field ids
+        # per view_group (e.g. ``xsoar-fireeyehelix_incidentType``) and
+        # rename them back to the canonical name via
+        # ``serializer.yaml`` ``field_mappings``. We index fields by their
+        # RUNTIME id (post-rename) so the required-field lookup below
+        # works for both bare and namespaced ids - mirrors CO136's
+        # `_find_default_ignore_field` resolution pattern.
+        fields_by_runtime_id: Dict[str, Dict[str, Any]] = {}
         for field in field_dicts_in_capability_entry(entry):
-            field_id = field.get("id")
-            if isinstance(field_id, str):
-                fields_by_id[field_id] = field
+            raw_id = field.get("id")
+            if not isinstance(raw_id, str):
+                continue
+            runtime_id = rename_map.get(raw_id, raw_id)
+            fields_by_runtime_id[runtime_id] = field
 
         issues: List[str] = []
         for expected_id, expected_type, expected_dyn in FETCH_ISSUES_REQUIRED_FIELDS:
-            found_field = fields_by_id.get(expected_id)
+            found_field = fields_by_runtime_id.get(expected_id)
             if found_field is None:
                 issues.append(
                     f"capability '{capability_id}' is missing required "

@@ -14,14 +14,17 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = Connector
 
-# Mapping of fetch/automation base capability id -> required action.type.
-# ``fetch-secrets`` intentionally omitted: it has no required action.
+# Mapping of fetch base capability id -> required action.type.
+# Only the four stateful fetch families are required to declare their
+# reset action. ``fetch-secrets`` is stateless so it's intentionally
+# omitted, and ``automation-and-remediation`` is NOT a fetch capability
+# so it is NOT required to declare any action (handlers may still
+# declare optional actions on it — CO161 only enforces required ones).
 REQUIRED_ACTION_BY_BASE_CAP: dict = {
     "fetch-issues": "reset_incidents_last_run",
     "log-collection": "reset_events_last_run",
     "fetch-assets-and-vulnerabilities": "reset_assets_last_run",
     "threat-intelligence-and-enrichment": "reset_feed_last_run",
-    "automation-and-remediation": "reset_integration_context",
 }
 
 
@@ -39,22 +42,23 @@ def _capability_base_id(cap_id: str) -> str:
 class IsFetchCapabilitiesContainActionsValidator(ConnectorsValidator[ContentTypes]):
     error_code = "CO161"
     description = (
-        "Validates that every fetch-family / automation capability the "
-        "handler subscribes to declares its required reset-state action."
+        "Validates that every fetch-family capability the handler "
+        "subscribes to declares its required reset-state action."
     )
     rationale = (
         "Fetch-type sub-capabilities are stateful (last-run cursors, event "
-        "watermarks, feed offsets, incident IDs, integration context). The "
-        "platform exposes a reset action per stateful capability so users "
-        "can recover from bad state. A subscribed capability that omits its "
-        "required action leaves users without a recovery path. Base id -> "
-        "required action mapping: "
+        "watermarks, feed offsets, incident IDs). The platform exposes a "
+        "reset action per stateful capability so users can recover from "
+        "bad state. A subscribed fetch capability that omits its required "
+        "action leaves users without a recovery path. Base id -> required "
+        "action mapping: "
         "fetch-issues -> reset_incidents_last_run; "
         "log-collection -> reset_events_last_run; "
         "fetch-assets-and-vulnerabilities -> reset_assets_last_run; "
-        "threat-intelligence-and-enrichment -> reset_feed_last_run; "
-        "automation-and-remediation -> reset_integration_context. "
-        "fetch-secrets is stateless and has no required action."
+        "threat-intelligence-and-enrichment -> reset_feed_last_run. "
+        "fetch-secrets is stateless and has no required action. "
+        "automation-and-remediation is not a fetch capability and is not "
+        "required to declare any action (optional actions are permitted)."
     )
     error_message = (
         "Handler '{handler_id}' has capabilities missing required actions: "
@@ -68,13 +72,13 @@ class IsFetchCapabilitiesContainActionsValidator(ConnectorsValidator[ContentType
         self,
         content_items: Iterable[ContentTypes],
     ) -> List[ValidationResult]:
-        """For each XSOAR handler, verify every subscribed fetch/automation
+        """For each XSOAR handler, verify every subscribed fetch-family
         capability contains an ``actions[].type`` matching its required
         action.
 
         Skips capabilities whose base id has no required action (e.g.
-        ``fetch-secrets`` and any non-fetch/non-automation capability such as
-        ``incident-response`` or ``endpoint-management``).
+        ``fetch-secrets``, ``automation-and-remediation``, or any other
+        non-fetch capability such as ``incident-response``).
 
         Per-handler aggregated result (one row per handler, listing every
         offending capability). Path points at the offending ``handler.yaml``.

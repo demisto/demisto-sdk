@@ -12,6 +12,9 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ConnectorsValidator,
     ValidationResult,
 )
+from demisto_sdk.commands.validate.validators.CO_validators.CO126_is_valid_engine_params import (
+    _resolver_for_profile,
+)
 
 ContentTypes = Connector
 
@@ -129,13 +132,21 @@ class IsProfileFieldsCoveredValidator(ConnectorsValidator[ContentTypes]):
                 if not self._has_xsoar_reference(connector, profile.id):
                     continue
 
+                # Build {raw_id -> canonical_id} from serializer rewrites
+                # so exemption checks (e.g. ``engine_mode``) work for
+                # grouped connectors whose ids are namespaced
+                # (e.g. ``plain_circl_engine_mode``).
+                resolver = _resolver_for_profile(connector, profile.id)
+
                 for field in self._iter_profile_fields(profile):
                     # Skip auth fields (they never publish - CO121 owns
                     # their .auth.parameter contract).
                     if self._is_auth_field(field):
                         continue
-                    # Skip the single documented exemption.
-                    if field.id in _PUBLISH_EXEMPT_IDS:
+                    # Skip the single documented exemption (resolve
+                    # namespaced ids via the serializer first).
+                    canonical_id = resolver.get(field.id, field.id)
+                    if canonical_id in _PUBLISH_EXEMPT_IDS:
                         continue
                     if not self._is_published(field):
                         results.append(

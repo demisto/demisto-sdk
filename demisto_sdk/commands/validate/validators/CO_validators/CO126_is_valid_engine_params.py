@@ -27,9 +27,6 @@ H. ``engine.metadata.dynamic_values.params.integrationID ==
 I. ``engine.metadata.dynamic_values.params.dynamicField == "engine"``;
    ``engineGroup.metadata.dynamic_values.params.dynamicField ==
    "engine-group"``.
-J. ``engine.create_modifiers.hidden is True`` AND
-   ``engine.edit_modifiers.hidden is True``; same for ``engineGroup``.
-   (Manifest: "engine and engine_group need to be hidden by default".)
 
 Skip guards:
 - No ``connector.connection`` -> skip.
@@ -168,20 +165,6 @@ def _xsoar_metadata(field: ConnectorField) -> Optional[dict]:
     return xs if isinstance(xs, dict) else None
 
 
-def _create_edit_hidden(field: ConnectorField) -> tuple[Optional[bool], Optional[bool]]:
-    """Return ``(create_hidden, edit_hidden)`` booleans for a field, or
-    ``None`` for either side that isn't present."""
-    opts = field.options
-    if opts is None:
-        return None, None
-    cm = opts.create_modifiers
-    em = opts.edit_modifiers
-    return (
-        (cm.hidden if cm is not None else None),
-        (em.hidden if em is not None else None),
-    )
-
-
 # ------------------------------------------------------------------
 # Validator
 # ------------------------------------------------------------------
@@ -205,16 +188,14 @@ class IsValidEngineParamsValidator(ConnectorsValidator[ContentTypes]):
         "xsoar-provider dynamic_values triggered on_create+on_edit; "
         "dynamic_values.params.integrationID matches the handler's "
         "integration id; dynamicField is 'engine' or 'engine-group'; "
-        "both create_modifiers.hidden and edit_modifiers.hidden are "
-        "true; all three engine fields live in the same FieldGroup."
+        "all three engine fields live in the same FieldGroup."
     )
     rationale = (
         "The engine picker is a UX contract: users pick 'no engine' / "
         "'engine' / 'engine group' via a radio; the follow-up select "
         "must fetch options dynamically from XSOAR and re-fetch on both "
-        "create and edit; the two selects are hidden until the radio is "
-        "toggled. Any drift from this contract breaks the engine flow "
-        "silently at runtime."
+        "create and edit. Any drift from this contract breaks the engine "
+        "flow silently at runtime."
     )
     error_message = (
         "Connector '{connector_id}' {location}: engine-params "
@@ -268,7 +249,7 @@ class IsValidEngineParamsValidator(ConnectorsValidator[ContentTypes]):
         expected_integration_ids: Set[str],
     ) -> List[str]:
         """Common checks for the ``engine`` and ``engineGroup`` fields
-        (E, F, G, H, I, J).
+        (E, F, G, H, I).
         """
         errors: List[str] = []
 
@@ -343,19 +324,6 @@ class IsValidEngineParamsValidator(ConnectorsValidator[ContentTypes]):
                         f"integration on the owning XSOAR handler to "
                         f"validate against)"
                     )
-
-        # J. hidden by default
-        create_hidden, edit_hidden = _create_edit_hidden(field)
-        if create_hidden is not True:
-            errors.append(
-                f"{label} options.create_modifiers.hidden must be true, "
-                f"got {create_hidden!r}"
-            )
-        if edit_hidden is not True:
-            errors.append(
-                f"{label} options.edit_modifiers.hidden must be true, "
-                f"got {edit_hidden!r}"
-            )
 
         return errors
 

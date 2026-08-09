@@ -42,6 +42,7 @@ never a silent skip.
 
 from __future__ import annotations
 
+import re
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 from demisto_sdk.commands.content_graph.objects.connector import (
@@ -68,6 +69,16 @@ INTEGRATION_LOG_LEVEL_ID = "integrationLogLevel"
 EXPECTED_FIELD_TYPE = "select"
 EXPECTED_CONFIG_TYPE = "backend"
 EXPECTED_VALUES_KEYS: Set[str] = {"Off", "Debug", "Verbose"}
+
+
+def _normalize_id(value: str) -> str:
+    """Same alphanumeric-only normalization as CO122's view_group id
+    match. Lowercase + strip every non-alphanumeric character so
+    ``"Palo Alto Networks Threat Vault v2"`` and
+    ``"palo-alto-networks-threat-vault-v2"`` collapse to the same
+    canonical form.
+    """
+    return re.sub(r"[^a-z0-9]+", "", value.strip().lower())
 
 
 # ============================================================
@@ -330,12 +341,15 @@ class IsHandlerContainLoglevelValidator(ConnectorsValidator[ContentTypes]):
     ) -> List[str]:
         issues: List[str] = []
 
-        # Index matching entries by view_group.
+        # Index matching entries by NORMALIZED view_group id (same
+        # lenient alphanumeric-only rule as CO122: developer-facing
+        # ids can drift stylistically as long as they collapse to the
+        # same canonical form).
         by_vg: Dict[str, Tuple[Dict[str, Any], Dict[str, Any]]] = {}
         for group, field in matching:
             vg = group.get("view_group")
             if isinstance(vg, str):
-                by_vg[vg] = (group, field)
+                by_vg[_normalize_id(vg)] = (group, field)
 
         checked_shape_for_vgs: Set[str] = set()
         for handler in xsoar_handlers:
@@ -348,13 +362,14 @@ class IsHandlerContainLoglevelValidator(ConnectorsValidator[ContentTypes]):
                 )
                 continue
             vg_id = integration.object_id
-            entry = by_vg.get(vg_id)
+            vg_key = _normalize_id(vg_id)
+            entry = by_vg.get(vg_key)
             if entry is None:
                 issues.append(
                     f"grouped connector: XSOAR handler '{handler.id}' "
                     f"(integration '{vg_id}') has no "
-                    f"general_configurations entry with "
-                    f"view_group='{vg_id}' containing "
+                    f"general_configurations entry whose view_group id "
+                    f"normalizes to '{vg_key}' containing "
                     f"`integrationLogLevel`"
                 )
                 continue
@@ -362,13 +377,15 @@ class IsHandlerContainLoglevelValidator(ConnectorsValidator[ContentTypes]):
             if group.get("advanced") is not True:
                 issues.append(
                     f"grouped connector: general_configurations entry "
-                    f"for view_group '{vg_id}' must set "
-                    f"`advanced: true` (per guide §3.7)"
+                    f"for view_group '{group.get('view_group')}' must "
+                    f"set `advanced: true` (per guide §3.7)"
                 )
-            if vg_id not in checked_shape_for_vgs:
-                checked_shape_for_vgs.add(vg_id)
+            if vg_key not in checked_shape_for_vgs:
+                checked_shape_for_vgs.add(vg_key)
                 issues.extend(
-                    _check_log_level_field_shape(field, f"view_group '{vg_id}'")
+                    _check_log_level_field_shape(
+                        field, f"view_group '{group.get('view_group')}'"
+                    )
                 )
 
         return issues

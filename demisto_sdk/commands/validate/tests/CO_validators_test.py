@@ -270,6 +270,43 @@ class TestCO164IsMatchingIntegrationExist:
 
         assert len(results) == 0
 
+    def test_handler_resolved_but_label_drifted_from_yml_id_fails(self):
+        """
+        Given: A connector whose XSOAR handler was resolved (via graph
+               fallback) to an integration, but the ``xsoar-integration-id``
+               label does NOT equal the integration's YML ``object_id``
+               verbatim (e.g. slugified handler label, canonical YML id
+               with spaces/mixed case).
+        When: CO164 runs.
+        Then: A validation error is returned - this invariant is what lets
+              CO122/CO139 compare against ``integration.object_id`` verbatim.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-drifted",
+                    "triggering": {
+                        "labels": {
+                            "xsoar-integration-id": "palo-alto-networks-threat-vault-v2",
+                        },
+                    },
+                },
+            ]
+        )
+        integration = create_integration_object()
+        # object_id is the canonical YML id (with spaces / mixed case).
+        integration.object_id = "Palo Alto Networks Threat Vault v2"
+        connector.handlers[0].related_integration = integration
+
+        validator = IsMatchingIntegrationExistValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "palo-alto-networks-threat-vault-v2" in msg
+        assert "Palo Alto Networks Threat Vault v2" in msg
+        assert "match verbatim" in msg
+
     def test_multiple_connectors_independent_results(self):
         """
         Given: Two connectors - one valid (handler linked), one invalid (unresolved).
@@ -3338,7 +3375,7 @@ class TestCO122IsValidViewgroup:
 
         assert len(results) == 1
         assert "my-integration" in results[0].message
-        assert "id=" in results[0].message
+        assert "normalizes to" in results[0].message
 
     def test_wrong_view_group_label_fails(self):
         """
@@ -3532,6 +3569,121 @@ class TestCO122IsValidViewgroup:
         assert len(results) == 1
         assert connector.object_id in results[0].message
         assert str(results[0].path).endswith("connection.yaml")
+
+    def test_view_group_id_verbatim_match_passes(self):
+        """
+        Given: A grouped connector whose XSOAR handler resolves to an
+               integration and whose connection.yaml declares a
+               view_group with the SAME id verbatim + matching label.
+        When: CO122 runs.
+        Then: No validation errors.
+        """
+        connector = _grouped_connector_with_view_groups(
+            [{"id": "my-integration", "label": "My Integration"}]
+        )
+        connector.handlers[0].related_integration = _stub_related_integration(
+            "my-integration", "My Integration"
+        )
+
+        validator = IsValidViewgroupValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert results == []
+
+    def test_view_group_id_slugified_form_passes_when_label_matches(self):
+        """
+        Given: A grouped connector whose XSOAR handler resolves to an
+               integration with a display-form id 'Syslog Sender' and a
+               view_group whose id is the slugified form 'syslog-sender'
+               with matching label.
+        When: CO122 runs.
+        Then: No validation errors - id comparison is lenient
+              (case/space/dash/underscore/dot are all ignored).
+        """
+        connector = _grouped_connector_with_view_groups(
+            [{"id": "syslog-sender", "label": "Syslog Sender"}]
+        )
+        connector.handlers[0].related_integration = _stub_related_integration(
+            "Syslog Sender", "Syslog Sender"
+        )
+
+        validator = IsValidViewgroupValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert results == []
+
+    def test_view_group_id_normalization_ignores_case_space_dash_underscore_dot(self):
+        """
+        Given: Integration id ``Palo Alto Networks_Threat.Vault-v2`` and
+               view_group id ``paloaltonetworksthreatvaultv2`` (all
+               separators dropped, lowercase).
+        When: CO122 runs.
+        Then: No validation errors - both normalize to the same form.
+        """
+        connector = _grouped_connector_with_view_groups(
+            [
+                {
+                    "id": "paloaltonetworksthreatvaultv2",
+                    "label": "Palo Alto Networks Threat Vault v2",
+                }
+            ]
+        )
+        connector.handlers[0].related_integration = _stub_related_integration(
+            "Palo Alto Networks_Threat.Vault-v2",
+            "Palo Alto Networks Threat Vault v2",
+        )
+
+        validator = IsValidViewgroupValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert results == []
+
+    def test_view_group_id_normalization_strips_parentheses_and_punctuation(self):
+        """
+        Given: Integration id containing parentheses, ampersand,
+               question mark (e.g. ``Mail Sender (New)``,
+               ``MITRE ATT&CK v2``, ``Have I Been Pwned? V2``) and a
+               view_group whose id has all non-alphanumeric characters
+               stripped (e.g. ``mailsendernew``, ``mitreattackv2``).
+        When: CO122 runs.
+        Then: No validation errors - both sides collapse to the same
+              alphanumeric-only canonical form.
+        """
+        connector = _grouped_connector_with_view_groups(
+            [{"id": "mailsendernew", "label": "Mail Sender (New)"}]
+        )
+        connector.handlers[0].related_integration = _stub_related_integration(
+            "Mail Sender (New)", "Mail Sender (New)"
+        )
+
+        validator = IsValidViewgroupValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert results == []
+
+    def test_view_group_label_must_match_display_name_verbatim(self):
+        """
+        Given: view_group id normalizes to integration id (id-side is
+               fine) BUT the view_group label does NOT equal
+               integration.display_name verbatim.
+        When: CO122 runs.
+        Then: CO122 flags the label mismatch - label is customer-facing
+              and MUST equal display_name verbatim (no lenient compare).
+        """
+        connector = _grouped_connector_with_view_groups(
+            [{"id": "syslog-sender", "label": "Syslog Sender wrong"}]
+        )
+        connector.handlers[0].related_integration = _stub_related_integration(
+            "Syslog Sender", "Syslog Sender"
+        )
+
+        validator = IsValidViewgroupValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "label='Syslog Sender wrong'" in msg
+        assert "display_name" in msg
 
 
 # ============================================================
@@ -3835,6 +3987,85 @@ class TestCO123IsProfileFieldsCovered:
         results = validator.obtain_invalid_content_items([connector])
 
         assert len(results) == 0
+
+    def test_grouped_namespaced_engine_mode_resolved_via_serializer_passes(self):
+        """
+        Given: A grouped connector whose profile exposes a NAMESPACED
+               engine_mode field id (e.g. ``plain_myint_engine_mode``) with
+               NO ``event.publish`` flag, and whose owning XSOAR handler's
+               ``resolved_params`` (from serializer.yaml) rewrites that raw
+               id to the canonical ``engine_mode``.
+        When: CO123 runs.
+        Then: No validation errors - the exemption must resolve namespaced
+              ids through the handler's serializer before comparing to the
+              canonical ``engine_mode``. This mirrors CO125/CO126 behavior
+              and prevents the false positives seen on real grouped
+              connectors (okta, cyberark, circl, ...).
+        """
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+            handlers=[_xsoar_handler_using_profile("xsoar-h", "plain.myint")],
+            connection_data={
+                "profiles": [
+                    _profile_with_fields(
+                        "plain.myint",
+                        [
+                            {
+                                "id": "plain_myint_engine_mode",
+                                "field_type": "radio",
+                                # No event.publish - engine_mode is exempt.
+                            }
+                        ],
+                    )
+                ]
+            },
+        )
+        # Serializer rewrite: namespaced raw id -> canonical engine_mode.
+        _override_resolved(
+            connector.handlers[0],
+            {"plain_myint_engine_mode": "engine_mode"},
+        )
+
+        validator = IsProfileFieldsCoveredValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert results == []
+
+    def test_grouped_namespaced_engine_mode_without_serializer_fails(self):
+        """
+        Given: A grouped connector with a NAMESPACED engine_mode field id
+               but NO serializer rewrite in ``resolved_params``.
+        When: CO123 runs.
+        Then: The namespaced id does not resolve to canonical
+              ``engine_mode`` so the exemption does NOT apply, and CO123
+              flags the field as missing publish. This proves the resolver
+              path is not silently accepting raw namespaced ids without a
+              serializer mapping (matches CO125/CO126 design).
+        """
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+            handlers=[_xsoar_handler_using_profile("xsoar-h", "plain.myint")],
+            connection_data={
+                "profiles": [
+                    _profile_with_fields(
+                        "plain.myint",
+                        [
+                            {
+                                "id": "plain_myint_engine_mode",
+                                "field_type": "radio",
+                            }
+                        ],
+                    )
+                ]
+            },
+        )
+        # No _override_resolved: identity-only default.
+
+        validator = IsProfileFieldsCoveredValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "plain_myint_engine_mode" in results[0].message
 
     def test_error_path_points_to_connection_yaml(self):
         """
@@ -4608,7 +4839,6 @@ def _canonical_engine_field(
     field_id: str = "engine",
     integration_id: str = "MyInt",
     dynamic_field: str = "engine",
-    hidden: bool = True,
 ) -> dict:
     """A minimal spec-compliant engine/engineGroup select field."""
     return {
@@ -4625,10 +4855,6 @@ def _canonical_engine_field(
                 },
             },
         },
-        "options": {
-            "create_modifiers": {"hidden": hidden},
-            "edit_modifiers": {"hidden": hidden},
-        },
     }
 
 
@@ -4636,10 +4862,8 @@ def _canonical_engine_triplet(integration_id: str = "MyInt") -> list:
     """The three engine fields in the order they appear on disk."""
     return [
         _canonical_engine_mode_field(),
-        _canonical_engine_field("engine", integration_id, "engine", hidden=True),
-        _canonical_engine_field(
-            "engineGroup", integration_id, "engine-group", hidden=True
-        ),
+        _canonical_engine_field("engine", integration_id, "engine"),
+        _canonical_engine_field("engineGroup", integration_id, "engine-group"),
     ]
 
 
@@ -4656,8 +4880,7 @@ class TestCO126IsValidEngineParams:
 
     CO125 (presence) is a prerequisite; CO126 only inspects fields that
     are already there. Sub-rules covered: A/B/C engine_mode shape,
-    D same-FieldGroup, E field_type, F config_type, G/H/I dynamic_values,
-    J hidden-by-default.
+    D same-FieldGroup, E field_type, F config_type, G/H/I dynamic_values.
     """
 
     # ------------------------------------------------------------------
@@ -4993,27 +5216,6 @@ class TestCO126IsValidEngineParams:
         msg = results[0].message
         assert "engine_group" in msg
         assert "'engine-group'" in msg
-
-    def test_engine_hidden_false_fails(self):
-        """J: hidden must be true on both create and edit modifiers."""
-        triplet = _canonical_engine_triplet("MyInt")
-        triplet[1]["options"]["create_modifiers"]["hidden"] = False
-        triplet[1]["options"]["edit_modifiers"]["hidden"] = False
-        connector = create_connector_object(
-            connection_data={
-                "general_configurations": _standard_engine_gc(triplet),
-            }
-        )
-        connector.handlers[0].related_integration = SimpleNamespace(
-            object_id="MyInt", display_name="My Int"
-        )
-        results = IsValidEngineParamsValidator().obtain_invalid_content_items(
-            [connector]
-        )
-        assert len(results) == 1
-        msg = results[0].message
-        assert "create_modifiers.hidden must be true" in msg
-        assert "edit_modifiers.hidden must be true" in msg
 
     # ------------------------------------------------------------------
     # Grouped connector (serializer rewrites)
@@ -7120,6 +7322,86 @@ class TestCO139IsHandlerContainLoglevel:
         )
         assert results == []
 
+    def test_grouped_view_group_id_verbatim_match_passes(self):
+        """Grouped connector: view_group.id equals integration.object_id
+        verbatim (baseline case)."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
+            IsHandlerContainLoglevelValidator,
+        )
+
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+        )
+        _wire_xsoar_handler_with_caps(connector, ["automation-and-remediation"])
+        connector.handlers[0].related_integration = _stub_related_integration(
+            "my-integration", "My Integration"
+        )
+        _write_configurations_with_log_level(
+            connector,
+            general_config_entries=[
+                _grouped_log_level_configurations(view_group_id="my-integration")
+            ],
+        )
+        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_grouped_slugified_view_group_id_passes_via_normalization(self):
+        """Grouped connector: view_group.id is the slugified form of
+        the integration id (e.g. 'syslog-sender' for integration
+        'Syslog Sender') - CO139 uses the same alphanumeric-only
+        normalization as CO122, so both collapse to 'syslogsender' and
+        the lookup succeeds."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
+            IsHandlerContainLoglevelValidator,
+        )
+
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+        )
+        _wire_xsoar_handler_with_caps(connector, ["automation-and-remediation"])
+        connector.handlers[0].related_integration = _stub_related_integration(
+            "Syslog Sender", "Syslog Sender"
+        )
+        _write_configurations_with_log_level(
+            connector,
+            general_config_entries=[
+                _grouped_log_level_configurations(view_group_id="syslog-sender")
+            ],
+        )
+        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_grouped_view_group_id_normalization_strips_punctuation(self):
+        """Grouped connector: integration id contains punctuation
+        (e.g. 'Mail Sender (New)') and view_group.id has all
+        non-alphanumeric characters stripped ('mailsendernew') - both
+        collapse to the same canonical form."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
+            IsHandlerContainLoglevelValidator,
+        )
+
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+        )
+        _wire_xsoar_handler_with_caps(connector, ["automation-and-remediation"])
+        connector.handlers[0].related_integration = _stub_related_integration(
+            "Mail Sender (New)", "Mail Sender (New)"
+        )
+        _write_configurations_with_log_level(
+            connector,
+            general_config_entries=[
+                _grouped_log_level_configurations(view_group_id="mailsendernew")
+            ],
+        )
+        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
     def test_grouped_missing_view_group_entry_fails(self):
         """Grouped connector: handler's view_group has no matching
         general_configurations entry -> fails."""
@@ -7146,7 +7428,7 @@ class TestCO139IsHandlerContainLoglevel:
         )
         assert len(results) == 1
         msg = results[0].message
-        assert "no" in msg and "view_group='qualysfim'" in msg
+        assert "no" in msg and "normalizes to 'qualysfim'" in msg
 
     def test_grouped_missing_advanced_true_fails(self):
         """Grouped connector: view_group entry present but missing
@@ -8032,13 +8314,11 @@ def _connector_with_prefixed_engine_fields(prefix: str = "plain_myint_"):
                                     field_id=f"{prefix}engine",
                                     integration_id="MyInt",
                                     dynamic_field="engine",
-                                    hidden=True,
                                 ),
                                 _canonical_engine_field(
                                     field_id=f"{prefix}engineGroup",
                                     integration_id="MyInt",
                                     dynamic_field="engine-group",
-                                    hidden=True,
                                 ),
                             ],
                         },
@@ -10479,8 +10759,9 @@ def _cap_with_actions(cap_id: str, action_types: list, **extras):
 
 
 class TestCO161IsFetchCapabilitiesContainActions:
-    """Tests for CO161: every subscribed fetch/automation capability must
-    declare its required reset-state action.
+    """Tests for CO161: every subscribed fetch-family capability must
+    declare its required reset-state action. `automation-and-remediation`
+    is intentionally NOT in the required-action mapping.
     """
 
     def test_no_fetch_capabilities_passes(self):
@@ -10616,11 +10897,12 @@ class TestCO161IsFetchCapabilitiesContainActions:
         assert "reset_incidents_last_run" in msg
         assert "reset_events_last_run" in msg
 
-    def test_all_families_valid_passes(self):
+    def test_all_fetch_families_valid_passes(self):
         """
-        Given: A handler with one capability from each fetch/automation
-               family, each with its correct action, plus fetch-secrets and
-               a non-fetch cap.
+        Given: A handler with one capability from each fetch family, each
+               with its correct action, plus fetch-secrets (stateless),
+               automation-and-remediation (not a fetch family, no action
+               required), and a non-fetch cap.
         When: CO161 runs.
         Then: No error.
         """
@@ -10639,10 +10921,7 @@ class TestCO161IsFetchCapabilitiesContainActions:
                             "threat-intelligence-and-enrichment",
                             ["reset_feed_last_run"],
                         ),
-                        _cap_with_actions(
-                            "automation-and-remediation",
-                            ["reset_integration_context"],
-                        ),
+                        _cap_with_actions("automation-and-remediation", []),
                         _cap_with_actions("fetch-secrets", []),
                         _cap_with_actions("incident-response", []),
                     ],
@@ -10656,12 +10935,70 @@ class TestCO161IsFetchCapabilitiesContainActions:
         )
         assert len(results) == 0
 
+    def test_automation_and_remediation_only_no_action_passes(self):
+        """
+        Given: An XSOAR handler whose only capability is
+               `automation-and-remediation` and declares no actions
+               (like cuckoo-sandbox on disk).
+        When: CO161 runs.
+        Then: No error - automation-and-remediation is NOT a fetch family
+              and is intentionally excluded from the required-action mapping.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-cuckoo-sandbox",
+                    "capabilities": [
+                        _cap_with_actions(
+                            "automation-and-remediation_cuckoo-sandbox", []
+                        )
+                    ],
+                }
+            ]
+        )
+        results = (
+            IsFetchCapabilitiesContainActionsValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 0
+
+    def test_automation_and_remediation_with_optional_action_passes(self):
+        """
+        Given: A handler with `automation-and-remediation` that DOES
+               declare an action (e.g. `reset_integration_context`).
+        When: CO161 runs.
+        Then: No error - actions on automation-and-remediation are always
+              permitted, they're just never required.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-with-optional-action",
+                    "capabilities": [
+                        _cap_with_actions(
+                            "automation-and-remediation",
+                            ["reset_integration_context"],
+                        )
+                    ],
+                }
+            ]
+        )
+        results = (
+            IsFetchCapabilitiesContainActionsValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 0
+
     def test_multiple_capabilities_aggregate_into_single_result(self):
         """
-        Given: Multiple fetch/automation capabilities all missing their
-               required actions.
+        Given: Multiple fetch-family capabilities all missing their required
+               actions, alongside an automation-and-remediation cap with no
+               actions (which must NOT be reported).
         When: CO161 runs.
-        Then: A single per-handler result listing all offenders.
+        Then: A single per-handler result listing only the fetch-family
+              offenders. `automation-and-remediation` is never reported.
         """
         connector = create_connector_object(
             handlers=[
@@ -10684,11 +11021,13 @@ class TestCO161IsFetchCapabilitiesContainActions:
         msg = results[0].message
         assert "fetch-issues" in msg
         assert "log-collection" in msg
-        assert "automation-and-remediation" in msg
         assert "reset_incidents_last_run" in msg
         assert "reset_events_last_run" in msg
-        assert "reset_integration_context" in msg
-        # Aggregation separator.
+        # automation-and-remediation must NOT be reported since it is not
+        # in the required-action mapping.
+        assert "automation-and-remediation" not in msg
+        assert "reset_integration_context" not in msg
+        # Aggregation separator between the two fetch-family findings.
         assert "; " in msg
 
     def test_non_xsoar_handler_ignored(self):

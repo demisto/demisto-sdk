@@ -3,6 +3,10 @@
 from pathlib import Path
 from types import SimpleNamespace
 
+from demisto_sdk.commands.common.constants import (
+    ALL_SUPPORTED_MODULES,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_connector_object,
     create_integration_object,
@@ -27,6 +31,9 @@ from demisto_sdk.commands.validate.validators.CO_validators.CO105_is_categories_
 )
 from demisto_sdk.commands.validate.validators.CO_validators.CO106_is_tags_union_superset_of_packs import (
     IsTagsUnionSupersetOfPacksValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO114_is_matching_license import (
+    IsMatchingLicenseValidator,
 )
 from demisto_sdk.commands.validate.validators.CO_validators.CO118_is_valid_connection_metadata import (
     IsValidConnectionMetadataValidator,
@@ -1277,3 +1284,224 @@ class TestCO157IsHandlerDescriptionTemplated:
         results = validator.obtain_invalid_content_items([connector])
 
         assert len(results) == 0
+
+
+# ============================================================
+# CO114 - IsMatchingLicenseValidator
+# ============================================================
+
+
+def _stub_integration_modules(supported_modules, pack_modules=None, platform=True):
+    """Build a minimal integration stub for get_content_item_supported_modules.
+
+    ``supported_modules`` is the integration's own supportedModules (None to
+    inherit from the pack). ``pack_modules`` sets the parent pack's
+    supportedModules (None => platform defaults when the integration's is None).
+    """
+    marketplaces = [MarketplaceVersions.PLATFORM] if platform else []
+    pack = SimpleNamespace(supportedModules=pack_modules)
+    return SimpleNamespace(
+        marketplaces=marketplaces,
+        supportedModules=supported_modules,
+        pack=pack,
+    )
+
+
+def _connector_with_license(required_license, integration=None, resolve=True):
+    """Grouped connector: one 'fetch-issues' sub-capability with the given
+    required_license, an XSOAR handler subscribing to it, and (optionally) a
+    resolved integration stub."""
+    connector = create_connector_object(
+        connector_overrides={"settings": {"grouped": True}},
+        capabilities_data={
+            "capabilities": [
+                {
+                    "id": "fetch-issues",
+                    "title": "Fetch Issues",
+                    "description": "desc",
+                    "default_enabled": False,
+                    "required": False,
+                    "sub_capabilities": [
+                        {
+                            "id": "fetch-issues_myint",
+                            "title": "My Integration",
+                            "default_enabled": False,
+                            "required": False,
+                            "config": (
+                                {"required_license": required_license}
+                                if required_license is not None
+                                else None
+                            ),
+                        }
+                    ],
+                }
+            ]
+        },
+        handlers=[
+            {
+                "id": "xsoar-myint",
+                "triggering": {
+                    "type": "PUB_SUB",
+                    "labels": {
+                        "xsoar-integration-id": "MyInt",
+                        "xsoar-pack-id": "MyPack",
+                    },
+                },
+                "capabilities": [
+                    {
+                        "id": "fetch-issues_myint",
+                        "auth_options": [
+                            {"id": "test-auth", "workloads": ["test-workload"]}
+                        ],
+                    }
+                ],
+            }
+        ],
+    )
+    if resolve:
+        connector.handlers[0].related_integration = (
+            integration
+            if integration is not None
+            else _stub_integration_modules(["xsiam", "agentix"])
+        )
+    else:
+        connector.handlers[0].related_integration = None
+    return connector
+
+
+class TestCO114IsMatchingLicense:
+    """Tests for CO114: a capability/sub-capability's required_license must be a
+    subset of the backing integration's supported modules."""
+
+    def test_required_license_subset_is_valid(self):
+        """
+        Given: A sub-capability whose required_license is a subset of the
+               integration's supported modules.
+        When: CO114 runs.
+        Then: No validation errors are returned.
+        """
+        connector = _connector_with_license(
+            ["xsiam"], integration=_stub_integration_modules(["xsiam", "agentix"])
+        )
+
+        validator = IsMatchingLicenseValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_required_license_not_subset_is_flagged(self):
+        """
+        Given: A sub-capability requiring a license the integration does not
+               support.
+        When: CO114 runs.
+        Then: A validation error naming the missing license is returned.
+        """
+        connector = _connector_with_license(
+            ["xsiam", "edr"], integration=_stub_integration_modules(["xsiam"])
+        )
+
+        validator = IsMatchingLicenseValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "edr" in results[0].message
+
+    def test_no_required_license_means_all_modules(self):
+        """
+        Given: A sub-capability with NO required_license (=> requires ALL
+               modules) but the integration supports only some.
+        When: CO114 runs.
+        Then: A validation error is returned (all-modules is not a subset).
+        """
+        connector = _connector_with_license(
+            None, integration=_stub_integration_modules(["xsiam", "agentix"])
+        )
+
+        validator = IsMatchingLicenseValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+
+    def test_no_required_license_with_all_modules_is_valid(self):
+        """
+        Given: A sub-capability with NO required_license (=> requires ALL
+               modules) and the integration supports ALL modules.
+        When: CO114 runs.
+        Then: No validation errors are returned.
+        """
+        connector = _connector_with_license(
+            None,
+            integration=_stub_integration_modules(list(ALL_SUPPORTED_MODULES)),
+        )
+
+        validator = IsMatchingLicenseValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_unresolved_integration_is_flagged(self):
+        """
+        Given: An XSOAR sub-capability whose subscribing handler's integration
+               was not resolved (related_integration is None).
+        When: CO114 runs.
+        Then: A validation error is returned (never silently skipped) and the
+              message mentions the marketplaces=PLATFORM hint.
+        """
+        connector = _connector_with_license(["xsiam"], resolve=False)
+
+        validator = IsMatchingLicenseValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "cannot be verified" in results[0].message
+        assert "PLATFORM" in results[0].message
+
+    def test_non_xsoar_handler_is_skipped(self):
+        """
+        Given: A sub-capability whose only subscribing handler is a non-XSOAR
+               (e.g. SaaS identity / data-security / posture) handler, so it has
+               no backing XSOAR integration whose modules we could compare
+               against.
+        When: CO114 runs.
+        Then: No validation errors are returned - non-XSOAR handlers are out of
+              scope for CO114 (they don't have an XSOAR integration to license
+              against).
+        """
+        connector = _connector_with_license(
+            ["xsiam"], integration=_stub_integration_modules(["xsiam"])
+        )
+        # Convert the sole subscribing handler into a non-XSOAR SaaS handler.
+        h = connector.handlers[0]
+        h.metadata.module = "identity"
+        h.metadata.ownership.team = "identity"
+        # Drop the xsoar-integration-id label since non-XSOAR handlers don't
+        # have one; the check must bail before touching this either way.
+        h.triggering.labels = {"identity-content-id": "gsuite"}
+        h.related_integration = None
+        assert not h.is_xsoar  # sanity - precondition for this test
+
+        validator = IsMatchingLicenseValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_xsoar_handler_missing_integration_id_is_flagged(self):
+        """
+        Given: An XSOAR handler subscribing to a sub-capability but declaring
+               NO ``xsoar-integration-id`` label.
+        When: CO114 runs.
+        Then: A validation error is returned - every XSOAR handler MUST label
+              its backing integration; a missing id is a real content bug, not
+              something to silently skip (which would hide the real issue).
+        """
+        connector = _connector_with_license(["xsiam"], resolve=False)
+        # Blank the xsoar-integration-id but keep the handler XSOAR.
+        connector.handlers[0].triggering.labels = {"xsoar-pack-id": "MyPack"}
+        assert connector.handlers[0].is_xsoar  # still XSOAR
+        assert not connector.handlers[0].xsoar_integration_id  # but no int-id
+
+        validator = IsMatchingLicenseValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "does not declare an 'xsoar-integration-id'" in results[0].message

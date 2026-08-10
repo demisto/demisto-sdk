@@ -454,6 +454,7 @@ TIGHTLY_COUPLED_TYPES: frozenset[ContentType] = frozenset(
         ContentType.XDRC_TEMPLATE,
         ContentType.ASSETS_MODELING_RULE,
         ContentType.MAPPER,
+        ContentType.CLASSIFIER,
     }
 )
 

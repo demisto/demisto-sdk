@@ -145,6 +145,8 @@ MATCH (pack_a:{ContentType.BASE_NODE})<-[:{RelationshipType.IN_PACK}]-(a)
     -[r:{RelationshipType.USES}]->(b)-[:{RelationshipType.IN_PACK}]->(pack_b:{ContentType.BASE_NODE})
 WHERE ANY(marketplace IN pack_a.marketplaces WHERE marketplace IN pack_b.marketplaces)
 AND elementId(pack_a) <> elementId(pack_b)
+AND coalesce(pack_b.derived_from, '') <> pack_a.object_id
+AND coalesce(pack_a.derived_from, '') <> pack_b.object_id
 AND NOT pack_b.object_id IN pack_a.excluded_dependencies
 AND NOT pack_a.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
 AND NOT pack_b.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}

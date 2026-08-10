@@ -73,8 +73,9 @@ class TestContentTypeCoupling:
     def test_dashboard_is_loosely_coupled(self):
         assert ContentType.DASHBOARD.is_tightly_coupled is False
 
-    def test_classifier_is_loosely_coupled(self):
-        assert ContentType.CLASSIFIER.is_tightly_coupled is False
+    def test_classifier_is_tightly_coupled(self):
+        """Classifiers route an integration's incoming data and cannot stand alone."""
+        assert ContentType.CLASSIFIER.is_tightly_coupled is True
 
     def test_pack_is_not_tightly_coupled(self):
         """Non-content items should not be tightly coupled."""

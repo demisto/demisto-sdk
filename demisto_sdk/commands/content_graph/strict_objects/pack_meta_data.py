@@ -106,6 +106,10 @@ class StrictPackMetadata(BaseStrictModel):
     coupling_overrides: Optional[Dict[str, str]] = Field(
         None, alias="coupling_overrides"
     )
+    # Per-pack override for the feature name this pack's derived (split) twin is
+    # published under. When unset, resolve_derived_pack_source() falls back to
+    # the DERIVED_PACK_SOURCE env var and then to DEFAULT_DERIVED_PACK_SOURCE.
+    derived_source: Optional[str] = Field(None, alias="derived_source")
 
     # Marketplace-suffixed managed/source fields (e.g. ``managed:platform``).
     # Resolved into the plain managed/source per-marketplace during dump.

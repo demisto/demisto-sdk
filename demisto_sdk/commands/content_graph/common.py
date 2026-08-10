@@ -471,6 +471,36 @@ DERIVED_PACK_SUFFIX = "Managed"
 # Feature flag: when False, derived pack generation is skipped entirely.
 ENABLE_SPLIT_PACKS = os.getenv("ENABLE_SPLIT_PACKS", "false").lower() == "true"
 
+# The feature name every derived (split) pack is published under, unless
+# overridden. Consumed downstream as the pack's ``source``, which determines the
+# Managed Content bucket layout: <bucket>/<bucket_path>/<source>/<pack_id>/.
+DEFAULT_DERIVED_PACK_SOURCE = "connectus"
+
+
+def resolve_derived_pack_source(pack_derived_source: Optional[str] = None) -> str:
+    """Resolve the ``source`` (feature name) assigned to a derived pack.
+
+    Precedence, highest first:
+        1. ``pack_derived_source`` - the ``derived_source`` field of the
+           originating pack's ``pack_metadata.json``. Scopes to a single pack.
+        2. ``DERIVED_PACK_SOURCE`` environment variable. Redirects every derived
+           pack in the run at once, which is what CI sets.
+        3. ``DEFAULT_DERIVED_PACK_SOURCE``.
+
+    The environment is read here rather than at module import (unlike
+    ``ENABLE_SPLIT_PACKS``) so the value stays overridable in tests and is not
+    sensitive to import order.
+
+    Args:
+        pack_derived_source: Per-pack override from pack metadata, if declared.
+
+    Returns:
+        The feature name to publish the derived pack under.
+    """
+    if pack_derived_source:
+        return pack_derived_source
+    return os.getenv("DERIVED_PACK_SOURCE") or DEFAULT_DERIVED_PACK_SOURCE
+
 
 class Relationship(BaseModel):
     relationship: Optional[RelationshipType] = None

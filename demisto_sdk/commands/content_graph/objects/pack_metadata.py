@@ -73,6 +73,9 @@ class PackMetadata(BaseModel):
     coupling_overrides: Optional[Dict[str, str]] = Field(
         None, alias="coupling_overrides"
     )
+    # Per-pack override for the feature name this pack's derived (split) twin is
+    # published under. See resolve_derived_pack_source().
+    derived_source: Optional[str] = Field(None, alias="derived_source")
 
     # For private packs
     premium: Optional[bool]

@@ -20,12 +20,14 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from demisto_sdk.commands.content_graph.common import (
+    DEFAULT_DERIVED_PACK_SOURCE,
     DERIVED_PACK_SUFFIX,
     ENABLE_SPLIT_PACKS,
     TIGHTLY_COUPLED_TYPES,
     ContentType,
     PackDestination,
     Relationships,
+    resolve_derived_pack_source,
 )
 
 
@@ -127,6 +129,52 @@ class TestPackDestination:
 class TestDerivedPackSuffix:
     def test_suffix_value(self):
         assert DERIVED_PACK_SUFFIX == "Managed"
+
+
+# ---------------------------------------------------------------------------
+# resolve_derived_pack_source precedence tests
+# ---------------------------------------------------------------------------
+
+
+class TestResolveDerivedPackSource:
+    """The resolver decides the Managed Content feature directory a derived pack
+    lands in: <bucket>/<bucket_path>/<source>/<pack_id>/."""
+
+    def test_default_is_connectus(self, monkeypatch):
+        monkeypatch.delenv("DERIVED_PACK_SOURCE", raising=False)
+        assert resolve_derived_pack_source() == "connectus"
+        assert DEFAULT_DERIVED_PACK_SOURCE == "connectus"
+
+    def test_env_var_overrides_default(self, monkeypatch):
+        monkeypatch.setenv("DERIVED_PACK_SOURCE", "other_feature")
+        assert resolve_derived_pack_source() == "other_feature"
+
+    def test_per_pack_value_overrides_env_var(self, monkeypatch):
+        monkeypatch.setenv("DERIVED_PACK_SOURCE", "env_feature")
+        assert resolve_derived_pack_source("pack_feature") == "pack_feature"
+
+    def test_per_pack_value_overrides_default(self, monkeypatch):
+        monkeypatch.delenv("DERIVED_PACK_SOURCE", raising=False)
+        assert resolve_derived_pack_source("pack_feature") == "pack_feature"
+
+    @pytest.mark.parametrize("empty_value", [None, ""])
+    def test_empty_per_pack_value_falls_through(self, monkeypatch, empty_value):
+        """An absent or blank ``derived_source`` must not shadow the lower
+        precedence levels."""
+        monkeypatch.setenv("DERIVED_PACK_SOURCE", "env_feature")
+        assert resolve_derived_pack_source(empty_value) == "env_feature"
+
+    def test_empty_env_var_falls_through_to_default(self, monkeypatch):
+        monkeypatch.setenv("DERIVED_PACK_SOURCE", "")
+        assert resolve_derived_pack_source() == DEFAULT_DERIVED_PACK_SOURCE
+
+    def test_env_var_is_read_per_call_not_at_import(self, monkeypatch):
+        """Unlike ENABLE_SPLIT_PACKS, the value must not be frozen at import
+        time - otherwise it is neither testable nor settable by CI."""
+        monkeypatch.setenv("DERIVED_PACK_SOURCE", "first")
+        assert resolve_derived_pack_source() == "first"
+        monkeypatch.setenv("DERIVED_PACK_SOURCE", "second")
+        assert resolve_derived_pack_source() == "second"
 
 
 # ---------------------------------------------------------------------------
@@ -283,6 +331,7 @@ class TestDerivedPackParser:
         mock.pack_metadata_dict = {"name": "Test Pack"}
         mock.supportedModules = None
         mock.coupling_overrides = None
+        mock.derived_source = None
         mock.internal = False
         mock.managed = False
         mock.source = ""
@@ -340,7 +389,10 @@ class TestDerivedPackParser:
         )
         assert derived.derived_from == "TestPack"
 
-    def test_derived_pack_source(self):
+    def test_derived_pack_source_is_the_feature_not_the_origin_pack(self):
+        """``source`` is the Managed Content feature directory, so it must be the
+        feature name - not the originating pack's name. The link back to the
+        origin is carried by ``derived_from``, asserted separately above."""
         from demisto_sdk.commands.content_graph.parsers.pack import DerivedPackParser
 
         original = self._make_mock_original_parser()
@@ -348,7 +400,30 @@ class TestDerivedPackParser:
             original_parser=original,
             derived_id="TestPackManaged",
         )
-        assert derived.source == "Test Pack"
+        assert derived.source == DEFAULT_DERIVED_PACK_SOURCE
+        assert derived.source != original.name
+
+    def test_derived_pack_source_honours_per_pack_override(self):
+        from demisto_sdk.commands.content_graph.parsers.pack import DerivedPackParser
+
+        original = self._make_mock_original_parser()
+        original.derived_source = "my_feature"
+        derived = DerivedPackParser(
+            original_parser=original,
+            derived_id="TestPackManaged",
+        )
+        assert derived.source == "my_feature"
+
+    def test_derived_pack_source_honours_env_override(self, monkeypatch):
+        from demisto_sdk.commands.content_graph.parsers.pack import DerivedPackParser
+
+        monkeypatch.setenv("DERIVED_PACK_SOURCE", "env_feature")
+        original = self._make_mock_original_parser()
+        derived = DerivedPackParser(
+            original_parser=original,
+            derived_id="TestPackManaged",
+        )
+        assert derived.source == "env_feature"
 
     def test_derived_pack_name_has_suffix(self):
         from demisto_sdk.commands.content_graph.parsers.pack import DerivedPackParser
@@ -605,6 +680,25 @@ class TestStrictPackMetadataCouplingOverrides:
         }
         # Should not raise
         StrictPackMetadata.parse_obj(data)
+
+    def test_derived_source_is_accepted_by_the_strict_schema(self):
+        """StrictPackMetadata sets ``extra = Extra.forbid``, so an undeclared
+        ``derived_source`` in pack_metadata.json would fail validation and make
+        the per-pack override unusable."""
+        from demisto_sdk.commands.content_graph.strict_objects.pack_meta_data import (
+            StrictPackMetadata,
+        )
+
+        data = {
+            "name": "TestPack",
+            "support": "xsoar",
+            "author": "Test",
+            "currentVersion": "1.0.0",
+            "serverMinVersion": "6.0.0",
+            "derived_source": "my_feature",
+        }
+        metadata = StrictPackMetadata.parse_obj(data)
+        assert metadata.derived_source == "my_feature"
 
 
 # ---------------------------------------------------------------------------

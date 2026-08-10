@@ -34,6 +34,7 @@ from demisto_sdk.commands.content_graph.common import (
     ContentType,
     Relationships,
     RelationshipType,
+    resolve_derived_pack_source,
 )
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
 from demisto_sdk.commands.content_graph.parsers.content_item import (
@@ -211,6 +212,10 @@ class PackMetadataParser:
         self.coupling_overrides: Optional[Dict[str, str]] = metadata.get(
             "coupling_overrides"
         )
+        # Per-pack override for the feature name this pack's derived twin is
+        # published under. Highest-precedence input to
+        # resolve_derived_pack_source().
+        self.derived_source: Optional[str] = metadata.get("derived_source")
 
         # Marketplace-suffixed managed/source fields (not private-pack specific).
         # Kept as-is here; they are resolved into the plain managed/source
@@ -532,6 +537,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
             "managed": "managed",
             "internal": "internal",
             "coupling_overrides": "coupling_overrides",
+            "derived_source": "derived_source",
         }
 
     def raw_data(self) -> dict:
@@ -644,7 +650,13 @@ class DerivedPackParser:
 
         # Override fields for derived identity
         self.managed = True
-        self.source = original_parser.name
+        # Derived packs are published under a feature name, not under the
+        # originating pack's name: the Managed Content bucket lays out as
+        # <bucket>/<bucket_path>/<source>/<pack_id>/. The link back to the
+        # originating pack is preserved via derived_from below.
+        self.source = resolve_derived_pack_source(
+            getattr(original_parser, "derived_source", None)
+        )
         self.internal = original_parser.internal
         self.is_derived = True
         self.derived_from = original_parser.object_id

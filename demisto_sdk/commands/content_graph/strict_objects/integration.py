@@ -219,7 +219,9 @@ class _StrictIntegration(BaseStrictModel):
     default_classifier: Optional[str] = Field(None, alias="defaultclassifier")
     detailed_description: Optional[str] = Field(None, alias="detaileddescription")
     auto_config_instance: Optional[bool] = Field(None, alias="autoconfiginstance")
-    support_level_header: Optional[SupportLevels] = Field(None, alias="supportlevelheader")
+    support_level_header: Optional[SupportLevels] = Field(
+        None, alias="supportlevelheader"
+    )
     script: Script  # type:ignore[valid-type]
     hidden: Optional[bool] = None
     internal: Optional[bool] = None

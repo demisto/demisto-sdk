@@ -1,4 +1,3 @@
-# Touch to re-trigger the SDK Nightly Gate comment (verifying backslash fix).
 from pathlib import Path
 from typing import List, Optional, Set
 

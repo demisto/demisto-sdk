@@ -1,4 +1,3 @@
-# Touch to re-trigger the SDK Nightly Gate comment (verifying backslash fix).
 from __future__ import annotations
 
 from abc import ABC

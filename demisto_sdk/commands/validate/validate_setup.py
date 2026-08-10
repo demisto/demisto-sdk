@@ -1,4 +1,3 @@
-# Touch to re-trigger the SDK Nightly Gate comment (verifying backslash fix).
 import contextlib
 import os
 import sys

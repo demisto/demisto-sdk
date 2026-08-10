@@ -76,16 +76,7 @@ def validate(
         help="Path of the id-set.json used for validations.",
     ),
     graph: bool = typer.Option(
-        False,
-        "-gr",
-        "--graph",
-        help=(
-            "Connect to an already-running content graph instead of "
-            "building/updating it (e.g. in CI where 'graph update' ran first). "
-            "This flag is optional: graph-dependent validations (including the "
-            "connectors flow) now build/update the graph automatically when "
-            "needed."
-        ),
+        False, "-gr", "--graph", help="Perform validations on content graph."
     ),
     prev_ver: str = typer.Option(
         None, help="Previous branch or SHA1 commit to run checks against."

@@ -1,11 +1,12 @@
 changes:
 - description: The **validate** command now builds/updates the content graph automatically
-    when a selected validation needs it (graph validations and the connectors flow),
-    so the `--graph` flag is no longer required for those. `--graph` remains as an
-    optional connect-only shortcut for CI where the graph is built beforehand.
-  type: feature
+    when running the connectors validation flow (`--run-connectors-validation`), which
+    resolves handler-to-integration links through the graph while collecting content
+    items. Previously this required passing `--graph` with a pre-built graph, and
+    silently fell back to no-graph behavior otherwise.
+  type: fix
 - description: Reduced the number of content-graph queries performed by the connectors
-    validation flow by batching the handler/integration cross-matching lookups into
-    a single query per content type instead of one query per item.
+    validation flow by fetching the connector table once and indexing it in memory,
+    instead of re-scanning it for every unmatched integration.
   type: internal
 pr_number: '5480'

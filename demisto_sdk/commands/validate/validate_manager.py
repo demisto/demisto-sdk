@@ -55,10 +55,10 @@ class ValidateManager:
                 self.initializer.private_content_path
             )
 
-        # Determine which validators are selected *before* collecting objects,
-        # so we can build/update the content graph up-front when any selected
-        # validator needs it. This must happen before gather_objects_to_run_on()
-        # because the connectors initializer queries the graph during collection.
+        (
+            self.objects_to_run,
+            self.invalid_items,
+        ) = self.initializer.gather_objects_to_run_on()
         self.committed_only = self.initializer.committed_only
         self.configured_validations: ConfiguredValidations = self.config_reader.read(
             ignore_support_level=ignore_support_level,
@@ -66,18 +66,6 @@ class ValidateManager:
             codes_to_ignore=ignore,
         )
         self.validators = self.filter_validators()
-
-        # Implicit graph initialization: if any selected validator needs the
-        # graph (GR/PA/SC/AG graph validators, or ConnectorsValidator), build/
-        # update it now - no --graph flag required. This is idempotent and a
-        # no-op when the graph is already wired (e.g. connect-only via --graph).
-        if any(type(validator).requires_graph() for validator in self.validators):
-            BaseValidator.ensure_graph_initialized()
-
-        (
-            self.objects_to_run,
-            self.invalid_items,
-        ) = self.initializer.gather_objects_to_run_on()
 
     def run_validations(self) -> int:
         """

@@ -1456,10 +1456,30 @@ class ConnectorAwareInitializer(Initializer):
                         f"no XSOAR handlers."
                     )
 
-        # 3. Cross-match and expand with missing counterparts
-        filtered = self._cross_match_and_expand(
-            filtered_integrations, filtered_connectors
+        # 3. Cross-match and expand with missing counterparts.
+        # The expand phases below resolve handler<->integration links through
+        # the content graph, so the graph must be built/updated *before* they
+        # run - unlike validators, which build it lazily on first access. This
+        # is idempotent and a no-op when the graph is already wired (e.g.
+        # connect-only via --graph in CI).
+        from demisto_sdk.commands.validate.validators.base_validator import (
+            BaseValidator,
         )
+
+        BaseValidator.ensure_graph_initialized()
+        try:
+            filtered = self._cross_match_and_expand(
+                filtered_integrations, filtered_connectors
+            )
+        except Exception:
+            # ValidateManager closes the graph in run_validations(), which never
+            # runs if collection raises. Close it here so a failure during
+            # cross-matching does not leak the Neo4j driver.
+            if BaseValidator.graph_interface:
+                logger.debug("Closing graph after connector cross-match failure.")
+                BaseValidator.graph_interface.close()
+                BaseValidator.graph_interface = None
+            raise
 
         return filtered, invalid_items
 
@@ -1675,12 +1695,17 @@ class ConnectorAwareInitializer(Initializer):
                 continue
             if not found_connector.xsoar_handlers:
                 continue
-            for handler in found_connector.xsoar_handlers:
-                int_id = handler.xsoar_integration_id
-                if int_id:
-                    connectors_by_integration_id.setdefault(int_id, []).append(
-                        found_connector
-                    )
+            # A connector may declare several handlers pointing at the same
+            # integration; index it once per integration id.
+            referenced_ids = {
+                handler.xsoar_integration_id
+                for handler in found_connector.xsoar_handlers
+                if handler.xsoar_integration_id
+            }
+            for int_id in referenced_ids:
+                connectors_by_integration_id.setdefault(int_id, []).append(
+                    found_connector
+                )
 
         existing_connector_ids = {c.object_id for c in connectors}
         for integration in list(unmatched_integrations):
@@ -1749,28 +1774,13 @@ class ConnectorAwareInitializer(Initializer):
             f"Searching graph for integrations referenced by unmatched "
             f"handlers: {[(c.object_id, h.id) for c, h in unmatched_handlers]}"
         )
-        # Fetch every integration once and index by object_id and (as a
-        # fallback) by name, instead of issuing one or two graph queries per
-        # unmatched handler.
-        integrations_by_object_id: Dict[str, Any] = {}
-        integrations_by_name: Dict[str, Any] = {}
-        for graph_integration in self._all_graph_integrations():
-            obj_id = getattr(graph_integration, "object_id", None)
-            if obj_id:
-                integrations_by_object_id.setdefault(obj_id, graph_integration)
-            name = getattr(graph_integration, "name", None)
-            if name:
-                integrations_by_name.setdefault(name, graph_integration)
-
         for connector, handler in unmatched_handlers:
             int_id = handler.xsoar_integration_id
             if not int_id:
                 continue
-            # Preserve the original object_id-then-name resolution order.
-            integration = integrations_by_object_id.get(
-                int_id
-            ) or integrations_by_name.get(int_id)
-            if integration:
+            results = self._graph_search_integration(int_id)
+            if results:
+                integration = results[0]
                 # Non-PLATFORM integrations are out of scope for the connector
                 # flow -- do not link and do not add them.
                 if hasattr(integration, "marketplaces") and (
@@ -1830,13 +1840,14 @@ class ConnectorAwareInitializer(Initializer):
             integrations -= unmatched_final
 
     @staticmethod
-    def _all_graph_integrations() -> List[Any]:
-        """Fetch every integration from the graph in a single query.
+    def _graph_search_integration(integration_id: str) -> List[Any]:
+        """Graph search for an integration by object_id or name.
 
-        Batched replacement for the previous per-integration
-        ``_graph_search_integration`` lookups: the whole integration table is
-        fetched once and callers index the result in memory (by ``object_id``
-        and ``name``) instead of issuing one (or two) queries per handler.
+        Deliberately *not* batched into a single unfiltered fetch: these are
+        indexed point lookups, and the number of unmatched handlers in a run is
+        typically small. Fetching the whole integration table instead would
+        hydrate every integration node and its relationships, which costs far
+        more than the handful of lookups it would replace.
         """
         from demisto_sdk.commands.content_graph.common import ContentType
         from demisto_sdk.commands.validate.validators.base_validator import (
@@ -1847,7 +1858,16 @@ class ConnectorAwareInitializer(Initializer):
         if not graph:
             logger.debug("Graph interface not available, skipping graph search.")
             return []
-        return graph.search(content_type=ContentType.INTEGRATION)
+        results = graph.search(
+            content_type=ContentType.INTEGRATION,
+            object_id=integration_id,
+        )
+        if not results:
+            results = graph.search(
+                content_type=ContentType.INTEGRATION,
+                name=integration_id,
+            )
+        return results
 
     @staticmethod
     def _all_graph_connectors() -> List[Any]:

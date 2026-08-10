@@ -1847,3 +1847,6 @@ class ConnectorAwareInitializer(Initializer):
             if hasattr(c, "xsoar_handlers")
             and any(h.xsoar_integration_id == integration_id for h in c.xsoar_handlers)
         ]
+
+
+# Touch to re-trigger the SDK Nightly Gate comment (verifying backslash fix).

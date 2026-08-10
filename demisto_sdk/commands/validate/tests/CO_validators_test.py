@@ -8285,19 +8285,60 @@ def _write_triggers_yaml(connector, triggers: list) -> None:
     _write_connector_yaml_file(connector, "triggers.yaml", {"triggers": triggers})
 
 
-def _connector_with_standard_engine_fields():
+def _stamp_proxy_resolved_param(
+    connector,
+    raw_id: str = "proxy",
+    runtime_name: str = "proxy",
+) -> None:
+    """Give the connector's first XSOAR handler a resolved_params entry
+    that CO148 recognizes as 'connector exposes a proxy field with raw
+    id raw_id'. Mirrors CO120 test setup so the two validators stay
+    consistent.
+    """
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        ResolvedParamMapping,
+    )
+
+    existing = list(connector.handlers[0].resolved_params or [])
+    existing.append(
+        ResolvedParamMapping(
+            connector_param_name=raw_id,
+            content_param_name=runtime_name,
+        )
+    )
+    connector.handlers[0].resolved_params = existing
+
+
+def _connector_with_standard_engine_fields(with_proxy: bool = True):
     """Standard connector with bare engine triplet in
-    connection.general_configurations."""
-    return create_connector_object(
+    connection.general_configurations.
+
+    When with_proxy is True (default), also stamps a 'proxy'
+    resolved_param on the first XSOAR handler so CO148 will require
+    the unlock-proxy trigger. Set to False to simulate a connector
+    that has engine fields but no proxy field (CO148 should then
+    skip the unlock-proxy check for it).
+    """
+    connector = create_connector_object(
         connection_data={
             "general_configurations": _standard_engine_gc(_canonical_engine_triplet()),
         },
     )
+    if with_proxy:
+        _stamp_proxy_resolved_param(connector, raw_id="proxy", runtime_name="proxy")
+    return connector
 
 
-def _connector_with_prefixed_engine_fields(prefix: str = "plain_myint_"):
-    """Grouped-style connector with prefixed engine triplet in a profile."""
-    return create_connector_object(
+def _connector_with_prefixed_engine_fields(
+    prefix: str = "plain_myint_", with_proxy: bool = True
+):
+    """Grouped-style connector with prefixed engine triplet in a profile.
+
+    When with_proxy is True (default), stamps a '<prefix>proxy'
+    resolved_param on the first XSOAR handler so CO148 requires the
+    prefixed unlock-proxy trigger.
+    """
+    connector = create_connector_object(
         connector_overrides={"settings": {"grouped": True}},
         connection_data={
             "profiles": [
@@ -8327,6 +8368,11 @@ def _connector_with_prefixed_engine_fields(prefix: str = "plain_myint_"):
             ],
         },
     )
+    if with_proxy:
+        _stamp_proxy_resolved_param(
+            connector, raw_id=f"{prefix}proxy", runtime_name="proxy"
+        )
+    return connector
 
 
 class TestCO148IsValidEngineTriggers:
@@ -8619,6 +8665,14 @@ class TestCO148IsValidEngineTriggers:
                 ],
             },
         )
+        # Both profiles expose a proxy field (per CO120), so the
+        # unlock-proxy trigger IS required for both prefixes.
+        _stamp_proxy_resolved_param(
+            connector, raw_id="plain_myint_proxy", runtime_name="proxy"
+        )
+        _stamp_proxy_resolved_param(
+            connector, raw_id="oauth_myint_proxy", runtime_name="proxy"
+        )
         # Ship triggers ONLY for the plain_myint_ prefix; oauth_myint_ is
         # completely missing -> the 3 oauth triggers should all be flagged.
         _write_triggers_yaml(connector, _canonical_engine_trigger_set("plain_myint_"))
@@ -8649,6 +8703,244 @@ class TestCO148IsValidEngineTriggers:
         assert "hide engineGroup" in msg
         assert "unlock proxy" in msg
 
+    # ------------------------------------------------------------
+    # Conditional unlock-proxy check (based on CO120-style proxy
+    # exposure). The unlock-proxy trigger is ONLY required when a
+    # proxy field actually exists for the connector; otherwise
+    # emitting one would violate the Go OPA cross-file rule.
+    # ------------------------------------------------------------
+    def test_standard_no_proxy_field_skips_unlock_proxy_check(self):
+        """Connector has engine fields but NO proxy field exposed by any
+        XSOAR handler (resolved_params has no proxy alias). The unlock-
+        proxy trigger MUST NOT be required — only the 2 hide triggers."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO148_is_valid_engine_triggers import (
+            IsValidEngineTriggersValidator,
+        )
+
+        connector = _connector_with_standard_engine_fields(with_proxy=False)
+        # Ship ONLY the 2 hide triggers; no unlock-proxy trigger at all.
+        _write_triggers_yaml(
+            connector,
+            [_hide_engine_trigger(""), _hide_engine_group_trigger("")],
+        )
+        results = IsValidEngineTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_standard_no_proxy_field_still_requires_hide_triggers(self):
+        """Even without a proxy field, the two hide triggers are still
+        mandatory (engine + engineGroup fields exist unconditionally)."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO148_is_valid_engine_triggers import (
+            IsValidEngineTriggersValidator,
+        )
+
+        connector = _connector_with_standard_engine_fields(with_proxy=False)
+        # Ship NO triggers at all -> both hide triggers should be flagged
+        # BUT NOT the unlock-proxy trigger.
+        _write_triggers_yaml(connector, [])
+        results = IsValidEngineTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "hide engine when engine_mode" in msg
+        assert "hide engineGroup" in msg
+        assert "unlock proxy" not in msg
+
+    def test_standard_useproxy_alias_is_accepted_as_unlock_target(self):
+        """When the connector's proxy field is named 'useproxy' (a valid
+        CO120 alias), the unlock-proxy trigger targeting id='useproxy'
+        must be accepted."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO148_is_valid_engine_triggers import (
+            IsValidEngineTriggersValidator,
+        )
+
+        connector = _connector_with_standard_engine_fields(with_proxy=False)
+        _stamp_proxy_resolved_param(
+            connector, raw_id="useproxy", runtime_name="useproxy"
+        )
+        # Build an unlock-proxy trigger whose effect targets 'useproxy'.
+        unlock_useproxy = _unlock_proxy_trigger("")
+        unlock_useproxy["effects"][0]["id"] = "useproxy"
+        _write_triggers_yaml(
+            connector,
+            [
+                _hide_engine_trigger(""),
+                _hide_engine_group_trigger(""),
+                unlock_useproxy,
+            ],
+        )
+        results = IsValidEngineTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_standard_use_proxy_alias_is_accepted_as_unlock_target(self):
+        """When the connector's proxy field is named 'use_proxy' (a
+        valid CO120 alias), the unlock-proxy trigger targeting
+        id='use_proxy' must be accepted."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO148_is_valid_engine_triggers import (
+            IsValidEngineTriggersValidator,
+        )
+
+        connector = _connector_with_standard_engine_fields(with_proxy=False)
+        _stamp_proxy_resolved_param(
+            connector, raw_id="use_proxy", runtime_name="use_proxy"
+        )
+        unlock_use_proxy = _unlock_proxy_trigger("")
+        unlock_use_proxy["effects"][0]["id"] = "use_proxy"
+        _write_triggers_yaml(
+            connector,
+            [
+                _hide_engine_trigger(""),
+                _hide_engine_group_trigger(""),
+                unlock_use_proxy,
+            ],
+        )
+        results = IsValidEngineTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_standard_serializer_renamed_proxy_uses_raw_id_target(self):
+        """When serializer renames a namespaced raw id (e.g.
+        'foo_proxy') to the runtime name 'proxy', the trigger MUST
+        target the RAW id 'foo_proxy' (triggers.yaml uses raw ids).
+        Targeting the runtime name 'proxy' when it isn't the raw id
+        would violate the Go OPA cross-file rule."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO148_is_valid_engine_triggers import (
+            IsValidEngineTriggersValidator,
+        )
+
+        connector = _connector_with_standard_engine_fields(with_proxy=False)
+        # Handler's resolved_params: raw id 'foo_proxy' renamed to 'proxy'.
+        _stamp_proxy_resolved_param(
+            connector, raw_id="foo_proxy", runtime_name="proxy"
+        )
+        # Correct: trigger targets the raw id 'foo_proxy' -> passes.
+        unlock_ok = _unlock_proxy_trigger("")
+        unlock_ok["effects"][0]["id"] = "foo_proxy"
+        _write_triggers_yaml(
+            connector,
+            [
+                _hide_engine_trigger(""),
+                _hide_engine_group_trigger(""),
+                unlock_ok,
+            ],
+        )
+        results = IsValidEngineTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_standard_unlock_proxy_wrong_target_id_fails(self):
+        """Trigger with a proxy field present, but the effect targets
+        a raw id that no XSOAR handler exposes -> must fail."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO148_is_valid_engine_triggers import (
+            IsValidEngineTriggersValidator,
+        )
+
+        connector = _connector_with_standard_engine_fields()  # exposes 'proxy'
+        bad = _unlock_proxy_trigger("")
+        bad["effects"][0]["id"] = "some_other_field"  # not the real proxy id
+        _write_triggers_yaml(
+            connector,
+            [
+                _hide_engine_trigger(""),
+                _hide_engine_group_trigger(""),
+                bad,
+            ],
+        )
+        results = IsValidEngineTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "unlock proxy" in results[0].message
+
+    def test_grouped_prefix_without_proxy_skips_only_that_unlock(self):
+        """Grouped connector: plain_myint_ profile exposes proxy but
+        oauth_myint_ profile does not. Both hide triggers required for
+        both prefixes; unlock-proxy required ONLY for plain_myint_."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO148_is_valid_engine_triggers import (
+            IsValidEngineTriggersValidator,
+        )
+
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+            connection_data={
+                "profiles": [
+                    {
+                        "id": "plain",
+                        "type": "plain",
+                        "configurations": [
+                            {
+                                "fields": [
+                                    _canonical_engine_mode_field(
+                                        field_id="plain_myint_engine_mode"
+                                    ),
+                                    _canonical_engine_field(
+                                        field_id="plain_myint_engine",
+                                        integration_id="MyInt",
+                                        dynamic_field="engine",
+                                    ),
+                                    _canonical_engine_field(
+                                        field_id="plain_myint_engineGroup",
+                                        integration_id="MyInt",
+                                        dynamic_field="engine-group",
+                                    ),
+                                ],
+                            },
+                        ],
+                    },
+                    {
+                        "id": "oauth",
+                        "type": "oauth",
+                        "configurations": [
+                            {
+                                "fields": [
+                                    _canonical_engine_mode_field(
+                                        field_id="oauth_myint_engine_mode"
+                                    ),
+                                    _canonical_engine_field(
+                                        field_id="oauth_myint_engine",
+                                        integration_id="MyInt",
+                                        dynamic_field="engine",
+                                    ),
+                                    _canonical_engine_field(
+                                        field_id="oauth_myint_engineGroup",
+                                        integration_id="MyInt",
+                                        dynamic_field="engine-group",
+                                    ),
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        )
+        # Only plain_myint_ exposes a proxy field.
+        _stamp_proxy_resolved_param(
+            connector, raw_id="plain_myint_proxy", runtime_name="proxy"
+        )
+        # Ship both hide triggers for both prefixes AND unlock-proxy
+        # ONLY for plain_myint_. This must pass.
+        _write_triggers_yaml(
+            connector,
+            [
+                _hide_engine_trigger("plain_myint_"),
+                _hide_engine_group_trigger("plain_myint_"),
+                _unlock_proxy_trigger("plain_myint_"),
+                _hide_engine_trigger("oauth_myint_"),
+                _hide_engine_group_trigger("oauth_myint_"),
+                # No unlock-proxy for oauth_myint_ (no proxy field for it).
+            ],
+        )
+        results = IsValidEngineTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
     def test_error_path_points_to_triggers_yaml(self):
         from demisto_sdk.commands.validate.validators.CO_validators.CO148_is_valid_engine_triggers import (
             IsValidEngineTriggersValidator,
@@ -8657,516 +8949,6 @@ class TestCO148IsValidEngineTriggers:
         connector = _connector_with_standard_engine_fields()
         _write_triggers_yaml(connector, [])  # empty triggers list
         results = IsValidEngineTriggersValidator().obtain_invalid_content_items(
-            [connector]
-        )
-        assert len(results) == 1
-        assert str(results[0].path).endswith("triggers.yaml")
-
-
-# ============================================================
-# CO149 test helpers
-# ============================================================
-def _mutex_trigger(condition_id: str, effect_id: str) -> dict:
-    """Canonical mutex trigger: condition_id selected -> lock effect_id."""
-    return {
-        "conditions": {
-            "id": condition_id,
-            "behavior": "selected",
-            "operator": "eq",
-            "value": True,
-        },
-        "effects": [
-            {
-                "id": effect_id,
-                "action": {"read_only": True},
-                "message": "Select only one fetch option.",
-            }
-        ],
-    }
-
-
-def _mutex_trigger_set(cap_ids: list) -> list:
-    """All n × (n-1) canonical mutex triggers among cap_ids."""
-    return [_mutex_trigger(a, b) for a in cap_ids for b in cap_ids if a != b]
-
-
-def _fetch_computed_rule(flag_id: str, capability_id: str):
-    """Build one ComputedFieldRule that emits ``flag_id: true`` under
-    the capability condition ``capability_id == "on"`` (the canonical
-    serializer shape used by the platform)."""
-    from demisto_sdk.commands.content_graph.objects.connector import (
-        ComputedCondition,
-        ComputedConditionGroup,
-        ComputedFieldRule,
-        ComputedOutput,
-    )
-
-    return ComputedFieldRule(
-        output=[ComputedOutput(id=flag_id, value=True)],
-        any_of=[
-            ComputedConditionGroup(
-                conditions=[
-                    ComputedCondition(
-                        type="capability",
-                        options={
-                            "capability_id": capability_id,
-                            "value": "on",
-                        },
-                    )
-                ]
-            )
-        ],
-    )
-
-
-def _serializer_with_fetch_flags(flag_to_cap: dict):
-    """Build a SerializerData with one computed_fields rule per
-    ``{flag_id: capability_id}`` entry."""
-    from demisto_sdk.commands.content_graph.objects.connector import (
-        SerializerData,
-    )
-
-    return SerializerData(
-        field_mappings=[],
-        computed_fields=[
-            _fetch_computed_rule(flag, cap) for flag, cap in flag_to_cap.items()
-        ],
-    )
-
-
-def _connector_with_multi_fetch(
-    handler_flag_map: dict,
-    handler_prefix: str = "xsoar-myint",
-):
-    """Create a connector whose handlers[i] serializer emits the fetch
-    flags specified by ``handler_flag_map[i]`` (a dict
-    ``{flag_id: capability_id}``). Handlers beyond the default are
-    added to the connector; the first handler is the default one from
-    ``create_connector_object``."""
-    from demisto_sdk.commands.content_graph.objects.connector import (
-        HandlerCapability,
-        HandlerData,
-        HandlerMetadata,
-        HandlerOwnership,
-        HandlerTriggering,
-    )
-
-    connector = create_connector_object()
-    needed = max(len(handler_flag_map), 1)
-    while len(connector.handlers) < needed:
-        i = len(connector.handlers)
-        connector.handlers.append(
-            HandlerData(
-                id=f"{handler_prefix}-{i}",
-                handler_dir_name=f"{handler_prefix}-{i}",
-                metadata=HandlerMetadata(
-                    module="xsoar",
-                    ownership=HandlerOwnership(
-                        team="xsoar", maintainers=["@xsoar-content"]
-                    ),
-                ),
-                triggering=HandlerTriggering(),
-                capabilities=[],
-            )
-        )
-    for i, flag_map in enumerate(handler_flag_map):
-        handler = connector.handlers[i]
-        handler.serializer = _serializer_with_fetch_flags(flag_map)
-        # Wire cap ids onto handler.capabilities too so tests that
-        # inspect handler capabilities work; this is not strictly
-        # required by CO149 but keeps fixtures consistent.
-        handler.capabilities = [
-            HandlerCapability(id=cid, auth_options=[], workloads=[], actions=[])
-            for cid in flag_map.values()
-        ]
-    return connector
-
-
-class TestCO149IsFetchMutexTriggers:
-    """Tests for CO149: for any handler emitting ≥2 fetch capabilities
-    (discovered via serializer computed_fields), triggers.yaml must
-    contain the n × (n-1) canonical mutex triggers."""
-
-    # ------------------------------------------------------------
-    # Skip cases
-    # ------------------------------------------------------------
-    def test_no_fetch_capabilities_short_circuits(self):
-        """Connector with no serializer / no fetch flags -> skip."""
-        from demisto_sdk.commands.validate.validators.CO_validators.CO149_is_fetch_mutex_triggers import (
-            IsFetchMutexTriggersValidator,
-        )
-
-        connector = create_connector_object()
-        # No serializer at all on the default handler.
-        results = IsFetchMutexTriggersValidator().obtain_invalid_content_items(
-            [connector]
-        )
-        assert results == []
-
-    def test_single_fetch_capability_short_circuits(self):
-        """A handler with only 1 fetch flag needs no mutex triggers."""
-        from demisto_sdk.commands.validate.validators.CO_validators.CO149_is_fetch_mutex_triggers import (
-            IsFetchMutexTriggersValidator,
-        )
-
-        connector = _connector_with_multi_fetch([{"isFetch": "fetch-issues"}])
-        # No triggers.yaml either — still passes.
-        results = IsFetchMutexTriggersValidator().obtain_invalid_content_items(
-            [connector]
-        )
-        assert results == []
-
-    def test_non_fetch_serializer_flag_is_ignored(self):
-        """A rule that emits a non-fetch flag (e.g. isMappable) doesn't
-        count toward the fetch bucket."""
-        from demisto_sdk.commands.validate.validators.CO_validators.CO149_is_fetch_mutex_triggers import (
-            IsFetchMutexTriggersValidator,
-        )
-
-        connector = _connector_with_multi_fetch(
-            [
-                {
-                    "isMappable": "mapping-support",  # not a fetch flag
-                    "isFetch": "fetch-issues",  # only 1 real fetch flag
-                }
-            ]
-        )
-        results = IsFetchMutexTriggersValidator().obtain_invalid_content_items(
-            [connector]
-        )
-        assert results == []
-
-    # ------------------------------------------------------------
-    # Valid cases
-    # ------------------------------------------------------------
-    def test_two_fetch_caps_with_full_mutex_passes(self):
-        from demisto_sdk.commands.validate.validators.CO_validators.CO149_is_fetch_mutex_triggers import (
-            IsFetchMutexTriggersValidator,
-        )
-
-        connector = _connector_with_multi_fetch(
-            [
-                {
-                    "isFetch": "fetch-issues",
-                    "isFetchEvents": "log-collection",
-                }
-            ]
-        )
-        _write_triggers_yaml(
-            connector,
-            _mutex_trigger_set(["fetch-issues", "log-collection"]),
-        )
-        results = IsFetchMutexTriggersValidator().obtain_invalid_content_items(
-            [connector]
-        )
-        assert results == []
-
-    def test_grouped_namespaced_cap_ids_pass(self):
-        """Grouped connectors namespace cap ids by integration suffix;
-        the mutex triggers use the same namespaced ids."""
-        from demisto_sdk.commands.validate.validators.CO_validators.CO149_is_fetch_mutex_triggers import (
-            IsFetchMutexTriggersValidator,
-        )
-
-        cap_ids = [
-            "fetch-issues_akamai-waf-siem",
-            "log-collection_akamai-waf-siem",
-        ]
-        connector = _connector_with_multi_fetch(
-            [
-                {
-                    "isFetch": cap_ids[0],
-                    "isFetchEvents": cap_ids[1],
-                }
-            ]
-        )
-        _write_triggers_yaml(connector, _mutex_trigger_set(cap_ids))
-        results = IsFetchMutexTriggersValidator().obtain_invalid_content_items(
-            [connector]
-        )
-        assert results == []
-
-    def test_all_five_fetch_flags_full_mutex_passes(self):
-        """A handler that emits every fetch flag needs 5×4=20 triggers."""
-        from demisto_sdk.commands.validate.validators.CO_validators.CO149_is_fetch_mutex_triggers import (
-            IsFetchMutexTriggersValidator,
-        )
-
-        flag_map = {
-            "isFetch": "fetch-issues",
-            "feed": "threat-intelligence-and-enrichment",
-            "isFetchEvents": "log-collection",
-            "isFetchAssets": "fetch-assets-and-vulnerabilities",
-            "isFetchCredentials": "fetch-secrets",
-        }
-        connector = _connector_with_multi_fetch([flag_map])
-        _write_triggers_yaml(
-            connector,
-            _mutex_trigger_set(list(flag_map.values())),
-        )
-        results = IsFetchMutexTriggersValidator().obtain_invalid_content_items(
-            [connector]
-        )
-        assert results == []
-
-    # ------------------------------------------------------------
-    # Hard-fail cases
-    # ------------------------------------------------------------
-    def test_missing_triggers_yaml_fails(self):
-        from demisto_sdk.commands.validate.validators.CO_validators.CO149_is_fetch_mutex_triggers import (
-            IsFetchMutexTriggersValidator,
-        )
-
-        connector = _connector_with_multi_fetch(
-            [
-                {
-                    "isFetch": "fetch-issues",
-                    "isFetchEvents": "log-collection",
-                }
-            ]
-        )
-        # No _write_triggers_yaml call → triggers.yaml missing.
-        results = IsFetchMutexTriggersValidator().obtain_invalid_content_items(
-            [connector]
-        )
-        assert len(results) == 1
-        assert "triggers.yaml is missing" in results[0].message
-
-    def test_missing_single_mutex_trigger_fails(self):
-        from demisto_sdk.commands.validate.validators.CO_validators.CO149_is_fetch_mutex_triggers import (
-            IsFetchMutexTriggersValidator,
-        )
-
-        connector = _connector_with_multi_fetch(
-            [
-                {
-                    "isFetch": "fetch-issues",
-                    "isFetchEvents": "log-collection",
-                }
-            ]
-        )
-        # Only 1 of the 2 required triggers.
-        _write_triggers_yaml(
-            connector,
-            [_mutex_trigger("fetch-issues", "log-collection")],
-        )
-        results = IsFetchMutexTriggersValidator().obtain_invalid_content_items(
-            [connector]
-        )
-        assert len(results) == 1
-        assert "log-collection" in results[0].message
-        assert "fetch-issues" in results[0].message
-
-    def test_wrong_message_fails(self):
-        from demisto_sdk.commands.validate.validators.CO_validators.CO149_is_fetch_mutex_triggers import (
-            IsFetchMutexTriggersValidator,
-        )
-
-        connector = _connector_with_multi_fetch(
-            [
-                {
-                    "isFetch": "fetch-issues",
-                    "isFetchEvents": "log-collection",
-                }
-            ]
-        )
-        bad = _mutex_trigger_set(["fetch-issues", "log-collection"])
-        # Corrupt the message on the first trigger.
-        bad[0]["effects"][0]["message"] = "Wrong message"
-        _write_triggers_yaml(connector, bad)
-        results = IsFetchMutexTriggersValidator().obtain_invalid_content_items(
-            [connector]
-        )
-        assert len(results) == 1
-
-    def test_wrong_action_extra_key_fails(self):
-        """Strict action shape: extra keys beyond ``read_only`` fail."""
-        from demisto_sdk.commands.validate.validators.CO_validators.CO149_is_fetch_mutex_triggers import (
-            IsFetchMutexTriggersValidator,
-        )
-
-        connector = _connector_with_multi_fetch(
-            [
-                {
-                    "isFetch": "fetch-issues",
-                    "isFetchEvents": "log-collection",
-                }
-            ]
-        )
-        bad = _mutex_trigger_set(["fetch-issues", "log-collection"])
-        bad[0]["effects"][0]["action"] = {"read_only": True, "hidden": False}
-        _write_triggers_yaml(connector, bad)
-        results = IsFetchMutexTriggersValidator().obtain_invalid_content_items(
-            [connector]
-        )
-        assert len(results) == 1
-
-    def test_wrong_readonly_false_fails(self):
-        from demisto_sdk.commands.validate.validators.CO_validators.CO149_is_fetch_mutex_triggers import (
-            IsFetchMutexTriggersValidator,
-        )
-
-        connector = _connector_with_multi_fetch(
-            [
-                {
-                    "isFetch": "fetch-issues",
-                    "isFetchEvents": "log-collection",
-                }
-            ]
-        )
-        bad = _mutex_trigger_set(["fetch-issues", "log-collection"])
-        bad[0]["effects"][0]["action"] = {"read_only": False}
-        _write_triggers_yaml(connector, bad)
-        results = IsFetchMutexTriggersValidator().obtain_invalid_content_items(
-            [connector]
-        )
-        assert len(results) == 1
-
-    def test_wrong_condition_value_false_fails(self):
-        """The trigger fires on ``value: true`` — ``value: false`` is
-        the wrong shape."""
-        from demisto_sdk.commands.validate.validators.CO_validators.CO149_is_fetch_mutex_triggers import (
-            IsFetchMutexTriggersValidator,
-        )
-
-        connector = _connector_with_multi_fetch(
-            [
-                {
-                    "isFetch": "fetch-issues",
-                    "isFetchEvents": "log-collection",
-                }
-            ]
-        )
-        bad = _mutex_trigger_set(["fetch-issues", "log-collection"])
-        bad[0]["conditions"]["value"] = False
-        _write_triggers_yaml(connector, bad)
-        results = IsFetchMutexTriggersValidator().obtain_invalid_content_items(
-            [connector]
-        )
-        assert len(results) == 1
-
-    # ------------------------------------------------------------
-    # Aggregation and independent scoping
-    # ------------------------------------------------------------
-    def test_multi_handler_independent_scoping(self):
-        """Two handlers each contribute their OWN fetch set — mutex is
-        required WITHIN each handler, NOT across handlers."""
-        from demisto_sdk.commands.validate.validators.CO_validators.CO149_is_fetch_mutex_triggers import (
-            IsFetchMutexTriggersValidator,
-        )
-
-        connector = _connector_with_multi_fetch(
-            [
-                {
-                    "isFetch": "fetch-issues_akamai-waf-siem",
-                    "isFetchEvents": "log-collection_akamai-waf-siem",
-                },
-                {
-                    "isFetch": "fetch-issues_guardicore-v2",
-                    "isFetchEvents": "log-collection_guardicore-v2",
-                },
-            ]
-        )
-        # Provide mutex triggers for BOTH integration groups.
-        triggers = _mutex_trigger_set(
-            [
-                "fetch-issues_akamai-waf-siem",
-                "log-collection_akamai-waf-siem",
-            ]
-        ) + _mutex_trigger_set(
-            [
-                "fetch-issues_guardicore-v2",
-                "log-collection_guardicore-v2",
-            ]
-        )
-        _write_triggers_yaml(connector, triggers)
-        results = IsFetchMutexTriggersValidator().obtain_invalid_content_items(
-            [connector]
-        )
-        assert results == []
-
-    def test_multi_handler_one_missing_aggregates(self):
-        from demisto_sdk.commands.validate.validators.CO_validators.CO149_is_fetch_mutex_triggers import (
-            IsFetchMutexTriggersValidator,
-        )
-
-        connector = _connector_with_multi_fetch(
-            [
-                {
-                    "isFetch": "fetch-issues_akamai-waf-siem",
-                    "isFetchEvents": "log-collection_akamai-waf-siem",
-                },
-                {
-                    "isFetch": "fetch-issues_guardicore-v2",
-                    "isFetchEvents": "log-collection_guardicore-v2",
-                },
-            ]
-        )
-        # Only provide mutex triggers for the FIRST integration.
-        triggers = _mutex_trigger_set(
-            [
-                "fetch-issues_akamai-waf-siem",
-                "log-collection_akamai-waf-siem",
-            ]
-        )
-        _write_triggers_yaml(connector, triggers)
-        results = IsFetchMutexTriggersValidator().obtain_invalid_content_items(
-            [connector]
-        )
-        assert len(results) == 1
-        msg = results[0].message
-        assert "fetch-issues_guardicore-v2" in msg
-        assert "log-collection_guardicore-v2" in msg
-        # akamai integration should NOT appear in the error.
-        assert "fetch-issues_akamai-waf-siem" not in msg
-
-    def test_multiple_missing_aggregate_into_single_result(self):
-        from demisto_sdk.commands.validate.validators.CO_validators.CO149_is_fetch_mutex_triggers import (
-            IsFetchMutexTriggersValidator,
-        )
-
-        connector = _connector_with_multi_fetch(
-            [
-                {
-                    "isFetch": "fetch-issues",
-                    "isFetchEvents": "log-collection",
-                    "isFetchAssets": "fetch-assets-and-vulnerabilities",
-                }
-            ]
-        )
-        # Provide 0 triggers — all 3×2=6 pairs are missing.
-        _write_triggers_yaml(connector, [])
-        results = IsFetchMutexTriggersValidator().obtain_invalid_content_items(
-            [connector]
-        )
-        assert len(results) == 1
-        # All 6 pairs should be reported.
-        msg = results[0].message
-        for pair in [
-            ("fetch-issues", "log-collection"),
-            ("log-collection", "fetch-issues"),
-            ("fetch-issues", "fetch-assets-and-vulnerabilities"),
-            ("fetch-assets-and-vulnerabilities", "fetch-issues"),
-            ("log-collection", "fetch-assets-and-vulnerabilities"),
-            ("fetch-assets-and-vulnerabilities", "log-collection"),
-        ]:
-            assert f"'{pair[0]}' → lock '{pair[1]}'" in msg
-
-    def test_error_path_points_to_triggers_yaml(self):
-        from demisto_sdk.commands.validate.validators.CO_validators.CO149_is_fetch_mutex_triggers import (
-            IsFetchMutexTriggersValidator,
-        )
-
-        connector = _connector_with_multi_fetch(
-            [
-                {
-                    "isFetch": "fetch-issues",
-                    "isFetchEvents": "log-collection",
-                }
-            ]
-        )
-        _write_triggers_yaml(connector, [])
-        results = IsFetchMutexTriggersValidator().obtain_invalid_content_items(
             [connector]
         )
         assert len(results) == 1

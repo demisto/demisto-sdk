@@ -41,19 +41,24 @@ def expected_title(capability_id: str) -> str:
 class IsCapabilityTitleValidValidator(ConnectorsValidator[ContentTypes]):
     error_code = "CO117"
     description = (
-        "Validates that each capability's title is the exact Title Case of its "
-        "id (hyphen-delimited words capitalized, with the connector word 'and' "
-        "kept lowercase). For example, 'automation-and-remediation' must have "
-        "the title 'Automation and Remediation'."
+        "Validates that each XSOAR-owned capability's title is the exact "
+        "Title Case of its id (hyphen-delimited words capitalized, with the "
+        "connector word 'and' kept lowercase). For example, "
+        "'automation-and-remediation' must have the title 'Automation and "
+        "Remediation'. Non-XSOAR capabilities are governed by their owning "
+        "team's naming and are skipped."
     )
     rationale = (
-        "Capability titles are customer-facing labels derived from their ids. "
-        "A consistent, deterministic Title Case keeps the product UI uniform "
-        "and prevents ad-hoc or mismatched capability labels."
+        "XSOAR capability titles are customer-facing labels derived "
+        "deterministically from their (closed-list) ids. A consistent Title "
+        "Case keeps the product UI uniform and prevents ad-hoc or mismatched "
+        "XSOAR capability labels. Ownership is determined via the handler "
+        "'module: xsoar' field; non-XSOAR capabilities pick their own titles "
+        "and are intentionally out of scope."
     )
     error_message = (
-        "Connector '{connector_id}' has capabilities whose title does not match "
-        "the expected Title Case of their id: {details}."
+        "Connector '{connector_id}' has XSOAR-owned capabilities whose title "
+        "does not match the expected Title Case of their id: {details}."
     )
     related_field = "capabilities"
     is_auto_fixable = False
@@ -71,7 +76,14 @@ class IsCapabilityTitleValidValidator(ConnectorsValidator[ContentTypes]):
             # Parent capabilities only. Sub-capability titles are the backing
             # integration's display name (governed by CO194), not a title-cased
             # id, so they are intentionally excluded here.
+            #
+            # Only XSOAR-owned capabilities are checked - non-XSOAR
+            # capabilities (e.g. posture capabilities owned by other teams
+            # like "identity", "saas-posture-config-monitoring") have their
+            # own naming conventions and are out of scope for CO117.
             for capability in connector.capabilities:
+                if not self._is_xsoar_owned(connector, capability.id):
+                    continue
                 expected = expected_title(capability.id)
                 if capability.title != expected:
                     details.append(
@@ -93,3 +105,15 @@ class IsCapabilityTitleValidValidator(ConnectorsValidator[ContentTypes]):
                 )
 
         return results
+
+    @staticmethod
+    def _is_xsoar_owned(connector: ContentTypes, capability_id: str) -> bool:
+        """Whether the given capability id is XSOAR-owned.
+
+        Ownership is recorded on the capability-handler mapping, which sets
+        ``is_xsoar`` when at least one subscribing handler is XSOAR-related
+        (``module: xsoar`` and ``team: xsoar``). Mirrors CO110's gating so
+        the two validators agree on which capabilities are XSOAR-scoped.
+        """
+        mapping = connector.capability_handler_map.get(capability_id)
+        return bool(mapping and mapping.is_xsoar)

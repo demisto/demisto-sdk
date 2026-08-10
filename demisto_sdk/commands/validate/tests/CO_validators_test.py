@@ -2309,7 +2309,11 @@ class TestCO116IsConnectorMatchesIntegrationFlags:
 
 
 def _connector_with_capability_title(cap_id, title):
-    """Connector with a single (leaf) capability having the given id and title."""
+    """Connector with a single (leaf) capability having the given id and title.
+
+    Attaches a default (XSOAR) handler subscribing to ``cap_id`` so the
+    capability is XSOAR-owned - CO117 only checks XSOAR-owned capabilities.
+    """
     return create_connector_object(
         capabilities_data={
             "capabilities": [
@@ -2322,6 +2326,7 @@ def _connector_with_capability_title(cap_id, title):
                 }
             ]
         },
+        handlers=[_xsoar_handler_subscribing_to(cap_id)],
     )
 
 
@@ -2434,6 +2439,55 @@ class TestCO117IsCapabilityTitleValid:
                     }
                 ]
             },
+            handlers=[
+                _xsoar_handler_subscribing_to("fetch-issues", "fetch-issues_jira-v3")
+            ],
+        )
+
+        validator = IsCapabilityTitleValidValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_non_xsoar_capability_skipped(self):
+        """
+        Given: A connector whose only capability ('identity') is subscribed
+               to by a non-XSOAR handler and carries a title
+               ('Identity Posture') that does NOT match the Title Case of the
+               id ('Identity').
+        When: CO117 runs.
+        Then: No validation errors are returned - CO117 only checks
+              XSOAR-owned capabilities (closed list). Non-XSOAR capabilities
+              like posture capabilities own their own titles and are out of
+              scope. This is the exact scenario producing false positives
+              on connectors like googleworkspace, microsoft365-services,
+              and salesforce.
+        """
+        connector = create_connector_object(
+            capabilities_data={
+                "capabilities": [
+                    {
+                        "id": "identity",
+                        "title": "Identity Posture",
+                        "description": "desc",
+                        "default_enabled": False,
+                        "required": False,
+                    }
+                ]
+            },
+            handlers=[
+                {
+                    "metadata": {"module": "cwp", "ownership": {"team": "cwp"}},
+                    "capabilities": [
+                        {
+                            "id": "identity",
+                            "auth_options": [
+                                {"id": "test-auth", "workloads": ["test-workload"]}
+                            ],
+                        }
+                    ],
+                }
+            ],
         )
 
         validator = IsCapabilityTitleValidValidator()
@@ -4173,19 +4227,62 @@ _OMIT = object()
 
 
 def _profile_with_mapping(profile_id: str, mapping_value):
-    """Build a profile block whose metadata.xsoar.interpolation_mapping
-    is exactly ``mapping_value``. Pass ``_OMIT`` to omit the key entirely.
+    """Build a profile block with an auth surface (one field carrying
+    ``metadata.auth.parameter``) whose
+    ``metadata.xsoar.interpolation_mapping`` is exactly ``mapping_value``.
+    Pass ``_OMIT`` to omit the key entirely.
+
+    The auth field is required so CO124's Sub-rule B (skip profiles with
+    no auth surface) does NOT fire and we can exercise the mapping-value
+    checks in isolation.
     """
     profile: dict = {
         "id": profile_id,
         "type": "plain",
         "title": "T",
-        "configurations": [{"fields": [{"id": "u", "field_type": "input"}]}],
+        "configurations": [
+            {
+                "fields": [
+                    {
+                        "id": "u",
+                        "field_type": "input",
+                        "metadata": {"auth": {"parameter": "username"}},
+                    }
+                ]
+            }
+        ],
     }
     if mapping_value is _OMIT:
         profile["metadata"] = {"xsoar": {}}
     else:
         profile["metadata"] = {"xsoar": {"interpolation_mapping": mapping_value}}
+    return profile
+
+
+def _profile_without_auth_surface(profile_id: str, mapping_value=_OMIT):
+    """Build a profile with ONLY framework fields (no
+    ``metadata.auth.parameter`` on any field, no ``vault_mappings``).
+    Used to exercise CO124's Sub-rule B skip guard.
+    """
+    profile: dict = {
+        "id": profile_id,
+        "type": "passthrough",
+        "title": "No Auth",
+        "configurations": [
+            {"fields": [{"id": "proxy", "field_type": "checkbox"}]},
+            {"fields": [{"id": "insecure", "field_type": "checkbox"}]},
+            {"fields": [{"id": "engine_mode", "field_type": "radio"}]},
+        ],
+    }
+    if mapping_value is _OMIT:
+        profile["metadata"] = {"xsoar": {"interpolated": True}}
+    else:
+        profile["metadata"] = {
+            "xsoar": {
+                "interpolated": True,
+                "interpolation_mapping": mapping_value,
+            }
+        }
     return profile
 
 
@@ -4347,6 +4444,117 @@ class TestCO124IsValidGroupedConnectorAuth:
         results = validator.obtain_invalid_content_items([connector])
 
         assert results == []
+
+    # ------------------------------------------------------------------
+    # Sub-rule B: skip profiles with no auth surface.
+    # Regression coverage for the 39 real-world false-positives seen in
+    # unified-connectors-content (passthrough feed profiles + external_auth
+    # "No Authentication Required" tiles).
+    # ------------------------------------------------------------------
+
+    def test_grouped_passthrough_without_auth_surface_is_skipped(self):
+        """
+        Given: A grouped connector with a passthrough profile that
+               exposes ONLY framework fields (proxy / insecure /
+               engine_mode) and NO metadata.xsoar.interpolation_mapping.
+               This mirrors the shape of ~35 real intel-feed profiles
+               (e.g. passthrough.nmap, passthrough.dnstwist,
+               passthrough.tor_exit_addresses_feed).
+        When: CO124 runs.
+        Then: No errors - Sub-rule B skips profiles with no auth surface.
+        """
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+            connection_data={
+                "profiles": [
+                    _profile_without_auth_surface("passthrough.nmap_like")
+                ]
+            },
+        )
+
+        validator = IsValidGroupedConnectorAuthValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert results == []
+
+    def test_grouped_external_auth_without_auth_surface_is_skipped(self):
+        """
+        Given: A grouped connector with an external_auth "No
+               Authentication Required" tile (no auth fields, no mapping).
+               Mirrors external_auth.dbot_truth_bombs,
+               external_auth.sample_incident_generator,
+               external_auth.zoom_feed.
+        When: CO124 runs.
+        Then: No errors - Sub-rule B skips.
+        """
+        profile = _profile_without_auth_surface("external_auth.no_auth_tile")
+        profile["type"] = "external_auth"
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+            connection_data={"profiles": [profile]},
+        )
+
+        validator = IsValidGroupedConnectorAuthValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert results == []
+
+    def test_grouped_profile_with_vault_mappings_still_requires_mapping(self):
+        """
+        Given: A grouped connector with a passthrough profile that has
+               NO field-level auth.parameter but DOES declare
+               ``vault_mappings`` (so it draws credentials from a vault).
+               The mapping is missing.
+        When: CO124 runs.
+        Then: One ValidationResult - vault_mappings counts as an auth
+              surface, so Sub-rule B does NOT skip and the missing
+              mapping is flagged.
+        """
+        profile = _profile_without_auth_surface("passthrough.vault_only")
+        profile["vault_mappings"] = [
+            {"id": "credentials", "map": {"user": "client_id",
+                                          "password": "client_secret"}}
+        ]
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+            connection_data={"profiles": [profile]},
+        )
+
+        validator = IsValidGroupedConnectorAuthValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "passthrough.vault_only" in results[0].message
+        assert "missing" in results[0].message
+
+    def test_grouped_mixed_profiles_only_reports_ones_with_auth_surface(self):
+        """
+        Given: A grouped connector with 3 profiles:
+                 - one passthrough feed (no auth surface, no mapping)  -> skip
+                 - one profile with an auth field and a valid mapping  -> ok
+                 - one profile with an auth field but NO mapping        -> ERROR
+        When: CO124 runs.
+        Then: Exactly one ValidationResult, naming the third profile.
+        """
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+            connection_data={
+                "profiles": [
+                    _profile_without_auth_surface("passthrough.feed"),
+                    _profile_with_mapping("plain.ok", "username:credentials.identifier"),
+                    _profile_with_mapping("plain.needs_mapping", _OMIT),
+                ]
+            },
+        )
+
+        validator = IsValidGroupedConnectorAuthValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "plain.needs_mapping" in results[0].message
+        assert "missing" in results[0].message
+        # The auth-less passthrough feed must NOT appear.
+        assert "passthrough.feed" not in results[0].message
 
 
 # ============================================================
@@ -8934,6 +9142,121 @@ class TestCO148IsValidEngineTriggers:
                 _hide_engine_trigger("oauth_myint_"),
                 _hide_engine_group_trigger("oauth_myint_"),
                 # No unlock-proxy for oauth_myint_ (no proxy field for it).
+            ],
+        )
+        results = IsValidEngineTriggersValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_grouped_two_handlers_share_bare_prefix_no_proxy_leakage(self):
+        """Regression: grouped connector where two profiles share the empty
+        (bare) prefix, split across two XSOAR handlers -- one handler exposes
+        engine_mode/engine/engineGroup with NO proxy field, the other exposes
+        ONLY proxy. CO148 must scope proxy detection PER HANDLER via
+        ``resolved_params``: since no single handler exposes BOTH engine_mode
+        and proxy under the bare prefix, the bare unlock-proxy trigger must
+        NOT be required, and hide-triggers only must pass.
+
+        This locks the fix for the cross-profile proxy leakage that caused
+        false-positives on cisco-security, red-hat-ansible, mongodb, imperva,
+        box-automation-and-collection, threatconnect,
+        m365-automation-and-collection, and salesforce.
+        """
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            ResolvedParamMapping,
+        )
+        from demisto_sdk.commands.validate.validators.CO_validators.CO148_is_valid_engine_triggers import (
+            IsValidEngineTriggersValidator,
+        )
+
+        # Grouped connector with TWO profiles, both using bare (empty)
+        # prefix. Profile A carries the engine triplet; profile B carries a
+        # single proxy field. They share the empty prefix -- the same shape
+        # as cisco-security's plain.amp + plain.ampv2.
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+            connection_data={
+                "profiles": [
+                    {
+                        "id": "profile_a",
+                        "type": "plain",
+                        "configurations": [
+                            {
+                                "fields": [
+                                    _canonical_engine_mode_field(
+                                        field_id="engine_mode"
+                                    ),
+                                    _canonical_engine_field(
+                                        field_id="engine",
+                                        integration_id="MyInt",
+                                        dynamic_field="engine",
+                                    ),
+                                    _canonical_engine_field(
+                                        field_id="engineGroup",
+                                        integration_id="MyInt",
+                                        dynamic_field="engine-group",
+                                    ),
+                                ],
+                            },
+                        ],
+                    },
+                    {
+                        "id": "profile_b",
+                        "type": "plain",
+                        "configurations": [
+                            {
+                                "fields": [
+                                    {
+                                        "id": "proxy",
+                                        "type": "boolean",
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+            handlers=[
+                {"id": "xsoar-a"},
+                {"id": "xsoar-b"},
+            ],
+        )
+
+        # Handler A is bound to profile_a and only exposes the engine fields.
+        connector.handlers[0].resolved_params = [
+            ResolvedParamMapping(
+                connector_param_name="engine_mode",
+                content_param_name="engine_mode",
+            ),
+            ResolvedParamMapping(
+                connector_param_name="engine",
+                content_param_name="engine",
+            ),
+            ResolvedParamMapping(
+                connector_param_name="engineGroup",
+                content_param_name="engineGroup",
+            ),
+        ]
+        # Handler B is bound to profile_b and only exposes the proxy field --
+        # crucially, NOT engine_mode, so the bare-prefix engine_mode must not
+        # be paired with any proxy field on this handler either.
+        connector.handlers[1].resolved_params = [
+            ResolvedParamMapping(
+                connector_param_name="proxy",
+                content_param_name="proxy",
+            ),
+        ]
+
+        # Only the two hide triggers for the bare prefix are shipped. No
+        # unlock-proxy trigger for the empty prefix -- and CO148 must NOT
+        # complain, because no handler exposes both engine_mode and proxy
+        # under that prefix.
+        _write_triggers_yaml(
+            connector,
+            [
+                _hide_engine_trigger(""),
+                _hide_engine_group_trigger(""),
             ],
         )
         results = IsValidEngineTriggersValidator().obtain_invalid_content_items(

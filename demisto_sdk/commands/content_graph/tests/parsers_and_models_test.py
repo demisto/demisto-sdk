@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     MINIMUM_XSOAR_SAAS_VERSION,
     MarketplaceVersions,
+    SupportLevels,
 )
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.content_graph.common import (
@@ -3335,6 +3336,24 @@ def test_support_attribute_in_integration_object(
             pack_info={"support": pack_support},
         )
         assert test_integration.support == expected_support
+
+
+@pytest.mark.parametrize("support_level", [sl.value for sl in SupportLevels])
+def test_integration_supportlevelheader_accepts_valid_support_levels(support_level):
+    """
+    Given:
+        - An integration YML with a valid supportlevelheader value (community, partner, developer, xsoar).
+    When:
+        - Creating an Integration object with the given supportlevelheader.
+    Then:
+        - Ensure no validation error is raised (regression for CIAC-17642).
+    """
+    with ChangeCWD(REPO.path):
+        test_integration = create_integration_object(
+            paths=["supportlevelheader"],
+            values=[support_level],
+        )
+        assert test_integration.support == support_level
 
 
 def test_layout_parser_group():

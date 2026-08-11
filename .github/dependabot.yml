@@ -5,7 +5,7 @@ updates:
     schedule:
       interval: "weekly"
     assignees:
-      - "skidorball"
+      - "ShacharKidor"
 
   - package-ecosystem: "npm"
     directory: "/"

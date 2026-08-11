@@ -8539,14 +8539,53 @@ def _connector_with_standard_engine_fields(with_proxy: bool = True):
     return connector
 
 
+def _stamp_engine_resolved_params(
+    connector,
+    prefix: str,
+    handler_index: int = 0,
+) -> None:
+    """Give ``connector.handlers[handler_index]`` resolved_params
+    entries for the engine triplet under ``prefix`` — ``<prefix>engine_mode``,
+    ``<prefix>engine``, ``<prefix>engineGroup`` — so CO148's
+    ``_prefix_proxy_map`` discovers the picker.
+
+    The connector parser only auto-populates resolved_params from
+    profile fields when the profile id appears in the handler's
+    auth_options. Tests that put the triplet inside a profile
+    (grouped style) without matching auth_options never surface
+    those field ids, so we stamp them here to mirror what the
+    parser would produce.
+    """
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        ResolvedParamMapping,
+    )
+
+    existing = list(connector.handlers[handler_index].resolved_params or [])
+    for suffix in ("engine_mode", "engine", "engineGroup"):
+        field_id = f"{prefix}{suffix}"
+        if any(rp.connector_param_name == field_id for rp in existing):
+            continue
+        existing.append(
+            ResolvedParamMapping(
+                connector_param_name=field_id,
+                content_param_name=field_id,
+            )
+        )
+    connector.handlers[handler_index].resolved_params = existing
+
+
 def _connector_with_prefixed_engine_fields(
     prefix: str = "plain_myint_", with_proxy: bool = True
 ):
     """Grouped-style connector with prefixed engine triplet in a profile.
 
-    When with_proxy is True (default), stamps a '<prefix>proxy'
-    resolved_param on the first XSOAR handler so CO148 requires the
-    prefixed unlock-proxy trigger.
+    Also stamps the engine triplet as resolved_params on the first
+    XSOAR handler so CO148's ``_prefix_proxy_map`` discovers the
+    ``<prefix>engine_mode`` picker (the parser only surfaces profile
+    fields whose profile id matches the handler's auth_options).
+
+    When with_proxy is True (default), also stamps a '<prefix>proxy'
+    resolved_param so CO148 requires the prefixed unlock-proxy trigger.
     """
     connector = create_connector_object(
         connector_overrides={"settings": {"grouped": True}},
@@ -8578,6 +8617,7 @@ def _connector_with_prefixed_engine_fields(
             ],
         },
     )
+    _stamp_engine_resolved_params(connector, prefix=prefix)
     if with_proxy:
         _stamp_proxy_resolved_param(
             connector, raw_id=f"{prefix}proxy", runtime_name="proxy"
@@ -8875,6 +8915,13 @@ class TestCO148IsValidEngineTriggers:
                 ],
             },
         )
+        # Stamp the engine triplet as resolved_params on the first
+        # XSOAR handler for BOTH prefixes so CO148's
+        # _prefix_proxy_map discovers both engine pickers (the parser
+        # only surfaces profile fields whose profile id matches the
+        # handler's auth_options).
+        _stamp_engine_resolved_params(connector, prefix="plain_myint_")
+        _stamp_engine_resolved_params(connector, prefix="oauth_myint_")
         # Both profiles expose a proxy field (per CO120), so the
         # unlock-proxy trigger IS required for both prefixes.
         _stamp_proxy_resolved_param(

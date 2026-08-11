@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from typing import Any, Iterable, List, Optional, Set, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 from demisto_sdk.commands.content_graph.objects.connector import (
     ConnectionProfile,
     Connector,
+    ConnectorField,
     HandlerData,
 )
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
@@ -50,33 +51,46 @@ class IsValidInterpolationValidator(ConnectorsValidator[ContentTypes]):
        handlers that reference this profile.
     D. The credentials-style suffix is only valid when the referenced
        integration param has ``type == 9`` (ParameterType.AUTH).
+    E. LEFT must NOT target a profile field whose
+       ``metadata.event.publish`` is ``true``. Publish and interpolation
+       are mutually exclusive contracts: an interpolated field is
+       consumed by the auth flow and must NOT also publish its raw
+       pre-interpolation value to the runtime integration - the
+       complement of CO123 (which requires non-interpolated fields to
+       publish).
 
     Skip guards:
     - Skip profiles that are not interpolated (``metadata.xsoar
       .interpolated != true`` OR no ``interpolation_mapping``).
-    - Sub-rules A/B are intrinsic to the profile and always run.
+    - Sub-rules A/B/E are intrinsic to the profile and always run.
     - Sub-rules C/D need ``handler.related_integration``. If NO XSOAR
       handler references the profile (or none of them has a resolved
       integration), C/D are skipped for that profile - CO114/CO120 already
       flag unresolved-integration handlers.
     - Non-XSOAR handlers do NOT participate in the C/D integration lookup.
+    - Sub-rule E is skipped when Sub-rule B already fires for the same
+      LEFT (a reserved LEFT is a harder failure; suppressing E avoids
+      double-reporting on the same pair).
     """
 
     error_code = "CO121"
     description = (
         "Validates each interpolated auth profile's interpolation_mapping: "
         "left keys must be auth-field parameter names present in the "
-        "profile (never engine/engine_group/proxy/insecure); right values "
-        "must exist as parameter names on the backing integration, and "
-        "credentials-suffix syntax (.identifier / .password) is only valid "
-        "for integration params of type 9 (credentials)."
+        "profile (never engine/engine_group/proxy/insecure) and must not "
+        "target a field with metadata.event.publish=true (publish and "
+        "interpolation are mutually exclusive); right values must exist "
+        "as parameter names on the backing integration, and credentials-"
+        "suffix syntax (.identifier / .password) is only valid for "
+        "integration params of type 9 (credentials)."
     )
     rationale = (
         "interpolation_mapping is the contract between the connector's "
         "user-facing auth fields and the runtime integration params. A "
         "broken mapping (missing left auth field, mistyped right param, "
-        "or wrong .identifier/.password on a non-credentials param) is a "
-        "runtime auth failure the customer only discovers at fetch time."
+        "wrong .identifier/.password on a non-credentials param, or a "
+        "left key that also publishes to the integration) is a runtime "
+        "auth failure the customer only discovers at fetch time."
     )
     error_message = "Connector '{connector_id}' profile '{profile_id}': {details}."
     related_field = "connection.profiles.metadata.xsoar.interpolation_mapping"
@@ -118,6 +132,47 @@ class IsValidInterpolationValidator(ConnectorsValidator[ContentTypes]):
                     param = auth.get("parameter")
                     if param:
                         yield param
+
+    @staticmethod
+    def _profile_field_index(
+        profile: ConnectionProfile,
+    ) -> Dict[str, ConnectorField]:
+        """Return ``{lookup_name -> ConnectorField}`` keyed by BOTH the
+        raw ``field.id`` AND the field's ``metadata.auth.parameter``
+        (same dual-lookup semantics as
+        :meth:`_iter_profile_field_names`), used by Sub-rule E to
+        resolve a LEFT key back to its underlying field so we can check
+        ``metadata.event.publish``.
+
+        On the (defensive) case of a collision between id and
+        auth.parameter across two different fields, first write wins -
+        Sub-rule A/B behavior for that name is unchanged, and Sub-rule E
+        is a best-effort publish check that only fires when the LEFT
+        resolves cleanly.
+        """
+        index: Dict[str, ConnectorField] = {}
+        for fg in profile.configurations:
+            for field in fg.fields:
+                index.setdefault(field.id, field)
+                meta = field.metadata or {}
+                auth = meta.get("auth") if isinstance(meta, dict) else None
+                if isinstance(auth, dict):
+                    param = auth.get("parameter")
+                    if param:
+                        index.setdefault(param, field)
+        return index
+
+    @staticmethod
+    def _is_published(field: ConnectorField) -> bool:
+        """Mirror of CO123's publish detection: a field is "published"
+        iff ``metadata.event.publish is True``. Missing metadata / event
+        block / publish key all mean False.
+        """
+        meta = field.metadata or {}
+        event = meta.get("event") if isinstance(meta, dict) else None
+        if not isinstance(event, dict):
+            return False
+        return event.get("publish") is True
 
     @staticmethod
     def _parse_pairs(mapping: str) -> List[Tuple[str, str]]:
@@ -201,6 +256,11 @@ class IsValidInterpolationValidator(ConnectorsValidator[ContentTypes]):
                     continue
 
                 profile_field_names = set(self._iter_profile_field_names(profile))
+                # Parallel index used by Sub-rule E to resolve LEFT -> field
+                # for the publish check. Keeping this separate from
+                # ``profile_field_names`` preserves Sub-rule A's set-membership
+                # semantics and avoids touching call sites unrelated to E.
+                profile_field_index = self._profile_field_index(profile)
                 xsoar_handlers = self._xsoar_handlers_for_profile(connector, profile.id)
                 resolved_xsoar_handlers = [
                     h for h in xsoar_handlers if h.related_integration is not None
@@ -211,6 +271,7 @@ class IsValidInterpolationValidator(ConnectorsValidator[ContentTypes]):
                         left,
                         right,
                         profile_field_names,
+                        profile_field_index,
                         resolved_xsoar_handlers,
                     ):
                         results.append(
@@ -237,6 +298,7 @@ class IsValidInterpolationValidator(ConnectorsValidator[ContentTypes]):
         left: str,
         right: str,
         profile_field_names: Set[str],
+        profile_field_index: Dict[str, ConnectorField],
         resolved_xsoar_handlers: List[HandlerData],
     ) -> List[str]:
         details: List[str] = []
@@ -253,6 +315,23 @@ class IsValidInterpolationValidator(ConnectorsValidator[ContentTypes]):
                 f"LEFT '{left}' does not match any field id or "
                 f"metadata.auth.parameter on the profile"
             )
+        else:
+            # Sub-rule E: LEFT resolved to a real profile field. That
+            # field must NOT publish to the runtime integration -
+            # interpolation and publish are mutually exclusive (an
+            # interpolated field is consumed by the auth flow; if it
+            # also published, the raw pre-interpolation value would
+            # leak through as an integration param). Complements CO123
+            # which enforces the non-interpolated => publish=true
+            # direction.
+            field = profile_field_index.get(left)
+            if field is not None and self._is_published(field):
+                details.append(
+                    f"LEFT '{left}' targets a profile field with "
+                    f"metadata.event.publish=true; publish and "
+                    f"interpolation are mutually exclusive - remove the "
+                    f"field from interpolation_mapping or set publish=false"
+                )
 
         # Sub-rule C/D: check RIGHT against the integration - only if we
         # have at least one XSOAR handler with a resolved integration for

@@ -20,6 +20,12 @@ ContentTypes = Connector
 # a tightening transition.
 ModifierRequired = bool
 
+# Field state carried through the diff: (create_required, edit_required,
+# has_default). ``has_default`` is True iff the field declares an explicit
+# ``options.default_value`` (presence semantics - ``None`` means "no default
+# declared"; ``""`` / ``0`` / ``False`` count as declared defaults).
+FieldRequiredState = Tuple[ModifierRequired, ModifierRequired, bool]
+
 
 class NoParamRequiredTightenedValidator(ConnectorsValidator[ContentTypes]):
     error_code = "CO179"
@@ -27,7 +33,10 @@ class NoParamRequiredTightenedValidator(ConnectorsValidator[ContentTypes]):
         "Breaking-change check: no XSOAR-relevant connector field may have "
         "its `options.create_modifiers.required` OR "
         "`options.edit_modifiers.required` transition from False (or unset) "
-        "to True across versions. The XSOAR-visible field surface is built "
+        "to True across versions. **Exemption:** if the new version declares "
+        "an explicit `options.default_value`, the tightening is allowed - "
+        "the platform substitutes the default for existing instances so the "
+        "next save does not fail. The XSOAR-visible field surface is built "
         "per XSOAR handler from: connection.yaml general_configurations, the "
         "connection.yaml profiles this handler authenticates against, "
         "capabilities.yaml general_configurations, and the "
@@ -37,10 +46,13 @@ class NoParamRequiredTightenedValidator(ConnectorsValidator[ContentTypes]):
     rationale = (
         "Making a previously-optional field required is a breaking change: "
         "existing enabled instances that never provided a value would fail "
-        "validation on their next save, silently breaking upgrades. New "
-        "fields may be introduced as required, and existing required fields "
-        "may be relaxed to optional, but the reverse transition is not "
-        "allowed."
+        "validation on their next save, silently breaking upgrades. "
+        "However, when the new field carries an explicit "
+        "`options.default_value`, the platform substitutes the default at "
+        "save time, so no upgrade path breaks - the tightening is safe. "
+        "New fields may be introduced as required, and existing required "
+        "fields may be relaxed to optional; the reverse transition without "
+        "a default is not allowed."
     )
     error_message = (
         "Handler '{handler_id}' has fields whose `required` modifier "
@@ -108,29 +120,34 @@ class NoParamRequiredTightenedValidator(ConnectorsValidator[ContentTypes]):
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _required_pair(
-        field: ConnectorField,
-    ) -> Tuple[ModifierRequired, ModifierRequired]:
-        """Return (create_required, edit_required) for a field.
+    def _required_pair(field: ConnectorField) -> FieldRequiredState:
+        """Return ``(create_required, edit_required, has_default)`` for a field.
 
-        Missing modifier blocks and missing `required` keys both count as
-        False (i.e. not required). Only an explicit True counts as required.
+        - Missing modifier blocks and missing ``required`` keys both count as
+          False (i.e. not required). Only an explicit True counts as required.
+        - ``has_default`` follows presence semantics on
+          ``options.default_value``: True iff the value is anything other
+          than ``None`` (so ``""``, ``0``, ``False`` are all "declared").
+          Rationale: any concrete default is what the platform will
+          substitute for missing user input on upgrade, making a
+          previously-optional -> now-required transition non-breaking.
         """
         opts = getattr(field, "options", None)
         if opts is None:
-            return (False, False)
+            return (False, False, False)
         create = getattr(opts, "create_modifiers", None)
         edit = getattr(opts, "edit_modifiers", None)
         create_req = bool(getattr(create, "required", False)) if create else False
         edit_req = bool(getattr(edit, "required", False)) if edit else False
-        return (create_req, edit_req)
+        has_default = getattr(opts, "default_value", None) is not None
+        return (create_req, edit_req, has_default)
 
     @classmethod
     def _required_map(
         cls,
         connector: ContentTypes,
         handler: HandlerData,
-    ) -> Dict[str, Tuple[ModifierRequired, ModifierRequired]]:
+    ) -> Dict[str, FieldRequiredState]:
         """Build ``{field_id: (create_required, edit_required)}`` for the
         XSOAR-visible field surface of a single handler.
 
@@ -201,19 +218,31 @@ class NoParamRequiredTightenedValidator(ConnectorsValidator[ContentTypes]):
 
     @staticmethod
     def _tightened_fields(
-        old_map: Dict[str, Tuple[ModifierRequired, ModifierRequired]],
-        new_map: Dict[str, Tuple[ModifierRequired, ModifierRequired]],
+        old_map: Dict[str, FieldRequiredState],
+        new_map: Dict[str, FieldRequiredState],
     ) -> Dict[str, Set[str]]:
         """Return ``{field_id: {"create", "edit"}}`` for fields whose
-        create/edit `required` transitioned from False→True.
+        create/edit ``required`` transitioned from False->True.
 
         Only field ids present in BOTH old and new are considered.
+
+        Default-value exemption: when the NEW version of the field
+        declares an explicit ``options.default_value`` (i.e.
+        ``has_default`` is True on the new side), the field is exempt
+        from the tightening check even if create/edit tightened. The
+        platform substitutes the default for existing instances on
+        save, so the tightening is non-breaking. The check consults the
+        NEW side (not old) because the exemption is about how the
+        upgraded connector treats existing instances at save time.
         """
         tightened: Dict[str, Set[str]] = {}
-        for fid, (new_create, new_edit) in new_map.items():
+        for fid, (new_create, new_edit, new_has_default) in new_map.items():
             if fid not in old_map:
                 continue  # newly-added field, not this validator's concern
-            old_create, old_edit = old_map[fid]
+            if new_has_default:
+                # Exemption: platform will substitute the default on save.
+                continue
+            old_create, old_edit, _old_has_default = old_map[fid]
             which: Set[str] = set()
             if (not old_create) and new_create:
                 which.add("create")

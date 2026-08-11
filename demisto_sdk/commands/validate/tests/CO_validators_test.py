@@ -2988,6 +2988,8 @@ def _make_interpolated_profile(
     ``field_specs`` is an iterable of dicts describing each field, e.g.
     ``[{"id": "credentials_username", "auth_parameter": "username"}]``.
     Setting ``auth_parameter`` populates ``metadata.auth.parameter``.
+    Setting ``publish`` (bool) populates ``metadata.event.publish`` — used
+    by CO121 Sub-rule E (an interpolated field must not also publish).
     """
     fields = []
     for spec in field_specs:
@@ -2996,8 +2998,13 @@ def _make_interpolated_profile(
             "title": spec.get("title", spec["id"]),
             "field_type": spec.get("field_type", "input"),
         }
+        metadata: dict = {}
         if spec.get("auth_parameter"):
-            field["metadata"] = {"auth": {"parameter": spec["auth_parameter"]}}
+            metadata["auth"] = {"parameter": spec["auth_parameter"]}
+        if "publish" in spec:
+            metadata["event"] = {"publish": bool(spec["publish"])}
+        if metadata:
+            field["metadata"] = metadata
         fields.append(field)
 
     return {
@@ -3346,6 +3353,146 @@ class TestCO121IsValidInterpolation:
         messages = [r.message for r in results]
         assert any("does not match any field id" in m for m in messages)
         assert any("RIGHT for LEFT 'not_a_pair' is empty" in m for m in messages)
+
+    # ---- Sub-rule E: LEFT must NOT target a publish=true field ----
+    # Complements CO123 (non-interpolated => publish=true). A field that is
+    # interpolated is consumed by auth and must NOT also publish to the
+    # runtime integration, otherwise the raw pre-interpolation value would
+    # leak through as a param.
+
+    def test_left_targets_published_field_fails(self):
+        """
+        Sub-rule E: A LEFT key whose profile field carries
+        ``metadata.event.publish: true`` must be flagged - a published
+        field cannot also be the target of an interpolation mapping.
+
+        Given: An interpolated profile whose ``username`` auth field has
+               ``metadata.event.publish: true`` AND is referenced on the
+               LEFT of interpolation_mapping.
+        When: CO121 runs.
+        Then: One validation error mentioning the publish/interpolation
+              mutual-exclusion for that LEFT key.
+        """
+        connector = create_connector_object(
+            connection_data=_make_interpolated_profile(
+                profile_id="plain.myint",
+                mapping="username:credentials.identifier",
+                field_specs=[
+                    {
+                        "id": "credentials_username",
+                        "auth_parameter": "username",
+                        "publish": True,  # violates Sub-rule E
+                    },
+                ],
+            )
+        )
+        _wire_handler_to_profile(
+            connector,
+            "plain.myint",
+            _make_integration_with_params_objs(("credentials", 9)),
+        )
+
+        validator = IsValidInterpolationValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1, [r.message for r in results]
+        msg = results[0].message
+        assert "'username'" in msg
+        # The message must clearly convey the publish/interpolation conflict.
+        assert "publish" in msg.lower()
+        assert "interpolat" in msg.lower()
+
+    def test_left_targets_unpublished_field_passes(self):
+        """
+        Sub-rule E: An interpolated LEFT that resolves to a field with
+        ``publish`` absent or explicitly ``false`` is valid.
+        """
+        connector = create_connector_object(
+            connection_data=_make_interpolated_profile(
+                profile_id="plain.myint",
+                mapping="username:credentials.identifier",
+                field_specs=[
+                    {
+                        "id": "credentials_username",
+                        "auth_parameter": "username",
+                        "publish": False,
+                    },
+                ],
+            )
+        )
+        _wire_handler_to_profile(
+            connector,
+            "plain.myint",
+            _make_integration_with_params_objs(("credentials", 9)),
+        )
+
+        validator = IsValidInterpolationValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert results == [], [r.message for r in results]
+
+    def test_left_matches_field_id_with_publish_true_fails(self):
+        """
+        Sub-rule E: LEFT resolution must also work when the mapping
+        references the raw ``field.id`` (not the ``auth.parameter``
+        alias). A published raw-id field is still a Sub-rule E violation.
+        """
+        connector = create_connector_object(
+            connection_data=_make_interpolated_profile(
+                profile_id="plain.myint",
+                mapping="raw_field_id:credentials.password",
+                field_specs=[
+                    {"id": "raw_field_id", "publish": True},
+                ],
+            )
+        )
+        _wire_handler_to_profile(
+            connector,
+            "plain.myint",
+            _make_integration_with_params_objs(("credentials", 9)),
+        )
+
+        validator = IsValidInterpolationValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1, [r.message for r in results]
+        msg = results[0].message
+        assert "'raw_field_id'" in msg
+        assert "publish" in msg.lower()
+
+    def test_reserved_left_with_publish_true_only_reports_reserved(self):
+        """
+        Guard against double-reporting: a reserved LEFT (e.g. ``engine``)
+        that also happens to be marked ``publish=true`` should still only
+        emit Sub-rule B (reserved), not both B and E - Sub-rule B is the
+        primary/harder failure and Sub-rule E is skipped for reserved LEFTs.
+        """
+        connector = create_connector_object(
+            connection_data=_make_interpolated_profile(
+                profile_id="plain.myint",
+                mapping="engine:credentials.identifier",
+                field_specs=[
+                    {
+                        "id": "engine",
+                        "auth_parameter": "engine",
+                        "publish": True,
+                    },
+                ],
+            )
+        )
+        _wire_handler_to_profile(
+            connector,
+            "plain.myint",
+            _make_integration_with_params_objs(("credentials", 9)),
+        )
+
+        validator = IsValidInterpolationValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        # Exactly one finding, and it must be the "reserved" one - the
+        # publish-vs-interpolation rule must not double-report on top of it.
+        assert len(results) == 1, [r.message for r in results]
+        assert "reserved general param" in results[0].message
 
 
 # ============================================================
@@ -12747,14 +12894,26 @@ class TestCO176NoChangeConnectorIDs:
 # ---------------------------------------------------------------------------
 
 
+_NO_DEFAULT = object()  # sentinel: caller did not pass default_value at all
+
+
 def _field(
     field_id: str,
     create_required=None,
     edit_required=None,
+    default_value=_NO_DEFAULT,
 ):
     """Build a ConnectorField carrying the given create/edit `required`
     modifier values. Passing ``None`` for a modifier omits the modifier
     block entirely, which the validator treats as False.
+
+    ``default_value``: pass any concrete value (including ``None``, ``""``,
+    ``0``, ``False``) to populate ``options.default_value``. Omit the
+    argument entirely (sentinel-defaulted) to leave ``options.default_value``
+    at its Pydantic default (``None``, meaning "no default declared").
+    This distinction matters because CO179's default-exemption uses
+    ``default_value is not None`` — so ``default_value=None`` explicitly
+    is semantically the same as omitting it.
     """
     from demisto_sdk.commands.content_graph.objects.connector import (
         ConnectorField,
@@ -12770,13 +12929,16 @@ def _field(
     edit_mod = (
         FieldModifiers(required=edit_required) if edit_required is not None else None
     )
+    options_kwargs = {
+        "create_modifiers": create_mod,
+        "edit_modifiers": edit_mod,
+    }
+    if default_value is not _NO_DEFAULT:
+        options_kwargs["default_value"] = default_value
     return ConnectorField(
         id=field_id,
         title=field_id,
-        options=FieldOptions(
-            create_modifiers=create_mod,
-            edit_modifiers=edit_mod,
-        ),
+        options=FieldOptions(**options_kwargs),
     )
 
 
@@ -13081,6 +13243,223 @@ class TestCO179NoParamRequiredTightened:
         assert results[0].path is not None
         assert results[0].path == connector.handlers[0].file_path
         assert str(results[0].path).endswith("handler.yaml")
+
+    # ------------------------------------------------------------------
+    # Default-value exemption: a False->True `required` transition is
+    # ALLOWED when the new field carries an explicit
+    # ``options.default_value`` - the platform substitutes the default
+    # for existing instances, so upgrade doesn't break saves.
+    # Rule: exempt iff ``field.options.default_value is not None``
+    # (presence semantics, matches the "system uses default if it doesn't
+    # exist" rationale). Missing options.default_value / omitted argument
+    # / explicit None all mean "no default declared" and remain flagged.
+    # ------------------------------------------------------------------
+
+    def test_create_tightened_with_default_value_is_exempt(self):
+        """
+        Given: A field whose ``create_modifiers.required`` flips
+               false -> true AND the new field declares an explicit
+               ``options.default_value``.
+        When: CO179 runs.
+        Then: No validation error - existing instances get the default
+              on save, so the transition is non-breaking.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_connection_general_fields(
+            old_connector, [_field("url", create_required=False)]
+        )
+        _set_connection_general_fields(
+            connector,
+            [
+                _field(
+                    "url",
+                    create_required=True,
+                    default_value="https://example.com",
+                )
+            ],
+        )
+        connector.old_base_content_object = old_connector
+
+        results = NoParamRequiredTightenedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == [], [r.message for r in results]
+
+    def test_edit_tightened_with_default_value_is_exempt(self):
+        """
+        Same exemption applies to ``edit_modifiers.required`` transitions
+        - the exemption is per-field, not per-modifier-kind.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_connection_general_fields(
+            old_connector, [_field("url", edit_required=False)]
+        )
+        _set_connection_general_fields(
+            connector,
+            [
+                _field(
+                    "url",
+                    edit_required=True,
+                    default_value="https://example.com",
+                )
+            ],
+        )
+        connector.old_base_content_object = old_connector
+
+        results = NoParamRequiredTightenedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == [], [r.message for r in results]
+
+    def test_unset_to_true_with_default_value_is_exempt(self):
+        """
+        Same exemption applies to the "modifier was omitted, now
+        explicitly True" tightening path already covered by
+        ``test_unset_to_true_treated_as_tightening``.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_connection_general_fields(old_connector, [_field("url")])
+        _set_connection_general_fields(
+            connector,
+            [
+                _field(
+                    "url",
+                    create_required=True,
+                    default_value="https://example.com",
+                )
+            ],
+        )
+        connector.old_base_content_object = old_connector
+
+        results = NoParamRequiredTightenedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == [], [r.message for r in results]
+
+    def test_tightened_without_default_value_still_flagged(self):
+        """
+        Regression guard: a field with ``options`` present but no
+        ``default_value`` (Pydantic default of ``None``) must still be
+        flagged - the default-value exemption is opt-in, not implicit.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_connection_general_fields(
+            old_connector, [_field("url", create_required=False)]
+        )
+        # Explicitly omit default_value - matches the pre-exemption
+        # behavior; must still fail.
+        _set_connection_general_fields(
+            connector, [_field("url", create_required=True)]
+        )
+        connector.old_base_content_object = old_connector
+
+        results = NoParamRequiredTightenedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1, [r.message for r in results]
+        assert "url" in results[0].message
+
+    def test_default_value_explicit_none_is_not_exempt(self):
+        """
+        Semantic pin: ``default_value=None`` explicitly is the SAME as
+        omitting it (no default declared), so the exemption does NOT
+        fire and the tightening is flagged.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_connection_general_fields(
+            old_connector, [_field("url", create_required=False)]
+        )
+        _set_connection_general_fields(
+            connector,
+            [_field("url", create_required=True, default_value=None)],
+        )
+        connector.old_base_content_object = old_connector
+
+        results = NoParamRequiredTightenedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1, [r.message for r in results]
+        assert "url" in results[0].message
+
+    def test_default_value_falsy_is_exempt(self):
+        """
+        Semantic pin: falsy-but-present default values (``""``, ``0``,
+        ``False``) all count as "default declared" and exempt the field.
+        These are legitimate defaults for string / duration / checkbox
+        field types respectively.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_connection_general_fields(
+            old_connector,
+            [
+                _field("str_field", create_required=False),
+                _field("int_field", create_required=False),
+                _field("bool_field", create_required=False),
+            ],
+        )
+        _set_connection_general_fields(
+            connector,
+            [
+                _field("str_field", create_required=True, default_value=""),
+                _field("int_field", create_required=True, default_value=0),
+                _field("bool_field", create_required=True, default_value=False),
+            ],
+        )
+        connector.old_base_content_object = old_connector
+
+        results = NoParamRequiredTightenedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == [], [r.message for r in results]
+
+    def test_default_value_exemption_is_per_field(self):
+        """
+        Mixed case: on the same handler, one field tightens with a
+        default (exempt) and another tightens without (flagged). Only
+        the second field appears in the aggregated result.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_connection_general_fields(
+            old_connector,
+            [
+                _field("with_default", create_required=False),
+                _field("no_default", create_required=False),
+            ],
+        )
+        _set_connection_general_fields(
+            connector,
+            [
+                _field(
+                    "with_default",
+                    create_required=True,
+                    default_value="ok",
+                ),
+                _field("no_default", create_required=True),
+            ],
+        )
+        connector.old_base_content_object = old_connector
+
+        results = NoParamRequiredTightenedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1, [r.message for r in results]
+        msg = results[0].message
+        assert "no_default" in msg
+        assert "with_default" not in msg
 
 
 # ---------------------------------------------------------------------------

@@ -392,7 +392,10 @@ def decide(classification: Classification, labels: Iterable[str]) -> Decision:
 def _render_file_list(files: list[str], limit: int = 25) -> str:
     """Render a bulleted list of files, truncating if very long."""
     shown = files[:limit]
-    lines = [f"- `{f}`" for f in shown]
+    # Strip trailing backslashes / whitespace from each path. Without this
+    # a stray `\` (which GitHub renders as a hard line-break) can leak in
+    # from the changed-files transport and show up inside each code span.
+    lines = [f"- `{f.rstrip(chr(92)).strip()}`" for f in shown]
     if len(files) > limit:
         lines.append(f"- _(and {len(files) - limit} more)_")
     return "\n".join(lines)

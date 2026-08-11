@@ -5,18 +5,18 @@ updates:
     schedule:
       interval: "weekly"
     assignees:
-      - "kobymeir"
+      - "skidorball"
 
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "weekly"
     assignees:
-      - "kobymeir"
+      - "skidorball"
 
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "weekly"
     assignees:
-      - "kobymeir"
+      - "skidorball"

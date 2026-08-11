@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import json as stdlib_json
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional, Tuple
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -855,6 +855,273 @@ class TestPackDestinationsJson:
         assert pack_a_managed["parent_pack_id"] == "PackA"
         assert pack_a_managed["managed"] is True
         assert pack_a_managed["source"] == "Pack A"
+
+
+# ---------------------------------------------------------------------------
+# pack_destinations.json managed_pack_id tests
+# ---------------------------------------------------------------------------
+
+
+def _mock_pack(
+    object_id: str,
+    *,
+    destination: PackDestination = PackDestination.MARKETPLACE,
+    managed: bool = False,
+    source: str = "",
+    managed_pack_id: Optional[str] = None,
+) -> MagicMock:
+    """Build a mock pack for the destinations writer.
+
+    ``managed_pack_id`` defaults to ``None``, which *deletes* the attribute
+    from the mock rather than setting it. This matters: on a bare ``MagicMock``
+    every attribute access auto-creates a truthy child mock, so a pack that is
+    supposed to have no graph-provided managed counterpart must have the
+    attribute genuinely absent for ``getattr(pack, "managed_pack_id", None)``
+    to return ``None``.
+    """
+    pack = MagicMock()
+    pack.object_id = object_id
+    pack.name = object_id
+    pack.destination = destination
+    pack.path = Path(f"/fake/Packs/{object_id}")
+    pack.is_derived = False
+    pack.derived_from = None
+    pack.managed = managed
+    pack.source = source
+    pack.content_items = []
+    if managed_pack_id is None:
+        del pack.managed_pack_id
+    else:
+        pack.managed_pack_id = managed_pack_id
+    return pack
+
+
+def _write_and_read(
+    tmp_path: Path,
+    packs: List[MagicMock],
+    managed_pack_ids: Optional[dict] = None,
+) -> dict:
+    """Run the real writer over mock packs and return the parsed JSON."""
+    from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
+
+    dto = MagicMock(spec=ContentDTO)
+    dto.packs = packs
+    # Bind the real method
+    dto.write_pack_destinations = ContentDTO.write_pack_destinations.__get__(
+        dto, ContentDTO
+    )
+
+    output_file = tmp_path / "pack_destinations.json"
+    if managed_pack_ids is None:
+        dto.write_pack_destinations(output_file)
+    else:
+        dto.write_pack_destinations(output_file, managed_pack_ids)
+
+    return stdlib_json.loads(output_file.read_text())
+
+
+class TestPackDestinationsManagedPackId:
+    """Tests for the ``managed_pack_id`` field in the destinations output."""
+
+    def test_every_entry_has_a_managed_pack_id_key(self, tmp_path: Path):
+        """The key must be present on every entry, whether or not it has a value."""
+        packs = [
+            _mock_pack("AWS", managed=True, managed_pack_id="AWSManaged"),
+            _mock_pack("PackA"),
+        ]
+
+        data = _write_and_read(tmp_path, packs)
+
+        assert len(data["packs"]) == 2
+        for entry in data["packs"]:
+            assert "managed_pack_id" in entry
+
+    def test_graph_provided_managed_pack_id_is_emitted(self, tmp_path: Path):
+        """A pack whose graph object carries a renamed id emits that id."""
+        packs = [_mock_pack("AWS", managed=True, managed_pack_id="AWSManaged")]
+
+        data = _write_and_read(tmp_path, packs)
+
+        assert data["packs"][0]["managed_pack_id"] == "AWSManaged"
+
+    def test_managed_pack_id_falls_back_to_the_caller_supplied_mapping(
+        self, tmp_path: Path
+    ):
+        """When the graph carries no id, the caller mapping supplies it."""
+        packs = [_mock_pack("Azure", managed=True)]
+
+        data = _write_and_read(tmp_path, packs, {"Azure": "AzureManaged"})
+
+        assert data["packs"][0]["managed_pack_id"] == "AzureManaged"
+
+    def test_graph_value_wins_over_the_caller_supplied_mapping(self, tmp_path: Path):
+        """The graph is the more authoritative source of the renamed id."""
+        packs = [_mock_pack("GCP", managed=True, managed_pack_id="GCPManaged")]
+
+        data = _write_and_read(tmp_path, packs, {"GCP": "FromMapping"})
+
+        assert data["packs"][0]["managed_pack_id"] == "GCPManaged"
+
+    def test_managed_pack_id_is_null_when_there_is_no_counterpart(self, tmp_path: Path):
+        """A pack with no managed counterpart serializes as JSON null."""
+        packs = [_mock_pack("PackA")]
+
+        data = _write_and_read(tmp_path, packs)
+
+        assert data["packs"][0]["managed_pack_id"] is None
+        assert (
+            '"managed_pack_id": null'
+            in (tmp_path / "pack_destinations.json").read_text()
+        )
+
+    def test_managed_pack_id_is_null_when_the_mapping_omits_the_pack(
+        self, tmp_path: Path
+    ):
+        """A non-empty mapping that does not mention the pack still yields null."""
+        packs = [_mock_pack("PackA")]
+
+        data = _write_and_read(tmp_path, packs, {"AWS": "AWSManaged"})
+
+        assert data["packs"][0]["managed_pack_id"] is None
+
+    def test_empty_graph_value_is_normalized_to_null(self, tmp_path: Path):
+        """An empty string must never reach consumers as an empty string."""
+        packs = [_mock_pack("PackA", managed_pack_id="")]
+
+        data = _write_and_read(tmp_path, packs)
+
+        assert data["packs"][0]["managed_pack_id"] is None
+
+
+# ---------------------------------------------------------------------------
+# pack_destinations.json artifact_path tests
+# ---------------------------------------------------------------------------
+
+
+def _artifact_mock_pack(
+    object_id: str,
+    dir_name: str,
+    *,
+    is_derived: bool = False,
+    derived_from: Optional[str] = None,
+) -> MagicMock:
+    """Build a mock pack whose source directory name is independent of its id.
+
+    ``dir_name`` is deliberately decoupled from ``object_id`` so a fixture can
+    express the case the invariant is about: a pack whose directory on disk is
+    not named after its id.
+    """
+    pack = MagicMock()
+    pack.object_id = object_id
+    pack.name = object_id
+    pack.destination = (
+        PackDestination.MANAGED_CONTENT if is_derived else PackDestination.MARKETPLACE
+    )
+    pack.path = Path(f"/fake/Packs/{dir_name}")
+    pack.is_derived = is_derived
+    pack.derived_from = derived_from
+    pack.managed = is_derived
+    pack.source = DEFAULT_DERIVED_PACK_SOURCE if is_derived else ""
+    pack.content_items = []
+    pack._is_item_tightly_coupled = MagicMock(return_value=True)
+    # Absent by design - see ``_mock_pack`` for why this must be deleted.
+    del pack.managed_pack_id
+    return pack
+
+
+def _dump_and_write_destinations(
+    packs: List[MagicMock], output_dir: Path
+) -> Tuple[dict, Dict[str, Path]]:
+    """Run the real ``dump()`` and the real writer over the same packs.
+
+    Returns the parsed destinations JSON together with
+    ``{pack_id: dumped_path}``, captured from the output directory
+    ``ContentDTO.dump()`` actually handed to each ``Pack.dump()`` call.
+    """
+    from demisto_sdk.commands.common.constants import MarketplaceVersions
+    from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
+
+    dto = MagicMock(spec=ContentDTO)
+    dto.packs = packs
+    # Bind the real methods
+    dto._artifact_path = ContentDTO._artifact_path
+    dto.dump = ContentDTO.dump.__get__(dto, ContentDTO)
+    dto.write_pack_destinations = ContentDTO.write_pack_destinations.__get__(
+        dto, ContentDTO
+    )
+
+    dto.dump(output_dir, MarketplaceVersions.XSOAR, zip=False)
+    dumped_paths = {pack.object_id: pack.dump.call_args.args[0] for pack in packs}
+
+    # The writer derives the artifact directory from the file's parent, so the
+    # artifact must be written inside the very directory that was dumped to.
+    output_file = output_dir / "pack_destinations.json"
+    dto.write_pack_destinations(output_file)
+
+    return stdlib_json.loads(output_file.read_text()), dumped_paths
+
+
+class TestPackDestinationsArtifactPath:
+    """``artifact_path`` must name the directory ``dump()`` actually wrote.
+
+    Infra's now-deleted writer always used ``object_id``, while ``dump()`` uses
+    ``pack.path.name`` for non-derived packs. The two disagree for every pack
+    whose directory name differs from its id, so the agreement is pinned here.
+    """
+
+    def test_artifact_path_matches_dump_when_dir_name_differs_from_id(
+        self, tmp_path: Path
+    ):
+        """A non-derived pack is dumped under its directory name, not its id."""
+        output_dir = tmp_path / "artifacts"
+        packs = [_artifact_mock_pack("PackA", "PackADirectory")]
+
+        data, dumped_paths = _dump_and_write_destinations(packs, output_dir)
+
+        entry = data["packs"][0]
+        assert entry["artifact_path"] == str(dumped_paths["PackA"])
+        assert entry["artifact_path"] == str(output_dir / "PackADirectory")
+        assert entry["artifact_path"] != str(output_dir / "PackA")
+
+    def test_artifact_path_matches_dump_for_a_derived_pack(self, tmp_path: Path):
+        """A derived pack is dumped under its derived id, not its source dir."""
+        output_dir = tmp_path / "artifacts"
+        packs = [
+            _artifact_mock_pack(
+                "PackAManaged",
+                "PackADirectory",
+                is_derived=True,
+                derived_from="PackA",
+            )
+        ]
+
+        data, dumped_paths = _dump_and_write_destinations(packs, output_dir)
+
+        entry = data["packs"][0]
+        assert entry["is_derived"] is True
+        assert entry["artifact_path"] == str(dumped_paths["PackAManaged"])
+        assert entry["artifact_path"] == str(output_dir / "PackAManaged")
+        assert entry["artifact_path"] != str(output_dir / "PackADirectory")
+
+    def test_every_entry_matches_its_dumped_path(self, tmp_path: Path):
+        """The invariant holds for every pack in a mixed fixture."""
+        output_dir = tmp_path / "artifacts"
+        packs = [
+            _artifact_mock_pack("PackA", "PackADirectory"),
+            _artifact_mock_pack("PackB", "PackB"),
+            _artifact_mock_pack(
+                "PackAManaged",
+                "PackADirectory",
+                is_derived=True,
+                derived_from="PackA",
+            ),
+        ]
+
+        data, dumped_paths = _dump_and_write_destinations(packs, output_dir)
+
+        assert len(data["packs"]) == len(packs)
+        for entry in data["packs"]:
+            assert entry["artifact_path"] == str(dumped_paths[entry["pack_id"]])
 
 
 # ---------------------------------------------------------------------------

@@ -205,14 +205,34 @@ class ContentDTO(BaseModel):
             if getattr(pack, "is_derived", False) and pack.derived_from
         }
 
-    def write_pack_destinations(self, output_path: Path) -> None:
+    def write_pack_destinations(
+        self,
+        output_path: Path,
+        managed_pack_ids: Optional[Dict[str, str]] = None,
+    ) -> None:
         """Write ``pack_destinations.json`` — the SDK→infra routing contract.
 
         Args:
             output_path: File path to write the JSON artifact.
+            managed_pack_ids: Optional ``{pack_id: managed_pack_id}`` mapping,
+                used to resolve the managed counterpart id of a pack when the
+                graph itself does not carry it. Defaults to an empty mapping,
+                in which case every pack without a managed counterpart on the
+                graph gets ``null``.
         """
+        managed_pack_ids = managed_pack_ids or {}
         entries: List[Dict[str, Any]] = []
         for pack in self.packs:
+            # The managed counterpart id comes from the graph when it carries
+            # one, and otherwise from the caller-supplied mapping. An empty
+            # value is normalized to ``None`` so consumers never see an empty
+            # string.
+            graph_managed_pack_id = getattr(pack, "managed_pack_id", None)
+            managed_pack_id: Optional[str] = (
+                graph_managed_pack_id
+                if isinstance(graph_managed_pack_id, str) and graph_managed_pack_id
+                else managed_pack_ids.get(pack.object_id) or None
+            )
             entry: Dict[str, Any] = {
                 "pack_id": pack.object_id,
                 "pack_name": pack.name,
@@ -222,20 +242,17 @@ class ContentDTO(BaseModel):
                 "parent_pack_id": getattr(pack, "derived_from", None),
                 "managed": pack.managed or False,
                 "source": pack.source or "",
+                "managed_pack_id": managed_pack_id,
             }
             if getattr(pack, "is_derived", False):
-                entry["artifact_path"] = str(
-                    output_path.parent / pack.object_id
-                )
+                entry["artifact_path"] = str(output_path.parent / pack.object_id)
                 entry["content_items"] = [
                     f"{ci.content_type.value}-{ci.object_id}"
                     for ci in pack.content_items
                     if pack._is_item_tightly_coupled(ci)
                 ]
             else:
-                entry["artifact_path"] = str(
-                    output_path.parent / pack.path.name
-                )
+                entry["artifact_path"] = str(output_path.parent / pack.path.name)
             entries.append(entry)
 
         output_path.parent.mkdir(parents=True, exist_ok=True)

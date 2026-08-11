@@ -19,4 +19,4 @@ updates:
     schedule:
       interval: "weekly"
     assignees:
-      - "skidorball"
+      - "ShacharKidor"

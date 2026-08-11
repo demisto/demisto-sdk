@@ -1,0 +1,4 @@
+changes:
+- description: Added a **managed_pack_id** field to every entry written by **ContentDTO.write_pack_destinations**. The value is taken from the pack in the content graph, falls back to an optional caller-supplied pack id to managed pack id mapping, and is null when the pack has no managed counterpart.
+  type: feature
+pr_number: '5483'

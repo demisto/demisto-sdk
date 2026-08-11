@@ -4466,9 +4466,7 @@ class TestCO124IsValidGroupedConnectorAuth:
         connector = create_connector_object(
             connector_overrides={"settings": {"grouped": True}},
             connection_data={
-                "profiles": [
-                    _profile_without_auth_surface("passthrough.nmap_like")
-                ]
+                "profiles": [_profile_without_auth_surface("passthrough.nmap_like")]
             },
         )
 
@@ -4512,8 +4510,10 @@ class TestCO124IsValidGroupedConnectorAuth:
         """
         profile = _profile_without_auth_surface("passthrough.vault_only")
         profile["vault_mappings"] = [
-            {"id": "credentials", "map": {"user": "client_id",
-                                          "password": "client_secret"}}
+            {
+                "id": "credentials",
+                "map": {"user": "client_id", "password": "client_secret"},
+            }
         ]
         connector = create_connector_object(
             connector_overrides={"settings": {"grouped": True}},
@@ -4541,7 +4541,9 @@ class TestCO124IsValidGroupedConnectorAuth:
             connection_data={
                 "profiles": [
                     _profile_without_auth_surface("passthrough.feed"),
-                    _profile_with_mapping("plain.ok", "username:credentials.identifier"),
+                    _profile_with_mapping(
+                        "plain.ok", "username:credentials.identifier"
+                    ),
                     _profile_with_mapping("plain.needs_mapping", _OMIT),
                 ]
             },
@@ -9023,9 +9025,7 @@ class TestCO148IsValidEngineTriggers:
 
         connector = _connector_with_standard_engine_fields(with_proxy=False)
         # Handler's resolved_params: raw id 'foo_proxy' renamed to 'proxy'.
-        _stamp_proxy_resolved_param(
-            connector, raw_id="foo_proxy", runtime_name="proxy"
-        )
+        _stamp_proxy_resolved_param(connector, raw_id="foo_proxy", runtime_name="proxy")
         # Correct: trigger targets the raw id 'foo_proxy' -> passes.
         unlock_ok = _unlock_proxy_trigger("")
         unlock_ok["effects"][0]["id"] = "foo_proxy"
@@ -9322,6 +9322,84 @@ def _stamp_connector_capabilities(connector, cap_ids: list) -> None:
     )
 
     connector.capabilities = [CapabilityData(id=cid) for cid in cap_ids]
+
+
+def _connector_with_multi_fetch(handler_flag_maps: list):
+    """Build a connector whose N handlers each emit one or more fetch
+    flags via ``serializer.computed_fields``.
+
+    Each entry in ``handler_flag_maps`` is a dict describing ONE
+    handler. Keys are flag ids (e.g. ``isFetch``, ``isFetchEvents``,
+    ``feed``, ``isFetchAssets``, ``isFetchCredentials``, or a
+    non-fetch flag like ``isMappable`` for negative cases) and values
+    are the gating capability id. For every (flag_id, cap_id) pair we
+    add ONE ``ComputedFieldRule`` that outputs ``flag_id=True`` under
+    a ``capability`` condition ``{capability_id: cap_id, value: on}``
+    — the exact shape CO149/CO150 discovery walks.
+
+    Handlers are marked XSOAR-owned and also carry a
+    ``HandlerCapability`` per unique cap id, mirroring the wiring
+    that ``_wire_handler_for_fetch_issues`` produces for CO130.
+    """
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        ComputedCondition,
+        ComputedConditionGroup,
+        ComputedFieldRule,
+        ComputedOutput,
+        HandlerCapability,
+        SerializerData,
+    )
+
+    # One handler per entry. ``create_connector_object`` merges each
+    # handler override on top of the default handler template, so we
+    # only need to give each handler a distinct id.
+    handler_overrides = [
+        {"id": f"xsoar-fetch-{idx}"} for idx, _ in enumerate(handler_flag_maps)
+    ]
+    connector = create_connector_object(handlers=handler_overrides)
+
+    for handler, flag_map in zip(connector.handlers, handler_flag_maps):
+        handler.metadata.module = "xsoar"
+
+        rules = []
+        cap_ids_seen: list = []
+        for flag_id, cap_id in flag_map.items():
+            rules.append(
+                ComputedFieldRule(
+                    output=[ComputedOutput(id=flag_id, value=True)],
+                    any_of=[
+                        ComputedConditionGroup(
+                            conditions=[
+                                ComputedCondition(
+                                    type="capability",
+                                    options={
+                                        "capability_id": cap_id,
+                                        "value": "on",
+                                    },
+                                )
+                            ]
+                        )
+                    ],
+                )
+            )
+            if cap_id not in cap_ids_seen:
+                cap_ids_seen.append(cap_id)
+
+        handler.serializer = SerializerData(
+            field_mappings=[],
+            computed_fields=rules,
+        )
+        handler.capabilities = [
+            HandlerCapability(
+                id=cid,
+                auth_options=[],
+                workloads=[],
+                actions=[],
+            )
+            for cid in cap_ids_seen
+        ]
+
+    return connector
 
 
 class TestCO150IsCollectionAutoEnablesAutomation:

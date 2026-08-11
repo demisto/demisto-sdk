@@ -181,11 +181,7 @@ def _handler_proxy_alias_ids(handler: Any) -> Set[str]:
     ids: Set[str] = set()
     for rp in handler.resolved_params or []:
         cid = rp.connector_param_name
-        if (
-            rp.content_param_name in PROXY_ALIASES
-            and isinstance(cid, str)
-            and cid
-        ):
+        if rp.content_param_name in PROXY_ALIASES and isinstance(cid, str) and cid:
             ids.add(cid)
     return ids
 

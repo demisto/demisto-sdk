@@ -800,6 +800,79 @@ class TestDownloadExistingFile:
         assert "fromVersion" in data and data["fromVersion"] == "5.0.0"
         assert "toVersion" in data and data["toVersion"] == "5.9.9"
 
+    @pytest.mark.parametrize(
+        "file_type, entity_dir",
+        [
+            (FileType.INDICATOR_FIELD, "IndicatorFields"),
+            (FileType.INCIDENT_FIELD, "IncidentFields"),
+            (FileType.INCIDENT_TYPE, "IncidentTypes"),
+            (FileType.LAYOUTS_CONTAINER, "Layouts"),
+        ],
+    )
+    def test_download_existing_file_no_duplicate_prefix(
+        self, tmp_path, file_type, entity_dir
+    ):
+        """
+        Given: An existing content item whose file name on disk is already prefixed
+               (e.g. 'indicatorfield-MyTest.json'), which is the actual
+               format returned by the server's custom-content bundle.
+        When:  Re-downloading the same item with `force=True`, hitting
+               `download_existing_content_items`.
+        Then:  The file must be written as '<type>-<name>.json' exactly once - the
+               prefix must NOT be compounded to '<type>-<type>-<name>.json'.
+               (Regression test for XSUP-74505).
+        """
+        content_item_name = "MyTest"
+        prefixed_file_name = f"{file_type.value}-{content_item_name}.json"
+        item_data = {"id": content_item_name, "name": content_item_name}
+
+        output_path = tmp_path / "TestPack"
+        entity_path = output_path / entity_dir
+        entity_path.mkdir(parents=True)
+        # Seed the pack with an already-prefixed file (simulating a prior download).
+        (entity_path / prefixed_file_name).write_text(json.dumps(item_data))
+
+        content_object = {
+            "id": content_item_name,
+            "name": content_item_name,
+            "entity": entity_dir,
+            "type": file_type,
+            "file_extension": "json",
+            "file_name": prefixed_file_name,  # As stored by create_content_item_object.
+            "file": StringIO(json.dumps(item_data)),
+            "data": item_data,
+        }
+        existing_pack_structure = {
+            entity_dir: {
+                content_item_name: [
+                    {
+                        "name": content_item_name,
+                        "id": content_item_name,
+                        "path": entity_path / prefixed_file_name,
+                        "file_extension": "json",
+                    }
+                ]
+            }
+        }
+
+        downloader = Downloader(force=True)
+        with TemporaryDirectory() as temp_dir_str:
+            downloader.download_existing_content_items(
+                content_object=content_object,
+                existing_pack_structure=existing_pack_structure,
+                output_path=output_path,
+                temp_dir=Path(temp_dir_str),
+            )
+
+        # The correctly-prefixed file must exist, and no double-prefixed file may be created.
+        assert (entity_path / prefixed_file_name).is_file()
+        double_prefixed = (
+            entity_path / f"{file_type.value}-{file_type.value}-{content_item_name}.json"
+        )
+        assert not double_prefixed.exists(), (
+            f"Prefix was duplicated: {double_prefixed.name} was created."
+        )
+
     def test_update_data_yml(self, tmp_path):
         env = Environment(tmp_path)
         downloader = Downloader()

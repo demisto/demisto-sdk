@@ -1466,6 +1466,9 @@ class ConnectorAwareInitializer(Initializer):
             BaseValidator,
         )
 
+        # Only this call may close the graph on failure: when the interface was
+        # already wired by the caller (e.g. --graph in CI), the caller owns it.
+        graph_opened_here = BaseValidator.graph_interface is None
         BaseValidator.ensure_graph_initialized()
         try:
             filtered = self._cross_match_and_expand(
@@ -1475,7 +1478,7 @@ class ConnectorAwareInitializer(Initializer):
             # ValidateManager closes the graph in run_validations(), which never
             # runs if collection raises. Close it here so a failure during
             # cross-matching does not leak the Neo4j driver.
-            if BaseValidator.graph_interface:
+            if graph_opened_here and BaseValidator.graph_interface:
                 logger.debug("Closing graph after connector cross-match failure.")
                 BaseValidator.graph_interface.close()
                 BaseValidator.graph_interface = None

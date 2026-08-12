@@ -1466,9 +1466,14 @@ class TestConnectorAwareInitializerCrossMatch:
         graph_int_b = create_integration_object(
             paths=["commonfields.id", "name"], values=["IntB", "IntB"]
         )
-        # An integration in the set with no matching connector handler present.
-        unmatched_integration = create_integration_object(
-            paths=["commonfields.id", "name"], values=["Orphan", "Orphan"]
+        # Integrations in the set with no matching connector handler present.
+        # There must be more than one: the per-integration scan this test guards
+        # against would only be observable with multiple unmatched integrations.
+        unmatched_integration_1 = create_integration_object(
+            paths=["commonfields.id", "name"], values=["Orphan1", "Orphan1"]
+        )
+        unmatched_integration_2 = create_integration_object(
+            paths=["commonfields.id", "name"], values=["Orphan2", "Orphan2"]
         )
 
         initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
@@ -1490,12 +1495,13 @@ class TestConnectorAwareInitializerCrossMatch:
             ) as mock_integrations,
         ):
             initializer._cross_match_and_expand(
-                {unmatched_integration}, {connector_a, connector_b}
+                {unmatched_integration_1, unmatched_integration_2},
+                {connector_a, connector_b},
             )
 
         # The full connector scan happens once, not once per unmatched
-        # integration.
-        mock_connectors.assert_called_once()
+        # integration (there are two of them here).
+        assert mock_connectors.call_count == 1
         # Integrations resolve via indexed point lookups - one per handler.
         assert sorted(c.args[0] for c in mock_integrations.call_args_list) == [
             "IntA",
@@ -2185,6 +2191,29 @@ class TestImplicitGraphInitialization:
 
         fake_graph.close.assert_called_once()
         assert BaseValidator.graph_interface is None
+
+    def test_caller_owned_graph_is_not_closed_when_cross_matching_fails(self, mocker):
+        """When the graph interface was already wired by the caller (e.g.
+        connect-only via --graph in CI), the initializer must not close it on
+        failure - ValidateManager owns it and closes it in run_validations()."""
+        caller_graph = mocker.Mock()
+        BaseValidator.graph_interface = caller_graph
+        mocker.patch.object(
+            ConnectorAwareInitializer,
+            "_cross_match_and_expand",
+            side_effect=RuntimeError("boom"),
+        )
+        mocker.patch.object(
+            Initializer, "gather_objects_to_run_on", return_value=(set(), set())
+        )
+
+        initializer = ConnectorAwareInitializer(execution_mode=ExecutionMode.ALL_FILES)
+
+        with pytest.raises(RuntimeError, match="boom"):
+            initializer.gather_objects_to_run_on()
+
+        caller_graph.close.assert_not_called()
+        assert BaseValidator.graph_interface is caller_graph
 
     def test_plain_initializer_does_not_build_graph(self, mocker):
         """Graph initialization is scoped to the connectors flow. The regular

@@ -10943,11 +10943,12 @@ class TestCO159IsHandlerHasValidTestConnection:
 
         connector = create_connector_object()
         handler = connector.handlers[0]
+        forbidden_host = "bad-host-value"
         handler.test_connection = HandlerTestConnection(
             type="service",
             service="xsoar",
             endpoint="/settings/integration/connector/verification",
-            host="example.com",
+            host=forbidden_host,
         )
         handler.test_connection_metro = _canonical_test_connection()
 
@@ -10958,7 +10959,7 @@ class TestCO159IsHandlerHasValidTestConnection:
         )
         assert len(results) == 1
         assert "test_connection.host must be omitted" in results[0].message
-        assert "example.com" in results[0].message
+        assert forbidden_host in results[0].message
 
     def test_extra_headers_fails(self):
         """

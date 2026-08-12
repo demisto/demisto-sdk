@@ -2002,11 +2002,11 @@ class TestConnectorHandlerIgnoreFiltering:
         from demisto_sdk.commands.content_graph.parsers.related_files import (
             RelatedFileType,
         )
-        from demisto_sdk.commands.validate.validators.CO_validators.CO157_is_handler_description_templated import (
-            IsHandlerDescriptionTemplatedValidator,
+        from demisto_sdk.commands.validate.validators.CO_validators.CO155_is_handler_module_xsoar import (
+            IsHandlerModuleXsoarValidator,
         )
 
-        validator = IsHandlerDescriptionTemplatedValidator()
+        validator = IsHandlerModuleXsoarValidator()
         always_run_code = ALWAYS_RUN_ON_ERROR_CODE[0]
 
         content_item = mocker.Mock()
@@ -2031,15 +2031,15 @@ class TestConnectorHandlerIgnoreFiltering:
         """
         manager = get_validate_manager(mocker)
 
-        ignored_map = {"handler_a/handler.yaml": ["CO157"]}
+        ignored_map = {"handler_a/handler.yaml": ["CO155"]}
         result_a = self._make_result(
-            "CO157",
+            "CO155",
             Path("/repo/connectors/foo/components/handlers/handler_a/handler.yaml"),
             ignored_map,
             related_file_type=[RelatedFileType.CONNECTOR_HANDLER],
         )
         result_b = self._make_result(
-            "CO157",
+            "CO155",
             Path("/repo/connectors/foo/components/handlers/handler_b/handler.yaml"),
             ignored_map,
             related_file_type=[RelatedFileType.CONNECTOR_HANDLER],
@@ -2059,9 +2059,9 @@ class TestConnectorHandlerIgnoreFiltering:
         """
         manager = get_validate_manager(mocker)
 
-        ignored_map = {"handler_a/serializer.yaml": ["CO157"]}
+        ignored_map = {"handler_a/serializer.yaml": ["CO155"]}
         result = self._make_result(
-            "CO157",
+            "CO155",
             Path("/repo/connectors/foo/components/handlers/handler_a/serializer.yaml"),
             ignored_map,
             related_file_type=[RelatedFileType.CONNECTOR_SERIALIZER],
@@ -2101,7 +2101,7 @@ class TestConnectorHandlerIgnoreFiltering:
         manager = get_validate_manager(mocker)
 
         result = self._make_result(
-            "CO157",
+            "CO155",
             Path("/repo/connectors/foo/components/handlers/handler_a/handler.yaml"),
             {},
             related_file_type=[RelatedFileType.CONNECTOR_HANDLER],
@@ -2122,9 +2122,9 @@ class TestConnectorHandlerIgnoreFiltering:
         manager = get_validate_manager(mocker)
 
         result = self._make_result(
-            "CO157",
+            "CO155",
             Path("/repo/connectors/foo/connector.yaml"),
-            {"connector.yaml": ["CO157"]},
+            {"connector.yaml": ["CO155"]},
         )
 
         filtered = manager.filter_validation_results([result])

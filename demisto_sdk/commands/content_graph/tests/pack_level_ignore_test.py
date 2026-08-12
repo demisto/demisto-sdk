@@ -331,6 +331,52 @@ class TestIsErrorIgnoredPackLevel:
             is_error_ignored("RM104", ALLOWED, item, [RelatedFileType.README]) is False
         )
 
+    def test_missing_related_file_attribute_does_not_crash_on_debug_log(self):
+        """
+        Given a content item that does NOT expose the related-file attribute
+        (so `getattr(content_item, related_file.value)` raises AttributeError),
+        and whose repr contains angle-bracket text (e.g. "<number>") that
+        loguru interprets as color markup,
+        When is_error_ignored is called with the related_file_type while a
+        colorized loguru sink is active (as in CI),
+        Then the AttributeError is swallowed, the debug log does not raise a
+        loguru ValueError ("Tag ... does not correspond to any known color
+        directive"), and evaluation falls through to the main content's
+        per-file ignore list.
+
+        This reproduces the CI crash: logging the full model repr under a
+        colorized sink previously blew up the whole `validate` run.
+        """
+        from demisto_sdk.commands.common.logger import logger
+
+        class _AngleBracketReprItem(_FakeContentItem):
+            def __repr__(self) -> str:
+                # Mimics a Pydantic model repr, which contains "<...>" text
+                # that loguru misreads as an (unknown) color tag.
+                return "Pack(some_field=<number>)"
+
+        # No `related_file` is set, so accessing RelatedFileType.README.value
+        # ("readme") raises AttributeError inside is_error_ignored.
+        item = _AngleBracketReprItem(pack=None, ignored_errors=["RM104"])
+
+        # Activate a colorized DEBUG sink so the loguru color parser runs on
+        # the debug message, exactly as it does in CI.
+        logger.enable(None)
+        sink_id = logger.add(
+            lambda _msg: None,
+            level="DEBUG",
+            colorize=True,
+        )
+        try:
+            # Must not raise; falls through to the main content's
+            # ignored_errors and returns True.
+            assert (
+                is_error_ignored("RM104", ALLOWED, item, [RelatedFileType.README])
+                is True
+            )
+        finally:
+            logger.remove(sink_id)
+
 
 # ---------------------------------------------------------------------------
 # Slice 3: extract_error_codes_from_file (PA137 coverage)

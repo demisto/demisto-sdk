@@ -27,7 +27,7 @@ class AgentixAgentParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AGE
         self.visibility: str = self.yml_data.get("visibility")  # type: ignore
         self.actionids: list[str] = self.yml_data.get("actionids", [])
         self.skillids: list[str] = self.yml_data.get("skillids", [])
-        self.collectionids: list[str] = self.yml_data.get("collectionids", [])
+        self.knowledgeids: list[str] = self.yml_data.get("knowledgeids", [])
         self.conversationstarters: list[str] = self.yml_data.get(
             "conversationstarters", []
         )
@@ -39,7 +39,7 @@ class AgentixAgentParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AGE
         self.sharedwithroles: list[str] = self.yml_data.get("sharedwithroles", [])
         self.add_action_dependencies()
         self.add_skill_dependencies()
-        self.add_collection_dependencies()
+        self.add_knowledge_dependencies()
 
     @property
     def systeminstructions(self) -> str:
@@ -76,12 +76,12 @@ class AgentixAgentParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AGE
                     skill_id, ContentType.AGENTIX_SKILL, is_mandatory=False
                 )
 
-    def add_collection_dependencies(self) -> None:
-        """Collects the collections used in the agent as optional dependencies."""
-        if collection_ids := self.yml_data.get("collectionids"):
-            for id in collection_ids:
+    def add_knowledge_dependencies(self) -> None:
+        """Collects the knowledges used in the agent as optional dependencies."""
+        if knowledge_ids := self.yml_data.get("knowledgeids"):
+            for id in knowledge_ids:
                 self.add_dependency_by_id(
-                    id, ContentType.COLLECTION, is_mandatory=False
+                    id, ContentType.KNOWLEDGE, is_mandatory=False
                 )
 
     @cached_property

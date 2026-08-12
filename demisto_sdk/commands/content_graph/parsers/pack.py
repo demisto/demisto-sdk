@@ -111,7 +111,7 @@ class PackContentItems:
         )
         self.agentix_agent = ContentItemsList(content_type=ContentType.AGENTIX_AGENT)
         self.agentix_skill = ContentItemsList(content_type=ContentType.AGENTIX_SKILL)
-        self.collection = ContentItemsList(content_type=ContentType.COLLECTION)
+        self.knowledge = ContentItemsList(content_type=ContentType.KNOWLEDGE)
 
     def iter_lists(self) -> Iterator[ContentItemsList]:
         yield from vars(self).values()

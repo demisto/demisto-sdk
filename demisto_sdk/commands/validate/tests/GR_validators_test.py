@@ -3478,7 +3478,7 @@ def _gr116_collection_dep(
         "name": name,
         "description": description,
         "path": f"Packs/P/Collections/{object_id}/{object_id}.json",
-        "content_type": ContentType.COLLECTION.value,
+        "content_type": ContentType.KNOWLEDGE.value,
         "fromversion": fromversion,
     }
 

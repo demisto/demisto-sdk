@@ -139,6 +139,98 @@ def test_SchemaValidator_extra_field(pack: Pack):
     )
 
 
+def test_SchemaValidator_prompt_config_valid_model_tier(pack: Pack):
+    """
+    Given:
+        - an LLM script whose promptConfig pins a supported model tier
+    When:
+        - execute the SchemaValidator (ST110 validation) on the script
+    Then:
+        - Ensure the validation passes
+    """
+    # given
+    script = pack.create_script(yml=load_yaml("script.yml"))
+    script.yml.update(
+        {
+            "isllm": True,
+            "userprompt": "Summarize ${issue}",
+            "script": "",
+            "promptConfig": {"modelTier": "Thinking"},
+        }
+    )
+    script_parser = ScriptParser(
+        Path(script.path), list(MarketplaceVersions), pack_supported_modules=[]
+    )
+
+    # when
+    results = SchemaValidator().obtain_invalid_content_items([script_parser])
+
+    # then
+    assert len(results) == 0
+
+
+def test_SchemaValidator_prompt_config_invalid_model_tier(pack: Pack):
+    """
+    Given:
+        - an LLM script whose promptConfig pins an unsupported model tier
+    When:
+        - execute the SchemaValidator (ST110 validation) on the script
+    Then:
+        - Ensure the validation fails on the modelTier field
+    """
+    # given
+    script = pack.create_script(yml=load_yaml("script.yml"))
+    script.yml.update(
+        {
+            "isllm": True,
+            "userprompt": "Summarize ${issue}",
+            "script": "",
+            "promptConfig": {"modelTier": "NotATier"},
+        }
+    )
+    script_parser = ScriptParser(
+        Path(script.path), list(MarketplaceVersions), pack_supported_modules=[]
+    )
+
+    # when
+    results = SchemaValidator().obtain_invalid_content_items([script_parser])
+
+    # then
+    assert len(results) == 1
+    assert "modelTier" in results[0].message
+
+
+def test_SchemaValidator_prompt_config_without_model_tier(pack: Pack):
+    """
+    Given:
+        - an LLM script whose promptConfig omits the model tier
+    When:
+        - execute the SchemaValidator (ST110 validation) on the script
+    Then:
+        - Ensure the validation passes, since an absent tier is valid and
+          resolves to the hub-advertised default model at run time
+    """
+    # given
+    script = pack.create_script(yml=load_yaml("script.yml"))
+    script.yml.update(
+        {
+            "isllm": True,
+            "userprompt": "Summarize ${issue}",
+            "script": "",
+            "promptConfig": {"temperature": 0.1, "maxOutputTokens": 12000},
+        }
+    )
+    script_parser = ScriptParser(
+        Path(script.path), list(MarketplaceVersions), pack_supported_modules=[]
+    )
+
+    # when
+    results = SchemaValidator().obtain_invalid_content_items([script_parser])
+
+    # then
+    assert len(results) == 0
+
+
 def test_modeling_rule_parser_sanity_check(pack: Pack):
     """
     Given:

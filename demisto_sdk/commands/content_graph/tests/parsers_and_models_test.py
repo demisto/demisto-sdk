@@ -1391,6 +1391,78 @@ class TestParsersAndModels:
         model = Script.from_orm(parser)
         assert model.auto_update_docker_image is expected_value
 
+    def test_script_parser_prompt_config_model_tier(self, pack: Pack):
+        """
+        Given:
+            - An LLM script whose promptConfig pins a model tier.
+        When:
+            - Creating the content item's parser and model.
+        Then:
+            - Verify the modelTier is parsed onto the model's promptConfig.
+        """
+        from demisto_sdk.commands.content_graph.objects.script import Script
+        from demisto_sdk.commands.content_graph.parsers.script import ScriptParser
+
+        # given
+        script = pack.create_script()
+        script.create_default_script()
+        script.yml.update(
+            {
+                "promptConfig": {
+                    "temperature": 0.1,
+                    "maxOutputTokens": 12000,
+                    "webSearch": False,
+                    "modelTier": "Thinking",
+                }
+            }
+        )
+
+        # when
+        parser = ScriptParser(
+            Path(script.path), list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        model = Script.from_orm(parser)
+
+        # then
+        assert model.prompt_config is not None
+        assert model.prompt_config.model_tier == "Thinking"
+
+    def test_script_parser_prompt_config_without_model_tier(self, pack: Pack):
+        """
+        Given:
+            - An LLM script whose promptConfig omits the model tier.
+        When:
+            - Creating the content item's parser and model.
+        Then:
+            - Verify the model is parsed and the tier is None, since an absent
+              tier is valid and resolves to the hub-advertised default model.
+        """
+        from demisto_sdk.commands.content_graph.objects.script import Script
+        from demisto_sdk.commands.content_graph.parsers.script import ScriptParser
+
+        # given
+        script = pack.create_script()
+        script.create_default_script()
+        script.yml.update(
+            {
+                "promptConfig": {
+                    "temperature": 0.1,
+                    "maxOutputTokens": 12000,
+                    "webSearch": False,
+                }
+            }
+        )
+
+        # when
+        parser = ScriptParser(
+            Path(script.path), list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        model = Script.from_orm(parser)
+
+        # then
+        assert model.prompt_config is not None
+        assert model.prompt_config.model_tier is None
+
     def test_test_playbook_parser(self, pack: Pack):
         """
         Given:

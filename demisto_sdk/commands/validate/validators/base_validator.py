@@ -517,8 +517,15 @@ def is_error_ignored(
                 ):
                     return True
             except Exception as e:
+                # Log only a safe identifier of the content item rather than
+                # its full repr. A Pydantic model repr can contain angle-bracket
+                # text (e.g. "<number>"), which loguru interprets as color
+                # markup and raises a ValueError on unknown tags.
+                content_item_id = getattr(content_item, "object_id", None) or type(
+                    content_item
+                ).__name__
                 logger.debug(
-                    f"is_error_ignored: skipped related_file={related_file.value!r} on {content_item!r}: {e!r}"
+                    f"is_error_ignored: skipped related_file={related_file.value!r} on {content_item_id}: {e}"
                 )
                 continue
         # None of the related files carried the ignore (e.g. the related file

@@ -867,11 +867,12 @@ class TestDownloadExistingFile:
         # The correctly-prefixed file must exist, and no double-prefixed file may be created.
         assert (entity_path / prefixed_file_name).is_file()
         double_prefixed = (
-            entity_path / f"{file_type.value}-{file_type.value}-{content_item_name}.json"
+            entity_path
+            / f"{file_type.value}-{file_type.value}-{content_item_name}.json"
         )
-        assert not double_prefixed.exists(), (
-            f"Prefix was duplicated: {double_prefixed.name} was created."
-        )
+        assert (
+            not double_prefixed.exists()
+        ), f"Prefix was duplicated: {double_prefixed.name} was created."
 
     def test_update_data_yml(self, tmp_path):
         env = Environment(tmp_path)

@@ -1579,9 +1579,11 @@ class Downloader:
                 FileType.INDICATOR_FIELD,
                 FileType.LAYOUTS_CONTAINER,
             ):
-                expected_prefix = f"{content_item_type.value}"
+                expected_prefix = f"{content_item_type.value}-"
                 if not content_item_file_name.startswith(expected_prefix):
-                    content_item_file_name = f"{expected_prefix}-{content_item_file_name}"
+                    content_item_file_name = (
+                        f"{expected_prefix}{content_item_file_name}"
+                    )
 
             temp_download_path = (
                 temp_dir / content_item_entity_directory / content_item_file_name

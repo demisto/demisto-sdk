@@ -166,7 +166,7 @@ class NoParamRequiredTightenedValidator(ConnectorsValidator[ContentTypes]):
         across yamls, at least one place must satisfy the invariant. The
         source-4 (per-capability) view mirrors the effective runtime shape.
         """
-        out: Dict[str, Tuple[ModifierRequired, ModifierRequired]] = {}
+        out: Dict[str, FieldRequiredState] = {}
 
         # 1. connection.yaml general_configurations
         conn = connector.connection

@@ -13356,9 +13356,7 @@ class TestCO179NoParamRequiredTightened:
         )
         # Explicitly omit default_value - matches the pre-exemption
         # behavior; must still fail.
-        _set_connection_general_fields(
-            connector, [_field("url", create_required=True)]
-        )
+        _set_connection_general_fields(connector, [_field("url", create_required=True)])
         connector.old_base_content_object = old_connector
 
         results = NoParamRequiredTightenedValidator().obtain_invalid_content_items(

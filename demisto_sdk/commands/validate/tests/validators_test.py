@@ -53,6 +53,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     FixResult,
     ValidationResult,
     get_all_validators,
+    is_error_ignored,
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backwards_subtype import (
     BreakingBackwardsSubtypeValidator,
@@ -603,6 +604,110 @@ def test_should_run_api_module():
     validator = DockerImageTagIsNotOutdated()
     assert not validator.should_run(
         script, [], {}, running_execution_mode=ExecutionMode.USE_GIT
+    )
+
+
+class _FakeRelatedFile:
+    def __init__(self, file_path: str):
+        self.file_path = file_path
+
+
+class _FakeContentItem:
+    """Minimal stand-in for a ContentItem for is_error_ignored tests.
+
+    Emulates the two lookup paths used by is_error_ignored:
+    - per-file ignore on the item itself via ``ignored_errors``
+    - per-related-file ignore via ``ignored_errors_related_files``
+    The related-file attribute (e.g. ``skill_content``) is only present when
+    ``has_related_file`` is True, mirroring an AgentixSkill; an AgentixAction
+    has no such attribute so the getattr raises AttributeError.
+    """
+
+    def __init__(
+        self,
+        own_ignored,
+        related_ignored=None,
+        has_related_file=False,
+    ):
+        self.ignored_errors = list(own_ignored)
+        self._related_ignored = list(related_ignored or [])
+        if has_related_file:
+            self.skill_content = _FakeRelatedFile("skill_body.md")
+
+    def ignored_errors_related_files(self, _file_path):
+        return self._related_ignored
+
+
+def test_is_error_ignored_falls_through_to_main_when_related_file_missing():
+    """
+    Given:
+    - A validator error code that declares a related_file_type (SKILL_CONTENT).
+    - A content item that has NO related file (like an AgentixAction) but does
+      list the code under its own per-file `[file:...]` ignore section.
+    When:
+    - Calling is_error_ignored with the related_file_type.
+    Then:
+    - The main content per-file ignore is honored (returns True), because the
+      lookup falls through when no related file matches.
+    """
+    item = _FakeContentItem(
+        own_ignored=["AG112"], related_ignored=[], has_related_file=False
+    )
+    assert (
+        is_error_ignored(
+            "AG112",
+            ["AG112"],
+            item,
+            related_file_type=[RelatedFileType.SKILL_CONTENT],
+        )
+        is True
+    )
+
+
+def test_is_error_ignored_related_file_still_matches():
+    """
+    Given:
+    - A content item that has a related file which lists the code to ignore
+      (like an AgentixSkill using the SKILL_CONTENT section).
+    When:
+    - Calling is_error_ignored with the related_file_type.
+    Then:
+    - The related-file ignore is honored (returns True), preserving prior
+      behavior.
+    """
+    item = _FakeContentItem(
+        own_ignored=[], related_ignored=["AG112"], has_related_file=True
+    )
+    assert (
+        is_error_ignored(
+            "AG112",
+            ["AG112"],
+            item,
+            related_file_type=[RelatedFileType.SKILL_CONTENT],
+        )
+        is True
+    )
+
+
+def test_is_error_ignored_not_ignored_anywhere():
+    """
+    Given:
+    - A content item that lists the code in neither its own per-file section nor
+      any related file section.
+    When:
+    - Calling is_error_ignored with the related_file_type.
+    Then:
+    - The code is not ignored (returns False).
+    """
+    item = _FakeContentItem(own_ignored=[], related_ignored=[], has_related_file=False)
+    assert (
+        is_error_ignored(
+            "AG112",
+            ["AG112"],
+            item,
+            related_file_type=[RelatedFileType.SKILL_CONTENT],
+        )
+        is False
     )
 
 

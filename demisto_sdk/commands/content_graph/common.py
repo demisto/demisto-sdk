@@ -271,12 +271,17 @@ class ContentType(StrEnum):
         else:
             # less safe option - will raise an exception if the path
             # is not to the content item directory or file
-            if path.parts[-2][:-1] in ContentType.values():
+            if path.parts[-2] == KNOWLEDGE_DIR or path.parts[-3] == KNOWLEDGE_DIR:
+                return cls.KNOWLEDGE
+            elif path.parts[-2][:-1] in ContentType.values():
                 content_type_dir = path.parts[-2]
             elif path.parts[-3][:-1] in ContentType.values():
                 content_type_dir = path.parts[-3]
             else:
                 raise ValueError(f"Could not find content type in path {path}")
+        # Knowledge uses a singular folder name (no trailing 's')
+        if content_type_dir == KNOWLEDGE_DIR:
+            return cls.KNOWLEDGE
         return cls(content_type_dir[:-1])  # remove the `s`
 
     @staticmethod

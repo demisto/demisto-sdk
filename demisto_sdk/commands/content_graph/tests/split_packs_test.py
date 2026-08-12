@@ -1125,6 +1125,201 @@ class TestPackDestinationsArtifactPath:
 
 
 # ---------------------------------------------------------------------------
+# pack_destinations.json artifact_path dump-directory routing tests
+# ---------------------------------------------------------------------------
+
+
+def _write_destinations_with_dump_dirs(
+    packs: List[MagicMock],
+    output_path: Path,
+    artifacts_dir: Optional[Path] = None,
+    managed_artifacts_dir: Optional[Path] = None,
+) -> dict:
+    """Run the real writer with explicit dump directories and return the JSON.
+
+    Only ``_artifact_path`` and ``write_pack_destinations`` are rebound to the
+    real implementations - every other attribute stays a ``MagicMock`` so an
+    accidental extra ``self.<method>()`` call inside the writer would surface as
+    a corrupted ``artifact_path`` instead of silently passing.
+
+    When both directories are omitted the legacy two-argument form is used, so
+    the same helper can exercise the backward-compatible call shape.
+    """
+    from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
+
+    dto = MagicMock(spec=ContentDTO)
+    dto.packs = packs
+    dto._artifact_path = ContentDTO._artifact_path
+    dto.write_pack_destinations = ContentDTO.write_pack_destinations.__get__(
+        dto, ContentDTO
+    )
+
+    if artifacts_dir is None and managed_artifacts_dir is None:
+        dto.write_pack_destinations(output_path)
+    else:
+        dto.write_pack_destinations(
+            output_path, None, artifacts_dir, managed_artifacts_dir
+        )
+
+    return stdlib_json.loads(output_path.read_text())
+
+
+class TestPackDestinationsDumpDirectories:
+    """``artifact_path`` must be rooted at the directory the pack is dumped to.
+
+    ``dump()`` writes regular packs into ``artifacts_dir`` and managed packs
+    into ``managed_artifacts_dir``. The writer used to always root the path at
+    ``output_path.parent``, which silently dropped the dump-directory segment
+    whenever the JSON artifact did not live inside the dump directory - exactly
+    the CI layout. The two axes pinned here are independent: the *base* dir is
+    chosen by ``pack.managed``, the *last segment* by ``pack.is_derived``.
+    """
+
+    def test_regular_pack_is_rooted_at_the_artifacts_dir(self, tmp_path: Path):
+        """An unmanaged pack keeps the artifacts-dir segment in its path."""
+        artifacts_dir = tmp_path / "content_packs"
+        output_path = tmp_path / "pack_destinations.json"
+        packs = [_artifact_mock_pack("PackA", "PackADirectory")]
+
+        data = _write_destinations_with_dump_dirs(
+            packs,
+            output_path,
+            artifacts_dir=artifacts_dir,
+            managed_artifacts_dir=tmp_path / "content_packs_managed",
+        )
+
+        assert data["packs"][0]["artifact_path"] == str(
+            artifacts_dir / "PackADirectory"
+        )
+
+    def test_managed_pack_is_rooted_at_the_managed_artifacts_dir(self, tmp_path: Path):
+        """A managed pack is never routed to the regular artifacts directory."""
+        artifacts_dir = tmp_path / "content_packs"
+        managed_artifacts_dir = tmp_path / "content_packs_managed"
+        output_path = tmp_path / "pack_destinations.json"
+        pack = _artifact_mock_pack("AWSManaged", "AWSManagedDirectory")
+        pack.managed = True
+
+        data = _write_destinations_with_dump_dirs(
+            [pack],
+            output_path,
+            artifacts_dir=artifacts_dir,
+            managed_artifacts_dir=managed_artifacts_dir,
+        )
+
+        artifact_path = data["packs"][0]["artifact_path"]
+        assert artifact_path == str(managed_artifacts_dir / "AWSManagedDirectory")
+        assert artifact_path != str(artifacts_dir / "AWSManagedDirectory")
+        assert artifact_path != str(output_path.parent / "AWSManagedDirectory")
+
+    def test_mixed_graph_routes_each_pack_to_its_own_base_dir(self, tmp_path: Path):
+        """Managed and unmanaged packs in one call must not cross-contaminate."""
+        artifacts_dir = tmp_path / "content_packs"
+        managed_artifacts_dir = tmp_path / "content_packs_managed"
+        regular_pack = _artifact_mock_pack("PackA", "PackADirectory")
+        managed_pack = _artifact_mock_pack("AWSManaged", "AWSManagedDirectory")
+        managed_pack.managed = True
+
+        data = _write_destinations_with_dump_dirs(
+            [regular_pack, managed_pack],
+            tmp_path / "pack_destinations.json",
+            artifacts_dir=artifacts_dir,
+            managed_artifacts_dir=managed_artifacts_dir,
+        )
+
+        by_id = {entry["pack_id"]: entry["artifact_path"] for entry in data["packs"]}
+        assert by_id == {
+            "PackA": str(artifacts_dir / "PackADirectory"),
+            "AWSManaged": str(managed_artifacts_dir / "AWSManagedDirectory"),
+        }
+
+    def test_relative_artifacts_dir_yields_an_absolute_artifact_path(
+        self, tmp_path: Path
+    ):
+        """Consumers resolve the path from a different cwd, so it must be absolute."""
+        artifacts_dir = Path("content_packs")
+        packs = [_artifact_mock_pack("PackA", "PackADirectory")]
+
+        data = _write_destinations_with_dump_dirs(
+            packs,
+            tmp_path / "pack_destinations.json",
+            artifacts_dir=artifacts_dir,
+            managed_artifacts_dir=Path("content_packs_managed"),
+        )
+
+        artifact_path = data["packs"][0]["artifact_path"]
+        assert Path(artifact_path).is_absolute()
+        assert artifact_path == str(artifacts_dir.absolute() / "PackADirectory")
+
+    def test_derived_unmanaged_pack_keeps_its_object_id_under_the_artifacts_dir(
+        self, tmp_path: Path
+    ):
+        """``is_derived`` drives the last segment, not the base directory."""
+        artifacts_dir = tmp_path / "content_packs"
+        pack = _artifact_mock_pack(
+            "PackAManaged", "PackADirectory", is_derived=True, derived_from="PackA"
+        )
+        pack.managed = False
+
+        data = _write_destinations_with_dump_dirs(
+            [pack],
+            tmp_path / "pack_destinations.json",
+            artifacts_dir=artifacts_dir,
+            managed_artifacts_dir=tmp_path / "content_packs_managed",
+        )
+
+        assert data["packs"][0]["artifact_path"] == str(
+            artifacts_dir / "PackAManaged"
+        )
+
+    def test_derived_managed_pack_keeps_its_object_id_under_the_managed_dir(
+        self, tmp_path: Path
+    ):
+        """The derived-id segment and the managed base directory combine."""
+        managed_artifacts_dir = tmp_path / "content_packs_managed"
+        pack = _artifact_mock_pack(
+            "PackAManaged", "PackADirectory", is_derived=True, derived_from="PackA"
+        )
+
+        data = _write_destinations_with_dump_dirs(
+            [pack],
+            tmp_path / "pack_destinations.json",
+            artifacts_dir=tmp_path / "content_packs",
+            managed_artifacts_dir=managed_artifacts_dir,
+        )
+
+        assert data["packs"][0]["artifact_path"] == str(
+            managed_artifacts_dir / "PackAManaged"
+        )
+
+    def test_managed_pack_without_a_managed_artifacts_dir_raises(self, tmp_path: Path):
+        """Falling back to the regular artifacts dir would corrupt the upload."""
+        pack = _artifact_mock_pack("AWSManaged", "AWSManagedDirectory")
+        pack.managed = True
+
+        with pytest.raises(ValueError, match="AWSManaged"):
+            _write_destinations_with_dump_dirs(
+                [pack],
+                tmp_path / "pack_destinations.json",
+                artifacts_dir=tmp_path / "content_packs",
+            )
+
+    def test_legacy_two_argument_call_with_a_managed_pack_does_not_raise(
+        self, tmp_path: Path
+    ):
+        """Omitting the dump dirs entirely keeps the historical output."""
+        output_path = tmp_path / "pack_destinations.json"
+        pack = _artifact_mock_pack("AWSManaged", "AWSManagedDirectory")
+        pack.managed = True
+
+        data = _write_destinations_with_dump_dirs([pack], output_path)
+
+        assert data["packs"][0]["artifact_path"] == str(
+            output_path.parent / "AWSManagedDirectory"
+        )
+
+
+# ---------------------------------------------------------------------------
 # ContentDTO mapping API tests
 # ---------------------------------------------------------------------------
 

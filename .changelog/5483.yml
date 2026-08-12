@@ -1,4 +1,6 @@
 changes:
 - description: Added a **managed_pack_id** field to every entry written by **ContentDTO.write_pack_destinations**. The value is taken from the pack in the content graph, falls back to an optional caller-supplied pack id to managed pack id mapping, and is null when the pack has no managed counterpart.
   type: feature
+- description: Fixed an issue where **pack_destinations.json** recorded an incorrect **artifact_path**, derived from the location of the JSON file rather than from the directory the packs are actually dumped into.
+  type: fix
 pr_number: '5483'

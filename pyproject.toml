@@ -14,7 +14,7 @@ exclude = "tests/.*|demisto_sdk/commands/init/templates/.*"
 
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.39.5"
+version = "1.39.6"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"
@@ -207,6 +207,9 @@ max-complexity = 30
 [tool.ruff.lint.per-file-ignores]
 "demisto_sdk/commands/test_content/timestamp_replacer.py" = ["TID251"] # used outside the SDK
 "demisto_sdk/__main__.py" = ["E402"] # The logger must be set up before everything else
+"Utils/github_workflow_scripts/nightly_gate/check_nightly_gate.py" = ["TID251", "T201"] # standalone GitHub workflow script: kept dependency-light and prints GitHub Actions annotations
+"Utils/github_workflow_scripts/nightly_gate/upsert_gate_comment.py" = ["TID251", "T201"] # standalone GitHub workflow script: kept dependency-light and prints GitHub Actions annotations
+"Utils/github_workflow_scripts/nightly_gate/tests/*" = ["TID251"] # tests for standalone GitHub workflow scripts: kept dependency-light
 
 [tool.vulture]
 exclude = ["*/tests/*"]

@@ -1,9 +1,0 @@
-changes:
-- description: Docker image push now verifies the image is pullable after pushing.
-  type: feature
-- description: Docker image push now fails loudly when the push did not succeed.
-  type: fix
-- description: Dev/test docker images are now pulled from the registry they were pushed
-    to, fixing intermittent "manifest unknown" failures on first-time pushes.
-  type: fix
-pr_number: 5458

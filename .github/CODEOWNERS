@@ -22,3 +22,8 @@ pytest.ini @demisto/marketplace-infra-tls
 
 # Content graph
 demisto_sdk/commands/content_graph/** @demisto/marketplace-infra-tls
+
+# SDK Nightly gate config - changes to the gated path list must be
+# reviewed by the infra team so the policy doesn't drift silently.
+.github/nightly-gate-paths.yml @demisto/marketplace-infra-tls
+Utils/github_workflow_scripts/nightly_gate/** @demisto/marketplace-infra-tls

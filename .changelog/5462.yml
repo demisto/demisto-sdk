@@ -1,4 +1,0 @@
-changes:
-- description: Added connector validation infrastructure (ConnectorsValidator base, .connector-ignore, grouped/standard filtering) and new CO validators covering connector metadata, handlers, and capabilities.
-  type: internal
-pr_number: 5642

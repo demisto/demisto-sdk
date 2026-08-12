@@ -1,4 +1,23 @@
 # Changelog
+## 1.39.6 (2026-08-03)
+### Feature
+* Docker image push now verifies the image is pullable after pushing. [#5458](https://github.com/demisto/demisto-sdk/pull/5458)
+* Added a new graph validation (GR116) that verifies an AgentixAgent's total context (its own name, description, system instructions and conversation starters, plus the name and description of every action, skill, and collection it depends on) does not exceed the maximum allowed character budget. [#5460](https://github.com/demisto/demisto-sdk/pull/5460)
+* Added a new validation (AG118) that enforces an evaluator test file ('<ActionName>_test.yml') exists next to each AgentixAction. [#5460](https://github.com/demisto/demisto-sdk/pull/5460)
+* Added a new `-ccp/--connectors-content-path` option to `demisto-sdk validate` so an external Unified Connector Content (UCC) repository can be validated together with a plain content checkout. Works with both `-a` (all UCC connectors are temporarily synced into the content repo) and `-g` (only the connectors changed in the UCC repo's git diff are validated), mirroring the existing `--private-content-path` behavior for `Packs/**`. Copied files are automatically cleaned up on exit, and the flag can be combined with `--private-content-path`. [#5468](https://github.com/demisto/demisto-sdk/pull/5468)
+
+### Fix
+* Docker image push now fails loudly when the push did not succeed. [#5458](https://github.com/demisto/demisto-sdk/pull/5458)
+* Dev/test docker images are now pulled from the registry they were pushed to, fixing intermittent "manifest unknown" failures on first-time pushes. [#5458](https://github.com/demisto/demisto-sdk/pull/5458)
+* Updated the AG105 validation to align the AgentixAction argument/output valid types (removed 'keyValue' and 'textArea') and to compare types case-sensitively. [#5460](https://github.com/demisto/demisto-sdk/pull/5460)
+* Fixed `demisto-sdk validate -a` silently skipping connectors, so connector-only validations (such as `CO100`) now run under `-a` as they already did under `-g`. [#5468](https://github.com/demisto/demisto-sdk/pull/5468)
+* Fixed `demisto-sdk validate -i` not supporting a relative connectors path (e.g. `connectors/foo/connector.yaml`) together with `--connectors-content-path`, nor a pack-level path (e.g. `Packs/CommonScripts`) together with `--private-content-path`. [#5468](https://github.com/demisto/demisto-sdk/pull/5468)
+
+### Internal
+* Added connector validation infrastructure (ConnectorsValidator base, .connector-ignore, grouped/standard filtering) and new CO validators covering connector metadata, handlers, and capabilities. [#5642](https://github.com/demisto/demisto-sdk/pull/5642)
+* Added the **SDK Nightly Gate** GitHub Actions workflow, which flags PRs that modify SDK code and requires either a `nightly-run-passed` or `nightly-run-skipped` label (or a Content build against the SDK branch) before merge. [#5464](https://github.com/demisto/demisto-sdk/pull/5464)
+
+
 ## 1.39.5 (2026-07-21)
 ### Feature
 * Added the BA133 validation, which ensures fetch-related configuration parameters in an integration exist as required by their fetch type and resolve to supportedModules that are consistent with that fetch type. The validation is auto-fixable - it removes un-allowed supportedModules values and adds missing required server-level parameters with the correct supportedModules. [#5438](https://github.com/demisto/demisto-sdk/pull/5438)

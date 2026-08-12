@@ -183,18 +183,38 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     ) -> FixResult:
         raise NotImplementedError
 
+    @classmethod
+    def ensure_graph_initialized(cls) -> ContentGraphInterface:
+        """Build/update the content graph once and wire it onto ``BaseValidator``.
+
+        This is the shared graph-initialization path used by the lazy ``graph``
+        property and by the connectors flow, which needs the graph *during*
+        object collection - before any validator runs. It runs the same
+        ``update_content_graph`` machinery as the standalone ``graph update``
+        command, so it: imports the existing graph, updates only what changed
+        (unless ``create_graph_from_scratch`` forces a rebuild), includes
+        private content via ``private_content_path``, and skips work entirely
+        when the graph is already up-to-date.
+
+        Idempotent: if the graph interface is already wired (e.g. connect-only
+        via ``--graph`` in CI, or a previous call), it is returned as-is without
+        rebuilding.
+        """
+        if BaseValidator.graph_interface:
+            return BaseValidator.graph_interface
+        logger.info("Graph validations were selected, will init graph")
+        BaseValidator.graph_interface = ContentGraphInterface()
+        update_content_graph(
+            BaseValidator.graph_interface,
+            use_git=True,
+            private_content_path=BaseValidator.private_content_path,
+            create_graph_from_scratch=BaseValidator.create_graph_from_scratch,
+        )
+        return BaseValidator.graph_interface
+
     @property
     def graph(self) -> ContentGraphInterface:
-        if not self.graph_interface:
-            logger.info("Graph validations were selected, will init graph")
-            BaseValidator.graph_interface = ContentGraphInterface()
-            update_content_graph(
-                BaseValidator.graph_interface,
-                use_git=True,
-                private_content_path=BaseValidator.private_content_path,
-                create_graph_from_scratch=BaseValidator.create_graph_from_scratch,
-            )
-        return self.graph_interface
+        return self.ensure_graph_initialized()
 
     @classmethod
     def set_private_content_path(cls, private_content_path: Optional[Path]) -> None:

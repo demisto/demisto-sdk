@@ -594,15 +594,9 @@ class DockerBase:
         else:
             repo, tag = image.split(":")
 
-        # Extended (``devtestdemistoextended/*``) images are hosted ONLY on GCR
-        # (``gcr.io/xsoar-registry``) and are not visible via the DockerHub Registry
-        # API, so they must be verified through the configured registry (daemon
-        # pull). Regular ``devtestdemisto/*`` images are pushed to and served from
-        # DockerHub, so they are verified via the DockerHub Registry API directly -
-        # which queries DockerHub itself, bypassing any DockerHub pull-through proxy
-        # (e.g. the CI ``xdr-docker-hub-virtual`` GAR proxy) that cannot serve a
-        # freshly pushed tag.
-        is_gar_image = repo.startswith(DEVTEST_DEMISTO_EXTENDED_REPOSITORY)
+        # ``devtestdemistoextended/*`` images live on GCR and are verified via a daemon
+        # pull; all other images are verified via the DockerHub Registry API.
+        is_gar_image = DEVTEST_DEMISTO_EXTENDED_REPOSITORY in repo.split("/")
         registry_name = "the registry (GAR)" if is_gar_image else "DockerHub"
 
         logger.info(

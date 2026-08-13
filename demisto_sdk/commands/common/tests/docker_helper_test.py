@@ -532,6 +532,46 @@ def test_verify_image_available_after_push_for_gar_image_uses_daemon(mocker):
     sleep_mock.assert_not_called()
 
 
+def test_verify_image_available_after_push_for_registry_qualified_gar_image_uses_daemon(
+    mocker,
+):
+    """
+    Given:
+        - A registry-qualified GAR-hosted image, i.e. the exact form produced in CI
+          where the extended image keeps its ``gcr.io/xsoar-registry`` prefix
+          (``gcr.io/xsoar-registry/devtestdemistoextended/python3:...``).
+    When:
+        - _verify_image_available_after_push is called and the image is available.
+    Then:
+        - It is correctly detected as a GAR image and verified via
+          is_image_available(use_registry_prefix=True), NOT the DockerHub API.
+
+    Regression test: a string-prefix check (repo.startswith(...)) failed for the
+    registry-qualified form, so extended images fell through to the DockerHub
+    verification branch, which cannot see a private GCR image ("manifest unknown").
+    """
+    # Given
+    image = (
+        f"{dhelper.DEFAULT_EXTENDED_REGISTRY}/"
+        f"{dhelper.DEVTEST_DEMISTO_EXTENDED_REPOSITORY}/python3:1.0.0-abcdef"
+    )
+    is_available_mock = mocker.patch.object(
+        dhelper.DockerBase, "is_image_available", return_value=True
+    )
+    dockerhub_api_mock = mocker.patch.object(
+        dhelper.DockerBase, "_is_image_available_on_registry"
+    )
+    sleep_mock = mocker.patch.object(dhelper.time, "sleep")
+
+    # When
+    dhelper.DockerBase._verify_image_available_after_push(image)
+
+    # Then
+    is_available_mock.assert_called_once_with(image, use_registry_prefix=True)
+    dockerhub_api_mock.assert_not_called()
+    sleep_mock.assert_not_called()
+
+
 def test_verify_image_available_after_push_for_gar_image_retries_then_raises(mocker):
     """
     Given:

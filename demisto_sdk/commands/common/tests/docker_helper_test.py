@@ -1407,9 +1407,7 @@ class TestGetPythonVersionOrDefault:
         Then:
          - the resolved version is returned and no warning is emitted.
         """
-        mocker.patch.object(
-            dhelper, "get_python_version", return_value=Version("3.9")
-        )
+        mocker.patch.object(dhelper, "get_python_version", return_value=Version("3.9"))
         warning = mocker.patch.object(dhelper.logger, "warning")
 
         result = dhelper.get_python_version_or_default(
@@ -1478,6 +1476,5 @@ class TestGetPythonVersionOrDefault:
             "Could not resolve the python version for "
             "Packs/Foo/Scripts/Bar/Bar.yml "
             "(docker image 'some-repo/some-image:1.0.0.1'); "
-            f"assuming {dhelper.DEFAULT_PYTHON_VERSION} for mypy-in-docker."
-            == message
+            f"assuming {dhelper.DEFAULT_PYTHON_VERSION} for mypy-in-docker." == message
         )

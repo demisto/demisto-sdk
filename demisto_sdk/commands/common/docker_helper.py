@@ -778,12 +778,19 @@ class DockerBase:
             The test image name and errors to create it if any
         """
         errors = ""
-        if (
-            not python_version
-            and container_type != TYPE_PWSH
-            and (version := get_python_version(base_image))
-        ):
-            python_version = version.major
+        if not python_version and container_type != TYPE_PWSH:
+            if version := get_python_version(base_image):
+                python_version = version.major
+            else:
+                # Could not resolve the python version; fall back to the default
+                # major so the python3 dev-requirements still get installed
+                # instead of building an empty tool-less dev image.
+                python_version = Version(DEFAULT_PYTHON_VERSION).major
+                logger.warning(
+                    f"Could not resolve the python version for base image "
+                    f"{base_image!r}; assuming python{python_version} "
+                    f"({DEFAULT_PYTHON_VERSION}) for the dev/test image."
+                )
         python3_requirements = get_pip_requirements_from_file(
             TEST_REQUIREMENTS_DIR / "python3_requirements" / "dev-requirements.txt"
         )

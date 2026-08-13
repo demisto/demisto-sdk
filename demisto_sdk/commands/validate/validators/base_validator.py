@@ -517,8 +517,9 @@ def is_error_ignored(
                 ):
                     return True
             except Exception as e:
-                logger.debug(
-                    f"is_error_ignored: skipped related_file={related_file.value!r} on {content_item!r}: {e!r}"
+                logger.debug(  # noqa: PLE1205
+                    "{}",
+                    f"<yellow>is_error_ignored: skipped related_file={related_file.value!r} on {content_item!r}: {e!r}</yellow>",
                 )
                 continue
         # None of the related files carried the ignore (e.g. the related file

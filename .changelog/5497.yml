@@ -1,0 +1,7 @@
+changes:
+- description: Fixed an issue where debug-logging in **validate** command failed.
+  type: fix
+- description: Fixed an issue where a **SyntaxWarning** was raised in Python 3.14 due
+    to a 'return' statement inside a 'finally' block.
+  type: fix
+pr_number: 5497

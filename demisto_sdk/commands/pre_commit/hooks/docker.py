@@ -17,7 +17,6 @@ from packaging.version import Version
 from requests import Timeout
 
 from demisto_sdk.commands.common.constants import (
-    DEFAULT_PYTHON_VERSION,
     TYPE_PWSH,
     TYPE_PYTHON,
 )
@@ -29,6 +28,7 @@ from demisto_sdk.commands.common.docker_helper import (
     docker_login,
     get_docker,
     get_pip_requirements_from_file,
+    get_python_version_or_default,
     init_global_docker_client,
 )
 from demisto_sdk.commands.common.files.errors import FileReadError
@@ -473,15 +473,15 @@ class DockerHook(Hook):
             hook = deepcopy(new_hook)
             if new_hook["name"].startswith("mypy-in-docker"):  # see CIAC-11832
                 for obj in objects_:
-                    if obj.python_version:
-                        python_version = Version(obj.python_version)
-                    else:
-                        python_version = Version(DEFAULT_PYTHON_VERSION)
-                        logger.warning(
-                            f"Could not resolve the python version for "
-                            f"{obj.path} (docker image {obj.docker_image!r}); "
-                            f"assuming {DEFAULT_PYTHON_VERSION} for mypy-in-docker."
+                    python_version = (
+                        Version(obj.python_version)
+                        if obj.python_version
+                        else get_python_version_or_default(
+                            obj.docker_image,
+                            context="mypy-in-docker",
+                            identifier=str(obj.path),
                         )
+                    )
                     hook["args"].append(
                         f"--python-version={python_version.major}.{python_version.minor}"
                     )  # mypy expects only the major and minor version (e.g., 3.10)

@@ -779,18 +779,12 @@ class DockerBase:
         """
         errors = ""
         if not python_version and container_type != TYPE_PWSH:
-            if version := get_python_version(base_image):
-                python_version = version.major
-            else:
-                # Could not resolve the python version; fall back to the default
-                # major so the python3 dev-requirements still get installed
-                # instead of building an empty tool-less dev image.
-                python_version = Version(DEFAULT_PYTHON_VERSION).major
-                logger.warning(
-                    f"Could not resolve the python version for base image "
-                    f"{base_image!r}; assuming python{python_version} "
-                    f"({DEFAULT_PYTHON_VERSION}) for the dev/test image."
-                )
+            # Fall back to the default major when the version can't be resolved,
+            # so the python3 dev-requirements still get installed instead of
+            # building an empty tool-less dev image.
+            python_version = get_python_version_or_default(
+                base_image, context="the dev/test image"
+            ).major
         python3_requirements = get_pip_requirements_from_file(
             TEST_REQUIREMENTS_DIR / "python3_requirements" / "dev-requirements.txt"
         )
@@ -1069,6 +1063,35 @@ def get_python_version(image: Optional[str]) -> Optional[Version]:
             f"Getting python version from {image=} by pulling its image and query its env"
         )
         return _get_python_version_from_image_client(image)
+
+
+def get_python_version_or_default(
+    image: Optional[str],
+    context: str,
+    identifier: Optional[str] = None,
+) -> Version:
+    """
+    Resolve the python version of a docker image, falling back to
+    DEFAULT_PYTHON_VERSION (with a warning) when it cannot be determined.
+
+    Args:
+        image: the docker image to resolve the python version from.
+        context: short description of the caller, included in the warning
+            (e.g. "pre-commit", "mypy-in-docker", "the dev/test image").
+        identifier: optional extra identifier for the warning (e.g. a yml path).
+
+    Returns:
+        Version: the resolved python version, or DEFAULT_PYTHON_VERSION.
+    """
+    if python_version := get_python_version(image):
+        return python_version
+    default = Version(DEFAULT_PYTHON_VERSION)
+    subject = f"{identifier} (docker image {image!r})" if identifier else repr(image)
+    logger.warning(
+        f"Could not resolve the python version for {subject}; "
+        f"assuming {DEFAULT_PYTHON_VERSION} for {context}."
+    )
+    return default
 
 
 def _get_python_version_from_image_client(image: str) -> Version:

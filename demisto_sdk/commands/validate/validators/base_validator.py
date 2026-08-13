@@ -516,10 +516,7 @@ def is_error_ignored(
                     related_file_object.file_path
                 ):
                     return True
-            except Exception as e:
-                logger.debug(
-                    f"is_error_ignored: skipped related_file={related_file.value!r} on {content_item!r}: {e!r}"
-                )
+            except Exception:
                 continue
         # None of the related files carried the ignore (e.g. the related file
         # does not exist for this content type, such as an AgentixAction which

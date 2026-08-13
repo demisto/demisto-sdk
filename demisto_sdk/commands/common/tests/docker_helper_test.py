@@ -1390,3 +1390,94 @@ class TestGetPythonVersionDemistoextendedFallback:
 
         with pytest.raises(Exception, match="docker pull failed"):
             get_python_version("demisto/python3:3.10.11.54799-unique-test")
+
+
+class TestGetPythonVersionOrDefault:
+    """Tests for get_python_version_or_default, which pins the fallback
+    behavior that replaced the previously inline pre-commit logic."""
+
+    def test_returns_resolved_version_without_warning(self, mocker):
+        """
+        Given:
+         - get_python_version resolves a version for the image.
+
+        When:
+         - calling get_python_version_or_default.
+
+        Then:
+         - the resolved version is returned and no warning is emitted.
+        """
+        mocker.patch.object(
+            dhelper, "get_python_version", return_value=Version("3.9")
+        )
+        warning = mocker.patch.object(dhelper.logger, "warning")
+
+        result = dhelper.get_python_version_or_default(
+            "demisto/python3:3.9.8.24399", context="the dev/test image"
+        )
+
+        assert result == Version("3.9")
+        warning.assert_not_called()
+
+    def test_falls_back_to_default_with_warning_no_identifier(self, mocker):
+        """
+        Given:
+         - get_python_version cannot resolve a version (returns None).
+         - no identifier is passed.
+
+        When:
+         - calling get_python_version_or_default.
+
+        Then:
+         - Version(DEFAULT_PYTHON_VERSION) is returned.
+         - a warning is emitted whose subject is just the repr of the image.
+        """
+        mocker.patch.object(dhelper, "get_python_version", return_value=None)
+        warning = mocker.patch.object(dhelper.logger, "warning")
+
+        result = dhelper.get_python_version_or_default(
+            "some-repo/some-image:1.0.0.1", context="the dev/test image"
+        )
+
+        assert result == Version(dhelper.DEFAULT_PYTHON_VERSION)
+        warning.assert_called_once()
+        message = warning.call_args[0][0]
+        assert (
+            "Could not resolve the python version for "
+            "'some-repo/some-image:1.0.0.1'; "
+            f"assuming {dhelper.DEFAULT_PYTHON_VERSION} for the dev/test image."
+            == message
+        )
+
+    def test_falls_back_to_default_with_warning_with_identifier(self, mocker):
+        """
+        Given:
+         - get_python_version cannot resolve a version (returns None).
+         - an identifier (e.g. a yml path) is passed.
+
+        When:
+         - calling get_python_version_or_default.
+
+        Then:
+         - Version(DEFAULT_PYTHON_VERSION) is returned.
+         - the warning subject includes the identifier and the image repr.
+        """
+        mocker.patch.object(dhelper, "get_python_version", return_value=None)
+        warning = mocker.patch.object(dhelper.logger, "warning")
+
+        result = dhelper.get_python_version_or_default(
+            "some-repo/some-image:1.0.0.1",
+            context="mypy-in-docker",
+            identifier="Packs/Foo/Scripts/Bar/Bar.yml",
+        )
+
+        assert result == Version(dhelper.DEFAULT_PYTHON_VERSION)
+        warning.assert_called_once()
+        message = warning.call_args[0][0]
+        assert (
+            "Could not resolve the python version for "
+            "Packs/Foo/Scripts/Bar/Bar.yml "
+            "(docker image 'some-repo/some-image:1.0.0.1'); "
+            f"assuming {dhelper.DEFAULT_PYTHON_VERSION} for mypy-in-docker."
+            == message
+        )

@@ -1,0 +1,12 @@
+changes:
+- description: The **validate** command now builds/updates the content graph automatically
+    when running the connectors validation flow (`--run-connectors-validation`), which
+    resolves handler-to-integration links through the graph while collecting content
+    items. Previously this required passing `--graph` with a pre-built graph, and
+    silently fell back to no-graph behavior otherwise.
+  type: fix
+- description: Reduced the number of content-graph queries performed by the connectors
+    validation flow by fetching the connector table once and indexing it in memory,
+    instead of re-scanning it for every unmatched integration.
+  type: internal
+pr_number: '5480'

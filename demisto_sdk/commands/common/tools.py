@@ -2733,9 +2733,9 @@ def open_id_set_file(id_set_path):
             id_set = json.load(id_set_file)
     except OSError:
         logger.info("<yellow>Could not open id_set file</yellow>")
-        raise
-    finally:
-        return id_set
+    except Exception:
+        pass
+    return id_set
 
 
 def get_demisto_version(client: demisto_client) -> Version:

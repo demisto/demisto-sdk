@@ -16,8 +16,8 @@ copies from system-managed originals.
 from pathlib import Path
 
 import typer
-from ruamel.yaml import YAMLError
 
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.logger import logger
 
 # The required suffix that marks an integration as a user-owned copy.
@@ -37,8 +37,6 @@ _NAME_KEY = "name"
 
 def _load_yaml(path: Path) -> dict:
     """Load a YAML file and return its contents as a dict."""
-    from demisto_sdk.commands.common.handlers import YAML_Handler
-
     yaml = YAML_Handler()
     with path.open("r", encoding="utf-8") as fh:
         return yaml.load(fh) or {}
@@ -107,7 +105,7 @@ def is_integration_yaml(path: Path) -> bool:
     except OSError:
         # File exists (checked above) but cannot be read — treat as non-integration.
         return False
-    except YAMLError as exc:
+    except Exception as exc:
         raise typer.BadParameter(
             f"YAML syntax error in '{target_path}': {exc}"
         ) from exc

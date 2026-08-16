@@ -1,0 +1,4 @@
+changes:
+- description: Added the **modelTier** field under the **promptConfig** object in the Script schema, allowing AI Tasks to pin an LLM tier (Flash, Thinking or Pro) instead of a concrete model id. An absent tier remains valid and resolves to the default model.
+  type: feature
+pr_number: 5492

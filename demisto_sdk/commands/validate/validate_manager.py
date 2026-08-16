@@ -45,6 +45,16 @@ class ValidateManager:
         self.initializer = initializer
         self.objects_to_run: Set[BaseContent] = set()
         self.invalid_items: Set[Path] = set()
+
+        # Set the class variable for BaseValidator to use when initializing the graph
+        BaseValidator.create_graph_from_scratch = create_graph_from_scratch
+
+        # Set private content path on BaseValidator for graph building
+        if self.initializer.private_content_path:
+            BaseValidator.set_private_content_path(
+                self.initializer.private_content_path
+            )
+
         (
             self.objects_to_run,
             self.invalid_items,
@@ -56,14 +66,6 @@ class ValidateManager:
             codes_to_ignore=ignore,
         )
         self.validators = self.filter_validators()
-        # Set the class variable for BaseValidator to use when initializing the graph
-        BaseValidator.create_graph_from_scratch = create_graph_from_scratch
-
-        # Set private content path on BaseValidator for graph building
-        if self.initializer.private_content_path:
-            BaseValidator.set_private_content_path(
-                self.initializer.private_content_path
-            )
 
     def run_validations(self) -> int:
         """

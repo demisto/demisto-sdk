@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where a validator that declares a related_file_type (such as AG112) checked only the related-file ignore section and not the file's own per-file ignore section in `.pack-ignore`.
+  type: fix
+pr_number: '5478'

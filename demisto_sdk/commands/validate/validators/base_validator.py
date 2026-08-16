@@ -183,18 +183,38 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     ) -> FixResult:
         raise NotImplementedError
 
+    @classmethod
+    def ensure_graph_initialized(cls) -> ContentGraphInterface:
+        """Build/update the content graph once and wire it onto ``BaseValidator``.
+
+        This is the shared graph-initialization path used by the lazy ``graph``
+        property and by the connectors flow, which needs the graph *during*
+        object collection - before any validator runs. It runs the same
+        ``update_content_graph`` machinery as the standalone ``graph update``
+        command, so it: imports the existing graph, updates only what changed
+        (unless ``create_graph_from_scratch`` forces a rebuild), includes
+        private content via ``private_content_path``, and skips work entirely
+        when the graph is already up-to-date.
+
+        Idempotent: if the graph interface is already wired (e.g. connect-only
+        via ``--graph`` in CI, or a previous call), it is returned as-is without
+        rebuilding.
+        """
+        if BaseValidator.graph_interface:
+            return BaseValidator.graph_interface
+        logger.info("Graph validations were selected, will init graph")
+        BaseValidator.graph_interface = ContentGraphInterface()
+        update_content_graph(
+            BaseValidator.graph_interface,
+            use_git=True,
+            private_content_path=BaseValidator.private_content_path,
+            create_graph_from_scratch=BaseValidator.create_graph_from_scratch,
+        )
+        return BaseValidator.graph_interface
+
     @property
     def graph(self) -> ContentGraphInterface:
-        if not self.graph_interface:
-            logger.info("Graph validations were selected, will init graph")
-            BaseValidator.graph_interface = ContentGraphInterface()
-            update_content_graph(
-                BaseValidator.graph_interface,
-                use_git=True,
-                private_content_path=BaseValidator.private_content_path,
-                create_graph_from_scratch=BaseValidator.create_graph_from_scratch,
-            )
-        return self.graph_interface
+        return self.ensure_graph_initialized()
 
     @classmethod
     def set_private_content_path(cls, private_content_path: Optional[Path]) -> None:
@@ -453,10 +473,12 @@ def is_error_ignored(
         3. If ``err_code`` is listed under the new ``[pack]`` section of the
            pack's ``.pack-ignore`` file -> ignore for every item in the pack
            (and for related files of those items).
-        4. If a ``related_file_type`` is provided -> ignore only when the
-           code is listed under the related file's per-file section.
-        5. Otherwise -> ignore only when the code is listed under the
-           content item's per-file section.
+        4. If a ``related_file_type`` is provided -> ignore when the code is
+           listed under any of the related files' per-file sections. If none
+           of the related files match (e.g. the related file does not exist
+           for this content type), fall through to rule 5.
+        5. Ignore when the code is listed under the content item's own
+           per-file section.
 
     Args:
         err_code: The validation's error code.
@@ -496,10 +518,13 @@ def is_error_ignored(
                     return True
             except Exception:
                 continue
-        return False
-    else:
-        # If the validation should run on the main content, will check if the validation's error code is ignored by the file.
-        return err_code in content_item.ignored_errors
+        # None of the related files carried the ignore (e.g. the related file
+        # does not exist for this content type, such as an AgentixAction which
+        # has no SKILL_CONTENT). Fall through to the main content's per-file
+        # ignore so a `[file:...]` section on the item itself is still honored.
+
+    # If the validation should run on the main content, will check if the validation's error code is ignored by the file.
+    return err_code in content_item.ignored_errors
 
 
 class ValidationResult(BaseResult, BaseModel):

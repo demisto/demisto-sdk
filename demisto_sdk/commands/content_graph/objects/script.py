@@ -16,6 +16,7 @@ class PromptConfig(BaseModel):
     temperature: Optional[float] = None
     max_output_tokens: Optional[int] = Field(None, alias="maxOutputTokens")
     web_search: Optional[bool] = Field(None, alias="webSearch")
+    model_tier: Optional[str] = Field(None, alias="modelTier")
 
 
 class Script(BaseScript, content_type=ContentType.SCRIPT):  # type: ignore[call-arg]

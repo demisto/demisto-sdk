@@ -5,7 +5,6 @@ from typing import Iterable, List, Union
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
-from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.tools import (
     action_text_fragments,
     count_chars_for_texts,
@@ -43,7 +42,6 @@ class IsActionOrSkillTotalTokenBudgetValidator(BaseValidator[ContentTypes]):
         "The {0} '{1}' is too large: the combined {2} add up to "
         "{3} characters, which exceeds the limit of {4}. Trim these fields."
     )
-    related_file_type = [RelatedFileType.SKILL_CONTENT]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

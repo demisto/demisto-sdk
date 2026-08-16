@@ -3,7 +3,6 @@ from __future__ import annotations
 import re
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.connector import Connector
 from demisto_sdk.commands.validate.validators.base_validator import (
     ConnectorsValidator,
@@ -63,7 +62,6 @@ class IsConnectorIdTitleAlignedValidator(ConnectorsValidator[ContentTypes]):
     )
     related_field = "id"
     is_auto_fixable = False
-    expected_git_statuses = [GitStatuses.ADDED]
 
     def obtain_invalid_content_items(
         self,

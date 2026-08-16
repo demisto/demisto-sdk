@@ -41,6 +41,20 @@ class ScriptSubType(StrEnum):
     PYTHON2 = TYPE_PYTHON2
 
 
+class ModelTier(StrEnum):
+    """The LLM model tiers advertised by agentix-hub.
+
+    The concrete model backing each tier is resolved at runtime by the server
+    from the agentix-hub models cache, so the tier - not a model id - is what
+    content pins. An absent tier is valid and resolves to the hub-advertised
+    default model.
+    """
+
+    FLASH = "Flash"
+    THINKING = "Thinking"
+    PRO = "Pro"
+
+
 class CommonFieldsScript(CommonFields):  # type:ignore[misc,valid-type]
     id_x2: Optional[str] = None
     id_xpanse: Optional[str] = Field(None, alias="id:xpanse")
@@ -56,6 +70,7 @@ class PromptConfig(BaseStrictModel):
     temperature: Optional[float] = None
     max_output_tokens: Optional[int] = Field(None, alias="maxOutputTokens")
     web_search: Optional[bool] = Field(None, alias="webSearch")
+    model_tier: Optional[ModelTier] = Field(None, alias="modelTier")
 
 
 class ContentItemFields(BaseStrictModel):

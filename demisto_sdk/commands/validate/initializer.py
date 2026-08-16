@@ -41,6 +41,7 @@ from demisto_sdk.commands.common.tools import (
     find_type_by_path,
     get_content_path,
     get_file_by_status,
+    get_relative_path_from_connectors_dir,
     get_relative_path_from_packs_dir,
     is_external_repo,
     is_private_content_file,
@@ -282,6 +283,7 @@ class Initializer:
         execution_mode: Optional[ExecutionMode] = None,
         handling_private_repositories: bool = False,
         private_content_path: Optional[Path] = None,
+        connectors_content_path: Optional[Path] = None,
     ):
         self.staged = staged
         self.file_path = file_path
@@ -293,6 +295,13 @@ class Initializer:
             Path(private_content_path) if private_content_path else None
         )
         self.private_content_files: set[Path] = set()
+        # Unified Connector Content (UCC) repo path. When set (via -ccp with -g),
+        # the UCC repo is git-diffed directly so only connectors actually changed
+        # there are collected - mirroring the private_content_path handling.
+        self.connectors_content_path = (
+            Path(connectors_content_path) if connectors_content_path else None
+        )
+        self.connectors_content_files: set[Path] = set()
 
         # Set environment variable to enable private repo mode when handling private repositories
         if handling_private_repositories:
@@ -381,6 +390,20 @@ class Initializer:
             added_files = added_files.union(private_added_files)
             renamed_files = renamed_files.union(private_renamed_files)
 
+        if self.connectors_content_path:
+            (
+                connectors_modified_files,
+                connectors_added_files,
+                connectors_renamed_files,
+            ) = self.get_unfiltered_changed_files_from_git(self.connectors_content_path)
+            self.connectors_content_files = connectors_modified_files.union(
+                connectors_added_files
+            ).union(connectors_renamed_files)
+
+            modified_files = modified_files.union(connectors_modified_files)
+            added_files = added_files.union(connectors_added_files)
+            renamed_files = renamed_files.union(connectors_renamed_files)
+
         # filter to only specified paths if given
         if file_path:
             (modified_files, added_files, renamed_files) = self.specify_files_by_status(
@@ -402,6 +425,16 @@ class Initializer:
             )
             self.private_content_files.update(private_deleted_files)
             deleted_files = deleted_files.union(private_deleted_files)
+
+        if self.connectors_content_path:
+            connectors_git_util = GitUtil(self.connectors_content_path)
+            connectors_deleted_files = connectors_git_util.deleted_files(
+                prev_ver=self.prev_ver,
+                committed_only=self.committed_only,
+                staged_only=self.staged,
+            )
+            self.connectors_content_files.update(connectors_deleted_files)
+            deleted_files = deleted_files.union(connectors_deleted_files)
 
         # Handle deleted files for private repositories
         if self.handling_private_repositories:
@@ -631,7 +664,13 @@ class Initializer:
             content_dto = ContentDTO.from_path()
             if not isinstance(content_dto, ContentDTO):
                 raise Exception("no content found")
-            content_objects_to_run = set(content_dto.packs)
+            # Include connectors alongside packs so connector-only validators
+            # (e.g. CO100) run under -a exactly as they do under -g. Without
+            # this, content_dto.connectors would be silently discarded and no
+            # Connector object would ever reach the validation loop.
+            content_objects_to_run = set(content_dto.packs) | set(
+                content_dto.connectors
+            )
         else:
             self.execution_mode = ExecutionMode.USE_GIT
             self.committed_only = True
@@ -795,8 +834,15 @@ class Initializer:
                 is_private = is_private_content_file(
                     file_path, self.private_content_path
                 )
+                is_connector = bool(
+                    self.connectors_content_path
+                    and path.is_relative_to(self.connectors_content_path)
+                    and _is_connector_path(path)
+                )
                 if is_private and self.private_content_path:
                     chdir_path = self.private_content_path
+                elif is_connector and self.connectors_content_path:
+                    chdir_path = self.connectors_content_path
                 else:
                     chdir_path = Path(get_content_path())
 
@@ -809,6 +855,8 @@ class Initializer:
                     else:
                         if is_private and self.private_content_path:
                             temp_obj.path_to_read = self.private_content_path / path
+                        elif is_connector and self.connectors_content_path:
+                            temp_obj.path_to_read = path
                         basecontent_with_path_set.add(temp_obj)
             except NotAContentItemException:
                 non_content_items.add(file_path)  # type: ignore[arg-type]
@@ -847,6 +895,11 @@ class Initializer:
                     and self.private_content_path
                 ):
                     chdir_path = self.private_content_path
+                elif (
+                    file_path in self.connectors_content_files
+                    and self.connectors_content_path
+                ):
+                    chdir_path = self.connectors_content_path
                 else:
                     chdir_path = Path(get_content_path())
 
@@ -862,6 +915,13 @@ class Initializer:
                         ):
                             obj.path_to_read = (
                                 Path(self.private_content_path) / file_path
+                            )
+                        elif (
+                            file_path in self.connectors_content_files
+                            and self.connectors_content_path
+                        ):
+                            obj.path_to_read = (
+                                Path(self.connectors_content_path) / file_path
                             )
 
                         obj.git_sha = current_git_sha
@@ -1046,15 +1106,17 @@ class Initializer:
         """Recursively load all files from a given list of paths.
 
         This method resolves each path to determine if it belongs to the private
-        content directory. If a directory exists in both the standard and
-        private content locations, the files from both locations are merged.
+        content directory or the Unified Connector Content (UCC) directory. If a
+        directory exists in both the standard and an external content location,
+        the files from both locations are merged.
 
         Args:
             files (List[str]): A list of file or directory paths (relative or absolute).
 
         Returns:
             Set[Path]: A unique set of Path objects for all discovered files.
-                    Private files are also tracked in `self.private_content_files`.
+                    Private files are also tracked in `self.private_content_files`
+                    and connector files in `self.connectors_content_files`.
         """
         loaded_files: Set[Path] = set()
 
@@ -1064,7 +1126,19 @@ class Initializer:
 
             file_level = detect_file_level(resolved_file_str)
 
-            if file_level in {PathLevel.FILE, PathLevel.PACK}:
+            # A plain FILE that resolves to an existing path is added as-is.
+            # PACK-level inputs are only shortcut here when there is no external
+            # repo to consult; otherwise they must fall through so the
+            # private/connector merge blocks below can resolve them against the
+            # external repo (e.g. `-i Packs/CommonScripts --private-content-path`
+            # or `-i connectors/foo -ccp <ucc>`, where the relative path does not
+            # exist in the main content checkout).
+            has_external_repo = bool(
+                self.private_content_path or self.connectors_content_path
+            )
+            if file_level == PathLevel.FILE or (
+                file_level == PathLevel.PACK and not has_external_repo
+            ):
                 loaded_files.add(file_path)
                 continue
 
@@ -1087,7 +1161,42 @@ class Initializer:
                     loaded_files.update(private_found)
                     self.private_content_files.update(private_found)
 
+            if self.connectors_content_path:
+                connector_found = self._load_connector_files_from_ucc(resolved_file_str)
+                loaded_files.update(connector_found)
+                self.connectors_content_files.update(connector_found)
+
         return loaded_files
+
+    def _load_connector_files_from_ucc(self, resolved_file_str: str) -> Set[Path]:
+        """Resolve a (possibly relative) connectors path against the UCC repo.
+
+        Supports inputs such as ``connectors/foo`` or
+        ``connectors/foo/connector.yaml`` that do not exist in the main content
+        checkout but do exist under ``<connectors_content_path>/connectors/``.
+
+        Args:
+            resolved_file_str (str): The user-provided input path.
+
+        Returns:
+            Set[Path]: The set of connector files found under the UCC repo
+                (empty if the path is not a connectors path or does not exist
+                there).
+        """
+        if not self.connectors_content_path:
+            return set()
+
+        rel_path = get_relative_path_from_connectors_dir(resolved_file_str)
+        if rel_path is None:
+            return set()
+
+        connector_obj = self.connectors_content_path / rel_path
+        if not connector_obj.exists():
+            return set()
+
+        if connector_obj.is_file():
+            return {connector_obj}
+        return {p for p in connector_obj.rglob("*") if p.is_file()}
 
     def collect_related_files_main_items(self, file_paths: Set[Path]) -> Set[Path]:
         """Convert the given file path to the main item its related to.
@@ -1347,10 +1456,33 @@ class ConnectorAwareInitializer(Initializer):
                         f"no XSOAR handlers."
                     )
 
-        # 3. Cross-match and expand with missing counterparts
-        filtered = self._cross_match_and_expand(
-            filtered_integrations, filtered_connectors
+        # 3. Cross-match and expand with missing counterparts.
+        # The expand phases below resolve handler<->integration links through
+        # the content graph, so the graph must be built/updated *before* they
+        # run - unlike validators, which build it lazily on first access. This
+        # is idempotent and a no-op when the graph is already wired (e.g.
+        # connect-only via --graph in CI).
+        from demisto_sdk.commands.validate.validators.base_validator import (
+            BaseValidator,
         )
+
+        # Only this call may close the graph on failure: when the interface was
+        # already wired by the caller (e.g. --graph in CI), the caller owns it.
+        graph_opened_here = BaseValidator.graph_interface is None
+        BaseValidator.ensure_graph_initialized()
+        try:
+            filtered = self._cross_match_and_expand(
+                filtered_integrations, filtered_connectors
+            )
+        except Exception:
+            # ValidateManager closes the graph in run_validations(), which never
+            # runs if collection raises. Close it here so a failure during
+            # cross-matching does not leak the Neo4j driver.
+            if graph_opened_here and BaseValidator.graph_interface:
+                logger.debug("Closing graph after connector cross-match failure.")
+                BaseValidator.graph_interface.close()
+                BaseValidator.graph_interface = None
+            raise
 
         return filtered, invalid_items
 
@@ -1557,15 +1689,33 @@ class ConnectorAwareInitializer(Initializer):
             f"Searching graph for connectors referencing unmatched "
             f"integrations: {[i.object_id for i in unmatched_integrations]}"
         )
+        # Fetch every connector once and build an in-memory index keyed by the
+        # integration ids their XSOAR handlers reference, instead of re-scanning
+        # the whole connector table for each unmatched integration.
+        connectors_by_integration_id: Dict[str, List[Connector]] = {}
+        for found_connector in self._all_graph_connectors():
+            if not isinstance(found_connector, Connector):
+                continue
+            if not found_connector.xsoar_handlers:
+                continue
+            # A connector may declare several handlers pointing at the same
+            # integration; index it once per integration id.
+            referenced_ids = {
+                handler.xsoar_integration_id
+                for handler in found_connector.xsoar_handlers
+                if handler.xsoar_integration_id
+            }
+            for int_id in referenced_ids:
+                connectors_by_integration_id.setdefault(int_id, []).append(
+                    found_connector
+                )
+
         existing_connector_ids = {c.object_id for c in connectors}
         for integration in list(unmatched_integrations):
-            found_connectors = self._graph_search_connectors(integration.object_id)
-            for found_connector in found_connectors:
-                if not isinstance(found_connector, Connector):
-                    continue
+            for found_connector in connectors_by_integration_id.get(
+                integration.object_id, []
+            ):
                 if found_connector.object_id in existing_connector_ids:
-                    continue
-                if not found_connector.xsoar_handlers:
                     continue
                 for handler in found_connector.xsoar_handlers:
                     if handler.xsoar_integration_id == integration.object_id:
@@ -1694,7 +1844,14 @@ class ConnectorAwareInitializer(Initializer):
 
     @staticmethod
     def _graph_search_integration(integration_id: str) -> List[Any]:
-        """Graph search for an integration by object_id or name."""
+        """Graph search for an integration by object_id or name.
+
+        Deliberately *not* batched into a single unfiltered fetch: these are
+        indexed point lookups, and the number of unmatched handlers in a run is
+        typically small. Fetching the whole integration table instead would
+        hydrate every integration node and its relationships, which costs far
+        more than the handful of lookups it would replace.
+        """
         from demisto_sdk.commands.content_graph.common import ContentType
         from demisto_sdk.commands.validate.validators.base_validator import (
             BaseValidator,
@@ -1716,11 +1873,14 @@ class ConnectorAwareInitializer(Initializer):
         return results
 
     @staticmethod
-    def _graph_search_connectors(integration_id: str) -> List[Any]:
-        """Graph search for connectors whose XSOAR handlers reference the given integration.
+    def _all_graph_connectors() -> List[Any]:
+        """Fetch every connector from the graph in a single query.
 
-        Searches all connectors in the graph and filters to those with at least
-        one XSOAR handler whose ``xsoar_integration_id`` matches.
+        Batched replacement for the previous per-integration
+        ``_graph_search_connectors`` scans: the whole connector table is
+        fetched once and callers build an in-memory
+        ``xsoar_integration_id -> connectors`` index instead of re-scanning the
+        connector table for every unmatched integration.
         """
         from demisto_sdk.commands.content_graph.common import ContentType
         from demisto_sdk.commands.validate.validators.base_validator import (
@@ -1731,10 +1891,4 @@ class ConnectorAwareInitializer(Initializer):
         if not graph:
             logger.debug("Graph interface not available, skipping connector search.")
             return []
-        all_connectors = graph.search(content_type=ContentType.CONNECTOR)
-        return [
-            c
-            for c in all_connectors
-            if hasattr(c, "xsoar_handlers")
-            and any(h.xsoar_integration_id == integration_id for h in c.xsoar_handlers)
-        ]
+        return graph.search(content_type=ContentType.CONNECTOR)

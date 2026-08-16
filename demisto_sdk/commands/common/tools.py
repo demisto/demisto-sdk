@@ -2733,9 +2733,9 @@ def open_id_set_file(id_set_path):
             id_set = json.load(id_set_file)
     except OSError:
         logger.info("<yellow>Could not open id_set file</yellow>")
-        raise
-    finally:
-        return id_set
+    except Exception:
+        pass
+    return id_set
 
 
 def get_demisto_version(client: demisto_client) -> Version:
@@ -3174,6 +3174,28 @@ def get_relative_path_from_packs_dir(file_path: str) -> str:
         return file_path
 
     return file_path[file_path.find(PACKS_DIR) :]
+
+
+def get_relative_path_from_connectors_dir(file_path: str) -> Optional[str]:
+    """Get the relative path for a given file_path starting in the connectors directory.
+
+    Args:
+        file_path (str): The (possibly relative or absolute) path to normalize.
+
+    Returns:
+        Optional[str]: The path starting from the ``connectors/`` segment (e.g.
+            ``connectors/foo/connector.yaml``), or None if the path is not a
+            connectors path.
+    """
+    connectors_segment = f"{CONNECTORS_FOLDER}/"
+    if file_path.startswith(connectors_segment) or file_path == CONNECTORS_FOLDER:
+        return file_path
+
+    idx = file_path.find(f"/{connectors_segment}")
+    if idx != -1:
+        return file_path[idx + 1 :]
+
+    return None
 
 
 def is_uuid(s: str) -> Optional[Match]:

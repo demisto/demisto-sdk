@@ -1,27 +1,33 @@
 """
 Validation logic for the upload-custom-integration command.
 
-Enforces the '_copy' marker naming convention on integration IDs and display
-names before upload, preventing ID conflicts with official system pack integrations.
+Enforces the '_copy' marker naming convention on integration IDs and
+name before upload, preventing ID conflicts with official system pack integrations.
 
 Background
 ----------
 If a custom integration is uploaded with an ``id`` that matches a system
-integration's ``id``, any subsequent attempt to download the system pack that
+integration's ``id``, any subsequent attempt to install the system pack that
 contains that integration will fail with a system error.  The ``_copy`` suffix
-is the established XSOAR convention that distinguishes custom (user-owned)
+is the established convention that distinguishes custom (user-owned)
 copies from system-managed originals.
 """
 
 from pathlib import Path
-from typing import Tuple
 
 import typer
+from ruamel.yaml import YAMLError
 
 from demisto_sdk.commands.common.logger import logger
 
 # The required suffix that marks an integration as a user-owned copy.
 COPY_MARKER: str = "_copy"
+
+_COPY_MARKER_RISK_EXPLANATION: str = (
+    "Uploading a custom integration whose ID matches a system integration ID "
+    "will cause subsequent installations of the system pack that contains that "
+    "integration to fail with a system error."
+)
 
 # YAML key path for the canonical integration ID.
 _COMMONFIELDS_KEY = "commonfields"
@@ -51,6 +57,10 @@ def resolve_integration_yaml(path: Path) -> Path:
     Returns:
         The resolved ``.yml`` / ``.yaml`` file path when *path* is a directory
         containing exactly one non-hidden YAML file; otherwise *path* unchanged.
+
+    Raises:
+        typer.BadParameter: When *path* is a directory containing more than one
+            YAML file — the caller must specify the exact file path.
     """
     if path.is_file():
         return path
@@ -62,6 +72,12 @@ def resolve_integration_yaml(path: Path) -> Path:
         ]
         if len(yml_files) == 1:
             return yml_files[0]
+        if len(yml_files) > 1:
+            names = ", ".join(f.name for f in sorted(yml_files))
+            raise typer.BadParameter(
+                f"'{path}' contains multiple YAML files ({names}). "
+                "Pass the exact integration YAML file path with -i/--input."
+            )
     # Return as-is; downstream checks will produce the appropriate error.
     return path
 
@@ -88,11 +104,16 @@ def is_integration_yaml(path: Path) -> bool:
     try:
         data = _load_yaml(target_path)
         return _COMMONFIELDS_KEY in data or ("script" in data and "category" in data)
-    except Exception:
+    except OSError:
+        # File exists (checked above) but cannot be read — treat as non-integration.
         return False
+    except YAMLError as exc:
+        raise typer.BadParameter(
+            f"YAML syntax error in '{target_path}': {exc}"
+        ) from exc
 
 
-def _read_id_and_name(path: Path) -> Tuple[str, str]:
+def _read_id_and_name(path: Path) -> tuple[str, str]:
     """Read ``commonfields.id`` (with top-level ``id`` fallback) and ``name``
     from an integration YAML.
 
@@ -175,8 +196,7 @@ def validate_integration_copy_marker(
 
     if force_id:
         logger.warning(
-            f"[WARNING] Uploading custom content without the '{COPY_MARKER}' marker "
-            f"risks conflicting with official system pack IDs. "
+            f"[WARNING] {_COPY_MARKER_RISK_EXPLANATION} "
             f"The following field(s) are missing the '{COPY_MARKER}' suffix: "
             f"{missing_summary}. "
             "Proceeding because --force-id was explicitly set."
@@ -188,9 +208,7 @@ def validate_integration_copy_marker(
         f"  Integration field(s) missing the '{COPY_MARKER}' marker:\n"
         f"    {missing_summary}\n"
         f"\n"
-        f"  RISK: Uploading a custom integration whose ID matches a system\n"
-        f"  integration ID will cause subsequent downloads of the system pack\n"
-        f"  that contains that integration to fail with a system error.\n"
+        f"  RISK: {_COPY_MARKER_RISK_EXPLANATION}\n"
         f"\n"
         f"  Fix: Rename 'commonfields.id' and 'name' in your YAML to end with\n"
         f"  '{COPY_MARKER}' (e.g., 'MyIntegration{COPY_MARKER}'), then re-run:\n"

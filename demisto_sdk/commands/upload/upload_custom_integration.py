@@ -3,8 +3,8 @@ Core logic for the ``upload-custom-integration`` command.
 
 This module is a thin safety wrapper around the existing
 :func:`~demisto_sdk.commands.upload.upload.upload_content_entity` function.
-It enforces the ``_copy`` naming convention on integration IDs and display
-names **before** delegating to the standard upload pipeline.
+It enforces the ``_copy`` naming convention on integration IDs and
+name **before** delegating to the standard upload pipeline.
 
 This command targets the **Cortex Platform marketplace exclusively**.
 ``marketplace="platform"`` is hardcoded in the call to
@@ -12,8 +12,6 @@ This command targets the **Cortex Platform marketplace exclusively**.
 be overridden.  Only ``-i`` / ``--input`` and ``--force-id`` are accepted as
 user-facing flags; any other argument is rejected by the explicit function
 signature.
-
-The existing ``demisto-sdk upload`` command is **not modified** by this module.
 """
 
 from pathlib import Path
@@ -77,8 +75,7 @@ def upload_custom_integration_entity(
 
     if not is_integration_yaml(resolved_path):
         raise typer.BadParameter(
-            f"'{input_path}' does not appear to be an integration YAML "
-            f"(missing 'commonfields' / 'script'+'category' keys). "
+            f"'{input_path}' does not appear to be an integration YAML. "
             "Use 'demisto-sdk upload' for packs and other content types."
         )
 

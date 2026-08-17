@@ -101,9 +101,20 @@ RETURN source.node_id AS source, target.node_id AS target"""
 
 
 def remove_existing_depends_on_relationships(tx: Transaction) -> None:
+    # Calculated edges (from_metadata = false) are always cleared, because
+    # create_depends_on_relationships recreates the ones that are still valid.
+    #
+    # Metadata-declared edges (from_metadata = true) are normally kept, since
+    # nothing recreates them - but a dependency involving a split-pack twin, or
+    # any managed/derived pack, is never legitimate. Such an edge is not
+    # recreated by any query either, so unless it is deleted here an edge
+    # written by an older build survives in a persistent graph forever.
     query = f"""// Removes all existing DEPENDS_ON relationships before recalculation
-MATCH ()-[r:{RelationshipType.DEPENDS_ON}]->()
+MATCH (p1)-[r:{RelationshipType.DEPENDS_ON}]->(p2)
 WHERE r.from_metadata = false
+OR {are_in_the_same_split_pack_family("p1", "p2")}
+OR {is_managed_or_derived("p1")}
+OR {is_managed_or_derived("p2")}
 DELETE r"""
     run_query(tx, query)
 

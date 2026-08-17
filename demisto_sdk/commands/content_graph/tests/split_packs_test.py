@@ -1634,3 +1634,133 @@ class TestDerivedPackCarriesNoPackLevelDependencies:
         assert len(depends_on) == 1
         assert depends_on[0]["source"] == "TestPack"
         assert depends_on[0]["target"] == "Base"
+
+
+# ---------------------------------------------------------------------------
+# Twin isolation on a persistent graph
+# ---------------------------------------------------------------------------
+#
+# The queries guarded above all *create* DEPENDS_ON. On a graph that is reused
+# between builds (which is how CI runs it) two further paths keep twin edges
+# alive even though no query creates them any more. Both were confirmed
+# against a live neo4j before these tests were written:
+#
+#   1. ``get_relationships_to_preserve`` captures every relationship pointing
+#      at a pack that is about to be recreated, with no type filter, and
+#      ``return_preserved_relationships`` writes them all back afterwards.
+#      Measured: refreshing only ``PackA`` captured 2 DEPENDS_ON edges from
+#      ``PackAManaged`` and restored both.
+#   2. ``remove_existing_depends_on_relationships`` only deletes edges with
+#      ``from_metadata = false``, so a ``from_metadata = true`` twin edge
+#      survives every recalculation. Measured: after injecting all four twin
+#      edge variants and running ``create_pack_dependencies``, the two
+#      ``from_metadata = true`` edges remained.
+
+
+class TestPreserveQueryExcludesTwinDependsOn:
+    """``get_relationships_to_preserve`` must not carry twin DEPENDS_ON over.
+
+    It runs before ``remove_packs_before_creation`` and its results are
+    replayed after the nodes are recreated, so anything it captures bypasses
+    every guard on the creating queries.
+    """
+
+    def _preserve_query(self) -> str:
+        from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
+            get_relationships_to_preserve,
+        )
+
+        transaction = MagicMock()
+        with patch(
+            "demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes.run_query"
+        ) as mock_run_query:
+            mock_run_query.return_value.data.return_value = []
+            get_relationships_to_preserve(transaction, ["PackA"])
+
+        return mock_run_query.call_args[0][1]
+
+    def test_preserve_query_excludes_twin_depends_on(self):
+        """The pack-to-pack branch matches ``(s)-[r]->(t)`` for every
+        relationship type. Without a family guard it re-attaches exactly the
+        edge the dependency queries refuse to create."""
+        query = self._preserve_query()
+
+        assert (
+            "NOT coalesce(s.derived_from, s.object_id) "
+            "= coalesce(t.derived_from, t.object_id)" in query
+        )
+
+    def test_preserve_query_excludes_depends_on_touching_a_managed_pack(self):
+        """Managed and derived packs ship self-contained, so no pack-level
+        dependency may be restored in either direction."""
+        query = self._preserve_query()
+
+        assert (
+            "NOT (coalesce(s.managed, false) OR coalesce(s.is_derived, false))" in query
+        )
+        assert (
+            "NOT (coalesce(t.managed, false) OR coalesce(t.is_derived, false))" in query
+        )
+
+    def test_preserve_query_only_guards_depends_on(self):
+        """The guards are scoped to DEPENDS_ON. Every other relationship type
+        must still be preserved - that is the whole point of the query."""
+        query = self._preserve_query()
+
+        # Anything that is not a DEPENDS_ON short-circuits the guard.
+        assert 'type(r) <> "DEPENDS_ON"' in query
+        # The three original branches are still there.
+        assert query.count("UNION") == 2
+
+
+class TestDependsOnRemovalClearsTwinEdges:
+    """``remove_existing_depends_on_relationships`` must clear twin edges
+    regardless of ``from_metadata``.
+
+    Metadata-declared edges are deliberately kept across recalculations, but a
+    twin edge is never legitimate, so the ``from_metadata`` exemption must not
+    apply to it. Otherwise an edge written by a pre-fix build is immortal.
+    """
+
+    def _removal_query(self) -> str:
+        from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
+            remove_existing_depends_on_relationships,
+        )
+
+        transaction = MagicMock()
+        with patch(
+            "demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies.run_query"
+        ) as mock_run_query:
+            remove_existing_depends_on_relationships(transaction)
+
+        return mock_run_query.call_args[0][1]
+
+    def test_removal_deletes_twin_edges_even_when_from_metadata(self):
+        """A twin edge with ``from_metadata = true`` is not recalculated by any
+        query, so if this deletion skips it, it stays in the graph forever."""
+        query = self._removal_query()
+
+        assert (
+            "coalesce(p1.derived_from, p1.object_id) "
+            "= coalesce(p2.derived_from, p2.object_id)" in query
+        )
+
+    def test_removal_deletes_edges_touching_a_managed_pack(self):
+        """Same reasoning, for any dependency involving a managed or derived
+        pack in either direction."""
+        query = self._removal_query()
+
+        assert (
+            "(coalesce(p1.managed, false) OR coalesce(p1.is_derived, false))" in query
+        )
+        assert (
+            "(coalesce(p2.managed, false) OR coalesce(p2.is_derived, false))" in query
+        )
+
+    def test_removal_still_keeps_metadata_edges_between_regular_packs(self):
+        """The pre-existing contract must not change: a metadata-declared
+        dependency between two regular packs survives recalculation, because
+        nothing recreates it."""
+        query = self._removal_query()
+
+        assert "r.from_metadata = false" in query

@@ -5,4 +5,8 @@ changes:
   type: fix
 - description: Fixed an issue where the all-level pack dependencies query produced invalid cypher when mandatory-only filtering was disabled.
   type: fix
+- description: Fixed an issue where a **DEPENDS_ON** relationship between a pack and its derived (managed) twin survived a graph rebuild. The relationships preserved while pack nodes are recreated were captured for every relationship type, which restored such a dependency after the queries that create them had already excluded it.
+  type: fix
+- description: Fixed an issue where a **DEPENDS_ON** relationship involving a managed or derived pack was never removed when it originated from pack metadata. Only calculated relationships were cleared before recalculation, so in a graph that is reused between builds such a relationship remained indefinitely.
+  type: fix
 pr_number: '5484'

@@ -27,8 +27,8 @@ from typing import Any
 
 import typer
 
-from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import get_yaml
 
 # The marketplace is fixed for this command — Cortex Platform only.
 _MARKETPLACE = "platform"
@@ -48,26 +48,10 @@ _ID_KEY = "id"
 _NAME_KEY = "name"
 
 
-def _load_yaml(path: Path) -> dict:
-    """Load a YAML file and return its contents as a dict."""
-    yaml = YAML_Handler()
-    with path.open("r", encoding="utf-8") as fh:
-        return yaml.load(fh) or {}
-
-
 def resolve_integration_yaml(path: Path) -> Path:
-    """If *path* is a directory, resolve the single integration YAML file inside it.
+    """If *path* is a directory, resolve the single integration YAML inside it.
 
-    Users often pass the integration folder (e.g.,
-    ``-i Packs/MyPack/Integrations/MyIntegration_copy/``) rather than the
-    explicit ``.yml`` file path.  This helper transparently handles both forms.
-
-    Args:
-        path: A filesystem path that may be either a file or a directory.
-
-    Returns:
-        The resolved ``.yml`` / ``.yaml`` file path when *path* is a directory
-        containing exactly one non-hidden YAML file; otherwise *path* unchanged.
+    Accepts either a direct ``.yml`` file path or an integration directory.
 
     Raises:
         typer.BadParameter: When *path* is a directory containing more than one
@@ -94,29 +78,20 @@ def resolve_integration_yaml(path: Path) -> Path:
 
 
 def is_integration_yaml(path: Path) -> bool:
-    """Return ``True`` if *path* points to an integration YAML file (or a
-    directory containing exactly one integration YAML).
+    """Return ``True`` if *path* points to an integration YAML file.
 
     Detection is based on the presence of the ``commonfields`` key, which is
-    present in integration YAMLs but not in playbooks, scripts, or other
-    content types.  As a secondary signal, the presence of both ``script`` and
-    ``category`` keys (used in unified integration YAMLs) is also accepted.
+    present in all integration YAMLs (both split and unified forms).
 
-    Args:
-        path: Filesystem path to the YAML file or integration directory.
-
-    Returns:
-        ``True`` when the file looks like an integration YAML, ``False``
-        otherwise (including when the file cannot be read or parsed).
+    Returns ``False`` when the file cannot be read or parsed.
     """
     target_path = resolve_integration_yaml(path)
     if not target_path.is_file():
         return False
     try:
-        data = _load_yaml(target_path)
-        return _COMMONFIELDS_KEY in data or ("script" in data and "category" in data)
+        data = get_yaml(target_path) or {}
+        return _COMMONFIELDS_KEY in data
     except OSError:
-        # File exists (checked above) but cannot be read — treat as non-integration.
         return False
     except Exception as exc:
         raise typer.BadParameter(
@@ -140,7 +115,7 @@ def _read_id_and_name(path: Path) -> tuple[str, str]:
     """
     target_path = resolve_integration_yaml(path)
     try:
-        data = _load_yaml(target_path)
+        data = get_yaml(target_path) or {}
     except Exception as exc:
         raise typer.BadParameter(
             f"Could not parse YAML file '{target_path}': {exc}"

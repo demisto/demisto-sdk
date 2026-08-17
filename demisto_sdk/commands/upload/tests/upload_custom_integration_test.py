@@ -17,14 +17,12 @@ from pathlib import Path
 import pytest
 import typer
 
-from demisto_sdk.commands.upload.integration_copy_validator import (
+from demisto_sdk.commands.upload.upload_custom_integration import (
     COPY_MARKER,
     is_integration_yaml,
     resolve_integration_yaml,
-    validate_integration_copy_marker,
-)
-from demisto_sdk.commands.upload.upload_custom_integration import (
     upload_custom_integration_entity,
+    validate_integration_copy_marker,
 )
 
 # ---------------------------------------------------------------------------
@@ -253,7 +251,7 @@ class TestValidateIntegrationCopyMarker:
         """
         yaml_path = _write_integration_yaml(tmp_path, "MyIntegration", "MyIntegration")
         mock_warning = mocker.patch(
-            "demisto_sdk.commands.upload.integration_copy_validator.logger"
+            "demisto_sdk.commands.upload.upload_custom_integration.logger"
         )
         # Should not raise
         validate_integration_copy_marker(yaml_path, force_id=True)
@@ -387,7 +385,7 @@ class TestUploadCustomIntegrationEntity:
             "demisto_sdk.commands.upload.upload.upload_content_entity"
         )
         mock_logger = mocker.patch(
-            "demisto_sdk.commands.upload.integration_copy_validator.logger"
+            "demisto_sdk.commands.upload.upload_custom_integration.logger"
         )
 
         upload_custom_integration_entity(input=yaml_path, force_id=True)

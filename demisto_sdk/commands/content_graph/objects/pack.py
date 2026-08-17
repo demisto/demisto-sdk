@@ -38,6 +38,7 @@ from demisto_sdk.commands.common.tools import (
 )
 from demisto_sdk.commands.content_graph.common import (
     DERIVED_PACK_SUFFIX,
+    ENABLE_SPLIT_PACKS,
     PACK_METADATA_FILENAME,
     TIGHTLY_COUPLED_TYPES,
     VERSION_CONFIG_FILENAME,
@@ -193,6 +194,31 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         if item_id in overrides:
             return overrides[item_id] == "tightly_coupled"
         return content_item.content_type.is_tightly_coupled
+
+    def is_managed_paired(self) -> bool:
+        """Whether this pack participates in a source/twin (marketplace + managed content) pair.
+
+        The rule:
+            - a derived twin (``is_derived``) is the managed half of a pair, so it is always paired.
+            - a natively managed pack (``managed`` and not derived, e.g. AWS/Azure/GCP) has no twin at all.
+            - any other pack is paired only if it has at least one tightly coupled item, which is exactly
+              what causes a twin to be generated for it.
+
+        This mirrors the twin-generation condition in ``PackParser._generate_derived_pack``
+        (``parsers/pack.py:364``); the two live in different class hierarchies, so the duplication is
+        deliberate and the two must be kept in sync.
+
+        Returns:
+            True if the pack is one half of a source/twin pair, False otherwise.
+        """
+        if self.is_derived:
+            return True
+        if self.managed:
+            return False
+        return any(
+            self._is_item_tightly_coupled(content_item)
+            for content_item in self.content_items
+        )
 
     @property
     def ignored_errors(self) -> List[str]:
@@ -504,6 +530,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 strip_internal=strip_internal,
             )
         )
+        # CIAC-16414: expose whether the pack is one half of a source/twin (marketplace + managed
+        # content) pair. Flag-gated: while ENABLE_SPLIT_PACKS is off the key is omitted entirely.
+        if ENABLE_SPLIT_PACKS:
+            metadata["managedPaired"] = self.is_managed_paired()
         self._clean_empty_supportedModuels_from_commands(
             metadata.get("contentItems", {})
         )

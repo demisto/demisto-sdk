@@ -1764,3 +1764,742 @@ class TestDependsOnRemovalClearsTwinEdges:
         query = self._removal_query()
 
         assert "r.from_metadata = false" in query
+
+
+# ---------------------------------------------------------------------------
+# Pack.is_managed_paired tests
+# ---------------------------------------------------------------------------
+
+
+class TestIsManagedPaired:
+    """Tests for Pack.is_managed_paired - "this pack is half of a source/twin pair".
+
+    True for a derived twin and for a source pack that yields one. False for a
+    natively managed pack (AWS/Azure/GCP style), which has no twin at all, and
+    for an ordinary pack with nothing tightly coupled to split out.
+    """
+
+    def _make_content_item(
+        self, object_id: str, content_type: ContentType
+    ) -> MagicMock:
+        mock = MagicMock()
+        mock.object_id = object_id
+        mock.content_type = content_type
+        return mock
+
+    def _make_pack(
+        self,
+        content_items: List[MagicMock],
+        managed: bool = False,
+        is_derived: bool = False,
+        coupling_overrides: Optional[dict] = None,
+    ) -> MagicMock:
+        from demisto_sdk.commands.content_graph.objects.pack import Pack
+
+        mock = MagicMock(spec=Pack)
+        mock.managed = managed
+        mock.is_derived = is_derived
+        mock.coupling_overrides = coupling_overrides
+        mock.content_items = content_items
+        # Bind the real methods
+        mock._is_item_tightly_coupled = Pack._is_item_tightly_coupled.__get__(
+            mock, Pack
+        )
+        mock.is_managed_paired = Pack.is_managed_paired.__get__(mock, Pack)
+        return mock
+
+    def test_derived_twin_is_managed_paired(self):
+        """The twin IS the managed half of the pair, regardless of what it holds."""
+        pack = self._make_pack(
+            [self._make_content_item("MyIntegration", ContentType.INTEGRATION)],
+            managed=True,
+            is_derived=True,
+        )
+        assert pack.is_managed_paired() is True, (
+            "a derived twin is by definition the managed half of a source/twin pair"
+        )
+
+    def test_source_pack_with_tightly_coupled_item_is_managed_paired(self):
+        """The marketplace half: not managed, and it yields a twin."""
+        assert ContentType.INTEGRATION in TIGHTLY_COUPLED_TYPES, (
+            "test premise: an integration must be tightly coupled for this pack to yield a twin"
+        )
+        pack = self._make_pack(
+            [self._make_content_item("MyIntegration", ContentType.INTEGRATION)],
+        )
+        assert pack.is_managed_paired() is True, (
+            "an unmanaged pack with a tightly coupled item yields a twin, so it is the marketplace half of a pair"
+        )
+
+    def test_natively_managed_pack_is_not_managed_paired(self):
+        """GCP/AWS/Azure style packs are managed at the source - no twin exists."""
+        pack = self._make_pack(
+            [self._make_content_item("GoogleCloudPlatform", ContentType.INTEGRATION)],
+            managed=True,
+            is_derived=False,
+        )
+        assert pack.is_managed_paired() is False, (
+            "a natively managed pack (GCP/AWS/Azure style: managed=True, is_derived=False) has no twin, "
+            "so it never participates in a source/twin pair"
+        )
+
+    def test_pack_with_only_loosely_coupled_items_is_not_managed_paired(self):
+        """No tightly coupled item means no twin is generated."""
+        pack = self._make_pack(
+            [self._make_content_item("MyPlaybook", ContentType.PLAYBOOK)],
+        )
+        assert pack.is_managed_paired() is False, (
+            "a pack whose only items are loosely coupled (a playbook here) produces no twin"
+        )
+
+    def test_override_to_loosely_coupled_makes_pack_not_managed_paired(self):
+        """The predicate must honour coupling_overrides, not the raw content type."""
+        pack = self._make_pack(
+            [self._make_content_item("MyIntegration", ContentType.INTEGRATION)],
+            coupling_overrides={"MyIntegration": "loosely_coupled"},
+        )
+        assert pack.is_managed_paired() is False, (
+            "the pack's only integration is overridden to loosely_coupled, so nothing is left to split into a twin"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Top level `managedPaired` key in the dumped metadata.json (CIAC-16414)
+# ---------------------------------------------------------------------------
+
+
+class TestManagedPairedTopLevelMetadata:
+    """Tests for the top level ``managedPaired`` key written by ``Pack.dump_metadata``.
+
+    The key is always emitted (including when it is False) while ENABLE_SPLIT_PACKS is
+    on, and is omitted entirely while the flag is off, which is the production default.
+
+    These tests drive the real ``Pack.dump_metadata`` against a real ``Pack`` and read
+    the JSON back, rather than the ``MagicMock(spec=Pack)`` idiom used above: the mock
+    idiom cannot exercise a large real method, and a source-inspection test would not
+    detect the gate being removed.
+    """
+
+    @staticmethod
+    def _make_pack(managed: bool = False, is_derived: bool = False):
+        from demisto_sdk.commands.common.constants import MarketplaceVersions
+        from demisto_sdk.commands.content_graph.objects.pack import Pack
+
+        return Pack(
+            object_id="TestPack",
+            content_type=ContentType.PACK,
+            node_id="Pack:TestPack",
+            path=Path("TestPack"),
+            name="TestPack",
+            display_name="TestPack",
+            marketplaces=[MarketplaceVersions.XSOAR],
+            current_version="1.0.0",
+            description="A pack used to exercise the managedPaired metadata key.",
+            created="2024-01-01T00:00:00Z",
+            support="xsoar",
+            author="Cortex XSOAR",
+            certification="certified",
+            hidden=False,
+            tags=[],
+            categories=[],
+            useCases=[],
+            keywords=[],
+            contentItems={},
+            managed=managed,
+            is_derived=is_derived,
+        )
+
+    @staticmethod
+    def _dump(pack, tmp_path: Path) -> dict:
+        from demisto_sdk.commands.common.constants import MarketplaceVersions
+
+        destination = tmp_path / "metadata.json"
+        pack.dump_metadata(destination, MarketplaceVersions.XSOAR)
+        return stdlib_json.loads(destination.read_text())
+
+    def test_managed_paired_true_is_written_when_flag_on(self, mocker, tmp_path):
+        """A derived twin is managed-paired, so the key must be written as True."""
+        mocker.patch(
+            "demisto_sdk.commands.content_graph.objects.pack.ENABLE_SPLIT_PACKS", True
+        )
+        pack = self._make_pack(managed=True, is_derived=True)
+        assert pack.is_managed_paired() is True, (
+            "test premise: a derived twin must be managed-paired, otherwise this case asserts nothing"
+        )
+
+        metadata = self._dump(pack, tmp_path)
+
+        assert "managedPaired" in metadata, (
+            "with ENABLE_SPLIT_PACKS on, dump_metadata must emit the top level `managedPaired` key"
+        )
+        assert metadata["managedPaired"] is True, (
+            f"a derived twin is half of a source/twin pair, so `managedPaired` must be True, "
+            f"got {metadata['managedPaired']!r}"
+        )
+
+    def test_managed_paired_false_is_still_written_when_flag_on(self, mocker, tmp_path):
+        """A natively managed pack has no twin - the key must be PRESENT and False, never omitted."""
+        mocker.patch(
+            "demisto_sdk.commands.content_graph.objects.pack.ENABLE_SPLIT_PACKS", True
+        )
+        pack = self._make_pack(managed=True, is_derived=False)
+        assert pack.is_managed_paired() is False, (
+            "test premise: a natively managed pack (managed=True, is_derived=False) must not be managed-paired"
+        )
+
+        metadata = self._dump(pack, tmp_path)
+
+        assert "managedPaired" in metadata, (
+            "`managedPaired` must always be emitted while the flag is on, including when it is False - "
+            "consumers must be able to tell 'not paired' apart from 'field not supported'"
+        )
+        assert metadata["managedPaired"] is False, (
+            f"a natively managed pack (AWS/Azure/GCP style) has no twin, so `managedPaired` must be False, "
+            f"got {metadata['managedPaired']!r}"
+        )
+
+    def test_managed_paired_is_absent_when_flag_off(self, mocker, tmp_path):
+        """With the flag off (the production default) the key must not appear at all."""
+        mocker.patch(
+            "demisto_sdk.commands.content_graph.objects.pack.ENABLE_SPLIT_PACKS", False
+        )
+        pack = self._make_pack(managed=True, is_derived=True)
+        assert pack.is_managed_paired() is True, (
+            "test premise: this pack would be managedPaired=True, so its absence below is caused by the flag alone"
+        )
+
+        metadata = self._dump(pack, tmp_path)
+
+        assert "managedPaired" not in metadata, (
+            "while ENABLE_SPLIT_PACKS is off the `managedPaired` key must be absent entirely (not False), "
+            f"keeping the blast radius at zero; got {metadata.get('managedPaired')!r}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Per content item `managedPaired` key in the dumped metadata.json (CIAC-16414)
+# ---------------------------------------------------------------------------
+
+
+class TestManagedPairedContentItemMetadata:
+    """Tests for the per content item ``managedPaired`` key inside ``contentItems``.
+
+    Each entry states whether that individual item is tightly coupled, i.e. whether it
+    is one of the items paired into the pack's managed twin. It is emitted on every item
+    of every type (including when False) while ENABLE_SPLIT_PACKS is on, and is absent
+    entirely while the flag is off.
+
+    Like ``TestManagedPairedTopLevelMetadata`` these drive the real ``Pack.dump_metadata``
+    against a real ``Pack`` and read the written JSON back, because the value is injected
+    by the metadata writer and cannot be observed through a mocked pack.
+    """
+
+    INTEGRATION_ID = "MyIntegration"
+    PLAYBOOK_ID = "MyPlaybook"
+
+    @staticmethod
+    def _make_integration(object_id: str):
+        from demisto_sdk.commands.common.constants import MarketplaceVersions
+        from demisto_sdk.commands.content_graph.objects.integration import Integration
+
+        return Integration(
+            id=object_id,
+            content_type=ContentType.INTEGRATION,
+            node_id=f"{ContentType.INTEGRATION}:{object_id}",
+            path=Path(f"{object_id}.yml"),
+            fromversion="6.0.0",
+            toversion="99.99.99",
+            display_name=object_id,
+            name=object_id,
+            marketplaces=[MarketplaceVersions.XSOAR],
+            deprecated=False,
+            type="python3",
+            docker_image="demisto/python3:3.10.11.54799",
+            category="Utilities",
+            commands=[],
+        )
+
+    @staticmethod
+    def _make_playbook(object_id: str):
+        from demisto_sdk.commands.common.constants import MarketplaceVersions
+        from demisto_sdk.commands.content_graph.objects.playbook import Playbook
+
+        return Playbook(
+            id=object_id,
+            content_type=ContentType.PLAYBOOK,
+            node_id=f"{ContentType.PLAYBOOK}:{object_id}",
+            path=Path(f"{object_id}.yml"),
+            fromversion="6.0.0",
+            toversion="99.99.99",
+            display_name=object_id,
+            name=object_id,
+            marketplaces=[MarketplaceVersions.XSOAR],
+            deprecated=False,
+            is_test=False,
+        )
+
+    @classmethod
+    def _make_pack(
+        cls,
+        with_integration: bool = False,
+        with_playbook: bool = False,
+        coupling_overrides: Optional[Dict[str, str]] = None,
+    ):
+        """Builds a real ``Pack`` holding real content items, so ``contentItems`` is non-empty."""
+        from demisto_sdk.commands.common.constants import MarketplaceVersions
+        from demisto_sdk.commands.content_graph.objects.pack import Pack
+        from demisto_sdk.commands.content_graph.objects.pack_content_items import (
+            PackContentItems,
+        )
+
+        content_items = PackContentItems()
+        if with_integration:
+            content_items.integration.append(
+                cls._make_integration(cls.INTEGRATION_ID)
+            )
+        if with_playbook:
+            content_items.playbook.append(cls._make_playbook(cls.PLAYBOOK_ID))
+
+        return Pack(
+            object_id="TestPack",
+            content_type=ContentType.PACK,
+            node_id="Pack:TestPack",
+            path=Path("TestPack"),
+            name="TestPack",
+            display_name="TestPack",
+            marketplaces=[MarketplaceVersions.XSOAR],
+            current_version="1.0.0",
+            description="A pack used to exercise the per item managedPaired metadata key.",
+            created="2024-01-01T00:00:00Z",
+            support="xsoar",
+            author="Cortex XSOAR",
+            certification="certified",
+            hidden=False,
+            tags=[],
+            categories=[],
+            useCases=[],
+            keywords=[],
+            contentItems=content_items,
+            coupling_overrides=coupling_overrides,
+        )
+
+    @staticmethod
+    def _dump(pack, tmp_path: Path) -> dict:
+        from demisto_sdk.commands.common.constants import MarketplaceVersions
+
+        destination = tmp_path / "metadata.json"
+        pack.dump_metadata(destination, MarketplaceVersions.XSOAR)
+        return stdlib_json.loads(destination.read_text())
+
+    @staticmethod
+    def _enable_flag(mocker) -> None:
+        """Turns the flag on in the module that consumes it for the PER ITEM key.
+
+        The name is bound at import time in each consuming module, so patching
+        ``content_graph.common`` would have no effect. Only ``objects.pack_metadata``
+        is patched here: these assertions are about ``contentItems`` entries alone, and
+        deliberately leave the top level key (read from ``objects.pack``) off, which also
+        proves the two gates are independent.
+        """
+        mocker.patch(
+            "demisto_sdk.commands.content_graph.objects.pack_metadata.ENABLE_SPLIT_PACKS",
+            True,
+        )
+
+    @staticmethod
+    def _all_item_entries(metadata: dict) -> List[dict]:
+        """Flattens every per item entry across every content type in ``contentItems``."""
+        entries: List[dict] = []
+        for type_entries in (metadata.get("contentItems") or {}).values():
+            entries.extend(type_entries)
+        return entries
+
+    def test_tightly_coupled_item_is_marked_true(self, mocker, tmp_path):
+        """An integration is tightly coupled, so its entry must carry `managedPaired: True`."""
+        assert ContentType.INTEGRATION in TIGHTLY_COUPLED_TYPES, (
+            "test premise: an integration must be tightly coupled, otherwise this case asserts nothing"
+        )
+        self._enable_flag(mocker)
+        pack = self._make_pack(with_integration=True)
+
+        metadata = self._dump(pack, tmp_path)
+
+        integrations = metadata["contentItems"]["integration"]
+        assert len(integrations) == 1, (
+            f"test premise: the pack must contribute exactly one integration entry, got {integrations!r}"
+        )
+        entry = integrations[0]
+        assert "managedPaired" in entry, (
+            "with ENABLE_SPLIT_PACKS on, every content item entry must carry the `managedPaired` key; "
+            f"got keys {sorted(entry)}"
+        )
+        assert entry["managedPaired"] is True, (
+            f"an integration is tightly coupled, so it is paired into the managed twin and its entry "
+            f"must be True, got {entry['managedPaired']!r}"
+        )
+
+    def test_loosely_coupled_item_is_present_and_false(self, mocker, tmp_path):
+        """A playbook is loosely coupled: the key must be PRESENT and False, never omitted."""
+        assert ContentType.PLAYBOOK not in TIGHTLY_COUPLED_TYPES, (
+            "test premise: a playbook must be loosely coupled, otherwise this case asserts nothing"
+        )
+        self._enable_flag(mocker)
+        pack = self._make_pack(with_playbook=True)
+
+        metadata = self._dump(pack, tmp_path)
+
+        playbooks = metadata["contentItems"]["playbook"]
+        assert len(playbooks) == 1, (
+            f"test premise: the pack must contribute exactly one playbook entry, got {playbooks!r}"
+        )
+        entry = playbooks[0]
+        assert "managedPaired" in entry, (
+            "`managedPaired` must be emitted on EVERY item while the flag is on, including loosely "
+            f"coupled ones - consumers must tell 'not paired' apart from 'field not supported'; got keys {sorted(entry)}"
+        )
+        assert entry["managedPaired"] is False, (
+            f"a playbook is loosely coupled and stays with the marketplace half, so its entry must be "
+            f"False, got {entry['managedPaired']!r}"
+        )
+
+    def test_value_is_per_item_within_a_single_pack(self, mocker, tmp_path):
+        """Both item kinds in one pack: the value must differ per item, not be copied from the pack."""
+        self._enable_flag(mocker)
+        pack = self._make_pack(with_integration=True, with_playbook=True)
+
+        metadata = self._dump(pack, tmp_path)
+
+        integration_entry = metadata["contentItems"]["integration"][0]
+        playbook_entry = metadata["contentItems"]["playbook"][0]
+        assert integration_entry["managedPaired"] is True, (
+            f"the tightly coupled integration must be True in the same written file, "
+            f"got {integration_entry['managedPaired']!r}"
+        )
+        assert playbook_entry["managedPaired"] is False, (
+            f"the loosely coupled playbook must be False in the same written file, proving the value is "
+            f"resolved per item rather than copied from the pack, got {playbook_entry['managedPaired']!r}"
+        )
+
+    def test_key_is_absent_from_every_entry_when_flag_off(self, mocker, tmp_path):
+        """With the flag off (the production default) no item entry may carry the key."""
+        mocker.patch(
+            "demisto_sdk.commands.content_graph.objects.pack_metadata.ENABLE_SPLIT_PACKS",
+            False,
+        )
+        pack = self._make_pack(with_integration=True, with_playbook=True)
+
+        metadata = self._dump(pack, tmp_path)
+
+        entries = self._all_item_entries(metadata)
+        assert len(entries) == 2, (
+            f"test premise: both content items must reach the metadata, otherwise the absence below is "
+            f"vacuous; got {entries!r}"
+        )
+        offenders = [entry for entry in entries if "managedPaired" in entry]
+        assert not offenders, (
+            "while ENABLE_SPLIT_PACKS is off no content item entry may carry `managedPaired` at all "
+            f"(not even False), keeping the blast radius at zero; offending entries: {offenders!r}"
+        )
+
+    def test_coupling_override_reaches_the_per_item_key(self, mocker, tmp_path):
+        """`coupling_overrides` must win over the raw content type, per item."""
+        self._enable_flag(mocker)
+        pack = self._make_pack(
+            with_integration=True,
+            coupling_overrides={self.INTEGRATION_ID: "loosely_coupled"},
+        )
+
+        metadata = self._dump(pack, tmp_path)
+
+        entry = metadata["contentItems"]["integration"][0]
+        assert "managedPaired" in entry, (
+            f"the key must still be emitted for an overridden item; got keys {sorted(entry)}"
+        )
+        assert entry["managedPaired"] is False, (
+            f"the integration is overridden to loosely_coupled, so it stays with the marketplace half and "
+            f"its entry must be False rather than the content type default True, got {entry['managedPaired']!r}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# End to end: BOTH `managedPaired` levels in a single written metadata.json (CIAC-16414)
+# ---------------------------------------------------------------------------
+
+
+class TestManagedPairedEndToEnd:
+    """Drives both ``managedPaired`` gates together, into ONE written ``metadata.json``.
+
+    ``TestManagedPairedTopLevelMetadata`` and ``TestManagedPairedContentItemMetadata`` each patch
+    exactly ONE of the two independent module level ``ENABLE_SPLIT_PACKS`` names, so neither proves
+    that the top level key and the per item keys coexist correctly in the shipped artifact. This
+    class patches BOTH and asserts the two levels in the same file, which is what a consumer of the
+    bucket actually reads.
+
+    Construction is deliberately delegated to ``TestManagedPairedContentItemMetadata``'s existing
+    real-``Integration``/real-``Playbook`` builders rather than duplicated; only the ``Pack`` factory
+    is local, because the existing one does not take the ``managed``/``is_derived`` flags this class
+    needs. No ``MagicMock`` is used anywhere here - the real writer runs end to end.
+    """
+
+    INTEGRATION_ID = "MyIntegration"
+    PLAYBOOK_ID = "MyPlaybook"
+
+    @classmethod
+    def _make_pack(
+        cls,
+        with_integration: bool = False,
+        with_playbook: bool = False,
+        managed: bool = False,
+        is_derived: bool = False,
+        derived_from: Optional[str] = None,
+        coupling_overrides: Optional[Dict[str, str]] = None,
+    ):
+        """A real ``Pack`` holding real content items, with the split-pack flags exposed.
+
+        The content items come from ``TestManagedPairedContentItemMetadata``'s builders so the two
+        suites cannot drift apart in what "an integration" or "a playbook" means.
+        """
+        from demisto_sdk.commands.common.constants import MarketplaceVersions
+        from demisto_sdk.commands.content_graph.objects.pack import Pack
+        from demisto_sdk.commands.content_graph.objects.pack_content_items import (
+            PackContentItems,
+        )
+
+        content_items = PackContentItems()
+        if with_integration:
+            content_items.integration.append(
+                TestManagedPairedContentItemMetadata._make_integration(
+                    cls.INTEGRATION_ID
+                )
+            )
+        if with_playbook:
+            content_items.playbook.append(
+                TestManagedPairedContentItemMetadata._make_playbook(cls.PLAYBOOK_ID)
+            )
+
+        return Pack(
+            object_id="TestPack",
+            content_type=ContentType.PACK,
+            node_id="Pack:TestPack",
+            path=Path("TestPack"),
+            name="TestPack",
+            display_name="TestPack",
+            marketplaces=[MarketplaceVersions.XSOAR],
+            current_version="1.0.0",
+            description="A pack used to exercise both managedPaired levels at once.",
+            created="2024-01-01T00:00:00Z",
+            support="xsoar",
+            author="Cortex XSOAR",
+            certification="certified",
+            hidden=False,
+            tags=[],
+            categories=[],
+            useCases=[],
+            keywords=[],
+            contentItems=content_items,
+            managed=managed,
+            is_derived=is_derived,
+            derived_from=derived_from,
+            coupling_overrides=coupling_overrides,
+        )
+
+    @staticmethod
+    def _dump(pack, tmp_path: Path) -> dict:
+        """Reuses the existing real-writer dump helper - one file, read back as JSON."""
+        return TestManagedPairedContentItemMetadata._dump(pack, tmp_path)
+
+    @staticmethod
+    def _all_item_entries(metadata: dict) -> List[dict]:
+        """Reuses the existing flattener over every ``contentItems`` entry of every type."""
+        return TestManagedPairedContentItemMetadata._all_item_entries(metadata)
+
+    @staticmethod
+    def _set_both_flags(mocker, value: bool) -> None:
+        """Sets BOTH gates at once.
+
+        ``ENABLE_SPLIT_PACKS`` is bound at import time in each consuming module, so the top level key
+        (``objects.pack``) and the per item key (``objects.pack_metadata``) are gated by two separate
+        names. Patching ``content_graph.common`` would affect neither.
+        """
+        mocker.patch(
+            "demisto_sdk.commands.content_graph.objects.pack.ENABLE_SPLIT_PACKS", value
+        )
+        mocker.patch(
+            "demisto_sdk.commands.content_graph.objects.pack_metadata.ENABLE_SPLIT_PACKS",
+            value,
+        )
+
+    def test_source_pack_writes_true_top_level_with_mixed_item_values(
+        self, mocker, tmp_path
+    ):
+        """The marketplace half (the user's `Core` shape): pack True, integration True, playbook False."""
+        assert ContentType.INTEGRATION in TIGHTLY_COUPLED_TYPES, (
+            "test premise: an integration must be tightly coupled, otherwise this case asserts nothing"
+        )
+        assert ContentType.PLAYBOOK not in TIGHTLY_COUPLED_TYPES, (
+            "test premise: a playbook must be loosely coupled, otherwise this case asserts nothing"
+        )
+        self._set_both_flags(mocker, True)
+        pack = self._make_pack(with_integration=True, with_playbook=True)
+
+        metadata = self._dump(pack, tmp_path)
+
+        assert "managedPaired" in metadata, (
+            "with both gates on, the single written metadata.json must carry the top level "
+            f"`managedPaired` key; got top level keys {sorted(metadata)}"
+        )
+        assert metadata["managedPaired"] is True, (
+            f"an unmanaged pack holding a tightly coupled integration yields a managed twin, so the "
+            f"pack is the marketplace half of a pair and the top level key must be True, "
+            f"got {metadata['managedPaired']!r}"
+        )
+
+        integration_entry = metadata["contentItems"]["integration"][0]
+        playbook_entry = metadata["contentItems"]["playbook"][0]
+        assert "managedPaired" in integration_entry, (
+            f"the integration entry must carry `managedPaired` in the same written file; "
+            f"got keys {sorted(integration_entry)}"
+        )
+        assert integration_entry["managedPaired"] is True, (
+            f"the integration is tightly coupled, so it is one of the items paired into the twin, "
+            f"got {integration_entry['managedPaired']!r}"
+        )
+        assert "managedPaired" in playbook_entry, (
+            f"the playbook entry must carry `managedPaired` too - the key is always emitted while the "
+            f"gate is on, including when False; got keys {sorted(playbook_entry)}"
+        )
+        assert playbook_entry["managedPaired"] is False, (
+            f"the playbook is loosely coupled and stays with the marketplace half, so its entry must be "
+            f"False in the very same file where the pack level key is True, "
+            f"got {playbook_entry['managedPaired']!r}"
+        )
+
+    def test_derived_twin_writes_true_at_both_levels(self, mocker, tmp_path):
+        """The managed half (the user's `AttlasianManaged` shape): pack True and its integration True."""
+        self._set_both_flags(mocker, True)
+        pack = self._make_pack(
+            with_integration=True,
+            managed=True,
+            is_derived=True,
+            derived_from="Attlasian",
+        )
+
+        metadata = self._dump(pack, tmp_path)
+
+        assert "managedPaired" in metadata, (
+            f"a derived twin's metadata must carry the top level `managedPaired` key; "
+            f"got top level keys {sorted(metadata)}"
+        )
+        assert metadata["managedPaired"] is True, (
+            f"a derived twin IS the managed half of a source/twin pair, so the top level key must be "
+            f"True regardless of its contents, got {metadata['managedPaired']!r}"
+        )
+
+        integration_entry = metadata["contentItems"]["integration"][0]
+        assert "managedPaired" in integration_entry, (
+            f"the twin's integration entry must carry `managedPaired`; "
+            f"got keys {sorted(integration_entry)}"
+        )
+        assert integration_entry["managedPaired"] is True, (
+            f"the integration inside the twin is tightly coupled - it is exactly the kind of item that "
+            f"caused the twin to be generated, got {integration_entry['managedPaired']!r}"
+        )
+
+    def test_natively_managed_pack_diverges_between_the_two_levels(
+        self, mocker, tmp_path
+    ):
+        """AWS/Azure/GCP shape: pack False (no twin exists) while its integration is still True.
+
+        This is the ONLY case where the two levels legitimately disagree, and the disagreement is
+        intentional - see the assertion messages before "fixing" either value.
+        """
+        self._set_both_flags(mocker, True)
+        pack = self._make_pack(with_integration=True, managed=True, is_derived=False)
+
+        metadata = self._dump(pack, tmp_path)
+
+        assert "managedPaired" in metadata, (
+            "the top level key must be emitted even when False - consumers must be able to tell "
+            f"'not paired' apart from 'field not supported'; got top level keys {sorted(metadata)}"
+        )
+        assert metadata["managedPaired"] is False, (
+            f"DO NOT 'fix' this to True: the two levels answer different questions. The TOP LEVEL key "
+            f"asks 'does a source/twin pair exist for this pack?'. A natively managed pack "
+            f"(managed=True, is_derived=False - AWS/Azure/GCP style) is already managed at the source, "
+            f"so no twin is ever generated and no pair exists. Got {metadata['managedPaired']!r}"
+        )
+
+        integration_entry = metadata["contentItems"]["integration"][0]
+        assert "managedPaired" in integration_entry, (
+            f"the per item key must be emitted for the integration; "
+            f"got keys {sorted(integration_entry)}"
+        )
+        assert integration_entry["managedPaired"] is True, (
+            f"DO NOT 'fix' this to False to match the pack level. The PER ITEM key asks 'is this item "
+            f"tightly coupled?', which is a property of the item alone and stays True for an "
+            f"integration no matter who owns it. The pack level being False and this being True is the "
+            f"correct, intended divergence. Got {integration_entry['managedPaired']!r}"
+        )
+
+    def test_both_gates_off_writes_no_managed_paired_key_anywhere(
+        self, mocker, tmp_path
+    ):
+        """The production default: neither the top level key nor ANY item entry key may appear."""
+        self._set_both_flags(mocker, False)
+        pack = self._make_pack(
+            with_integration=True, with_playbook=True, managed=True, is_derived=True
+        )
+        assert pack.is_managed_paired() is True, (
+            "test premise: this pack would be managedPaired=True, so the absences below are caused by "
+            "the gates alone rather than by the pack's shape"
+        )
+
+        metadata = self._dump(pack, tmp_path)
+
+        assert "managedPaired" not in metadata, (
+            "with both gates off the top level `managedPaired` key must be absent entirely (not False); "
+            f"got {metadata.get('managedPaired')!r}"
+        )
+        entries = self._all_item_entries(metadata)
+        assert len(entries) == 2, (
+            f"test premise: both content items must reach the metadata, otherwise the absence check "
+            f"below is vacuous; got {entries!r}"
+        )
+        offenders = [entry for entry in entries if "managedPaired" in entry]
+        assert not offenders, (
+            "with both gates off no content item entry may carry `managedPaired` either - the check "
+            f"covers every entry, not just the first; offending entries: {offenders!r}"
+        )
+
+    def test_override_removing_the_only_tightly_coupled_item_turns_both_levels_false(
+        self, mocker, tmp_path
+    ):
+        """`coupling_overrides` propagates to both levels: the item flips False, and so does the pack.
+
+        The pack's only tightly coupled item is overridden away, so nothing is left to split into a
+        twin and the pack stops being half of a pair.
+        """
+        self._set_both_flags(mocker, True)
+        pack = self._make_pack(
+            with_integration=True,
+            coupling_overrides={self.INTEGRATION_ID: "loosely_coupled"},
+        )
+
+        metadata = self._dump(pack, tmp_path)
+
+        integration_entry = metadata["contentItems"]["integration"][0]
+        assert "managedPaired" in integration_entry, (
+            f"the key must still be emitted for an overridden item; "
+            f"got keys {sorted(integration_entry)}"
+        )
+        assert integration_entry["managedPaired"] is False, (
+            f"the integration is overridden to loosely_coupled, so the override must win over the "
+            f"content type default, got {integration_entry['managedPaired']!r}"
+        )
+        assert "managedPaired" in metadata, (
+            f"the top level key must still be emitted; got top level keys {sorted(metadata)}"
+        )
+        assert metadata["managedPaired"] is False, (
+            f"the override left the pack with zero tightly coupled items, so no twin would be "
+            f"generated and the pack is not half of a pair, got {metadata['managedPaired']!r}"
+        )

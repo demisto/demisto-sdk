@@ -1,0 +1,4 @@
+changes:
+- description: Fixed post-push verification of extended dev/test images failing with "manifest unknown" by detecting GAR images from registry-qualified names.
+  type: fix
+pr_number: '5496'

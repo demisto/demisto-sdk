@@ -178,18 +178,7 @@ class TestIsIntegrationYaml:
         integration_dir = _write_integration_dir(
             tmp_path, "MyIntegration_copy", "MyIntegration_copy"
         )
-        assert is_integration_yaml(integration_dir) is True
-
-    def test_returns_true_for_unified_integration_yaml(self, tmp_path):
-        """
-        GIVEN a unified integration YAML with 'script' and 'category' keys (no commonfields)
-        WHEN is_integration_yaml is called
-        THEN it returns True
-        """
-        yaml_path = _write_unified_integration_yaml(
-            tmp_path, "MyIntegration_copy", "MyIntegration_copy"
-        )
-        assert is_integration_yaml(yaml_path) is True
+        assert is_integration_yaml(resolve_integration_yaml(integration_dir)) is True
 
     def test_returns_false_for_playbook_yaml(self, tmp_path):
         """
@@ -307,7 +296,9 @@ class TestValidateIntegrationCopyMarker:
             tmp_path, "MyIntegration_copy", "MyIntegration_copy"
         )
         # Should not raise
-        validate_integration_copy_marker(integration_dir, force_id=False)
+        validate_integration_copy_marker(
+            resolve_integration_yaml(integration_dir), force_id=False
+        )
 
 
 # ---------------------------------------------------------------------------

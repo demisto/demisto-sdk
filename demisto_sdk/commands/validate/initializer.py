@@ -1039,7 +1039,10 @@ class Initializer:
                     path = self.obtain_playbook_path(path)
                     if path not in statuses_dict and path.suffix == ".yml":
                         statuses_dict[path] = None
-            elif MODELING_RULES_DIR in path_str or PARSING_RULES_DIR in path_str:
+            elif (
+                f"/{MODELING_RULES_DIR}/" in path_str
+                or f"/{PARSING_RULES_DIR}/" in path_str
+            ):
                 # If it's a modeling rule or a parsing rule obtain the yml.
                 if path.suffix in [".json", ".xif"]:
                     # If it ends with a .json or a .xif replace the ending to the corresponding yml.
@@ -1227,7 +1230,10 @@ class Initializer:
                     paths_set.add(path)
                 else:
                     paths_set.add(self.obtain_playbook_path(path))
-            elif MODELING_RULES_DIR in path_str or PARSING_RULES_DIR in path_str:
+            elif (
+                f"/{MODELING_RULES_DIR}/" in path_str
+                or f"/{PARSING_RULES_DIR}/" in path_str
+            ):
                 path = Path(
                     path_str.replace(".xif", ".yml").replace("_schema.json", ".yml")
                 )

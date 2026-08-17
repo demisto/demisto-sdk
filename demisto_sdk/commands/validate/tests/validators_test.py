@@ -917,6 +917,51 @@ def test_collect_related_files_main_items(repo):
     }
 
 
+@pytest.mark.parametrize(
+    "pack_name",
+    (
+        "AgentixAction_CortexGetUserDefinedParsingRules",
+        "AgentixAction_CortexGetUserDefinedModelingRules",
+    ),
+)
+@pytest.mark.parametrize(
+    "file_attributes",
+    (
+        ["readme"],
+        ["pack_ignore"],
+        ["secrets"],
+        ["author_image"],
+        ["readme", "pack_ignore", "secrets", "author_image"],
+    ),
+)
+def test_collect_related_files_main_items_pack_name_contains_rules_dir_substring(
+    repo, pack_name, file_attributes
+):
+    """
+    Given:
+    - A pack whose name contains "ParsingRules" or "ModelingRules" as a substring
+      (e.g. an AgentixAction pack such as
+      "AgentixAction_CortexGetUserDefinedParsingRules"), along with one or more of
+      its pack-level auxiliary files (README, .pack-ignore, .secrets-ignore,
+      Author_image.png).
+    When:
+    - Calling collect_related_files_main_items.
+    Then:
+    - The auxiliary files must resolve to the pack_metadata.json (via is_pack_item),
+      and must NOT be short-circuited into the ModelingRules/ParsingRules branch
+      just because the pack name contains the substring "ParsingRules" or
+      "ModelingRules".
+      Regression test for BA102 spam on packs whose names contain "ParsingRules"
+      or "ModelingRules".
+    """
+    pack = repo.create_pack(pack_name)
+    initializer = Initializer()
+    results = initializer.collect_related_files_main_items(
+        {Path(getattr(pack, attribute).path) for attribute in file_attributes}
+    )
+    assert results == {Path(pack.pack_metadata.path)}
+
+
 def test_get_items_status(repo):
     """
     Given:

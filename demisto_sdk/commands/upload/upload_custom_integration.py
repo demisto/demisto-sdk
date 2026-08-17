@@ -85,62 +85,15 @@ def is_integration_yaml(path: Path) -> bool:
 
     Returns ``False`` when the file cannot be read or parsed.
     """
-    target_path = resolve_integration_yaml(path)
-    if not target_path.is_file():
+    if not path.is_file():
         return False
     try:
-        data = get_yaml(target_path) or {}
+        data = get_yaml(path) or {}
         return _COMMONFIELDS_KEY in data
     except OSError:
         return False
     except Exception as exc:
-        raise typer.BadParameter(
-            f"YAML syntax error in '{target_path}': {exc}"
-        ) from exc
-
-
-def _read_id_and_name(path: Path) -> tuple[str, str]:
-    """Read ``commonfields.id`` (with top-level ``id`` fallback) and ``name``
-    from an integration YAML.
-
-    Args:
-        path: Path to the integration YAML file or its parent directory.
-
-    Returns:
-        A ``(integration_id, integration_name)`` tuple.
-
-    Raises:
-        typer.BadParameter: When the YAML cannot be parsed or the expected
-            fields are missing.
-    """
-    target_path = resolve_integration_yaml(path)
-    try:
-        data = get_yaml(target_path) or {}
-    except Exception as exc:
-        raise typer.BadParameter(
-            f"Could not parse YAML file '{target_path}': {exc}"
-        ) from exc
-
-    # Primary: commonfields.id (standard integration YAML structure).
-    commonfields = data.get(_COMMONFIELDS_KEY, {})
-    integration_id: str = ""
-    if isinstance(commonfields, dict):
-        integration_id = commonfields.get(_ID_KEY, "")
-
-    # Fallback: top-level id (unified / marketplace-specific YAMLs).
-    if not integration_id:
-        integration_id = data.get(_ID_KEY, "")
-
-    integration_name: str = data.get(_NAME_KEY, "")
-
-    if not integration_id:
-        raise typer.BadParameter(
-            f"'commonfields.id' (or top-level 'id') is missing or empty in '{target_path}'."
-        )
-    if not integration_name:
-        raise typer.BadParameter(f"'name' is missing or empty in '{target_path}'.")
-
-    return integration_id, integration_name
+        raise typer.BadParameter(f"YAML syntax error in '{path}': {exc}") from exc
 
 
 def validate_integration_copy_marker(
@@ -149,27 +102,47 @@ def validate_integration_copy_marker(
 ) -> None:
     """Validate that the integration YAML uses the ``_copy`` naming convention.
 
-    Reads ``commonfields.id`` (with top-level ``id`` fallback) and ``name``
-    from *integration_yaml_path* and checks that both values end with
-    :data:`COPY_MARKER` (``"_copy"``).
+    Reads ``commonfields.id`` and ``name`` from *integration_yaml_path* and
+    checks that both values end with :data:`COPY_MARKER` (``"_copy"``).
 
     Args:
-        integration_yaml_path: Path to the integration YAML file or its parent
-            directory.
-        force_id: When ``True``, skip the hard error and emit a high-visibility
-            warning instead, then allow the upload to proceed.
+        integration_yaml_path: Path to the resolved integration YAML file.
+        force_id: When ``True``, skip the hard error and emit a warning instead.
 
     Raises:
         typer.BadParameter: When either field is missing the ``_copy`` suffix
             **and** *force_id* is ``False``.
     """
-    integration_id, integration_name = _read_id_and_name(integration_yaml_path)
+    try:
+        data = get_yaml(integration_yaml_path) or {}
+    except Exception as exc:
+        raise typer.BadParameter(
+            f"Could not parse YAML file '{integration_yaml_path}': {exc}"
+        ) from exc
+
+    commonfields = data.get(_COMMONFIELDS_KEY, {})
+    integration_id: str = ""
+    if isinstance(commonfields, dict):
+        integration_id = commonfields.get(_ID_KEY, "")
+    # Fallback: top-level id (unified / marketplace-specific YAMLs).
+    if not integration_id:
+        integration_id = data.get(_ID_KEY, "")
+
+    integration_name: str = data.get(_NAME_KEY, "")
+
+    if not integration_id:
+        raise typer.BadParameter(
+            f"'commonfields.id' (or top-level 'id') is missing or empty in '{integration_yaml_path}'."
+        )
+    if not integration_name:
+        raise typer.BadParameter(
+            f"'name' is missing or empty in '{integration_yaml_path}'."
+        )
 
     id_ok = integration_id.endswith(COPY_MARKER)
     name_ok = integration_name.endswith(COPY_MARKER)
 
     if id_ok and name_ok:
-        # Happy path — nothing to do.
         return
 
     missing_fields = []
@@ -243,10 +216,8 @@ def upload_custom_integration_entity(
 
     input_path = Path(input)
 
-    # Resolve directory → YAML file transparently so that both
-    #   -i Integrations/MyIntegration_copy/
-    #   -i Integrations/MyIntegration_copy/MyIntegration_copy.yml
-    # work identically.
+    # Resolve directory → YAML file once; all subsequent calls receive the
+    # resolved file path directly so the file is not re-resolved internally.
     resolved_path = resolve_integration_yaml(input_path)
 
     if not is_integration_yaml(resolved_path):

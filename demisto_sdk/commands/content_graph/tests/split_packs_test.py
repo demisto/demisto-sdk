@@ -1558,18 +1558,18 @@ class TestDependencyQueriesExcludeTwinsAndManagedPacks:
         assert query.count("(") == query.count(")")
         assert ("r.mandatorily = true" in query) is mandatorily
 
-    def test_metadata_dependency_query_merges_instead_of_creating(self):
-        """``CREATE`` accumulated a duplicate edge every time the same metadata
-        dependency was submitted, because metadata edges are never cleared
-        before recalculation."""
+    def test_metadata_dependency_query_creates_rather_than_merges(self):
+        """``target_min_version`` is null whenever a dependency declares no
+        ``minVersion``, and neo4j rejects a null property inside a MERGE
+        pattern - so this query must keep using CREATE."""
         from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
             build_depends_on_relationships_query,
         )
 
         query = build_depends_on_relationships_query()
 
-        assert "MERGE (p1)-[r:DEPENDS_ON" in query
-        assert "CREATE (p1)-[r:DEPENDS_ON" not in query
+        assert "CREATE (p1)-[r:DEPENDS_ON" in query
+        assert "MERGE (p1)-[r:DEPENDS_ON" not in query
 
 
 class TestDerivedPackCarriesNoPackLevelDependencies:

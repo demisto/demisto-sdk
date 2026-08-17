@@ -204,11 +204,11 @@ WHERE NOT {are_in_the_same_split_pack_family("p1", "p2")}
 AND NOT {is_managed_or_derived("p1")}
 AND NOT {is_managed_or_derived("p2")}
 
-// Get or create the relationship, and mark as "from_metadata".
-// MERGE rather than CREATE: the same metadata edge may be submitted more than
-// once (e.g. when a pack is re-parsed), and duplicates would accumulate
-// because they are never cleared before recalculation.
-MERGE (p1)-[r:{RelationshipType.DEPENDS_ON}{{
+// Create the relationship, and mark as "from_metadata".
+// CREATE rather than MERGE: target_min_version is null whenever the dependency
+// declares no minVersion, and neo4j rejects a null property inside a MERGE
+// pattern.
+CREATE (p1)-[r:{RelationshipType.DEPENDS_ON}{{
     mandatorily: rel_data.mandatorily,
     target_min_version: rel_data.target_min_version,
     from_metadata: true,

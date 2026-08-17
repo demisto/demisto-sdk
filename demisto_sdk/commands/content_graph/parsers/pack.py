@@ -672,8 +672,24 @@ class DerivedPackParser:
         self.deprecated = original_parser.deprecated
         self.private_pack_path = original_parser.private_pack_path
 
-        # Inherit pack-level dependencies
-        self.relationships.update(original_parser.relationships)
+        # Inherit the original pack's relationships, except its pack-level
+        # DEPENDS_ON edges. A derived pack ships to the Managed Content bucket
+        # as a self-contained unit, so it declares no pack-level dependencies.
+        # Inheriting them verbatim would also be wrong on its own terms: those
+        # entries carry the *original* pack's object_id as their source, so the
+        # graph would re-create the original's dependencies a second time
+        # (build_depends_on_relationships_query MERGEs them, but
+        # remove_existing_depends_on_relationships only clears edges with
+        # from_metadata = false, so metadata edges are never recalculated).
+        self.relationships.update(
+            Relationships(
+                {
+                    relationship_type: entries
+                    for relationship_type, entries in original_parser.relationships.items()
+                    if relationship_type != RelationshipType.DEPENDS_ON
+                }
+            )
+        )
 
     @property
     def object_id(self) -> Optional[str]:

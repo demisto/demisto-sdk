@@ -38,6 +38,53 @@ AND
     """
 
 
+def pack_family_key(pack: str) -> str:
+    """Builds the "family key" of a pack node: the id of its split-pack family.
+
+    A derived (managed) pack and the pack it was derived from are two graph
+    representations of the same source directory, so they share a family key:
+    the derived pack's ``derived_from`` equals the original's ``object_id``.
+
+    Returns:
+        A cypher expression evaluating to the family key of ``pack``.
+    """
+    return f"coalesce({pack}.derived_from, {pack}.object_id)"
+
+
+def are_in_the_same_split_pack_family(pack_a: str, pack_b: str) -> str:
+    """Builds a predicate that is true when both packs belong to the same split-pack family.
+
+    Covers every twin combination in a single comparison: original vs. derived,
+    derived vs. original, and two derived packs sharing an origin. A pack is
+    never dependent on another representation of itself, so callers negate this
+    predicate to exclude such pairs from dependency calculations.
+
+    Args:
+        pack_a: The cypher variable of the first pack node.
+        pack_b: The cypher variable of the second pack node.
+
+    Returns:
+        A cypher predicate comparing the family keys of both packs.
+    """
+    return f"{pack_family_key(pack_a)} = {pack_family_key(pack_b)}"
+
+
+def is_managed_or_derived(pack: str) -> str:
+    """Builds a predicate that is true when a pack is managed or derived.
+
+    Managed and derived packs are shipped to the Managed Content bucket as
+    self-contained units: everything they need travels with them as content
+    items, so they must never carry pack-level dependencies in either direction.
+
+    Args:
+        pack: The cypher variable of the pack node.
+
+    Returns:
+        A cypher predicate that is true for managed and derived packs.
+    """
+    return f"(coalesce({pack}.managed, false) OR coalesce({pack}.is_derived, false))"
+
+
 def node_map(properties: Dict[str, Any]) -> str:
     """Returns a string representation of a map in neo4j format."""
     return f'{{{", ".join([f"{k}: {v}" for k, v in properties.items()])}}}'

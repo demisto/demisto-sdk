@@ -1398,3 +1398,239 @@ class TestFeatureFlag:
         with patch.dict(os.environ, {"ENABLE_SPLIT_PACKS": "true"}):
             result = os.getenv("ENABLE_SPLIT_PACKS", "false").lower() == "true"
             assert result is True
+
+
+# ---------------------------------------------------------------------------
+# Split-pack dependency isolation tests
+# ---------------------------------------------------------------------------
+
+
+class TestSplitPackFamilyPredicates:
+    """Tests for the cypher predicates that isolate split-pack families.
+
+    A derived pack and the pack it was derived from are two graph
+    representations of the same source directory. They share their tightly
+    coupled content items via a second IN_PACK edge, which would otherwise make
+    the dependency calculation infer a DEPENDS_ON between them in one or both
+    directions. These predicates are what prevent that.
+    """
+
+    def test_family_key_of_a_regular_pack_is_its_own_id(self):
+        """A pack with no ``derived_from`` is the sole member of its family."""
+        from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
+            pack_family_key,
+        )
+
+        assert pack_family_key("pack_a") == "coalesce(pack_a.derived_from, pack_a.object_id)"
+
+    def test_family_predicate_compares_both_family_keys(self):
+        """Comparing family keys covers every twin direction in one predicate:
+        original vs. derived, derived vs. original, and two derived packs that
+        share an origin."""
+        from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
+            are_in_the_same_split_pack_family,
+        )
+
+        assert are_in_the_same_split_pack_family("pack_a", "pack_b") == (
+            "coalesce(pack_a.derived_from, pack_a.object_id) "
+            "= coalesce(pack_b.derived_from, pack_b.object_id)"
+        )
+
+    def test_managed_or_derived_predicate_defaults_missing_flags_to_false(self):
+        """Regular packs predate these flags and may not carry them at all, so
+        both must default to false rather than null - a null would make the
+        enclosing ``NOT`` filter out legitimate dependencies."""
+        from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
+            is_managed_or_derived,
+        )
+
+        assert is_managed_or_derived("pack_a") == (
+            "(coalesce(pack_a.managed, false) OR coalesce(pack_a.is_derived, false))"
+        )
+
+
+class TestDependencyQueriesExcludeTwinsAndManagedPacks:
+    """Tests that every query producing DEPENDS_ON applies the isolation guards.
+
+    There are three independent paths that can create a pack-level dependency,
+    and a guard on only one of them still lets twin edges through. These tests
+    pin all three.
+    """
+
+    def test_direct_dependency_query_guards_twins_and_managed_packs(self):
+        """``create_depends_on_relationships`` derives DEPENDS_ON from USES
+        edges between items in different packs - the path that produces twin
+        edges, because a tightly coupled item is IN_PACK for both twins."""
+        from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
+            create_depends_on_relationships,
+        )
+
+        transaction = MagicMock()
+        with patch(
+            "demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies.run_query",
+            return_value=[],
+        ) as mock_run_query:
+            create_depends_on_relationships(transaction)
+
+        query = mock_run_query.call_args[0][1]
+        assert (
+            "NOT coalesce(pack_a.derived_from, pack_a.object_id) "
+            "= coalesce(pack_b.derived_from, pack_b.object_id)" in query
+        )
+        assert "NOT (coalesce(pack_a.managed, false) OR coalesce(pack_a.is_derived, false))" in query
+        assert "NOT (coalesce(pack_b.managed, false) OR coalesce(pack_b.is_derived, false))" in query
+
+    def test_all_level_dependency_query_guards_twins_and_managed_packs(self):
+        """The all-level query walks paths of up to MAX_DEPTH hops. Guarding
+        only the direct edge is not enough: an indirect route such as
+        ``pack -> CommonScripts -> packManaged`` would still surface the twin
+        as an all-level dependency."""
+        from demisto_sdk.commands.common.constants import MarketplaceVersions
+        from demisto_sdk.commands.content_graph.common import RelationshipType
+        from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
+            get_all_level_packs_relationships,
+        )
+
+        transaction = MagicMock()
+        with patch(
+            "demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies.run_query",
+            return_value=[],
+        ) as mock_run_query:
+            get_all_level_packs_relationships(
+                transaction,
+                RelationshipType.DEPENDS_ON,
+                ["some-node-id"],
+                MarketplaceVersions.XSOAR,
+            )
+
+        query = mock_run_query.call_args[0][1]
+        assert (
+            "NOT coalesce(p1.derived_from, p1.object_id) "
+            "= coalesce(p2.derived_from, p2.object_id)" in query
+        )
+        assert "NOT (coalesce(p1.managed, false) OR coalesce(p1.is_derived, false))" in query
+        assert "NOT (coalesce(p2.managed, false) OR coalesce(p2.is_derived, false))" in query
+
+    def test_metadata_dependency_query_guards_twins_and_managed_packs(self):
+        """Metadata-declared dependencies bypass the calculation entirely, and
+        ``remove_existing_depends_on_relationships`` only clears edges with
+        ``from_metadata = false`` - so an unguarded twin edge here would never
+        be recalculated away."""
+        from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
+            build_depends_on_relationships_query,
+        )
+
+        query = build_depends_on_relationships_query()
+
+        assert (
+            "NOT coalesce(p1.derived_from, p1.object_id) "
+            "= coalesce(p2.derived_from, p2.object_id)" in query
+        )
+        assert "NOT (coalesce(p1.managed, false) OR coalesce(p1.is_derived, false))" in query
+        assert "NOT (coalesce(p2.managed, false) OR coalesce(p2.is_derived, false))" in query
+
+    @pytest.mark.parametrize("mandatorily", [False, True])
+    def test_all_level_dependency_query_is_balanced_for_both_mandatorily_modes(
+        self, mandatorily: bool
+    ):
+        """The ``mandatorily`` branch used to close the ``all(`` predicate only
+        when it was enabled, producing unbalanced cypher in the default mode."""
+        from demisto_sdk.commands.common.constants import MarketplaceVersions
+        from demisto_sdk.commands.content_graph.common import RelationshipType
+        from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
+            get_all_level_packs_relationships,
+        )
+
+        transaction = MagicMock()
+        with patch(
+            "demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies.run_query",
+            return_value=[],
+        ) as mock_run_query:
+            get_all_level_packs_relationships(
+                transaction,
+                RelationshipType.DEPENDS_ON,
+                ["some-node-id"],
+                MarketplaceVersions.XSOAR,
+                mandatorily,
+            )
+
+        query = mock_run_query.call_args[0][1]
+        assert query.count("(") == query.count(")")
+        assert ("r.mandatorily = true" in query) is mandatorily
+
+    def test_metadata_dependency_query_merges_instead_of_creating(self):
+        """``CREATE`` accumulated a duplicate edge every time the same metadata
+        dependency was submitted, because metadata edges are never cleared
+        before recalculation."""
+        from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
+            build_depends_on_relationships_query,
+        )
+
+        query = build_depends_on_relationships_query()
+
+        assert "MERGE (p1)-[r:DEPENDS_ON" in query
+        assert "CREATE (p1)-[r:DEPENDS_ON" not in query
+
+
+class TestDerivedPackCarriesNoPackLevelDependencies:
+    """Tests that a derived pack inherits content, but never dependencies."""
+
+    def _make_original_parser_with_dependencies(self) -> MagicMock:
+        from demisto_sdk.commands.content_graph.common import RelationshipType
+
+        original = TestDerivedPackParser()._make_mock_original_parser()
+        relationships = Relationships()
+        relationships.add(
+            RelationshipType.DEPENDS_ON,
+            source="TestPack",
+            target="Base",
+            mandatorily=True,
+        )
+        relationships.add(
+            RelationshipType.IN_PACK,
+            source_id="TestIntegration",
+            source_type=ContentType.INTEGRATION,
+            target="TestPack",
+        )
+        original.relationships = relationships
+        return original
+
+    def test_derived_pack_does_not_inherit_depends_on(self):
+        """A derived pack ships to Managed Content as a self-contained unit, so
+        it declares no pack-level dependencies."""
+        from demisto_sdk.commands.content_graph.common import RelationshipType
+        from demisto_sdk.commands.content_graph.parsers.pack import DerivedPackParser
+
+        derived = DerivedPackParser(
+            original_parser=self._make_original_parser_with_dependencies(),
+            derived_id="TestPackManaged",
+        )
+
+        assert derived.relationships.get(RelationshipType.DEPENDS_ON, []) == []
+
+    def test_derived_pack_still_inherits_other_relationships(self):
+        """Only DEPENDS_ON is dropped - the content graph still needs the rest,
+        which is what makes the shared items resolvable from the derived pack."""
+        from demisto_sdk.commands.content_graph.common import RelationshipType
+        from demisto_sdk.commands.content_graph.parsers.pack import DerivedPackParser
+
+        derived = DerivedPackParser(
+            original_parser=self._make_original_parser_with_dependencies(),
+            derived_id="TestPackManaged",
+        )
+
+        assert len(derived.relationships.get(RelationshipType.IN_PACK, [])) == 1
+
+    def test_original_pack_dependencies_are_left_untouched(self):
+        """Building the derived pack must not mutate the original's
+        relationships: regular packs keep the dependencies they always had."""
+        from demisto_sdk.commands.content_graph.common import RelationshipType
+        from demisto_sdk.commands.content_graph.parsers.pack import DerivedPackParser
+
+        original = self._make_original_parser_with_dependencies()
+        DerivedPackParser(original_parser=original, derived_id="TestPackManaged")
+
+        depends_on = original.relationships.get(RelationshipType.DEPENDS_ON, [])
+        assert len(depends_on) == 1
+        assert depends_on[0]["source"] == "TestPack"
+        assert depends_on[0]["target"] == "Base"

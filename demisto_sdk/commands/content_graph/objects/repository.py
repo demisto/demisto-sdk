@@ -23,7 +23,7 @@ from demisto_sdk.commands.content_graph.parsers.repository import RepositoryPars
 
 json = JSON_Handler()
 
-USE_MULTIPROCESSING = False  # toggle this for better debugging
+USE_MULTIPROCESSING = True  # toggle this for better debugging
 
 
 @lru_cache

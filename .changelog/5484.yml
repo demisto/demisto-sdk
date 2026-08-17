@@ -1,0 +1,10 @@
+changes:
+- description: Fixed an issue where a derived (managed) pack and the pack it was derived from were calculated as depending on each other. Their shared tightly coupled content items belong to both packs, which made the dependency calculation infer a **DEPENDS_ON** relationship between the two, sometimes in both directions. All three queries that produce pack dependencies now exclude packs belonging to the same split-pack family.
+  type: fix
+- description: Fixed an issue where managed and derived packs were assigned pack-level dependencies. Such packs ship to the Managed Content bucket as self-contained units, so they now carry no **DEPENDS_ON** relationship in either direction, and a derived pack no longer inherits the dependencies declared in the originating pack's metadata.
+  type: fix
+- description: Fixed an issue where dependencies declared in a pack's metadata were created rather than merged, accumulating duplicate relationships because metadata dependencies are not cleared before recalculation.
+  type: fix
+- description: Fixed an issue where the all-level pack dependencies query produced invalid cypher when mandatory-only filtering was disabled.
+  type: fix
+pr_number: '5484'

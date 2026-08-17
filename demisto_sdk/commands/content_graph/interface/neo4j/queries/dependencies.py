@@ -17,6 +17,8 @@ from demisto_sdk.commands.content_graph.common import (
     RelationshipType,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
+    are_in_the_same_split_pack_family,
+    is_managed_or_derived,
     is_target_available,
     run_query,
     to_neo4j_map,
@@ -39,12 +41,21 @@ def get_all_level_packs_relationships(
     params_str = to_neo4j_map(properties)
 
     if relationship_type == RelationshipType.DEPENDS_ON:
+        # Split-pack isolation, applied here in addition to
+        # create_depends_on_relationships: that query only guards the *direct*
+        # edge, while this one walks paths of up to MAX_DEPTH hops. Without the
+        # guard below an indirect route (pack -> CommonScripts -> packManaged)
+        # would still surface a twin, or any managed/derived pack, as an
+        # all-level dependency.
         query = f"""
             UNWIND $ids_list AS node_id
             MATCH path = shortestPath((p1:{ContentType.PACK}{params_str})-[r:{relationship_type}*..{MAX_DEPTH}]->(p2:{ContentType.PACK}))
             WHERE elementId(p1) = node_id AND elementId(p1) <> elementId(p2)
+            AND NOT {are_in_the_same_split_pack_family("p1", "p2")}
+            AND NOT {is_managed_or_derived("p1")}
+            AND NOT {is_managed_or_derived("p2")}
             AND all(n IN nodes(path) WHERE "{marketplace}" IN n.marketplaces)
-            AND all(r IN relationships(path) WHERE NOT r.is_test {"AND r.mandatorily = true)" if mandatorily else ""}
+            AND all(r IN relationships(path) WHERE NOT r.is_test{" AND r.mandatorily = true" if mandatorily else ""})
             RETURN node_id, collect(r) as relationships, collect(p2) AS nodes_to
         """
     if relationship_type == RelationshipType.IMPORTS:
@@ -145,8 +156,14 @@ MATCH (pack_a:{ContentType.BASE_NODE})<-[:{RelationshipType.IN_PACK}]-(a)
     -[r:{RelationshipType.USES}]->(b)-[:{RelationshipType.IN_PACK}]->(pack_b:{ContentType.BASE_NODE})
 WHERE ANY(marketplace IN pack_a.marketplaces WHERE marketplace IN pack_b.marketplaces)
 AND elementId(pack_a) <> elementId(pack_b)
-AND coalesce(pack_b.derived_from, '') <> pack_a.object_id
-AND coalesce(pack_a.derived_from, '') <> pack_b.object_id
+// A pack and its derived twin are two representations of the same source
+// directory and must never depend on each other, in either direction.
+AND NOT {are_in_the_same_split_pack_family("pack_a", "pack_b")}
+// Managed and derived packs ship as self-contained units to the Managed
+// Content bucket: everything they need travels with them as content items,
+// so they carry no pack-level dependencies in either direction.
+AND NOT {is_managed_or_derived("pack_a")}
+AND NOT {is_managed_or_derived("pack_b")}
 AND NOT pack_b.object_id IN pack_a.excluded_dependencies
 AND NOT pack_a.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
 AND NOT pack_b.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}

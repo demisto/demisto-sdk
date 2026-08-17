@@ -179,6 +179,9 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN170_is_param_suppo
 from demisto_sdk.commands.validate.validators.IN_validators.IN171_is_param_supported_modules_not_empty import (
     IsParamSupportedModulesNotEmptyValidator,
 )
+from demisto_sdk.commands.validate.validators.IN_validators.IN172_is_category_field_exist import (
+    IsCategoryFieldExistValidator,
+)
 from TestSuite.repo import ChangeCWD
 
 MARKETPLACE_VALUES = [mp.value for mp in MarketplaceVersions]
@@ -7254,3 +7257,28 @@ def test_IsParamSupportedModulesNotEmptyValidator_invalid_one_of_multiple_params
         assert len(results) == 1
         assert "param_empty_modules" in results[0].message
         assert results[0].validator.error_code == "IN171"
+
+
+# ===================== IN172 Tests =====================
+
+
+def test_IsCategoryFieldExistValidator_valid():
+    """
+    Given:
+        - An integration with a category field.
+    When:
+        - Running the IsCategoryFieldExistValidator.
+    Then:
+        - The validation should pass (a category field exists).
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                paths=["category"],
+                values=["Utilities"],
+            ),
+        ]
+        results = IsCategoryFieldExistValidator().obtain_invalid_content_items(
+            content_items
+        )
+        assert len(results) == 0

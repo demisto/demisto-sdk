@@ -2503,3 +2503,227 @@ class TestManagedPairedEndToEnd:
             f"the override left the pack with zero tightly coupled items, so no twin would be "
             f"generated and the pack is not half of a pair, got {metadata['managedPaired']!r}"
         )
+
+
+class TestSplitPackDependencySweep:
+    """Tests for the final sweep that severs dependencies of managed packs.
+
+    Guarding each writing query individually is not airtight: a DEPENDS_ON edge
+    can also reach the graph through relationship preservation across a rebuild,
+    which never consults those guards. The sweep runs unconditionally at the end
+    of the dependency phase, so the invariant holds no matter how an edge got in.
+    """
+
+    def test_sweep_deletes_edges_on_either_side_and_between_twins(self):
+        """One deletion covers all three illegitimate shapes: a managed source,
+        a managed target, and two packs of the same split family."""
+        from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
+            remove_split_pack_dependencies,
+        )
+
+        with patch(
+            "demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies.run_query",
+            return_value=[],
+        ) as mock_run_query:
+            remove_split_pack_dependencies(MagicMock())
+
+        query = mock_run_query.call_args[0][1]
+        assert (
+            "(coalesce(pack_a.managed, false) OR coalesce(pack_a.is_derived, false))"
+            in query
+        )
+        assert (
+            "(coalesce(pack_b.managed, false) OR coalesce(pack_b.is_derived, false))"
+            in query
+        )
+        assert (
+            "coalesce(pack_a.derived_from, pack_a.object_id) "
+            "= coalesce(pack_b.derived_from, pack_b.object_id)" in query
+        )
+        assert "DELETE r" in query, f"the sweep must delete, got: {query}"
+
+    def test_sweep_matches_packs_in_both_directions(self):
+        """A managed pack must neither depend on another pack nor be depended
+        upon, so the pattern is directional but the predicates cover both ends."""
+        from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
+            remove_split_pack_dependencies,
+        )
+
+        with patch(
+            "demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies.run_query",
+            return_value=[],
+        ) as mock_run_query:
+            remove_split_pack_dependencies(MagicMock())
+
+        query = mock_run_query.call_args[0][1]
+        assert (
+            "(pack_a:Pack)-[r:DEPENDS_ON]->(pack_b:Pack)" in query
+        ), f"the sweep must be restricted to pack-to-pack edges, got: {query}"
+
+    def test_sweep_returns_the_severed_pairs(self):
+        """The caller prunes the mapping using these pairs, so they must be
+        reported back rather than silently dropped."""
+        from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
+            remove_split_pack_dependencies,
+        )
+
+        with patch(
+            "demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies.run_query",
+            return_value=[
+                {"source": "HelloWorldManaged", "target": "Base"},
+                {"source": "HelloWorld", "target": "HelloWorldManaged"},
+            ],
+        ):
+            severed = remove_split_pack_dependencies(MagicMock())
+
+        assert severed == {
+            ("HelloWorldManaged", "Base"),
+            ("HelloWorld", "HelloWorldManaged"),
+        }
+
+    def test_pruning_drops_severed_pairs_and_keeps_the_rest(self):
+        """``depends_on.json`` must describe the graph after the sweep, so a
+        severed pair cannot survive in the mapping - but unrelated dependencies
+        of the same source pack must be preserved."""
+        from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
+            prune_severed_dependencies,
+        )
+
+        depends_on_data = {
+            "HelloWorld": {
+                "HelloWorldManaged": [{"source": "a", "target": "b"}],
+                "CommonScripts": [{"source": "c", "target": "d"}],
+            },
+        }
+
+        pruned = prune_severed_dependencies(
+            depends_on_data, {("HelloWorld", "HelloWorldManaged")}
+        )
+
+        assert pruned == {
+            "HelloWorld": {"CommonScripts": [{"source": "c", "target": "d"}]}
+        }
+
+    def test_pruning_removes_a_source_left_with_no_targets(self):
+        """A source whose every dependency was severed must disappear entirely,
+        rather than linger as an empty mapping."""
+        from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
+            prune_severed_dependencies,
+        )
+
+        pruned = prune_severed_dependencies(
+            {"HelloWorldManaged": {"Base": [{"source": "a", "target": "b"}]}},
+            {("HelloWorldManaged", "Base")},
+        )
+
+        assert pruned == {}
+
+    def test_pruning_is_a_no_op_when_nothing_was_severed(self):
+        """The common case - a repo with no split packs - must leave the
+        existing mapping untouched."""
+        from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
+            prune_severed_dependencies,
+        )
+
+        depends_on_data = {"HelloWorld": {"Base": [{"source": "a", "target": "b"}]}}
+
+        assert prune_severed_dependencies(depends_on_data, set()) is depends_on_data
+
+    def test_regular_pack_dependencies_are_never_pruned(self):
+        """The whole point of the change is that only managed/derived packs are
+        affected; ordinary pack-to-pack dependencies must keep working."""
+        from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
+            prune_severed_dependencies,
+        )
+
+        depends_on_data = {
+            "HelloWorld": {"Base": [{"source": "a", "target": "b"}]},
+            "Phishing": {"CommonScripts": [{"source": "c", "target": "d"}]},
+        }
+
+        pruned = prune_severed_dependencies(
+            depends_on_data, {("HelloWorldManaged", "Base")}
+        )
+
+        assert pruned == depends_on_data
+
+    def test_dependency_phase_sweeps_after_creating_dependencies(self):
+        """Order matters: sweeping before creation would let the creation query
+        reintroduce an edge. The sweep has to be the last step."""
+        from demisto_sdk.commands.content_graph.interface.neo4j.queries import (
+            dependencies as dependencies_module,
+        )
+
+        call_order = []
+
+        with (
+            patch.object(
+                dependencies_module,
+                "remove_existing_depends_on_relationships",
+                side_effect=lambda tx: call_order.append("remove_existing"),
+            ),
+            patch.object(
+                dependencies_module,
+                "update_uses_for_integration_commands",
+                side_effect=lambda tx: call_order.append("update_uses"),
+            ),
+            patch.object(
+                dependencies_module,
+                "delete_deprecatedcontent_relationship",
+                side_effect=lambda tx: call_order.append("delete_deprecated"),
+            ),
+            patch.object(
+                dependencies_module,
+                "create_depends_on_relationships",
+                side_effect=lambda tx: (call_order.append("create"), {})[1],
+            ),
+            patch.object(
+                dependencies_module,
+                "remove_split_pack_dependencies",
+                side_effect=lambda tx: (call_order.append("sweep"), set())[1],
+            ),
+            patch.object(dependencies_module, "write_depends_on_artifact"),
+        ):
+            dependencies_module.create_pack_dependencies(MagicMock())
+
+        assert call_order.index("sweep") > call_order.index(
+            "create"
+        ), f"the sweep must run after dependency creation, got order {call_order}"
+
+    def test_artifact_is_written_after_pruning(self):
+        """``depends_on.json`` is consumed downstream, so it must be serialized
+        from the pruned mapping rather than the pre-sweep one."""
+        from demisto_sdk.commands.content_graph.interface.neo4j.queries import (
+            dependencies as dependencies_module,
+        )
+
+        with (
+            patch.object(
+                dependencies_module, "remove_existing_depends_on_relationships"
+            ),
+            patch.object(dependencies_module, "update_uses_for_integration_commands"),
+            patch.object(dependencies_module, "delete_deprecatedcontent_relationship"),
+            patch.object(
+                dependencies_module,
+                "create_depends_on_relationships",
+                return_value={
+                    "HelloWorld": {
+                        "HelloWorldManaged": [{"source": "a", "target": "b"}],
+                        "Base": [{"source": "c", "target": "d"}],
+                    }
+                },
+            ),
+            patch.object(
+                dependencies_module,
+                "remove_split_pack_dependencies",
+                return_value={("HelloWorld", "HelloWorldManaged")},
+            ),
+            patch.object(
+                dependencies_module, "write_depends_on_artifact"
+            ) as mock_write,
+        ):
+            result = dependencies_module.create_pack_dependencies(MagicMock())
+
+        expected = {"HelloWorld": {"Base": [{"source": "c", "target": "d"}]}}
+        assert result == expected
+        mock_write.assert_called_once_with(expected)

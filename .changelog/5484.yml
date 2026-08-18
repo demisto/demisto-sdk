@@ -9,4 +9,6 @@ changes:
   type: fix
 - description: Fixed an issue where a **DEPENDS_ON** relationship involving a managed or derived pack was never removed when it originated from pack metadata. Only calculated relationships were cleared before recalculation, so in a graph that is reused between builds such a relationship remained indefinitely.
   type: fix
+- description: Fixed an issue where a **DEPENDS_ON** relationship involving a managed or derived pack could still reach the graph through a path that did not consult the dependency queries. Pack dependencies are now swept once after they are calculated, so no managed or derived pack depends on another pack, and no pack depends on one, regardless of how the relationship was created.
+  type: fix
 pr_number: '5484'

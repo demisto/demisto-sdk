@@ -143,6 +143,10 @@ from demisto_sdk.commands.validate.validators.CO_validators.CO190_no_reserved_pa
 from demisto_sdk.commands.validate.validators.CO_validators.CO194_is_sub_capability_title_derived import (
     IsSubCapabilityTitleDerivedValidator,
 )
+from demisto_sdk.commands.validate.validators.CO_validators.CO200_is_matching_integration_exist import (
+    IsMatchingIntegrationExistValidator,
+)
+
 
 VALID_CONNECTION_DESCRIPTION = (
     "Enter the credentials to securely authorize the connection"
@@ -14013,3 +14017,100 @@ class TestCO183NoGroupedFlagFlipped:
         assert len(results) == 1
         assert results[0].path is not None
         assert results[0].path == connector.path
+class TestIsMatchingIntegrationExistValidator:
+    """Tests for CO200 IsMatchingIntegrationExistValidator."""
+
+    def _connector_with_handlers(self, handlers):
+        """Build a Connector-shaped SimpleNamespace with the given handlers."""
+        return SimpleNamespace(
+            object_id="TestConnector",
+            xsoar_handlers=handlers,
+        )
+
+    def test_no_problems_returns_empty(self):
+        """A connector whose handlers all match should produce no results."""
+        integration = SimpleNamespace(object_id="TestIntegration")
+        handler = SimpleNamespace(
+            id="h1",
+            xsoar_integration_id="TestIntegration",
+            related_integration=integration,
+        )
+        connector = self._connector_with_handlers([handler])
+
+        results = IsMatchingIntegrationExistValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert results == []
+
+    def test_missing_label_is_flagged(self):
+        """A handler with no xsoar-integration-id label is a case-1 failure."""
+        handler = SimpleNamespace(
+            id="h1",
+            xsoar_integration_id=None,
+            related_integration=None,
+        )
+        connector = self._connector_with_handlers([handler])
+
+        results = IsMatchingIntegrationExistValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+        assert "missing xsoar-integration-id" in results[0].message
+
+    def test_unresolved_integration_is_flagged(self):
+        """Label present but integration not found is a case-2 failure."""
+        handler = SimpleNamespace(
+            id="h1",
+            xsoar_integration_id="MissingIntegration",
+            related_integration=None,
+        )
+        connector = self._connector_with_handlers([handler])
+
+        results = IsMatchingIntegrationExistValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+        assert "MissingIntegration" in results[0].message
+        assert "not found" in results[0].message
+
+    def test_mismatched_id_is_flagged(self):
+        """Label resolved to an integration but label != YML id is case-3."""
+        integration = SimpleNamespace(object_id="TestIntegration")
+        handler = SimpleNamespace(
+            id="h1",
+            xsoar_integration_id="testintegration",  # wrong case
+            related_integration=integration,
+        )
+        connector = self._connector_with_handlers([handler])
+
+        results = IsMatchingIntegrationExistValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+        assert "match verbatim" in results[0].message
+
+    def test_multiple_handler_problems_aggregated_in_one_result(self):
+        """Multiple bad handlers on one connector emit a single ValidationResult."""
+        bad_missing_label = SimpleNamespace(
+            id="h1", xsoar_integration_id=None, related_integration=None
+        )
+        bad_unresolved = SimpleNamespace(
+            id="h2",
+            xsoar_integration_id="Missing",
+            related_integration=None,
+        )
+        connector = self._connector_with_handlers(
+            [bad_missing_label, bad_unresolved]
+        )
+
+        results = IsMatchingIntegrationExistValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+        assert "h1" in results[0].message
+        assert "h2" in results[0].message

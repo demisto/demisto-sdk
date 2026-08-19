@@ -232,6 +232,11 @@ class ContentDTO(BaseModel):
                 Required whenever ``artifacts_dir`` is supplied and at least
                 one pack is managed.
 
+        Each emitted pack entry carries ``current_version`` — the pack's
+        version as recorded on the graph (``pack_metadata.json``'s
+        ``currentVersion``). An empty value is normalized to ``None`` so
+        consumers can decide what to upload without opening the artifact.
+
         Raises:
             ValueError: If ``artifacts_dir`` is supplied, a pack is managed and
                 ``managed_artifacts_dir`` is ``None``. Managed packs are never
@@ -250,9 +255,18 @@ class ContentDTO(BaseModel):
                 if isinstance(graph_managed_pack_id, str) and graph_managed_pack_id
                 else managed_pack_ids.get(pack.object_id) or None
             )
+            # The pack version is surfaced as-is from the graph, with the same
+            # empty-value normalization applied to ``managed_pack_id`` above.
+            graph_current_version = getattr(pack, "current_version", None)
+            current_version: Optional[str] = (
+                graph_current_version
+                if isinstance(graph_current_version, str) and graph_current_version
+                else None
+            )
             entry: Dict[str, Any] = {
                 "pack_id": pack.object_id,
                 "pack_name": pack.name,
+                "current_version": current_version,
                 "destination": pack.destination.value.upper(),
                 "source_path": str(pack.path),
                 "is_derived": getattr(pack, "is_derived", False),

@@ -11,4 +11,6 @@ changes:
   type: fix
 - description: Fixed an issue where a **DEPENDS_ON** relationship involving a managed or derived pack could still reach the graph through a path that did not consult the dependency queries. Pack dependencies are now swept once after they are calculated, so no managed or derived pack depends on another pack, and no pack depends on one, regardless of how the relationship was created.
   type: fix
+- description: Added a **current_version** field to every pack entry in **pack_destinations.json**, carrying the pack version as recorded on the content graph. Consumers of the artifact can now determine a pack's version without opening the dumped pack. An empty value is written as null.
+  type: feature
 pr_number: '5484'

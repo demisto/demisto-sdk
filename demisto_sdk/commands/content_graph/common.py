@@ -474,7 +474,7 @@ ENABLE_SPLIT_PACKS = os.getenv("ENABLE_SPLIT_PACKS", "false").lower() == "true"
 # The feature name every derived (split) pack is published under, unless
 # overridden. Consumed downstream as the pack's ``source``, which determines the
 # Managed Content bucket layout: <bucket>/<bucket_path>/<source>/<pack_id>/.
-DEFAULT_DERIVED_PACK_SOURCE = "connectus"
+DEFAULT_DERIVED_PACK_SOURCE = "force-update"
 
 
 def resolve_derived_pack_source(pack_derived_source: Optional[str] = None) -> str:

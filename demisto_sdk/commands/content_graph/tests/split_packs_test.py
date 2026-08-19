@@ -811,6 +811,7 @@ class TestPackDestinationsJson:
         mp_pack.derived_from = None
         mp_pack.managed = False
         mp_pack.source = ""
+        mp_pack.current_version = "1.2.3"
         mp_pack.content_items = []
 
         derived_pack = MagicMock()
@@ -822,6 +823,7 @@ class TestPackDestinationsJson:
         derived_pack.derived_from = "PackA"
         derived_pack.managed = True
         derived_pack.source = "Pack A"
+        derived_pack.current_version = "2.0.1"
         derived_pack.content_items = []
         derived_pack._is_item_tightly_coupled = MagicMock(return_value=True)
 
@@ -845,6 +847,7 @@ class TestPackDestinationsJson:
         assert pack_a["destination"] == "MARKETPLACE"
         assert pack_a["is_derived"] is False
         assert pack_a["managed"] is False
+        assert pack_a["current_version"] == "1.2.3"
 
         # Check derived pack
         pack_a_managed = next(
@@ -855,6 +858,7 @@ class TestPackDestinationsJson:
         assert pack_a_managed["parent_pack_id"] == "PackA"
         assert pack_a_managed["managed"] is True
         assert pack_a_managed["source"] == "Pack A"
+        assert pack_a_managed["current_version"] == "2.0.1"
 
 
 # ---------------------------------------------------------------------------
@@ -869,6 +873,7 @@ def _mock_pack(
     managed: bool = False,
     source: str = "",
     managed_pack_id: Optional[str] = None,
+    current_version: Optional[str] = "1.0.0",
 ) -> MagicMock:
     """Build a mock pack for the destinations writer.
 
@@ -878,6 +883,10 @@ def _mock_pack(
     supposed to have no graph-provided managed counterpart must have the
     attribute genuinely absent for ``getattr(pack, "managed_pack_id", None)``
     to return ``None``.
+
+    ``current_version`` follows the same convention: passing ``None`` deletes
+    the attribute so a pack whose graph object carries no version at all can be
+    expressed.
     """
     pack = MagicMock()
     pack.object_id = object_id
@@ -893,6 +902,10 @@ def _mock_pack(
         del pack.managed_pack_id
     else:
         pack.managed_pack_id = managed_pack_id
+    if current_version is None:
+        del pack.current_version
+    else:
+        pack.current_version = current_version
     return pack
 
 
@@ -994,6 +1007,72 @@ class TestPackDestinationsManagedPackId:
 
 
 # ---------------------------------------------------------------------------
+# pack_destinations.json current_version tests
+# ---------------------------------------------------------------------------
+
+
+class TestPackDestinationsCurrentVersion:
+    """Tests for the ``current_version`` field in the destinations output.
+
+    Infra decides what to upload from this artifact alone, so the pack version
+    must be readable without unzipping the dumped pack.
+    """
+
+    def test_every_entry_has_a_current_version_key(self, tmp_path: Path):
+        """The key must be present on every entry, whether or not it has a value."""
+        packs = [
+            _mock_pack("AWS", managed=True, current_version="3.2.1"),
+            _mock_pack("PackA", current_version=None),
+        ]
+
+        data = _write_and_read(tmp_path, packs)
+
+        assert len(data["packs"]) == 2
+        for entry in data["packs"]:
+            assert "current_version" in entry
+
+    def test_graph_current_version_is_emitted(self, tmp_path: Path):
+        """The version recorded on the graph is surfaced verbatim."""
+        packs = [_mock_pack("PackA", current_version="1.4.7")]
+
+        data = _write_and_read(tmp_path, packs)
+
+        assert data["packs"][0]["current_version"] == "1.4.7"
+
+    def test_empty_current_version_is_normalized_to_null(self, tmp_path: Path):
+        """An empty string must never reach consumers as an empty string."""
+        packs = [_mock_pack("PackA", current_version="")]
+
+        data = _write_and_read(tmp_path, packs)
+
+        assert data["packs"][0]["current_version"] is None
+        assert (
+            '"current_version": null'
+            in (tmp_path / "pack_destinations.json").read_text()
+        )
+
+    def test_missing_current_version_is_null(self, tmp_path: Path):
+        """A pack whose graph object carries no version serializes as JSON null."""
+        packs = [_mock_pack("PackA", current_version=None)]
+
+        data = _write_and_read(tmp_path, packs)
+
+        assert data["packs"][0]["current_version"] is None
+
+    def test_current_version_is_per_pack(self, tmp_path: Path):
+        """The value must not be copied between packs in a single call."""
+        packs = [
+            _mock_pack("PackA", current_version="1.0.0"),
+            _mock_pack("PackB", current_version="2.5.0"),
+        ]
+
+        data = _write_and_read(tmp_path, packs)
+
+        versions = {p["pack_id"]: p["current_version"] for p in data["packs"]}
+        assert versions == {"PackA": "1.0.0", "PackB": "2.5.0"}
+
+
+# ---------------------------------------------------------------------------
 # pack_destinations.json artifact_path tests
 # ---------------------------------------------------------------------------
 
@@ -1022,6 +1101,7 @@ def _artifact_mock_pack(
     pack.derived_from = derived_from
     pack.managed = is_derived
     pack.source = DEFAULT_DERIVED_PACK_SOURCE if is_derived else ""
+    pack.current_version = "1.0.0"
     pack.content_items = []
     pack._is_item_tightly_coupled = MagicMock(return_value=True)
     # Absent by design - see ``_mock_pack`` for why this must be deleted.
@@ -2727,3 +2807,96 @@ class TestSplitPackDependencySweep:
         expected = {"HelloWorld": {"Base": [{"source": "c", "target": "d"}]}}
         assert result == expected
         mock_write.assert_called_once_with(expected)
+
+
+class TestPackDestinationsSourceVsDumpedSource:
+    """``pack_destinations.json``'s ``source`` and the dumped ``metadata.json``'s ``source`` CAN differ.
+
+    These are two different values produced by two different stages:
+
+    * ``write_pack_destinations()`` writes the raw graph attribute ``pack.source``, which
+      ``PackParser`` populates as ``metadata.get("source", "")`` - the PLAIN key only.
+    * ``Pack.dump_metadata()`` writes ``metadata.json`` through
+      ``MarketplaceSuffixPreparer.prepare_managed_and_source()``, which lets a marketplace-suffixed
+      ``source:platform`` override win for the platform marketplace.
+
+    For a pack that declares BOTH, the two artifacts therefore disagree. These are characterization
+    tests: they document the behaviour as it is today, so that a future change which makes the two
+    agree fails here loudly and deliberately rather than silently.
+
+    This matters downstream: infra's managed-content upload derives a pack's bucket feature
+    directory from ``pack_destinations.json`` up front, but re-derives it from the dumped
+    ``metadata.json`` per pack. A disagreement can make the up-front check look for the pack under
+    the wrong feature, find it "already present", and skip an upload that never happened.
+    """
+
+    AUTHORED_METADATA = {
+        "name": "ProbePack",
+        "managed": True,
+        "source": "plain_feature",
+        "managed:platform": True,
+        "source:platform": "platform_feature",
+    }
+
+    def test_dumped_metadata_resolves_the_platform_suffixed_source(self):
+        """The dump resolves ``source:platform`` into the plain ``source`` for the platform MP."""
+        from demisto_sdk.commands.common.constants import MarketplaceVersions
+        from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer import (
+            MarketplaceSuffixPreparer,
+        )
+
+        resolved = MarketplaceSuffixPreparer.prepare_managed_and_source(
+            dict(self.AUTHORED_METADATA), MarketplaceVersions.PLATFORM
+        )
+
+        assert resolved["source"] == "platform_feature"
+
+    def test_pack_destinations_records_the_unresolved_plain_source(self, tmp_path: Path):
+        """The destinations artifact records the PLAIN source, ignoring the platform override."""
+        pack = _artifact_mock_pack("ProbePack", "ProbePack")
+        pack.managed = True
+        pack.source = self.AUTHORED_METADATA["source"]
+
+        data, _ = _dump_and_write_destinations([pack], tmp_path / "artifacts")
+
+        assert data["packs"][0]["source"] == "plain_feature"
+
+    def test_the_two_sources_diverge_for_a_platform_suffixed_pack(self, tmp_path: Path):
+        """The two artifacts disagree for the same pack - the reason infra needs a mismatch guard."""
+        from demisto_sdk.commands.common.constants import MarketplaceVersions
+        from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer import (
+            MarketplaceSuffixPreparer,
+        )
+
+        dumped_source = MarketplaceSuffixPreparer.prepare_managed_and_source(
+            dict(self.AUTHORED_METADATA), MarketplaceVersions.PLATFORM
+        )["source"]
+
+        pack = _artifact_mock_pack("ProbePack", "ProbePack")
+        pack.managed = True
+        pack.source = self.AUTHORED_METADATA["source"]
+        data, _ = _dump_and_write_destinations([pack], tmp_path / "artifacts")
+        destinations_source = data["packs"][0]["source"]
+
+        assert dumped_source == "platform_feature"
+        assert destinations_source == "plain_feature"
+        assert dumped_source != destinations_source
+
+    def test_the_two_sources_agree_when_no_suffixed_source_is_declared(self, tmp_path: Path):
+        """Without a ``source:platform`` override the two artifacts agree, which is the common case."""
+        from demisto_sdk.commands.common.constants import MarketplaceVersions
+        from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer import (
+            MarketplaceSuffixPreparer,
+        )
+
+        authored = {"name": "PlainPack", "managed": True, "source": "plain_feature"}
+        dumped_source = MarketplaceSuffixPreparer.prepare_managed_and_source(
+            dict(authored), MarketplaceVersions.PLATFORM
+        )["source"]
+
+        pack = _artifact_mock_pack("PlainPack", "PlainPack")
+        pack.managed = True
+        pack.source = authored["source"]
+        data, _ = _dump_and_write_destinations([pack], tmp_path / "artifacts")
+
+        assert dumped_source == data["packs"][0]["source"] == "plain_feature"

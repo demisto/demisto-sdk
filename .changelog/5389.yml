@@ -1,0 +1,4 @@
+changes:
+- description: 'fix: register all commands before attempting to dump the API'
+  type: fix
+pr_number: 5389

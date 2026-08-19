@@ -2269,6 +2269,83 @@ class TestConnectorHandlerIgnoreFiltering:
 
         assert result in filtered
 
+    def test_filter_drops_result_ignored_via_pack_level_ignore(self, mocker):
+        """
+        Given: A ContentItem result whose error code (e.g. GR109) is listed
+               under the pack's ``[pack]`` section of ``.pack-ignore`` (exposed
+               as ``in_pack.pack_level_ignored_errors``), and NOT in the item's
+               own per-file ``ignored_errors``.
+        When: filter_validation_results runs (the post-hoc path taken for
+              ``ALWAYS_RUN_ON_ERROR_CODE`` codes such as GR107/GR109).
+        Then: The result is dropped - the pack-level ignore is honored.
+        """
+        from types import SimpleNamespace
+
+        manager = get_validate_manager(mocker)
+
+        pack = SimpleNamespace(pack_level_ignored_errors=["GR109"])
+        result = SimpleNamespace(
+            validator=SimpleNamespace(error_code="GR109", related_file_type=None),
+            path=Path("/repo/Packs/Foo/Integrations/Foo/Foo.yml"),
+            content_object=SimpleNamespace(ignored_errors=[], in_pack=pack),
+        )
+
+        filtered = manager.filter_validation_results([result])
+
+        assert filtered == []
+
+    def test_filter_drops_result_when_content_object_is_pack_with_pack_level_ignore(
+        self, mocker
+    ):
+        """
+        Given: A result whose content_object IS the ``Pack`` itself (as with
+               PA-validators), and the code is listed in the pack's
+               ``pack_level_ignored_errors``.
+        When: filter_validation_results runs.
+        Then: The result is dropped - the duck-typed pack lookup uses
+              ``pack_level_ignored_errors`` directly on the content_object.
+        """
+        from types import SimpleNamespace
+
+        manager = get_validate_manager(mocker)
+
+        pack = SimpleNamespace(
+            ignored_errors=[],
+            pack_level_ignored_errors=["GR107"],
+        )
+        result = SimpleNamespace(
+            validator=SimpleNamespace(error_code="GR107", related_file_type=None),
+            path=Path("/repo/Packs/Foo/pack_metadata.json"),
+            content_object=pack,
+        )
+
+        filtered = manager.filter_validation_results([result])
+
+        assert filtered == []
+
+    def test_filter_keeps_result_when_neither_file_nor_pack_ignore_match(self, mocker):
+        """
+        Given: A result whose error code is neither in the content item's
+               per-file ``ignored_errors`` nor in the pack's
+               ``pack_level_ignored_errors``.
+        When: filter_validation_results runs.
+        Then: The result is kept.
+        """
+        from types import SimpleNamespace
+
+        manager = get_validate_manager(mocker)
+
+        pack = SimpleNamespace(pack_level_ignored_errors=["PB100"])
+        result = SimpleNamespace(
+            validator=SimpleNamespace(error_code="GR109", related_file_type=None),
+            path=Path("/repo/Packs/Foo/Integrations/Foo/Foo.yml"),
+            content_object=SimpleNamespace(ignored_errors=["BA101"], in_pack=pack),
+        )
+
+        filtered = manager.filter_validation_results([result])
+
+        assert result in filtered
+
 
 class TestImplicitGraphInitialization:
     """Tests for the connectors-flow graph initialization.

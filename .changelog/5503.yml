@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where the pack-level `[pack]` section of `.pack-ignore` was not honored for validators listed in `ALWAYS_RUN_ON_ERROR_CODE`. `ValidateManager.filter_validation_results` now consults both the content item's per-file `ignored_errors` and the pack's `pack_level_ignored_errors`.
+  type: fix
+pr_number: '5503'

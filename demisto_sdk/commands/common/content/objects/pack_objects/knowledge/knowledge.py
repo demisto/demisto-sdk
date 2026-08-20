@@ -8,15 +8,15 @@ from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_obje
     YAMLContentObject,
 )
 
-COLLECTION = "collection"
+KNOWLEDGE = "knowledge"
 
 
-class Collection(YAMLContentObject):
+class Knowledge(YAMLContentObject):
     def __init__(self, path: Union[Path, str]):
-        super().__init__(path, COLLECTION)
+        super().__init__(path, KNOWLEDGE)
 
     def upload(self, client: demisto_client):
         pass
 
     def type(self):
-        return FileType.COLLECTION
+        return FileType.KNOWLEDGE

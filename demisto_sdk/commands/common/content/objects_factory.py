@@ -15,7 +15,6 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     ChangeLog,
     Classifier,
     ClassifierMapper,
-    Collection,
     Contributors,
     CorrelationRule,
     Dashboard,
@@ -30,6 +29,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     IndicatorType,
     Integration,
     Job,
+    Knowledge,
     Layout,
     LayoutRule,
     LayoutsContainer,
@@ -108,7 +108,7 @@ TYPE_CONVERSION_BY_FileType = {
     FileType.AGENTIX_ACTION: AgentixAction,
     FileType.AGENTIX_AGENT: AgentixAgent,
     FileType.AGENTIX_SKILL: AgentixSkill,
-    FileType.COLLECTION: Collection,
+    FileType.KNOWLEDGE: Knowledge,
 }
 
 TYPE_CONVERSION_BY_FILE_NAME = {

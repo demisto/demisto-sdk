@@ -304,6 +304,28 @@ def test_get_file_creation_date_shallow_clone_warns(
     assert "shallow clone" in caplog.text
 
 
+@pytest.mark.parametrize(
+    "iso_date, expected",
+    [
+        ("2020-11-04T10:00:00Z", "2020-11-04T10:00:00Z"),  # newer git versions
+        ("2020-11-04T10:00:00+00:00", "2020-11-04T10:00:00Z"),
+        ("2020-11-04T12:00:00+02:00", "2020-11-04T10:00:00Z"),
+    ],
+)
+def test_normalize_iso_date(iso_date: str, expected: str):
+    """
+    Given:
+    - A strict-ISO git date, with either a 'Z' or a numeric UTC offset.
+
+    When:
+    - Normalizing it.
+
+    Then:
+    - The date is converted to UTC, in the expected format.
+    """
+    assert GitUtil._normalize_iso_date(iso_date) == expected
+
+
 def test_get_file_creation_date_no_history_returns_now(
     git_repo: Repo, unmocked_get_file_creation_date
 ):

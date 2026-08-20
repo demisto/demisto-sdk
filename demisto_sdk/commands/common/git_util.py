@@ -1275,7 +1275,12 @@ class GitUtil:
         Returns:
         - `str`: The date normalized to UTC, in `ISO_TIMESTAMP_FORMAT`.
         """
-        parsed = datetime.fromisoformat(iso_date.strip())
+        # Newer git versions render a UTC offset as a 'Z' suffix, which
+        # `datetime.fromisoformat` only supports from Python 3.11 onwards.
+        normalized = iso_date.strip()
+        if normalized.endswith(("Z", "z")):
+            normalized = f"{normalized[:-1]}+00:00"
+        parsed = datetime.fromisoformat(normalized)
         if parsed.tzinfo is not None:
             parsed = parsed.astimezone(timezone.utc)
         return parsed.strftime(ISO_TIMESTAMP_FORMAT)

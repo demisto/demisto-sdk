@@ -2,10 +2,24 @@ import stat
 from datetime import datetime
 from pathlib import Path
 
+import pytest
 from git import Blob
 
 from demisto_sdk.commands.common.constants import ISO_TIMESTAMP_FORMAT
+from demisto_sdk.commands.common.git_util import GitUtil
 from TestSuite.repo import Repo
+
+# ``TestSuite.repo.Repo.create_pack`` replaces ``GitUtil.get_file_creation_date``
+# with a ``MagicMock`` on the class and never restores it, so a test that ran
+# earlier can leak the mock into this module. Keep a reference to the real
+# implementation, captured on import (before any test could patch it).
+_REAL_GET_FILE_CREATION_DATE = GitUtil.get_file_creation_date
+
+
+@pytest.fixture
+def unmocked_get_file_creation_date(monkeypatch):
+    """Ensure the real ``get_file_creation_date`` is used, not a leaked mock."""
+    monkeypatch.setattr(GitUtil, "get_file_creation_date", _REAL_GET_FILE_CREATION_DATE)
 
 
 def test_find_primary_branch():
@@ -148,7 +162,7 @@ def test_git_util_with_repo():
     assert git_util.repo.working_dir == repo.working_dir
 
 
-def test_get_file_creation_date(git_repo: Repo):
+def test_get_file_creation_date(git_repo: Repo, unmocked_get_file_creation_date):
     """
     Given:
     - A git repo and a file in it.
@@ -195,7 +209,9 @@ def _commit_file(git_repo: Repo, file: Path, content: str, message: str, date: s
     )
 
 
-def test_get_file_creation_date_uses_add_commit_not_latest(git_repo: Repo):
+def test_get_file_creation_date_uses_add_commit_not_latest(
+    git_repo: Repo, unmocked_get_file_creation_date
+):
     """
     Given:
     - A file that was added in one commit and modified in a later commit.
@@ -221,7 +237,9 @@ def test_get_file_creation_date_uses_add_commit_not_latest(git_repo: Repo):
     assert git_repo.git_util.get_file_creation_date(file) == "2020-11-04T10:00:00Z"
 
 
-def test_get_file_creation_date_follows_renames(git_repo: Repo):
+def test_get_file_creation_date_follows_renames(
+    git_repo: Repo, unmocked_get_file_creation_date
+):
     """
     Given:
     - A file that was added and later renamed.
@@ -254,7 +272,9 @@ def test_get_file_creation_date_follows_renames(git_repo: Repo):
     assert git_repo.git_util.get_file_creation_date(renamed) == "2020-11-04T10:00:00Z"
 
 
-def test_get_file_creation_date_shallow_clone_warns(git_repo: Repo, mocker, caplog):
+def test_get_file_creation_date_shallow_clone_warns(
+    git_repo: Repo, mocker, caplog, unmocked_get_file_creation_date
+):
     """
     Given:
     - A shallow cloned repo.
@@ -284,7 +304,9 @@ def test_get_file_creation_date_shallow_clone_warns(git_repo: Repo, mocker, capl
     assert "shallow clone" in caplog.text
 
 
-def test_get_file_creation_date_no_history_returns_now(git_repo: Repo):
+def test_get_file_creation_date_no_history_returns_now(
+    git_repo: Repo, unmocked_get_file_creation_date
+):
     """
     Given:
     - A file path that has no git history.

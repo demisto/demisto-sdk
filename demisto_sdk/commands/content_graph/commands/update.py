@@ -17,7 +17,10 @@ from demisto_sdk.commands.common.tools import (
     is_external_repository,
     string_to_bool,
 )
-from demisto_sdk.commands.content_graph.commands.common import recover_if_fails
+from demisto_sdk.commands.content_graph.commands.common import (
+    isolate_managed_packs_before_export,
+    recover_if_fails,
+)
 from demisto_sdk.commands.content_graph.commands.create import create_content_graph
 from demisto_sdk.commands.content_graph.common import (
     NEO4J_DATABASE_HTTP,
@@ -351,6 +354,11 @@ def _update_content_graph_inner(
             f"Content graph is up-to-date. If you expected an update, make sure your changes are added/committed to git. UI representation is available at {NEO4J_DATABASE_HTTP} "
             f"(username: {NEO4J_USERNAME}, password: {NEO4J_PASSWORD})"
         )
+        # The graph on this path was produced elsewhere (a previously imported
+        # bucket graph), so it carries whatever relationships that build left
+        # behind. Isolate before re-exporting it, otherwise this path would
+        # publish a non-isolated graph.
+        isolate_managed_packs_before_export(content_graph_interface)
         content_graph_interface.export_graph(
             output_path,
             override_commit=use_git,
@@ -441,6 +449,9 @@ def _update_content_graph_inner(
 
     if dependencies:
         content_graph_interface.create_pack_dependencies()
+    # Unconditional: cross-pack content-item edges exist even when dependency
+    # calculation was skipped, so isolation must not be gated on `dependencies`.
+    isolate_managed_packs_before_export(content_graph_interface)
     content_graph_interface.export_graph(
         output_path, override_commit=use_git, marketplace=marketplace
     )

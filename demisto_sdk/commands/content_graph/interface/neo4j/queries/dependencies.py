@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Set, Tuple
 
 from neo4j import Transaction
 
@@ -17,6 +17,8 @@ from demisto_sdk.commands.content_graph.common import (
     RelationshipType,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
+    are_in_the_same_split_pack_family,
+    is_managed_or_derived,
     is_target_available,
     run_query,
     to_neo4j_map,
@@ -39,12 +41,21 @@ def get_all_level_packs_relationships(
     params_str = to_neo4j_map(properties)
 
     if relationship_type == RelationshipType.DEPENDS_ON:
+        # Split-pack isolation, applied here in addition to
+        # create_depends_on_relationships: that query only guards the *direct*
+        # edge, while this one walks paths of up to MAX_DEPTH hops. Without the
+        # guard below an indirect route (pack -> CommonScripts -> packManaged)
+        # would still surface a twin, or any managed/derived pack, as an
+        # all-level dependency.
         query = f"""
             UNWIND $ids_list AS node_id
             MATCH path = shortestPath((p1:{ContentType.PACK}{params_str})-[r:{relationship_type}*..{MAX_DEPTH}]->(p2:{ContentType.PACK}))
             WHERE elementId(p1) = node_id AND elementId(p1) <> elementId(p2)
+            AND NOT {are_in_the_same_split_pack_family("p1", "p2")}
+            AND NOT {is_managed_or_derived("p1")}
+            AND NOT {is_managed_or_derived("p2")}
             AND all(n IN nodes(path) WHERE "{marketplace}" IN n.marketplaces)
-            AND all(r IN relationships(path) WHERE NOT r.is_test {"AND r.mandatorily = true)" if mandatorily else ""}
+            AND all(r IN relationships(path) WHERE NOT r.is_test{" AND r.mandatorily = true" if mandatorily else ""})
             RETURN node_id, collect(r) as relationships, collect(p2) AS nodes_to
         """
     if relationship_type == RelationshipType.IMPORTS:
@@ -73,7 +84,82 @@ def create_pack_dependencies(tx: Transaction) -> dict:
     update_uses_for_integration_commands(tx)
     delete_deprecatedcontent_relationship(tx)  # TODO decide what to do with this
     depends_on_data = create_depends_on_relationships(tx)
+    # Final, unconditional sweep. Individual queries are guarded, but a
+    # DEPENDS_ON edge can also enter the graph through paths that never consult
+    # those guards - most notably relationship preservation across a rebuild.
+    # Sweeping once at the end makes the invariant hold regardless of how an
+    # edge got there.
+    severed_dependencies = remove_split_pack_dependencies(tx)
+    depends_on_data = prune_severed_dependencies(depends_on_data, severed_dependencies)
+    write_depends_on_artifact(depends_on_data)
     return depends_on_data
+
+
+def remove_split_pack_dependencies(tx: Transaction) -> Set[Tuple[str, str]]:
+    """Deletes every pack-level dependency that involves a managed or derived pack.
+
+    Managed and derived packs ship to the Managed Content bucket as
+    self-contained units: everything they need travels with them as content
+    items. They must therefore never depend on another pack, and no pack may
+    depend on them. The same holds for a pack and its own derived twin, which
+    are two graph representations of one source directory.
+
+    This runs after every other dependency query as a catch-all, so the
+    invariant does not rely on each individual writer being guarded.
+
+    Args:
+        tx: The neo4j transaction.
+
+    Returns:
+        The ``(source_pack_id, target_pack_id)`` pairs whose edges were deleted.
+    """
+    query = f"""// Severs pack dependencies involving managed, derived or twin packs
+MATCH (pack_a:{ContentType.PACK})-[r:{RelationshipType.DEPENDS_ON}]->(pack_b:{ContentType.PACK})
+WHERE {is_managed_or_derived("pack_a")}
+OR {is_managed_or_derived("pack_b")}
+OR {are_in_the_same_split_pack_family("pack_a", "pack_b")}
+WITH r, pack_a.object_id AS source, pack_b.object_id AS target
+DELETE r
+RETURN source, target"""
+    severed = {(row["source"], row["target"]) for row in run_query(tx, query)}
+    if severed:
+        logger.info(
+            f"Severed {len(severed)} pack dependencies involving managed or derived packs."
+        )
+        for source, target in sorted(severed):
+            logger.debug(f"Severed dependency {source} -> {target}.")
+    return severed
+
+
+def prune_severed_dependencies(
+    depends_on_data: Dict[str, Dict[str, list]],
+    severed_dependencies: Set[Tuple[str, str]],
+) -> Dict[str, Dict[str, list]]:
+    """Drops severed edges from the dependency mapping.
+
+    ``depends_on_data`` is serialized to ``depends_on.json`` and consumed
+    downstream, so it must describe the graph as it stands after the sweep.
+
+    Args:
+        depends_on_data: Mapping of source pack id to target pack id to reasons.
+        severed_dependencies: The pairs deleted by the sweep.
+
+    Returns:
+        The mapping without the severed pairs, and without sources left empty.
+    """
+    if not severed_dependencies:
+        return depends_on_data
+
+    pruned: Dict[str, Dict[str, list]] = {}
+    for source, targets in depends_on_data.items():
+        remaining = {
+            target: reasons
+            for target, reasons in targets.items()
+            if (source, target) not in severed_dependencies
+        }
+        if remaining:
+            pruned[source] = remaining
+    return pruned
 
 
 def delete_deprecatedcontent_relationship(tx: Transaction) -> None:
@@ -90,9 +176,20 @@ RETURN source.node_id AS source, target.node_id AS target"""
 
 
 def remove_existing_depends_on_relationships(tx: Transaction) -> None:
+    # Calculated edges (from_metadata = false) are always cleared, because
+    # create_depends_on_relationships recreates the ones that are still valid.
+    #
+    # Metadata-declared edges (from_metadata = true) are normally kept, since
+    # nothing recreates them - but a dependency involving a split-pack twin, or
+    # any managed/derived pack, is never legitimate. Such an edge is not
+    # recreated by any query either, so unless it is deleted here an edge
+    # written by an older build survives in a persistent graph forever.
     query = f"""// Removes all existing DEPENDS_ON relationships before recalculation
-MATCH ()-[r:{RelationshipType.DEPENDS_ON}]->()
+MATCH (p1)-[r:{RelationshipType.DEPENDS_ON}]->(p2)
 WHERE r.from_metadata = false
+OR {are_in_the_same_split_pack_family("p1", "p2")}
+OR {is_managed_or_derived("p1")}
+OR {is_managed_or_derived("p2")}
 DELETE r"""
     run_query(tx, query)
 
@@ -145,6 +242,14 @@ MATCH (pack_a:{ContentType.BASE_NODE})<-[:{RelationshipType.IN_PACK}]-(a)
     -[r:{RelationshipType.USES}]->(b)-[:{RelationshipType.IN_PACK}]->(pack_b:{ContentType.BASE_NODE})
 WHERE ANY(marketplace IN pack_a.marketplaces WHERE marketplace IN pack_b.marketplaces)
 AND elementId(pack_a) <> elementId(pack_b)
+// A pack and its derived twin are two representations of the same source
+// directory and must never depend on each other, in either direction.
+AND NOT {are_in_the_same_split_pack_family("pack_a", "pack_b")}
+// Managed and derived packs ship as self-contained units to the Managed
+// Content bucket: everything they need travels with them as content items,
+// so they carry no pack-level dependencies in either direction.
+AND NOT {is_managed_or_derived("pack_a")}
+AND NOT {is_managed_or_derived("pack_b")}
 AND NOT pack_b.object_id IN pack_a.excluded_dependencies
 AND NOT pack_a.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
 AND NOT pack_b.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
@@ -175,10 +280,20 @@ RETURN
         pack_a = row["pack_a"]
         pack_b = row["pack_b"]
         outputs.setdefault(pack_a, {}).setdefault(pack_b, []).extend(row["reasons"])
+    return outputs
 
+
+def write_depends_on_artifact(depends_on_data: Dict[str, Dict[str, list]]) -> None:
+    """Serializes the dependency mapping to ``depends_on.json``.
+
+    Called after the split-pack sweep so the artifact matches the graph, rather
+    than the intermediate state before severed edges were removed.
+
+    Args:
+        depends_on_data: Mapping of source pack id to target pack id to reasons.
+    """
     if (artifacts_folder := os.getenv("ARTIFACTS_FOLDER")) and Path(
         artifacts_folder
     ).exists():
         with open(f"{artifacts_folder}/depends_on.json", "w") as fp:
-            json.dump(outputs, fp, indent=4)
-    return outputs
+            json.dump(depends_on_data, fp, indent=4)

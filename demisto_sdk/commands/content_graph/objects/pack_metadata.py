@@ -15,7 +15,11 @@ from demisto_sdk.commands.common.content_constant_paths import (
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_json, is_external_repository
-from demisto_sdk.commands.content_graph.common import ContentType, PackTags
+from demisto_sdk.commands.content_graph.common import (
+    ENABLE_SPLIT_PACKS,
+    ContentType,
+    PackTags,
+)
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import PackContentItems
@@ -70,6 +74,12 @@ class PackMetadata(BaseModel):
     hybrid: bool = Field(False, alias="hybrid")
     default_data_source_id: Optional[str] = Field("", alias="defaultDataSource")
     default_data_source_name: Optional[str] = Field("", exclude=True)
+    coupling_overrides: Optional[Dict[str, str]] = Field(
+        None, alias="coupling_overrides"
+    )
+    # Per-pack override for the feature name this pack's derived (split) twin is
+    # published under. See resolve_derived_pack_source().
+    derived_source: Optional[str] = Field(None, alias="derived_source")
 
     # For private packs
     premium: Optional[bool]
@@ -562,6 +572,18 @@ class PackMetadata(BaseModel):
         content_item_summary = content_item.summary(
             marketplace, incident_to_alert=incident_to_alert
         )
+        # CIAC-16414: expose per content item whether it is tightly coupled, i.e. whether it is
+        # one of the items paired into the pack's managed twin. Flag-gated: while ENABLE_SPLIT_PACKS
+        # is off the key is omitted entirely.
+        # Injected here, at the single funnel every per-item summary dict passes through, rather
+        # than inside `summary()`: the caller re-parses each item from disk, so the item's own `pack`
+        # back-reference is unreliable, and only the owning pack can apply `coupling_overrides`.
+        # `self` is always a `Pack` at runtime (`Pack` inherits `PackMetadata`), so the resolver
+        # defined on `Pack` is available here.
+        if ENABLE_SPLIT_PACKS:
+            content_item_summary["managedPaired"] = self._is_item_tightly_coupled(  # type:ignore[attr-defined]
+                content_item
+            )
 
         if content_item_metadata := self._search_content_item_metadata_object(
             collected_content_items=collected_content_items,

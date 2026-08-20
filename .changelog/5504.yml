@@ -4,4 +4,4 @@ changes:
     pack metadata file (following renames), and a warning is logged when the result
     may be unreliable (for example, in a shallow clone).
   type: fix
-pr_number: '5498'
+pr_number: '5504'

@@ -15,8 +15,8 @@ signature.
 
 Background
 ----------
-If a custom integration is uploaded with an ``id`` that matches a system
-integration's ``id``, any subsequent attempt to install the system pack that
+If a custom integration is uploaded with an ``id`` that matches a marketplace
+integration's ``id``, any subsequent attempt to install the pack that
 contains that integration will fail with a system error.  The ``_copy`` suffix
 is the established convention that distinguishes custom (user-owned)
 copies from system-managed originals.
@@ -37,9 +37,16 @@ _MARKETPLACE = "platform"
 COPY_MARKER: str = "_copy"
 
 _COPY_MARKER_RISK_EXPLANATION: str = (
-    "Uploading a custom integration whose ID matches a system integration ID "
-    "will cause subsequent installations of the system pack that contains that "
+    "Uploading a custom integration whose ID matches a marketplace integration ID "
+    "will cause subsequent installations of the pack that contains that "
     "integration to fail with a system error."
+)
+
+_FORCE_ID_ACTIONABLE_GUIDANCE: str = (
+    "ACTION REQUIRED — before continuing, verify ALL of the following:\n"
+    "  1. Your chosen ID is completely unique and does NOT match the original integration ID.\n"
+    "  2. Your chosen ID does NOT match any other integration ID already present in the repository.\n"
+    "  3. Your chosen ID does NOT match any integration ID published on the Marketplace."
 )
 
 # YAML key path for the canonical integration ID.
@@ -107,7 +114,8 @@ def validate_integration_copy_marker(
 
     Args:
         integration_yaml_path: Path to the resolved integration YAML file.
-        force_id: When ``True``, skip the hard error and emit a warning instead.
+        force_id: When ``True``, skip the hard error and emit a high-visibility
+            warning with actionable guidance.
 
     Raises:
         typer.BadParameter: When either field is missing the ``_copy`` suffix
@@ -155,10 +163,11 @@ def validate_integration_copy_marker(
 
     if force_id:
         logger.warning(
-            f"[WARNING] {_COPY_MARKER_RISK_EXPLANATION} "
+            f"<yellow>[WARNING] {_COPY_MARKER_RISK_EXPLANATION} "
             f"The following field(s) are missing the '{COPY_MARKER}' suffix: "
-            f"{missing_summary}. "
-            "Proceeding because --force-id was explicitly set."
+            f"{missing_summary}.\n"
+            f"<red>{_FORCE_ID_ACTIONABLE_GUIDANCE}</red>\n"
+            f"Proceeding because --force-id was explicitly set.</yellow>"
         )
         return
 
@@ -175,6 +184,8 @@ def validate_integration_copy_marker(
         f"    demisto-sdk upload-custom-integration -i <path/to/integration.yml>\n"
         f"\n"
         f"  To bypass this check (not recommended), pass --force-id:\n"
+        f"\n"
+        f"  {_FORCE_ID_ACTIONABLE_GUIDANCE}\n"
         f"\n"
         f"    demisto-sdk upload-custom-integration -i <path/to/integration.yml> --force-id\n"
     )
@@ -198,7 +209,7 @@ def upload_custom_integration_entity(
     Args:
         input: Path to the integration YAML file or its parent directory.
         force_id: When ``True``, bypass the ``_copy`` marker check and emit a
-            high-visibility warning instead of raising an error.
+            high-visibility warning with actionable guidance.
 
     Raises:
         typer.BadParameter: When *input* is not an integration YAML (or a

@@ -10,6 +10,7 @@ Tests cover:
 - Directory input: passing an integration directory instead of a YAML file.
 - resolve_integration_yaml: directory resolution helper.
 - Top-level id fallback: YAMLs without commonfields but with a top-level id.
+- --force-id warning contains actionable guidance and color tags.
 """
 
 from pathlib import Path
@@ -18,6 +19,7 @@ import pytest
 import typer
 
 from demisto_sdk.commands.upload.upload_custom_integration import (
+    _FORCE_ID_ACTIONABLE_GUIDANCE,
     COPY_MARKER,
     is_integration_yaml,
     resolve_integration_yaml,
@@ -247,6 +249,43 @@ class TestValidateIntegrationCopyMarker:
         mock_warning.warning.assert_called_once()
         warning_text = mock_warning.warning.call_args[0][0]
         assert COPY_MARKER in warning_text
+
+    def test_force_id_warning_contains_actionable_guidance(self, tmp_path, mocker):
+        """
+        GIVEN an integration YAML where neither id nor name ends with '_copy'
+        WHEN validate_integration_copy_marker is called with force_id=True
+        THEN the warning message contains the three uniqueness checklist items
+        """
+        yaml_path = _write_integration_yaml(tmp_path, "MyIntegration", "MyIntegration")
+        mock_logger = mocker.patch(
+            "demisto_sdk.commands.upload.upload_custom_integration.logger"
+        )
+        validate_integration_copy_marker(yaml_path, force_id=True)
+
+        warning_text = mock_logger.warning.call_args[0][0]
+        assert "completely unique" in warning_text
+        assert "repository" in warning_text
+        assert "Marketplace" in warning_text
+        # The constant itself should be embedded
+        assert _FORCE_ID_ACTIONABLE_GUIDANCE in warning_text
+
+    def test_force_id_warning_contains_color_tags(self, tmp_path, mocker):
+        """
+        GIVEN an integration YAML where neither id nor name ends with '_copy'
+        WHEN validate_integration_copy_marker is called with force_id=True
+        THEN the warning string contains <yellow> and <red> loguru color tags
+        """
+        yaml_path = _write_integration_yaml(tmp_path, "MyIntegration", "MyIntegration")
+        mock_logger = mocker.patch(
+            "demisto_sdk.commands.upload.upload_custom_integration.logger"
+        )
+        validate_integration_copy_marker(yaml_path, force_id=True)
+
+        warning_text = mock_logger.warning.call_args[0][0]
+        assert "<yellow>" in warning_text
+        assert "</yellow>" in warning_text
+        assert "<red>" in warning_text
+        assert "</red>" in warning_text
 
     def test_only_id_missing_copy_raises(self, tmp_path):
         """

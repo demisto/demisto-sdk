@@ -1372,17 +1372,19 @@ class TestPackDestinationsDumpDirectories:
             managed_artifacts_dir / "PackAManaged"
         )
 
-    def test_managed_pack_without_a_managed_artifacts_dir_raises(self, tmp_path: Path):
-        """Falling back to the regular artifacts dir would corrupt the upload."""
+    def test_managed_pack_without_a_managed_artifacts_dir_is_empty(self, tmp_path: Path):
+        """No managed dump ran, so the pack is recorded with an empty artifact path."""
         pack = _artifact_mock_pack("AWSManaged", "AWSManagedDirectory")
         pack.managed = True
 
-        with pytest.raises(ValueError, match="AWSManaged"):
-            _write_destinations_with_dump_dirs(
-                [pack],
-                tmp_path / "pack_destinations.json",
-                artifacts_dir=tmp_path / "content_packs",
-            )
+        data = _write_destinations_with_dump_dirs(
+            [pack],
+            tmp_path / "pack_destinations.json",
+            artifacts_dir=tmp_path / "content_packs",
+        )
+
+        assert [entry["pack_id"] for entry in data["packs"]] == ["AWSManaged"]
+        assert data["packs"][0]["artifact_path"] == ""
 
     def test_legacy_two_argument_call_with_a_managed_pack_does_not_raise(
         self, tmp_path: Path

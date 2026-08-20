@@ -229,21 +229,19 @@ class ContentDTO(BaseModel):
             managed_artifacts_dir: Directory that managed packs are dumped
                 into — i.e. the ``dir`` passed to the managed
                 ``ContentDTO.dump`` call. Relative paths are made absolute.
-                Required whenever ``artifacts_dir`` is supplied and at least
-                one pack is managed.
+                When ``artifacts_dir`` is supplied without it, no managed dump
+                happened, so managed packs are still written but with an empty
+                ``artifact_path`` — they are never routed to the regular
+                artifacts directory.
 
         Each emitted pack entry carries ``current_version`` — the pack's
         version as recorded on the graph (``pack_metadata.json``'s
         ``currentVersion``). An empty value is normalized to ``None`` so
         consumers can decide what to upload without opening the artifact.
-
-        Raises:
-            ValueError: If ``artifacts_dir`` is supplied, a pack is managed and
-                ``managed_artifacts_dir`` is ``None``. Managed packs are never
-                silently routed to the regular artifacts directory.
         """
         managed_pack_ids = managed_pack_ids or {}
         entries: List[Dict[str, Any]] = []
+        no_managed_artifacts = artifacts_dir is not None and managed_artifacts_dir is None
         for pack in self.packs:
             # The managed counterpart id comes from the graph when it carries
             # one, and otherwise from the caller-supplied mapping. An empty
@@ -279,22 +277,20 @@ class ContentDTO(BaseModel):
             # and regular packs into ``artifacts_dir``. When no dump directory
             # was supplied (legacy two-argument call), fall back to the
             # directory holding this JSON artifact.
+            base_dir: Optional[Path]
             if artifacts_dir is None:
                 base_dir = output_path.parent
             elif pack.managed:
-                if managed_artifacts_dir is None:
-                    raise ValueError(
-                        f"Pack '{pack.object_id}' is managed but no managed_artifacts_dir "
-                        f"was provided to write_pack_destinations; managed packs are dumped "
-                        f"into a dedicated directory and must never fall back to the regular "
-                        f"artifacts directory."
-                    )
-                base_dir = managed_artifacts_dir.absolute()
+                base_dir = (
+                    None if managed_artifacts_dir is None else managed_artifacts_dir.absolute()
+                )
             else:
                 base_dir = artifacts_dir.absolute()
             # Delegate the last path segment to the same helper ``dump()``
             # uses, so the recorded path can never drift from the real one.
-            entry["artifact_path"] = str(self._artifact_path(base_dir, pack))
+            entry["artifact_path"] = (
+                "" if base_dir is None else str(self._artifact_path(base_dir, pack))
+            )
             if getattr(pack, "is_derived", False):
                 entry["content_items"] = [
                     f"{ci.content_type.value}-{ci.object_id}"
@@ -303,6 +299,12 @@ class ContentDTO(BaseModel):
                 ]
             entries.append(entry)
 
+        if no_managed_artifacts:
+            managed_count = sum(1 for pack in self.packs if pack.managed)
+            if managed_count:
+                logger.info(
+                    f"No managed_artifacts_dir supplied: {managed_count} managed packs written with an empty artifact_path"
+                )
         output_path.parent.mkdir(parents=True, exist_ok=True)
         with open(output_path, "w") as f:
             f.write(json.dumps({"packs": entries}, indent=2))

@@ -171,13 +171,27 @@ def test_get_file_creation_date(git_repo: Repo):
 # Distinctive content, so git's rename detection won't match other files in the repo.
 METADATA_CONTENT = '{"name": "MyPack", "support": "xsoar", "currentVersion": "1.0.0"}'
 
+# An explicit identity, as the git CLI fails to commit when one isn't configured
+# (for example, on a CI runner).
+GIT_IDENTITY_ENV = {
+    "GIT_AUTHOR_NAME": "demisto-sdk-test",
+    "GIT_AUTHOR_EMAIL": "demisto-sdk-test@example.com",
+    "GIT_COMMITTER_NAME": "demisto-sdk-test",
+    "GIT_COMMITTER_EMAIL": "demisto-sdk-test@example.com",
+}
+
+
+def _commit_env(date: str) -> dict:
+    """The environment to commit with, using a fixed identity and commit date."""
+    return {**GIT_IDENTITY_ENV, "GIT_COMMITTER_DATE": date}
+
 
 def _commit_file(git_repo: Repo, file: Path, content: str, message: str, date: str):
     """Create/update `file` with `content` and commit it with a fixed author/commit date."""
     git_repo.make_file(str(file), content)
     git_repo.git_util.repo.git.add(str(file))
     git_repo.git_util.repo.git.commit(
-        "-m", message, "--date", date, env={"GIT_COMMITTER_DATE": date}
+        "-m", message, "--date", date, env=_commit_env(date)
     )
 
 
@@ -234,7 +248,7 @@ def test_get_file_creation_date_follows_renames(git_repo: Repo):
         f"renamed {original}",
         "--date",
         "2025-03-29T10:00:00+00:00",
-        env={"GIT_COMMITTER_DATE": "2025-03-29T10:00:00+00:00"},
+        env=_commit_env("2025-03-29T10:00:00+00:00"),
     )
 
     assert git_repo.git_util.get_file_creation_date(renamed) == "2020-11-04T10:00:00Z"

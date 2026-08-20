@@ -1,6 +1,6 @@
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import lru_cache
 from pathlib import Path
 from typing import List, Optional, Sequence, Set, Tuple, Union
@@ -1264,8 +1264,62 @@ class GitUtil:
         else:
             logger.error(f"File '{file_path}' doesn't exist. Not adding.")
 
+    @staticmethod
+    def _normalize_iso_date(iso_date: str) -> str:
+        """
+        Convert a strict-ISO git date (``%aI``) into a UTC `ISO_TIMESTAMP_FORMAT` string.
+
+        Args:
+        - `iso_date` (``str``): The strict ISO 8601 date, e.g. `2020-11-04T10:20:30+02:00`.
+
+        Returns:
+        - `str`: The date normalized to UTC, in `ISO_TIMESTAMP_FORMAT`.
+        """
+        parsed = datetime.fromisoformat(iso_date.strip())
+        if parsed.tzinfo is not None:
+            parsed = parsed.astimezone(timezone.utc)
+        return parsed.strftime(ISO_TIMESTAMP_FORMAT)
+
     def get_file_creation_date(self, file_path: Path) -> str:
+        """
+        Get the date the file was first added to the repository, following renames.
+
+        Note that in a shallow clone the full history isn't available, so the returned
+        date may be later than the actual creation date. In such a case a warning is
+        logged and the best-effort date is still returned.
+
+        Args:
+        - `file_path` (``Path``): The file to get the creation date for.
+
+        Returns:
+        - `str`: The creation date in `ISO_TIMESTAMP_FORMAT`.
+        """
+        try:
+            if self.repo.git.rev_parse("--is-shallow-repository").strip() == "true":
+                logger.warning(
+                    f"The repository is a shallow clone, the first-created date of '{file_path}' may be inaccurate. "
+                    "Clone with the full history (for example, 'fetch-depth: 0') for an accurate date."
+                )
+        except GitError as e:
+            logger.debug(f"Could not determine whether the repository is shallow: {e}")
+
+        try:
+            # The log is ordered newest-first and '--follow' follows renames,
+            # so the last line is the commit that originally added the file.
+            log_output = self.repo.git.log(
+                "--follow", "--format=%aI", "--", str(file_path)
+            )
+            if add_dates := [line for line in log_output.splitlines() if line.strip()]:
+                return self._normalize_iso_date(add_dates[-1])
+        except (GitError, ValueError) as e:
+            logger.debug(f"Could not get the add-commit date of '{file_path}': {e}")
+
         if commits := list(self.repo.iter_commits(paths=file_path)):
+            logger.warning(
+                f"Could not find the commit that added '{file_path}', "
+                "falling back to the oldest reachable commit. The date may be inaccurate."
+            )
             first_commit = commits[-1]
-            return first_commit.authored_datetime.strftime(ISO_TIMESTAMP_FORMAT)
+            return self._normalize_iso_date(first_commit.authored_datetime.isoformat())
+
         return datetime.now().strftime(ISO_TIMESTAMP_FORMAT)

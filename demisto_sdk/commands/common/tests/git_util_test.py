@@ -166,3 +166,123 @@ def test_get_file_creation_date(git_repo: Repo):
     file_creation_date = git_repo.git_util.get_file_creation_date(file)
 
     datetime.strptime(file_creation_date, ISO_TIMESTAMP_FORMAT)  # raises if invalid
+
+
+# Distinctive content, so git's rename detection won't match other files in the repo.
+METADATA_CONTENT = '{"name": "MyPack", "support": "xsoar", "currentVersion": "1.0.0"}'
+
+
+def _commit_file(git_repo: Repo, file: Path, content: str, message: str, date: str):
+    """Create/update `file` with `content` and commit it with a fixed author/commit date."""
+    git_repo.make_file(str(file), content)
+    git_repo.git_util.repo.git.add(str(file))
+    git_repo.git_util.repo.git.commit(
+        "-m", message, "--date", date, env={"GIT_COMMITTER_DATE": date}
+    )
+
+
+def test_get_file_creation_date_uses_add_commit_not_latest(git_repo: Repo):
+    """
+    Given:
+    - A file that was added in one commit and modified in a later commit.
+
+    When:
+    - Retrieving the creation time of the given file.
+
+    Then:
+    - The date of the commit that added the file is returned, not the latest one.
+    """
+    file = Path("pack_metadata.json")
+    _commit_file(
+        git_repo, file, METADATA_CONTENT, f"added {file}", "2020-11-04T10:00:00+00:00"
+    )
+    _commit_file(
+        git_repo,
+        file,
+        METADATA_CONTENT.replace("1.0.0", "1.0.1"),
+        f"modified {file}",
+        "2025-03-29T10:00:00+00:00",
+    )
+
+    assert git_repo.git_util.get_file_creation_date(file) == "2020-11-04T10:00:00Z"
+
+
+def test_get_file_creation_date_follows_renames(git_repo: Repo):
+    """
+    Given:
+    - A file that was added and later renamed.
+
+    When:
+    - Retrieving the creation time of the file using its new path.
+
+    Then:
+    - The date of the commit that originally added the file is returned.
+    """
+    original = Path("pack_metadata.json")
+    renamed = Path("renamed_pack_metadata.json")
+    _commit_file(
+        git_repo,
+        original,
+        METADATA_CONTENT,
+        f"added {original}",
+        "2020-11-04T10:00:00+00:00",
+    )
+
+    git_repo.git_util.repo.git.mv(str(original), str(renamed))
+    git_repo.git_util.repo.git.commit(
+        "-m",
+        f"renamed {original}",
+        "--date",
+        "2025-03-29T10:00:00+00:00",
+        env={"GIT_COMMITTER_DATE": "2025-03-29T10:00:00+00:00"},
+    )
+
+    assert git_repo.git_util.get_file_creation_date(renamed) == "2020-11-04T10:00:00Z"
+
+
+def test_get_file_creation_date_shallow_clone_warns(git_repo: Repo, mocker, caplog):
+    """
+    Given:
+    - A shallow cloned repo.
+
+    When:
+    - Retrieving the creation time of a file in it.
+
+    Then:
+    - A warning is logged and the derived date is still returned.
+    """
+    file = Path("pack_metadata.json")
+    _commit_file(
+        git_repo, file, METADATA_CONTENT, f"added {file}", "2020-11-04T10:00:00+00:00"
+    )
+    # 'rev_parse' is resolved dynamically by GitPython, so it's patched on the class.
+    mocker.patch.object(
+        type(git_repo.git_util.repo.git),
+        "rev_parse",
+        create=True,
+        return_value="true",
+    )
+
+    caplog.set_level("WARNING")
+    file_creation_date = git_repo.git_util.get_file_creation_date(file)
+
+    assert file_creation_date == "2020-11-04T10:00:00Z"
+    assert "shallow clone" in caplog.text
+
+
+def test_get_file_creation_date_no_history_returns_now(git_repo: Repo):
+    """
+    Given:
+    - A file path that has no git history.
+
+    When:
+    - Retrieving the creation time of the given file.
+
+    Then:
+    - The current time is returned, in the expected format.
+    """
+    file_creation_date = git_repo.git_util.get_file_creation_date(
+        Path("no_such_file.json")
+    )
+
+    datetime.strptime(file_creation_date, ISO_TIMESTAMP_FORMAT)  # raises if invalid

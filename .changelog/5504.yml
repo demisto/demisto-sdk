@@ -1,0 +1,7 @@
+changes:
+- description: Fixed an issue where the pack **First Created** (`firstCreated`) date
+    could be inaccurate. The date is now derived from the commit that first added the
+    pack metadata file (following renames), and a warning is logged when the result
+    may be unreliable (for example, in a shallow clone).
+  type: fix
+pr_number: '5504'

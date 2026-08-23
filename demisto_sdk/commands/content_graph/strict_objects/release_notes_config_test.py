@@ -22,13 +22,13 @@ class TestStrictReleaseNotesConfigForceUpdate:
                 "breakingChanges": True,
                 "forceUpdate": {"breakingChangesNotesLoosely": "Loosely BC note."},
             },
-            # forceUpdate with the tightly note as an object.
+            # forceUpdate with the tightly note as an object (message + moreInfo).
             {
                 "breakingChanges": True,
                 "forceUpdate": {
                     "breakingChangesNotesTightly": {
                         "message": "Short banner text.",
-                        "more_info": "Detailed modal text.",
+                        "moreInfo": "Detailed modal text.",
                     }
                 },
             },
@@ -44,7 +44,7 @@ class TestStrictReleaseNotesConfigForceUpdate:
                     "breakingChangesNotesLoosely": "Loosely BC note.",
                     "breakingChangesNotesTightly": {
                         "message": "Short banner text.",
-                        "more_info": "Detailed modal text.",
+                        "moreInfo": "Detailed modal text.",
                     },
                 },
             },

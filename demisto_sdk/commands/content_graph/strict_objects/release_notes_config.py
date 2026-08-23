@@ -17,7 +17,7 @@ class StrictBreakingChangesNotesTightly(BaseStrictModel):
     """
 
     message: Optional[str] = None
-    more_info: Optional[str] = None
+    more_info: Optional[str] = Field(None, alias="moreInfo")
 
 
 class StrictForceUpdate(BaseStrictModel):
@@ -28,7 +28,7 @@ class StrictForceUpdate(BaseStrictModel):
 
     - `breakingChangesNotesLoosely`: Breaking-change notes for Loosely Coupled items only.
     - `breakingChangesNotesTightly`: Breaking-change notes for Tightly Coupled items only
-      (either a plain string or a {message, more_info} object).
+      (either a plain string or a {message, moreInfo} object).
     """
 
     breaking_changes_notes_loosely: Optional[str] = Field(

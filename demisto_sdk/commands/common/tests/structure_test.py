@@ -791,7 +791,7 @@ class TestGetMatchingRegex:
                 "forceUpdate": {
                     "breakingChangesNotesTightly": {
                         "message": "Short banner text.",
-                        "more_info": "Detailed modal text.",
+                        "moreInfo": "Detailed modal text.",
                     }
                 },
             },
@@ -811,7 +811,7 @@ class TestGetMatchingRegex:
                     "breakingChangesNotesLoosely": "Loosely BC note.",
                     "breakingChangesNotesTightly": {
                         "message": "Short banner text.",
-                        "more_info": "Detailed modal text.",
+                        "moreInfo": "Detailed modal text.",
                     },
                 },
             },

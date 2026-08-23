@@ -1,0 +1,4 @@
+changes:
+- description: Added CO116, CO130, and CO171 to the list of ignorable ConnectUs validators, and refined CO130 diagnostics and CO171 serializer awareness.
+  type: internal
+pr_number: 5505

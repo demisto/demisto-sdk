@@ -6397,9 +6397,7 @@ class TestCO130IsValidFetch:
         assert len(serializer_results) == 1
         assert len(configurations_results) == 1
         assert "does not emit" in serializer_results[0].message
-        assert (
-            "missing required field 'mappingId'" in configurations_results[0].message
-        )
+        assert "missing required field 'mappingId'" in configurations_results[0].message
 
     def test_serializer_defect_path_points_to_handler_serializer_yaml(self):
         """A Part-1 (missing ``isFetch``) result's path must be

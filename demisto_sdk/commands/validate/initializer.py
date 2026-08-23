@@ -1531,7 +1531,9 @@ class ConnectorAwareInitializer(Initializer):
                 f"from '{int_path}' for params hydration: {exc}"
             )
             return
-        fresh_params = list(getattr(fresh, "params", None) or []) if fresh is not None else []
+        fresh_params = (
+            list(getattr(fresh, "params", None) or []) if fresh is not None else []
+        )
         if fresh_params:
             integration.params = fresh_params
 

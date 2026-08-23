@@ -16,3 +16,15 @@ mapping:
     type: seq
     sequence:
     - type: str
+  # Optional coupling-aware breaking-change notes for the ConnectUS (Managed Content) flow.
+  # Omitting it preserves full backward compatibility. See CIAC-17085 / CIAC-17086.
+  forceUpdate:
+    type: map
+    required: false
+    mapping:
+      breakingChangesNotesLoosely:
+        type: str
+        required: false
+      breakingChangesNotesTightly:
+        type: any
+        required: false

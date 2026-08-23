@@ -3,6 +3,7 @@ from datetime import datetime
 from pathlib import Path
 
 import pytest
+from freezegun import freeze_time
 from git import Blob
 
 from demisto_sdk.commands.common.constants import ISO_TIMESTAMP_FORMAT
@@ -326,6 +327,7 @@ def test_normalize_iso_date(iso_date: str, expected: str):
     assert GitUtil._normalize_iso_date(iso_date) == expected
 
 
+@freeze_time("2020-11-04T10:00:00Z")
 def test_get_file_creation_date_no_history_returns_now(
     git_repo: Repo, unmocked_get_file_creation_date
 ):
@@ -343,4 +345,4 @@ def test_get_file_creation_date_no_history_returns_now(
         Path("no_such_file.json")
     )
 
-    datetime.strptime(file_creation_date, ISO_TIMESTAMP_FORMAT)  # raises if invalid
+    assert file_creation_date == "2020-11-04T10:00:00Z"

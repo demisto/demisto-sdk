@@ -1327,4 +1327,4 @@ class GitUtil:
             first_commit = commits[-1]
             return self._normalize_iso_date(first_commit.authored_datetime.isoformat())
 
-        return datetime.now().strftime(ISO_TIMESTAMP_FORMAT)
+        return self._normalize_iso_date(datetime.now(timezone.utc).isoformat())

@@ -11918,6 +11918,37 @@ class TestCO171IsCollectionSubCapabilityFetchFlagValid:
     serializer.yaml, gated on the right capability+value.
     """
 
+    def test_related_file_type_includes_serializer(self):
+        """
+        Given: The CO171 validator class as declared.
+        When: We inspect its ``related_file_type``.
+        Then: It contains BOTH ``CONNECTOR_HANDLER`` and
+              ``CONNECTOR_SERIALIZER``.
+
+        Why this is a real gate, not paperwork:
+
+        * ``ConnectorsValidator.should_run`` calls
+          ``is_error_ignored(err, ignorable, item, self.related_file_type)``
+          which iterates ``related_file_type`` and calls
+          ``_resolve_ignore_file_keys``. ``CONNECTOR_HANDLER`` alone yields
+          only ``<folder>/handler.yaml``, so a per-serializer
+          ``.connector-ignore`` entry keyed by
+          ``<folder>/serializer.yaml`` is never consulted and the
+          validator runs unignored.
+        * CO171 emits ``path = <handler_dir>/serializer.yaml``. The
+          author-facing convention (and what CO130 does — see its
+          ``related_file_type`` and the NOTE above it) is a serializer-scoped
+          ignore. Dropping ``CONNECTOR_SERIALIZER`` silently reintroduces
+          the CI regression where those ignores had no effect.
+        """
+        from demisto_sdk.commands.content_graph.parsers.related_files import (
+            RelatedFileType,
+        )
+
+        validator = IsCollectionSubCapabilityFetchFlagValidValidator()
+        assert RelatedFileType.CONNECTOR_HANDLER in validator.related_file_type
+        assert RelatedFileType.CONNECTOR_SERIALIZER in validator.related_file_type
+
     def test_no_collection_cap_short_circuits(self):
         """
         Given: A handler that subscribes to no collection sub-capability

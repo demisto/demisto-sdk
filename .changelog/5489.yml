@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where the SDK Nightly Gate PR comment rendered a stray trailing backslash after each file path.
-  type: internal
-pr_number: '5489'

@@ -917,6 +917,51 @@ def test_collect_related_files_main_items(repo):
     }
 
 
+@pytest.mark.parametrize(
+    "pack_name",
+    (
+        "AgentixAction_CortexGetUserDefinedParsingRules",
+        "AgentixAction_CortexGetUserDefinedModelingRules",
+    ),
+)
+@pytest.mark.parametrize(
+    "file_attributes",
+    (
+        ["readme"],
+        ["pack_ignore"],
+        ["secrets"],
+        ["author_image"],
+        ["readme", "pack_ignore", "secrets", "author_image"],
+    ),
+)
+def test_collect_related_files_main_items_pack_name_contains_rules_dir_substring(
+    repo, pack_name, file_attributes
+):
+    """
+    Given:
+    - A pack whose name contains "ParsingRules" or "ModelingRules" as a substring
+      (e.g. an AgentixAction pack such as
+      "AgentixAction_CortexGetUserDefinedParsingRules"), along with one or more of
+      its pack-level auxiliary files (README, .pack-ignore, .secrets-ignore,
+      Author_image.png).
+    When:
+    - Calling collect_related_files_main_items.
+    Then:
+    - The auxiliary files must resolve to the pack_metadata.json (via is_pack_item),
+      and must NOT be short-circuited into the ModelingRules/ParsingRules branch
+      just because the pack name contains the substring "ParsingRules" or
+      "ModelingRules".
+      Regression test for BA102 spam on packs whose names contain "ParsingRules"
+      or "ModelingRules".
+    """
+    pack = repo.create_pack(pack_name)
+    initializer = Initializer()
+    results = initializer.collect_related_files_main_items(
+        {Path(getattr(pack, attribute).path) for attribute in file_attributes}
+    )
+    assert results == {Path(pack.pack_metadata.path)}
+
+
 def test_get_items_status(repo):
     """
     Given:
@@ -2218,6 +2263,83 @@ class TestConnectorHandlerIgnoreFiltering:
             "CO155",
             Path("/repo/connectors/foo/connector.yaml"),
             {"connector.yaml": ["CO155"]},
+        )
+
+        filtered = manager.filter_validation_results([result])
+
+        assert result in filtered
+
+    def test_filter_drops_result_ignored_via_pack_level_ignore(self, mocker):
+        """
+        Given: A ContentItem result whose error code (e.g. GR109) is listed
+               under the pack's ``[pack]`` section of ``.pack-ignore`` (exposed
+               as ``in_pack.pack_level_ignored_errors``), and NOT in the item's
+               own per-file ``ignored_errors``.
+        When: filter_validation_results runs (the post-hoc path taken for
+              ``ALWAYS_RUN_ON_ERROR_CODE`` codes such as GR107/GR109).
+        Then: The result is dropped - the pack-level ignore is honored.
+        """
+        from types import SimpleNamespace
+
+        manager = get_validate_manager(mocker)
+
+        pack = SimpleNamespace(pack_level_ignored_errors=["GR109"])
+        result = SimpleNamespace(
+            validator=SimpleNamespace(error_code="GR109", related_file_type=None),
+            path=Path("/repo/Packs/Foo/Integrations/Foo/Foo.yml"),
+            content_object=SimpleNamespace(ignored_errors=[], in_pack=pack),
+        )
+
+        filtered = manager.filter_validation_results([result])
+
+        assert filtered == []
+
+    def test_filter_drops_result_when_content_object_is_pack_with_pack_level_ignore(
+        self, mocker
+    ):
+        """
+        Given: A result whose content_object IS the ``Pack`` itself (as with
+               PA-validators), and the code is listed in the pack's
+               ``pack_level_ignored_errors``.
+        When: filter_validation_results runs.
+        Then: The result is dropped - the duck-typed pack lookup uses
+              ``pack_level_ignored_errors`` directly on the content_object.
+        """
+        from types import SimpleNamespace
+
+        manager = get_validate_manager(mocker)
+
+        pack = SimpleNamespace(
+            ignored_errors=[],
+            pack_level_ignored_errors=["GR107"],
+        )
+        result = SimpleNamespace(
+            validator=SimpleNamespace(error_code="GR107", related_file_type=None),
+            path=Path("/repo/Packs/Foo/pack_metadata.json"),
+            content_object=pack,
+        )
+
+        filtered = manager.filter_validation_results([result])
+
+        assert filtered == []
+
+    def test_filter_keeps_result_when_neither_file_nor_pack_ignore_match(self, mocker):
+        """
+        Given: A result whose error code is neither in the content item's
+               per-file ``ignored_errors`` nor in the pack's
+               ``pack_level_ignored_errors``.
+        When: filter_validation_results runs.
+        Then: The result is kept.
+        """
+        from types import SimpleNamespace
+
+        manager = get_validate_manager(mocker)
+
+        pack = SimpleNamespace(pack_level_ignored_errors=["PB100"])
+        result = SimpleNamespace(
+            validator=SimpleNamespace(error_code="GR109", related_file_type=None),
+            path=Path("/repo/Packs/Foo/Integrations/Foo/Foo.yml"),
+            content_object=SimpleNamespace(ignored_errors=["BA101"], in_pack=pack),
         )
 
         filtered = manager.filter_validation_results([result])

@@ -6361,10 +6361,22 @@ class TestCO130IsValidFetch:
         assert "must be 'mapper-incoming'" in results[0].message
 
     # ------------------------------------------------------------
-    # Aggregation
+    # Result-splitting: per-handler serializer vs per-capability
+    # configurations. Enables handler-scoped ``.connector-ignore``
+    # entries (``[file:<handler-folder>/serializer.yaml]``) for
+    # Part-1 defects while keeping Part-2 defects filterable by
+    # ``[file:configurations.yaml]``.
     # ------------------------------------------------------------
-    def test_multiple_problems_aggregate_into_single_result(self):
-        """Missing serializer AND missing field -> one aggregated result."""
+    def test_multiple_problems_emit_separate_results_per_owning_file(self):
+        """Missing serializer AND missing field -> two results, each
+        keyed by the file that owns the fix.
+
+        Historical shape aggregated everything into one result with
+        path=configurations.yaml, which defeats per-handler
+        ``.connector-ignore`` filtering (the ignore key
+        ``<folder>/serializer.yaml`` was never resolved for a
+        configurations-file result).
+        """
         from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
             IsValidFetchValidator,
         )
@@ -6374,13 +6386,44 @@ class TestCO130IsValidFetch:
         connector.handlers[0].serializer = None
         _write_configurations_with_fetch_issues(connector, include_mappingId=False)
         results = IsValidFetchValidator().obtain_invalid_content_items([connector])
-        assert len(results) == 1
-        msg = results[0].message
-        assert "does not emit" in msg
-        assert "missing required field 'mappingId'" in msg
+        assert len(results) == 2
 
-    def test_error_path_points_to_configurations_yaml(self):
-        """Result.path should point at configurations.yaml."""
+        serializer_results = [
+            r for r in results if str(r.path).endswith("serializer.yaml")
+        ]
+        configurations_results = [
+            r for r in results if str(r.path).endswith("configurations.yaml")
+        ]
+        assert len(serializer_results) == 1
+        assert len(configurations_results) == 1
+        assert "does not emit" in serializer_results[0].message
+        assert (
+            "missing required field 'mappingId'" in configurations_results[0].message
+        )
+
+    def test_serializer_defect_path_points_to_handler_serializer_yaml(self):
+        """A Part-1 (missing ``isFetch``) result's path must be
+        ``<handler-folder>/serializer.yaml`` so per-handler
+        ``.connector-ignore`` entries actually filter it (mirrors
+        CO171/CO172)."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_fetch_issues(connector)
+        connector.handlers[0].serializer = None
+        # Configurations wired correctly so ONLY the Part-1 defect fires.
+        _write_configurations_with_fetch_issues(connector)
+        results = IsValidFetchValidator().obtain_invalid_content_items([connector])
+        assert len(results) == 1
+        assert str(results[0].path).endswith("serializer.yaml")
+
+    def test_configurations_defect_path_points_to_configurations_yaml(self):
+        """A Part-2 (missing required field) result's path stays at
+        ``configurations.yaml`` — the configurations entry is a
+        connector-scoped concern shared across every handler
+        subscribing to that capability id."""
         from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
             IsValidFetchValidator,
         )

@@ -27,7 +27,8 @@ CO131-CO134 own their own capability/flag constants when written):
 
 from __future__ import annotations
 
-from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
+from pathlib import Path
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from demisto_sdk.commands.content_graph.objects.connector import (
     Connector,
@@ -249,27 +250,133 @@ class IsValidFetchValidator(ConnectorsValidator[ContentTypes]):
     )
     related_field = "configurations"
     is_auto_fixable = False
+    # ``related_file_type`` feeds TWO independent ignore chains; each type
+    # is needed by a different one (mirrors CO171's NOTE):
+    #
+    #   1. ``ConnectorsValidator.should_run`` -> ``is_error_ignored`` ->
+    #      ``_resolve_ignore_file_keys``. This is the preflight; it expands
+    #      each type into ``.connector-ignore`` section keys and short-
+    #      circuits the validator when suppression is universal. Without
+    #      CONNECTOR_SERIALIZER, ``[file:<handler>/serializer.yaml]`` entries
+    #      are never consulted here and the validator runs even when every
+    #      handler explicitly opts out.
+    #
+    #   2. ``ValidateManager.filter_validation_results`` ->
+    #      ``_is_connector_handler_validation``. This is the post-hoc
+    #      per-result filter, and it triggers when EITHER
+    #      CONNECTOR_HANDLER OR CONNECTOR_SERIALIZER is present — so this
+    #      chain was already active before CONNECTOR_SERIALIZER was added
+    #      (CO130 has always carried CONNECTOR_HANDLER). What it does need
+    #      is the per-result ``path`` split done in ``obtain_invalid_content_items``
+    #      below, so each Part-1 result lands under
+    #      ``<handler>/serializer.yaml`` and the per-handler ignore key
+    #      resolves correctly.
+    #
+    # CONNECTOR_CONFIGURATIONS keeps Part-2 results discoverable under
+    # ``[file:configurations.yaml]`` in chain 1.
     related_file_type = [
         RelatedFileType.CONNECTOR_CONFIGURATIONS,
         RelatedFileType.CONNECTOR_HANDLER,
+        RelatedFileType.CONNECTOR_SERIALIZER,
     ]
 
     def obtain_invalid_content_items(
         self,
         content_items: Iterable[ContentTypes],
     ) -> List[ValidationResult]:
+        """Emit one ValidationResult per defect, keyed by the file that
+        owns the fix. The per-result ``path`` is what
+        ``ValidateManager.filter_validation_results`` reads to route each
+        result through the correct ignore lookup — so the split below is
+        what makes per-handler ``.connector-ignore`` entries actually
+        drop the right result (and only the right result):
+
+        * Part 1 (serializer missing ``isFetch`` computed_field) — one
+          result per offending handler, ``path=<handler>/serializer.yaml``.
+          Routed by ``filter_validation_results`` to the connector's
+          per-handler ignore check, which resolves
+          ``[file:<handler-folder>/serializer.yaml]``. Sibling validators
+          CO171/CO172 emit results the same way.
+
+        * Part 2 (missing/wrong fields in ``configurations.yaml`` for a
+          fetch-issues capability entry) — one result per offending
+          capability id, ``path=configurations.yaml``. This is a
+          connector-scoped concern (the configurations entry is shared
+          across every handler subscribing to that capability id), so it
+          keeps its historical placement and falls through to the
+          general-case ignore lookup (``[file:configurations.yaml]``).
+        """
         results: List[ValidationResult] = []
 
         for connector in content_items:
-            issues = self._check_connector(connector)
-            if not issues:
+            results.extend(self._collect_serializer_results(connector))
+            results.extend(self._collect_configurations_results(connector))
+        return results
+
+    def _collect_serializer_results(
+        self, connector: Connector
+    ) -> List[ValidationResult]:
+        """One result per handler whose serializer.yaml is missing the
+        required ``isFetch: true`` ``computed_fields`` rule for one of
+        its ``fetch-issues*`` capability ids."""
+        results: List[ValidationResult] = []
+        for handler in connector.xsoar_handlers:
+            per_handler_issues: List[str] = []
+            for cap_id in iter_handler_capability_ids(handler, FETCH_ISSUES_CAPABILITY):
+                if not computed_field_emits_flag(handler, FETCH_ISSUES_FLAG, cap_id):
+                    per_handler_issues.append(
+                        f"handler '{handler.id}' subscribes to "
+                        f"capability '{cap_id}' but its serializer.yaml "
+                        f"does not emit `computed_fields` output "
+                        f"'{FETCH_ISSUES_FLAG}: true' under a capability "
+                        f"condition '{cap_id} == on'"
+                    )
+            if not per_handler_issues:
                 continue
             results.append(
                 ValidationResult(
                     validator=self,
                     message=self.error_message.format(
                         connector_id=connector.object_id,
-                        issues="; ".join(issues),
+                        issues="; ".join(per_handler_issues),
+                    ),
+                    content_object=connector,
+                    path=self._serializer_path(handler),
+                )
+            )
+        return results
+
+    def _collect_configurations_results(
+        self, connector: Connector
+    ) -> List[ValidationResult]:
+        """One result per unique fetch-issues capability id whose
+        ``configurations.yaml`` entry is missing / has wrong-shape
+        required fields. A capability id may be subscribed to by
+        multiple handlers via alternative auth options; the underlying
+        configurations entry is shared, so we check each cap id once.
+        The first subscribing handler's serializer rename map is used
+        for id resolution (same behavior as before the split)."""
+        results: List[ValidationResult] = []
+        seen_capability_ids: Dict[str, HandlerData] = {}
+        for handler in connector.xsoar_handlers:
+            for cap_id in iter_handler_capability_ids(handler, FETCH_ISSUES_CAPABILITY):
+                if cap_id in seen_capability_ids:
+                    continue
+                seen_capability_ids[cap_id] = handler
+
+        for cap_id, handler in seen_capability_ids.items():
+            rename_map = _serializer_rename_map(handler)
+            capability_issues = self._check_capability_fields(
+                connector, cap_id, rename_map
+            )
+            if not capability_issues:
+                continue
+            results.append(
+                ValidationResult(
+                    validator=self,
+                    message=self.error_message.format(
+                        connector_id=connector.object_id,
+                        issues="; ".join(capability_issues),
                     ),
                     content_object=connector,
                     path=connector.configurations_file.file_path,
@@ -277,44 +384,20 @@ class IsValidFetchValidator(ConnectorsValidator[ContentTypes]):
             )
         return results
 
-    def _check_connector(self, connector: Connector) -> List[str]:
-        """Return a list of issue strings for the fetch-issues wiring on
-        ``connector``. Empty list means "all good"."""
-        issues: List[str] = []
-        # (capability_id, frozenset(rename_map.items())) -> already-checked.
-        # A capability's field-shape depends on the subscribing handler's
-        # serializer rename map, so we key the "already checked" set by
-        # (cap_id, rename_map) to avoid re-emitting identical issues while
-        # still re-checking when different handlers bring different rename
-        # maps.
-        checked_capability_ids: Set[str] = set()
+    @staticmethod
+    def _serializer_path(handler: HandlerData) -> Optional[Path]:
+        """Best-effort path to ``handler``'s ``serializer.yaml`` — mirrors
+        CO171/CO172's ``_serializer_path`` so the per-handler ignore key
+        (``<handler-folder>/serializer.yaml``) resolves the same way.
 
-        for handler in connector.xsoar_handlers:
-            rename_map = _serializer_rename_map(handler)
-            for cap_id in iter_handler_capability_ids(handler, FETCH_ISSUES_CAPABILITY):
-                # Part 1 - serializer computed_fields must emit `isFetch`
-                # for this capability id.
-                if not computed_field_emits_flag(handler, FETCH_ISSUES_FLAG, cap_id):
-                    issues.append(
-                        f"handler '{handler.id}' subscribes to "
-                        f"capability '{cap_id}' but its serializer.yaml "
-                        f"does not emit `computed_fields` output "
-                        f"'{FETCH_ISSUES_FLAG}: true' under a capability "
-                        f"condition '{cap_id} == on'"
-                    )
-
-                # Part 2 - the capability's configurations entry must
-                # exist and expose the 4 required fields. Do this only
-                # once per unique cap id (multiple handlers may share
-                # the same capability id via alternative auth options).
-                if cap_id in checked_capability_ids:
-                    continue
-                checked_capability_ids.add(cap_id)
-                issues.extend(
-                    self._check_capability_fields(connector, cap_id, rename_map)
-                )
-
-        return issues
+        Falls back to ``None`` when the handler's on-disk location can't
+        be determined; the per-handler ignore branch handles ``None``
+        gracefully (returns False → the result is not ignored, which is
+        the safe default)."""
+        handler_yaml = handler.file_path
+        if handler_yaml is None:
+            return None
+        return handler_yaml.parent / "serializer.yaml"
 
     def _check_capability_fields(
         self,

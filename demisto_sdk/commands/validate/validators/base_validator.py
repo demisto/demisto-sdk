@@ -309,17 +309,33 @@ class ConnectorsValidator(BaseValidator[ContentTypes], ABC):
     ) -> bool:
         """Check whether the given error code is ignored for the connector content item.
 
+        This is the ``should_run`` preflight — it decides whether to run the
+        validator on the connector at all. It is intentionally a **coarse,
+        universal** check; per-handler suppression of individual results is the
+        job of ``ValidateManager.filter_validation_results``, which drops one
+        result at a time keyed by ``result.path``.
+
         The ignore rules are read from the connector's ``.connector-ignore``
         file (parsed lazily by ``Connector.ignored_errors_dict``). Each section
         header maps to a connector sub-file:
 
         * Single sub-files (connection.yaml, capabilities.yaml,
           configurations.yaml, triggers.yaml, summary.yaml) are keyed by their
-          bare filename.
+          bare filename. They resolve to exactly one key, so a match on that
+          key is decisive.
         * Handler files are keyed by ``<handler_dir>/handler.yaml`` and
-          serializer files by ``<handler_dir>/serializer.yaml``. Because a
-          connector may have multiple handlers/serializers, it is sufficient for
-          **any** of them to ignore the error for this to return ``True``.
+          serializer files by ``<handler_dir>/serializer.yaml``. A connector
+          may have multiple handlers, so these types expand to **one key per
+          handler dir**. The validator is short-circuited here only when
+          **every** expanded key ignores the code — i.e. suppression is
+          universal across all handlers. When only some handlers ignore, the
+          validator still runs and ``filter_validation_results`` drops the
+          individual per-handler results whose ``path`` matches an ignored
+          handler; the others are kept and reported.
+
+          (The prior "any-match wins" behaviour silenced the whole validator
+          across every handler as soon as one handler ignored the code, which
+          hid legitimate defects on the others.)
 
         When ``related_file_type`` is not provided the check falls back to the
         connector's main file (``connector.yaml``).
@@ -350,13 +366,36 @@ class ConnectorsValidator(BaseValidator[ContentTypes], ABC):
             # No related file - check the connector's main file.
             return err_code in get_ignored_errors("connector.yaml")
 
+        # Handler/serializer types expand to one key per handler dir. Short-
+        # circuiting the whole validator when ANY single handler ignores the
+        # code would silence real defects on the other handlers; per-handler
+        # suppression is the job of ``filter_validation_results`` (per-result),
+        # not of this preflight. So for handler/serializer types we require
+        # that EVERY expanded key ignores the code. For single-file types the
+        # behaviour is unchanged (they expand to exactly one key, so all == any
+        # over one element).
+        per_handler_types = {
+            RelatedFileType.CONNECTOR_HANDLER,
+            RelatedFileType.CONNECTOR_SERIALIZER,
+        }
         for related_file in related_file_type:
             file_keys = self._resolve_ignore_file_keys(related_file, content_item)
-            # For handlers/serializers there may be several candidate keys; a
-            # single match is sufficient to consider the error ignored.
-            for file_key in file_keys:
-                if err_code in get_ignored_errors(file_key):
+            if not file_keys:
+                # No expanded keys for this type (e.g. a connector with no
+                # handlers for a handler/serializer type). Nothing to match —
+                # this type cannot contribute an ignore; move on.
+                continue
+            if related_file in per_handler_types:
+                # Universal suppression only: every handler dir must ignore.
+                if all(
+                    err_code in get_ignored_errors(file_key) for file_key in file_keys
+                ):
                     return True
+            else:
+                # Single-file types (one key): a match is decisive.
+                for file_key in file_keys:
+                    if err_code in get_ignored_errors(file_key):
+                        return True
         return False
 
     @staticmethod

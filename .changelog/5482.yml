@@ -1,4 +1,0 @@
-changes:
-- description: Changed the AG105 validation from a warning to an error.
-  type: internal
-pr_number: '5482'

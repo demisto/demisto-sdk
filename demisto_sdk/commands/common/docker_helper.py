@@ -594,15 +594,9 @@ class DockerBase:
         else:
             repo, tag = image.split(":")
 
-        # Extended (``devtestdemistoextended/*``) images are hosted ONLY on GCR
-        # (``gcr.io/xsoar-registry``) and are not visible via the DockerHub Registry
-        # API, so they must be verified through the configured registry (daemon
-        # pull). Regular ``devtestdemisto/*`` images are pushed to and served from
-        # DockerHub, so they are verified via the DockerHub Registry API directly -
-        # which queries DockerHub itself, bypassing any DockerHub pull-through proxy
-        # (e.g. the CI ``xdr-docker-hub-virtual`` GAR proxy) that cannot serve a
-        # freshly pushed tag.
-        is_gar_image = repo.startswith(DEVTEST_DEMISTO_EXTENDED_REPOSITORY)
+        # ``devtestdemistoextended/*`` images live on GCR and are verified via a daemon
+        # pull; all other images are verified via the DockerHub Registry API.
+        is_gar_image = DEVTEST_DEMISTO_EXTENDED_REPOSITORY in repo.split("/")
         registry_name = "the registry (GAR)" if is_gar_image else "DockerHub"
 
         logger.info(
@@ -784,12 +778,13 @@ class DockerBase:
             The test image name and errors to create it if any
         """
         errors = ""
-        if (
-            not python_version
-            and container_type != TYPE_PWSH
-            and (version := get_python_version(base_image))
-        ):
-            python_version = version.major
+        if not python_version and container_type != TYPE_PWSH:
+            # Fall back to the default major when the version can't be resolved,
+            # so the python3 dev-requirements still get installed instead of
+            # building an empty tool-less dev image.
+            python_version = get_python_version_or_default(
+                base_image, context="the dev/test image"
+            ).major
         python3_requirements = get_pip_requirements_from_file(
             TEST_REQUIREMENTS_DIR / "python3_requirements" / "dev-requirements.txt"
         )
@@ -1068,6 +1063,35 @@ def get_python_version(image: Optional[str]) -> Optional[Version]:
             f"Getting python version from {image=} by pulling its image and query its env"
         )
         return _get_python_version_from_image_client(image)
+
+
+def get_python_version_or_default(
+    image: Optional[str],
+    context: str,
+    identifier: Optional[str] = None,
+) -> Version:
+    """
+    Resolve the python version of a docker image, falling back to
+    DEFAULT_PYTHON_VERSION (with a warning) when it cannot be determined.
+
+    Args:
+        image: the docker image to resolve the python version from.
+        context: short description of the caller, included in the warning
+            (e.g. "pre-commit", "mypy-in-docker", "the dev/test image").
+        identifier: optional extra identifier for the warning (e.g. a yml path).
+
+    Returns:
+        Version: the resolved python version, or DEFAULT_PYTHON_VERSION.
+    """
+    if python_version := get_python_version(image):
+        return python_version
+    default = Version(DEFAULT_PYTHON_VERSION)
+    subject = f"{identifier} (docker image {image!r})" if identifier else repr(image)
+    logger.warning(
+        f"Could not resolve the python version for {subject}; "
+        f"assuming {DEFAULT_PYTHON_VERSION} for {context}."
+    )
+    return default
 
 
 def _get_python_version_from_image_client(image: str) -> Version:

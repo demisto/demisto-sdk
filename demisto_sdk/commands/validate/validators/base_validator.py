@@ -388,8 +388,7 @@ class ConnectorsValidator(BaseValidator[ContentTypes], ABC):
             if related_file in per_handler_types:
                 # Universal suppression only: every handler dir must ignore.
                 if all(
-                    err_code in get_ignored_errors(file_key)
-                    for file_key in file_keys
+                    err_code in get_ignored_errors(file_key) for file_key in file_keys
                 ):
                     return True
             else:

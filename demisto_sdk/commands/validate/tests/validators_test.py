@@ -2020,9 +2020,7 @@ class TestHydrateIntegrationParams:
               re-parse ``Path(None)`` would raise ``TypeError`` and mask
               the real (upstream) shape defect.
         """
-        integration = self._fake_integration(
-            params=[], path=None, object_id="Foo"
-        )
+        integration = self._fake_integration(params=[], path=None, object_id="Foo")
         from_path_spy = mocker.patch(
             "demisto_sdk.commands.content_graph.objects.integration."
             "Integration.from_path"
@@ -2033,9 +2031,7 @@ class TestHydrateIntegrationParams:
         from_path_spy.assert_not_called()
         assert integration.params == []
 
-    def test_success_path_mutates_in_place_and_calls_from_path_with_path(
-        self, mocker
-    ):
+    def test_success_path_mutates_in_place_and_calls_from_path_with_path(self, mocker):
         """
         Given: A graph-hydrated integration with ``params == []`` and a
                valid on-disk ``path``; ``IntegrationModel.from_path``
@@ -2057,9 +2053,7 @@ class TestHydrateIntegrationParams:
             the graph object would leak into the fresh Pydantic model.
         """
         int_path = Path("/repo/Packs/Foo/Integrations/Foo/Foo.yml")
-        integration = self._fake_integration(
-            params=[], path=int_path, object_id="Foo"
-        )
+        integration = self._fake_integration(params=[], path=int_path, object_id="Foo")
         original_ref = integration
 
         fresh_params = [SimpleNamespace(name="url"), SimpleNamespace(name="api_key")]
@@ -2438,9 +2432,7 @@ class TestConnectorHandlerIgnoreFiltering:
             is False
         )
 
-    def test_should_run_preflight_suppressed_when_every_handler_ignores(
-        self, mocker
-    ):
+    def test_should_run_preflight_suppressed_when_every_handler_ignores(self, mocker):
         """
         Given: A connector with three handlers (a, b, c), and EVERY handler's
                ``.connector-ignore`` ignores CO130 via its

@@ -15,7 +15,11 @@ from demisto_sdk.commands.common.constants import (
     DEMISTO_SDK_NEO4J_DATABASE_URL,
     DEMISTO_SDK_NEO4J_PASSWORD,
     DEMISTO_SDK_NEO4J_USERNAME,
+    DEPRECATED_DESC_REGEX,
+    DEPRECATED_NO_REPLACE_DESC_REGEX,
+    PACK_NAME_DEPRECATED_REGEX,
     PACKS_FOLDER,
+    XSOAR_SUPPORT,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
@@ -500,6 +504,143 @@ def resolve_derived_pack_source(pack_derived_source: Optional[str] = None) -> st
     if pack_derived_source:
         return pack_derived_source
     return os.getenv("DERIVED_PACK_SOURCE") or DEFAULT_DERIVED_PACK_SOURCE
+
+
+# Environment variable holding a comma-separated list of pack ids (folder names)
+# that must never yield a derived (split) pack, regardless of their content.
+DERIVED_PACKS_EXCLUDE_ENV = "DERIVED_PACKS_EXCLUDE"
+
+# Only xsoar-supported packs may be split. Partner/community/developer packs -
+# and packs declaring no support at all - are never eligible.
+DERIVED_PACK_ALLOWED_SUPPORT_LEVELS: frozenset[str] = frozenset({XSOAR_SUPPORT})
+
+DERIVED_PACKS_EXCLUDE_SEPARATOR = ","
+
+
+def derived_pack_exclusions() -> frozenset[str]:
+    """The set of pack ids explicitly excluded from derived (split) pack generation.
+
+    The value is read from the ``DERIVED_PACKS_EXCLUDE`` environment variable, a
+    comma-separated list of pack ids (the pack folder name, i.e.
+    ``pack.object_id``). Entries are stripped and casefolded, so matching is
+    case-insensitive and insensitive to whitespace around the separators. Blank
+    entries are dropped.
+
+    The environment is read per call (like ``resolve_derived_pack_source`` and
+    unlike ``ENABLE_SPLIT_PACKS``) so the value stays overridable in tests and is
+    not sensitive to import order.
+
+    Returns:
+        The casefolded pack ids to exclude; empty when the variable is unset or blank.
+    """
+    raw = os.getenv(DERIVED_PACKS_EXCLUDE_ENV) or ""
+    return frozenset(
+        entry.strip().casefold()
+        for entry in raw.split(DERIVED_PACKS_EXCLUDE_SEPARATOR)
+        if entry.strip()
+    )
+
+
+# ---------------------------------------------------------------------------
+# Deprecation - one canonical rule, applied identically to packs and to
+# content items by the split-pack (derived pack) logic.
+#
+# NOTE: this helper is deliberately scoped to the split-pack logic. The legacy
+# per-entity ``deprecated`` properties (``PackParser.deprecated``,
+# ``YAMLContentItemParser.deprecated``, ``JSONContentItemParser.deprecated``)
+# are left exactly as they are, so unrelated consumers keep their current
+# behaviour. Everything deciding derived-pack eligibility or tight coupling goes
+# through the functions below instead.
+# ---------------------------------------------------------------------------
+
+# The explicit deprecation field, spelled identically in ``pack_metadata.json``
+# and in a content item's yml/json.
+DEPRECATED_FIELD = "deprecated"
+
+
+def is_deprecated_entity(
+    name: Optional[str],
+    description: Optional[str],
+    deprecated_field: Optional[bool] = None,
+) -> bool:
+    """The canonical deprecation predicate, shared by packs and content items.
+
+    An entity is deprecated when EITHER holds:
+        1. its explicit ``deprecated`` field is truthy (``deprecated`` in a
+           content item's yml/json, ``deprecated`` in ``pack_metadata.json``), or
+        2. its display name is marked ``(Deprecated)`` AND its description
+           follows one of the deprecation description conventions
+           (``Deprecated. Use X instead.`` / ``Deprecated. No available replacement.``).
+
+    Rule 2 is the historical pack-level heuristic; applying it to content items as
+    well is what makes this predicate uniform across both entity kinds.
+
+    Args:
+        name: The entity display name, if any.
+        description: The entity description, if any.
+        deprecated_field: The value of the entity's explicit ``deprecated`` field, if any.
+
+    Returns:
+        True if the entity is deprecated under either rule.
+    """
+    if deprecated_field:
+        return True
+    if not isinstance(name, str) or not isinstance(description, str):
+        return False
+    return bool(
+        re.match(PACK_NAME_DEPRECATED_REGEX, name)
+        and (
+            re.match(DEPRECATED_NO_REPLACE_DESC_REGEX, description)
+            or re.match(DEPRECATED_DESC_REGEX, description)
+        )
+    )
+
+
+def is_deprecated_content_item(content_item: Any) -> bool:
+    """Apply ``is_deprecated_entity`` to a content item.
+
+    Works for both the parser representation
+    (``content_graph.parsers.content_item.ContentItemParser``) and the object
+    representation (``content_graph.objects.content_item.ContentItem``), which
+    expose the same ``name`` / ``description`` / ``deprecated`` surface.
+
+    Args:
+        content_item: The content item (parser or object) to inspect.
+
+    Returns:
+        True if the content item is deprecated.
+    """
+    return is_deprecated_entity(
+        name=getattr(content_item, "name", None),
+        description=getattr(content_item, "description", None),
+        deprecated_field=getattr(content_item, DEPRECATED_FIELD, None),
+    )
+
+
+def is_deprecated_pack(pack: Any) -> bool:
+    """Apply ``is_deprecated_entity`` to a pack.
+
+    Works for both the parser representation
+    (``content_graph.parsers.pack.PackParser``) and the object representation
+    (``content_graph.objects.pack.Pack``).
+
+    Unlike the legacy ``PackParser.deprecated`` property - which is left
+    untouched and consults the name/description convention only - this also
+    honours an explicit ``deprecated`` field in ``pack_metadata.json``.
+
+    Args:
+        pack: The pack (parser or object) to inspect.
+
+    Returns:
+        True if the pack is deprecated.
+    """
+    metadata = getattr(pack, "pack_metadata_dict", None) or {}
+    return is_deprecated_entity(
+        name=getattr(pack, "name", None),
+        description=getattr(pack, "description", None),
+        deprecated_field=metadata.get(DEPRECATED_FIELD)
+        or getattr(pack, DEPRECATED_FIELD, None),
+    )
 
 
 class Relationship(BaseModel):

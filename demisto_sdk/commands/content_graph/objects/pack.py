@@ -37,6 +37,7 @@ from demisto_sdk.commands.common.tools import (
     write_dict,
 )
 from demisto_sdk.commands.content_graph.common import (
+    DERIVED_PACK_ALLOWED_SUPPORT_LEVELS,
     DERIVED_PACK_SUFFIX,
     ENABLE_SPLIT_PACKS,
     PACK_METADATA_FILENAME,
@@ -47,6 +48,9 @@ from demisto_sdk.commands.content_graph.common import (
     PackDestination,
     Relationships,
     RelationshipType,
+    derived_pack_exclusions,
+    is_deprecated_content_item,
+    is_deprecated_pack,
     replace_marketplace_references,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
@@ -188,12 +192,61 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         return PackDestination.MARKETPLACE
 
     def _is_item_tightly_coupled(self, content_item: ContentItem) -> bool:
-        """Check if a content item is tightly coupled, respecting overrides."""
+        """Check if a content item is tightly coupled, respecting overrides.
+
+        A deprecated item is never tightly coupled: it must not be carried into a
+        derived pack even when an explicit override says otherwise, so the
+        deprecation check deliberately precedes ``coupling_overrides``.
+
+        Kept in sync with ``PackParser._is_item_tightly_coupled``
+        (``parsers/pack.py``), which mirrors this rule on the parser side.
+        """
+        if is_deprecated_content_item(content_item):
+            return False
         overrides = self.coupling_overrides or {}
         item_id = content_item.object_id
         if item_id in overrides:
             return overrides[item_id] == "tightly_coupled"
         return content_item.content_type.is_tightly_coupled
+
+    def _is_derived_pack_eligible(self) -> bool:
+        """Whether this pack may yield a derived (split) pack at all.
+
+        Mirrors ``PackParser._is_derived_pack_eligible`` (``parsers/pack.py``),
+        which is where a derived pack is actually created. The two live in
+        different class hierarchies, so the duplication is deliberate and the two
+        must be kept in sync: advertising a twin here that the parser would never
+        generate would put a phantom pack into ``metadata.json`` and
+        ``pack_destinations.json``.
+
+        Returns:
+            True if the pack may yield a derived pack, False otherwise.
+        """
+        pack_id = self.object_id or ""
+        if self.managed:
+            return False
+        if (self.support or "").casefold() not in DERIVED_PACK_ALLOWED_SUPPORT_LEVELS:
+            logger.debug(
+                f"Pack '{pack_id}' is not derived-pack eligible: support level "
+                f"'{self.support}' is not one of {sorted(DERIVED_PACK_ALLOWED_SUPPORT_LEVELS)}"
+            )
+            return False
+        if is_deprecated_pack(self):
+            logger.debug(
+                f"Pack '{pack_id}' is not derived-pack eligible: the pack is deprecated"
+            )
+            return False
+        if self.hidden:
+            logger.debug(
+                f"Pack '{pack_id}' is not derived-pack eligible: the pack is hidden"
+            )
+            return False
+        if pack_id.casefold() in derived_pack_exclusions():
+            logger.debug(
+                f"Pack '{pack_id}' is not derived-pack eligible: it is listed in the exclusion list"
+            )
+            return False
+        return True
 
     def is_managed_paired(self) -> bool:
         """Whether this pack participates in a source/twin (marketplace + managed content) pair.
@@ -201,11 +254,13 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         The rule:
             - a derived twin (``is_derived``) is the managed half of a pair, so it is always paired.
             - a natively managed pack (``managed`` and not derived, e.g. AWS/Azure/GCP) has no twin at all.
-            - any other pack is paired only if it has at least one tightly coupled item, which is exactly
-              what causes a twin to be generated for it.
+            - a pack that is not derived-pack eligible (wrong support level, deprecated, hidden, or
+              explicitly excluded) never yields a twin.
+            - any other pack is paired only if it has at least one tightly coupled, non-deprecated item,
+              which is exactly what causes a twin to be generated for it.
 
         This mirrors the twin-generation condition in ``PackParser._generate_derived_pack``
-        (``parsers/pack.py:364``); the two live in different class hierarchies, so the duplication is
+        (``parsers/pack.py``); the two live in different class hierarchies, so the duplication is
         deliberate and the two must be kept in sync.
 
         Returns:
@@ -213,7 +268,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         """
         if self.is_derived:
             return True
-        if self.managed:
+        if not self._is_derived_pack_eligible():
             return False
         return any(
             self._is_item_tightly_coupled(content_item)

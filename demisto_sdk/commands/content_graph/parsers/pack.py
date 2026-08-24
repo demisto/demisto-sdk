@@ -26,6 +26,7 @@ from demisto_sdk.commands.common.tools import (
     get_pack_latest_rn_version,
 )
 from demisto_sdk.commands.content_graph.common import (
+    DERIVED_PACK_ALLOWED_SUPPORT_LEVELS,
     DERIVED_PACK_SUFFIX,
     ENABLE_SPLIT_PACKS,
     PACK_CONTRIBUTORS_FILENAME,
@@ -34,6 +35,9 @@ from demisto_sdk.commands.content_graph.common import (
     ContentType,
     Relationships,
     RelationshipType,
+    derived_pack_exclusions,
+    is_deprecated_content_item,
+    is_deprecated_pack,
     resolve_derived_pack_source,
 )
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
@@ -354,25 +358,83 @@ class PackParser(BaseContentParser, PackMetadataParser):
         return self.path.name
 
     def _is_item_tightly_coupled(self, content_item: "ContentItemParser") -> bool:
-        """Check if a content item is tightly coupled, respecting overrides."""
+        """Check if a content item is tightly coupled, respecting overrides.
+
+        A deprecated item is never tightly coupled: it must not be carried into a
+        derived pack even when an explicit override says otherwise, so the
+        deprecation check deliberately precedes ``coupling_overrides``.
+
+        Kept in sync with ``Pack._is_item_tightly_coupled``
+        (``objects/pack.py``), which mirrors this rule on the object side.
+        """
+        if is_deprecated_content_item(content_item):
+            return False
         overrides = self.coupling_overrides or {}
         item_id = content_item.object_id
         if item_id and item_id in overrides:
             return overrides[item_id] == "tightly_coupled"
         return content_item.content_type.is_tightly_coupled
 
+    def _is_derived_pack_eligible(self) -> bool:
+        """Whether this pack may yield a derived (split) pack at all.
+
+        Checked before any content is inspected. A pack is ineligible when any of
+        the following holds:
+            - it is already ``managed`` (managed packs are never split);
+            - its ``support`` level is not in
+              ``DERIVED_PACK_ALLOWED_SUPPORT_LEVELS`` (only xsoar-supported packs
+              qualify; a missing or empty support level is not xsoar);
+            - it is deprecated;
+            - it is ``hidden``;
+            - its pack id appears in the ``DERIVED_PACKS_EXCLUDE`` environment
+              variable.
+
+        Returns:
+            True if the pack may yield a derived pack, False otherwise.
+        """
+        pack_id = self.object_id or ""
+        if self.managed:
+            logger.debug(
+                f"Pack '{pack_id}' is not derived-pack eligible: it is already managed"
+            )
+            return False
+        if (self.support or "").casefold() not in DERIVED_PACK_ALLOWED_SUPPORT_LEVELS:
+            logger.debug(
+                f"Pack '{pack_id}' is not derived-pack eligible: support level "
+                f"'{self.support}' is not one of {sorted(DERIVED_PACK_ALLOWED_SUPPORT_LEVELS)}"
+            )
+            return False
+        if is_deprecated_pack(self):
+            logger.debug(
+                f"Pack '{pack_id}' is not derived-pack eligible: the pack is deprecated"
+            )
+            return False
+        if self.hidden:
+            logger.debug(
+                f"Pack '{pack_id}' is not derived-pack eligible: the pack is hidden"
+            )
+            return False
+        if pack_id.casefold() in derived_pack_exclusions():
+            logger.debug(
+                f"Pack '{pack_id}' is not derived-pack eligible: it is listed in the exclusion list"
+            )
+            return False
+        return True
+
     def _generate_derived_pack(self) -> Optional["DerivedPackParser"]:
         """Generate a derived pack for split-pack candidates.
 
         A pack is a split-pack candidate when:
-        - ``managed`` is False (managed packs are never split)
-        - It contains at least one tightly coupled content item
-          (respecting ``coupling_overrides``)
+        - It is eligible per ``_is_derived_pack_eligible``: not ``managed``,
+          xsoar-supported, not deprecated, not ``hidden``, and not listed in the
+          ``DERIVED_PACKS_EXCLUDE`` environment variable
+        - It contains at least one tightly coupled content item that is not
+          deprecated (respecting ``coupling_overrides``)
 
         Returns:
             A ``DerivedPackParser`` if the pack qualifies, otherwise ``None``.
         """
-        if self.managed:
+        if not self._is_derived_pack_eligible():
             return None
 
         tightly_coupled_items = [
@@ -496,9 +558,9 @@ class PackParser(BaseContentParser, PackMetadataParser):
     def parse_ignored_errors(self):
         """Sets the pack's ignored_errors field."""
         try:
-            self.ignored_errors_dict = (
-                dict(get_pack_ignore_content(self.path.name) or {})  # type:ignore[var-annotated]
-            )
+            self.ignored_errors_dict = dict(
+                get_pack_ignore_content(self.path.name) or {}
+            )  # type: ignore[var-annotated]
         except Exception as e:
             logger.warning(
                 f"Failed to extract ignored errors list for {self.path.name} for {self.object_id}, reason: {e}"
@@ -667,7 +729,11 @@ class DerivedPackParser:
         self.relationships = Relationships()
         self.structure_errors: List[StructureError] = []
         self.ignored_errors_dict: dict = {}
-        self.contributors: List[str] = original_parser.contributors if hasattr(original_parser, "contributors") else []
+        self.contributors: List[str] = (
+            original_parser.contributors
+            if hasattr(original_parser, "contributors")
+            else []
+        )
         self.latest_rn_version = original_parser.latest_rn_version
         self.deprecated = original_parser.deprecated
         self.private_pack_path = original_parser.private_pack_path

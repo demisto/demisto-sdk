@@ -10,6 +10,7 @@ Covers:
 - pack_destinations.json generation
 - Validators: PA135, PA136, PA137
 """
+
 from __future__ import annotations
 
 import json as stdlib_json
@@ -24,7 +25,6 @@ from demisto_sdk.commands.content_graph.common import (
     DERIVED_PACK_ALLOWED_SUPPORT_LEVELS,
     DERIVED_PACK_SUFFIX,
     DERIVED_PACKS_EXCLUDE_ENV,
-    ENABLE_SPLIT_PACKS,
     TIGHTLY_COUPLED_TYPES,
     ContentType,
     PackDestination,
@@ -35,7 +35,6 @@ from demisto_sdk.commands.content_graph.common import (
     is_deprecated_pack,
     resolve_derived_pack_source,
 )
-
 
 # ---------------------------------------------------------------------------
 # ContentType coupling classification tests
@@ -204,9 +203,7 @@ class TestPackDestinationProperty:
         mock.is_derived = is_derived
         # Use the real property logic
         mock.destination = (
-            PackDestination.MANAGED_CONTENT
-            if managed
-            else PackDestination.MARKETPLACE
+            PackDestination.MANAGED_CONTENT if managed else PackDestination.MARKETPLACE
         )
         return mock
 
@@ -249,9 +246,7 @@ class TestIsItemTightlyCoupled:
         mock.description = description
         return mock
 
-    def _make_pack_with_overrides(
-        self, overrides: Optional[dict] = None
-    ) -> MagicMock:
+    def _make_pack_with_overrides(self, overrides: Optional[dict] = None) -> MagicMock:
         from demisto_sdk.commands.content_graph.objects.pack import Pack
 
         mock = MagicMock(spec=Pack)
@@ -273,23 +268,17 @@ class TestIsItemTightlyCoupled:
         assert pack._is_item_tightly_coupled(item) is False
 
     def test_override_script_to_tightly_coupled(self):
-        pack = self._make_pack_with_overrides(
-            {"MyScript": "tightly_coupled"}
-        )
+        pack = self._make_pack_with_overrides({"MyScript": "tightly_coupled"})
         item = self._make_content_item("MyScript", ContentType.SCRIPT)
         assert pack._is_item_tightly_coupled(item) is True
 
     def test_override_integration_to_loosely_coupled(self):
-        pack = self._make_pack_with_overrides(
-            {"MyIntegration": "loosely_coupled"}
-        )
+        pack = self._make_pack_with_overrides({"MyIntegration": "loosely_coupled"})
         item = self._make_content_item("MyIntegration", ContentType.INTEGRATION)
         assert pack._is_item_tightly_coupled(item) is False
 
     def test_override_only_affects_specified_item(self):
-        pack = self._make_pack_with_overrides(
-            {"MyScript": "tightly_coupled"}
-        )
+        pack = self._make_pack_with_overrides({"MyScript": "tightly_coupled"})
         other_script = self._make_content_item("OtherScript", ContentType.SCRIPT)
         assert pack._is_item_tightly_coupled(other_script) is False
 
@@ -300,20 +289,18 @@ class TestIsItemTightlyCoupled:
         item = self._make_content_item(
             "MyIntegration", ContentType.INTEGRATION, deprecated=True
         )
-        assert pack._is_item_tightly_coupled(item) is False, (
-            "a deprecated item is never tightly coupled, regardless of its content type"
-        )
+        assert (
+            pack._is_item_tightly_coupled(item) is False
+        ), "a deprecated item is never tightly coupled, regardless of its content type"
 
     def test_deprecated_item_overrides_an_explicit_tightly_coupled_override(self):
         """Deprecation wins over ``coupling_overrides``: an author cannot force a
         dead item into the managed twin."""
         pack = self._make_pack_with_overrides({"MyScript": "tightly_coupled"})
-        item = self._make_content_item(
-            "MyScript", ContentType.SCRIPT, deprecated=True
-        )
-        assert pack._is_item_tightly_coupled(item) is False, (
-            "deprecation must be evaluated before coupling_overrides, so the override cannot resurrect it"
-        )
+        item = self._make_content_item("MyScript", ContentType.SCRIPT, deprecated=True)
+        assert (
+            pack._is_item_tightly_coupled(item) is False
+        ), "deprecation must be evaluated before coupling_overrides, so the override cannot resurrect it"
 
     def test_item_deprecated_by_name_and_description_convention(self):
         """The shared predicate also honours the legacy name/description
@@ -326,9 +313,9 @@ class TestIsItemTightlyCoupled:
             name="My Integration (Deprecated)",
             description="Deprecated. Use Other Integration instead.",
         )
-        assert pack._is_item_tightly_coupled(item) is False, (
-            "an item marked deprecated by the name/description convention is treated as deprecated too"
-        )
+        assert (
+            pack._is_item_tightly_coupled(item) is False
+        ), "an item marked deprecated by the name/description convention is treated as deprecated too"
 
 
 # ---------------------------------------------------------------------------
@@ -341,7 +328,6 @@ class TestDerivedPackParser:
 
     def _make_mock_original_parser(self) -> MagicMock:
         from demisto_sdk.commands.content_graph.parsers.pack import (
-            PackContentItems,
             PackParser,
         )
 
@@ -778,7 +764,9 @@ class TestContentDTODestinationFiltering:
         mock.name = object_id
         mock.managed = destination == PackDestination.MANAGED_CONTENT
         mock.source = object_id if is_derived else ""
-        mock.derived_from = f"{object_id.replace(DERIVED_PACK_SUFFIX, '')}" if is_derived else None
+        mock.derived_from = (
+            f"{object_id.replace(DERIVED_PACK_SUFFIX, '')}" if is_derived else None
+        )
         mock.content_items = []
         mock.coupling_overrides = None
         mock._is_item_tightly_coupled = MagicMock(return_value=True)
@@ -798,8 +786,7 @@ class TestContentDTODestinationFiltering:
 
         # Simulate the filtering logic
         filtered = [
-            p for p in dto.packs
-            if p.destination == PackDestination.MARKETPLACE
+            p for p in dto.packs if p.destination == PackDestination.MARKETPLACE
         ]
         assert len(filtered) == 1
         assert filtered[0].object_id == "PackA"
@@ -817,8 +804,7 @@ class TestContentDTODestinationFiltering:
         dto.packs = [mp_pack, mc_pack]
 
         filtered = [
-            p for p in dto.packs
-            if p.destination == PackDestination.MANAGED_CONTENT
+            p for p in dto.packs if p.destination == PackDestination.MANAGED_CONTENT
         ]
         assert len(filtered) == 1
         assert filtered[0].object_id == "PackBManaged"
@@ -1401,9 +1387,7 @@ class TestPackDestinationsDumpDirectories:
             managed_artifacts_dir=tmp_path / "content_packs_managed",
         )
 
-        assert data["packs"][0]["artifact_path"] == str(
-            artifacts_dir / "PackAManaged"
-        )
+        assert data["packs"][0]["artifact_path"] == str(artifacts_dir / "PackAManaged")
 
     def test_derived_managed_pack_keeps_its_object_id_under_the_managed_dir(
         self, tmp_path: Path
@@ -1425,7 +1409,9 @@ class TestPackDestinationsDumpDirectories:
             managed_artifacts_dir / "PackAManaged"
         )
 
-    def test_managed_pack_without_a_managed_artifacts_dir_is_empty(self, tmp_path: Path):
+    def test_managed_pack_without_a_managed_artifacts_dir_is_empty(
+        self, tmp_path: Path
+    ):
         """No managed dump ran, so the pack is recorded with an empty artifact path."""
         pack = _artifact_mock_pack("AWSManaged", "AWSManagedDirectory")
         pack.managed = True
@@ -1475,8 +1461,8 @@ class TestContentDTOMappingAPI:
 
         dto = MagicMock(spec=ContentDTO)
         dto.packs = [pack1, pack2]
-        dto.get_pack_destination_mapping = ContentDTO.get_pack_destination_mapping.__get__(
-            dto, ContentDTO
+        dto.get_pack_destination_mapping = (
+            ContentDTO.get_pack_destination_mapping.__get__(dto, ContentDTO)
         )
 
         mapping = dto.get_pack_destination_mapping()
@@ -1556,7 +1542,10 @@ class TestSplitPackFamilyPredicates:
             pack_family_key,
         )
 
-        assert pack_family_key("pack_a") == "coalesce(pack_a.derived_from, pack_a.object_id)"
+        assert (
+            pack_family_key("pack_a")
+            == "coalesce(pack_a.derived_from, pack_a.object_id)"
+        )
 
     def test_family_predicate_compares_both_family_keys(self):
         """Comparing family keys covers every twin direction in one predicate:
@@ -1612,8 +1601,14 @@ class TestDependencyQueriesExcludeTwinsAndManagedPacks:
             "NOT coalesce(pack_a.derived_from, pack_a.object_id) "
             "= coalesce(pack_b.derived_from, pack_b.object_id)" in query
         )
-        assert "NOT (coalesce(pack_a.managed, false) OR coalesce(pack_a.is_derived, false))" in query
-        assert "NOT (coalesce(pack_b.managed, false) OR coalesce(pack_b.is_derived, false))" in query
+        assert (
+            "NOT (coalesce(pack_a.managed, false) OR coalesce(pack_a.is_derived, false))"
+            in query
+        )
+        assert (
+            "NOT (coalesce(pack_b.managed, false) OR coalesce(pack_b.is_derived, false))"
+            in query
+        )
 
     def test_all_level_dependency_query_guards_twins_and_managed_packs(self):
         """The all-level query walks paths of up to MAX_DEPTH hops. Guarding
@@ -1643,8 +1638,14 @@ class TestDependencyQueriesExcludeTwinsAndManagedPacks:
             "NOT coalesce(p1.derived_from, p1.object_id) "
             "= coalesce(p2.derived_from, p2.object_id)" in query
         )
-        assert "NOT (coalesce(p1.managed, false) OR coalesce(p1.is_derived, false))" in query
-        assert "NOT (coalesce(p2.managed, false) OR coalesce(p2.is_derived, false))" in query
+        assert (
+            "NOT (coalesce(p1.managed, false) OR coalesce(p1.is_derived, false))"
+            in query
+        )
+        assert (
+            "NOT (coalesce(p2.managed, false) OR coalesce(p2.is_derived, false))"
+            in query
+        )
 
     def test_metadata_dependency_query_guards_twins_and_managed_packs(self):
         """Metadata-declared dependencies bypass the calculation entirely, and
@@ -1661,8 +1662,14 @@ class TestDependencyQueriesExcludeTwinsAndManagedPacks:
             "NOT coalesce(p1.derived_from, p1.object_id) "
             "= coalesce(p2.derived_from, p2.object_id)" in query
         )
-        assert "NOT (coalesce(p1.managed, false) OR coalesce(p1.is_derived, false))" in query
-        assert "NOT (coalesce(p2.managed, false) OR coalesce(p2.is_derived, false))" in query
+        assert (
+            "NOT (coalesce(p1.managed, false) OR coalesce(p1.is_derived, false))"
+            in query
+        )
+        assert (
+            "NOT (coalesce(p2.managed, false) OR coalesce(p2.is_derived, false))"
+            in query
+        )
 
     @pytest.mark.parametrize("mandatorily", [False, True])
     def test_all_level_dependency_query_is_balanced_for_both_mandatorily_modes(
@@ -1973,21 +1980,21 @@ class TestIsManagedPaired:
             managed=True,
             is_derived=True,
         )
-        assert pack.is_managed_paired() is True, (
-            "a derived twin is by definition the managed half of a source/twin pair"
-        )
+        assert (
+            pack.is_managed_paired() is True
+        ), "a derived twin is by definition the managed half of a source/twin pair"
 
     def test_source_pack_with_tightly_coupled_item_is_managed_paired(self):
         """The marketplace half: not managed, and it yields a twin."""
-        assert ContentType.INTEGRATION in TIGHTLY_COUPLED_TYPES, (
-            "test premise: an integration must be tightly coupled for this pack to yield a twin"
-        )
+        assert (
+            ContentType.INTEGRATION in TIGHTLY_COUPLED_TYPES
+        ), "test premise: an integration must be tightly coupled for this pack to yield a twin"
         pack = self._make_pack(
             [self._make_content_item("MyIntegration", ContentType.INTEGRATION)],
         )
-        assert pack.is_managed_paired() is True, (
-            "an unmanaged pack with a tightly coupled item yields a twin, so it is the marketplace half of a pair"
-        )
+        assert (
+            pack.is_managed_paired() is True
+        ), "an unmanaged pack with a tightly coupled item yields a twin, so it is the marketplace half of a pair"
 
     def test_natively_managed_pack_is_not_managed_paired(self):
         """GCP/AWS/Azure style packs are managed at the source - no twin exists."""
@@ -2006,9 +2013,9 @@ class TestIsManagedPaired:
         pack = self._make_pack(
             [self._make_content_item("MyPlaybook", ContentType.PLAYBOOK)],
         )
-        assert pack.is_managed_paired() is False, (
-            "a pack whose only items are loosely coupled (a playbook here) produces no twin"
-        )
+        assert (
+            pack.is_managed_paired() is False
+        ), "a pack whose only items are loosely coupled (a playbook here) produces no twin"
 
     def test_override_to_loosely_coupled_makes_pack_not_managed_paired(self):
         """The predicate must honour coupling_overrides, not the raw content type."""
@@ -2016,9 +2023,9 @@ class TestIsManagedPaired:
             [self._make_content_item("MyIntegration", ContentType.INTEGRATION)],
             coupling_overrides={"MyIntegration": "loosely_coupled"},
         )
-        assert pack.is_managed_paired() is False, (
-            "the pack's only integration is overridden to loosely_coupled, so nothing is left to split into a twin"
-        )
+        assert (
+            pack.is_managed_paired() is False
+        ), "the pack's only integration is overridden to loosely_coupled, so nothing is left to split into a twin"
 
     @pytest.mark.parametrize("support", ["partner", "community", "developer", ""])
     def test_non_xsoar_supported_pack_is_not_managed_paired(self, support: str):
@@ -2027,9 +2034,9 @@ class TestIsManagedPaired:
             [self._make_content_item("MyIntegration", ContentType.INTEGRATION)],
             support=support,
         )
-        assert pack.is_managed_paired() is False, (
-            f"a {support or 'support-less'} pack is never split, so it must not advertise a managed twin"
-        )
+        assert (
+            pack.is_managed_paired() is False
+        ), f"a {support or 'support-less'} pack is never split, so it must not advertise a managed twin"
 
     def test_pack_whose_only_tightly_coupled_item_is_deprecated_is_not_managed_paired(
         self,
@@ -2042,36 +2049,36 @@ class TestIsManagedPaired:
                 )
             ],
         )
-        assert pack.is_managed_paired() is False, (
-            "the pack's only tightly coupled item is deprecated, so no twin is generated for it"
-        )
+        assert (
+            pack.is_managed_paired() is False
+        ), "the pack's only tightly coupled item is deprecated, so no twin is generated for it"
 
     def test_hidden_pack_is_not_managed_paired(self):
         pack = self._make_pack(
             [self._make_content_item("MyIntegration", ContentType.INTEGRATION)],
             hidden=True,
         )
-        assert pack.is_managed_paired() is False, (
-            "a hidden pack is never split, so it must not advertise a managed twin"
-        )
+        assert (
+            pack.is_managed_paired() is False
+        ), "a hidden pack is never split, so it must not advertise a managed twin"
 
     def test_deprecated_pack_is_not_managed_paired(self):
         pack = self._make_pack(
             [self._make_content_item("MyIntegration", ContentType.INTEGRATION)],
             deprecated=True,
         )
-        assert pack.is_managed_paired() is False, (
-            "a deprecated pack is never split, so it must not advertise a managed twin"
-        )
+        assert (
+            pack.is_managed_paired() is False
+        ), "a deprecated pack is never split, so it must not advertise a managed twin"
 
     def test_excluded_pack_is_not_managed_paired(self, monkeypatch):
         monkeypatch.setenv(DERIVED_PACKS_EXCLUDE_ENV, "TestPack")
         pack = self._make_pack(
             [self._make_content_item("MyIntegration", ContentType.INTEGRATION)],
         )
-        assert pack.is_managed_paired() is False, (
-            "an explicitly excluded pack must not advertise a managed twin either"
-        )
+        assert (
+            pack.is_managed_paired() is False
+        ), "an explicitly excluded pack must not advertise a managed twin either"
 
 
 # ---------------------------------------------------------------------------
@@ -2134,15 +2141,15 @@ class TestManagedPairedTopLevelMetadata:
             "demisto_sdk.commands.content_graph.objects.pack.ENABLE_SPLIT_PACKS", True
         )
         pack = self._make_pack(managed=True, is_derived=True)
-        assert pack.is_managed_paired() is True, (
-            "test premise: a derived twin must be managed-paired, otherwise this case asserts nothing"
-        )
+        assert (
+            pack.is_managed_paired() is True
+        ), "test premise: a derived twin must be managed-paired, otherwise this case asserts nothing"
 
         metadata = self._dump(pack, tmp_path)
 
-        assert "managedPaired" in metadata, (
-            "with ENABLE_SPLIT_PACKS on, dump_metadata must emit the top level `managedPaired` key"
-        )
+        assert (
+            "managedPaired" in metadata
+        ), "with ENABLE_SPLIT_PACKS on, dump_metadata must emit the top level `managedPaired` key"
         assert metadata["managedPaired"] is True, (
             f"a derived twin is half of a source/twin pair, so `managedPaired` must be True, "
             f"got {metadata['managedPaired']!r}"
@@ -2154,9 +2161,9 @@ class TestManagedPairedTopLevelMetadata:
             "demisto_sdk.commands.content_graph.objects.pack.ENABLE_SPLIT_PACKS", True
         )
         pack = self._make_pack(managed=True, is_derived=False)
-        assert pack.is_managed_paired() is False, (
-            "test premise: a natively managed pack (managed=True, is_derived=False) must not be managed-paired"
-        )
+        assert (
+            pack.is_managed_paired() is False
+        ), "test premise: a natively managed pack (managed=True, is_derived=False) must not be managed-paired"
 
         metadata = self._dump(pack, tmp_path)
 
@@ -2175,9 +2182,9 @@ class TestManagedPairedTopLevelMetadata:
             "demisto_sdk.commands.content_graph.objects.pack.ENABLE_SPLIT_PACKS", False
         )
         pack = self._make_pack(managed=True, is_derived=True)
-        assert pack.is_managed_paired() is True, (
-            "test premise: this pack would be managedPaired=True, so its absence below is caused by the flag alone"
-        )
+        assert (
+            pack.is_managed_paired() is True
+        ), "test premise: this pack would be managedPaired=True, so its absence below is caused by the flag alone"
 
         metadata = self._dump(pack, tmp_path)
 
@@ -2265,9 +2272,7 @@ class TestManagedPairedContentItemMetadata:
 
         content_items = PackContentItems()
         if with_integration:
-            content_items.integration.append(
-                cls._make_integration(cls.INTEGRATION_ID)
-            )
+            content_items.integration.append(cls._make_integration(cls.INTEGRATION_ID))
         if with_playbook:
             content_items.playbook.append(cls._make_playbook(cls.PLAYBOOK_ID))
 
@@ -2327,18 +2332,18 @@ class TestManagedPairedContentItemMetadata:
 
     def test_tightly_coupled_item_is_marked_true(self, mocker, tmp_path):
         """An integration is tightly coupled, so its entry must carry `managedPaired: True`."""
-        assert ContentType.INTEGRATION in TIGHTLY_COUPLED_TYPES, (
-            "test premise: an integration must be tightly coupled, otherwise this case asserts nothing"
-        )
+        assert (
+            ContentType.INTEGRATION in TIGHTLY_COUPLED_TYPES
+        ), "test premise: an integration must be tightly coupled, otherwise this case asserts nothing"
         self._enable_flag(mocker)
         pack = self._make_pack(with_integration=True)
 
         metadata = self._dump(pack, tmp_path)
 
         integrations = metadata["contentItems"]["integration"]
-        assert len(integrations) == 1, (
-            f"test premise: the pack must contribute exactly one integration entry, got {integrations!r}"
-        )
+        assert (
+            len(integrations) == 1
+        ), f"test premise: the pack must contribute exactly one integration entry, got {integrations!r}"
         entry = integrations[0]
         assert "managedPaired" in entry, (
             "with ENABLE_SPLIT_PACKS on, every content item entry must carry the `managedPaired` key; "
@@ -2351,18 +2356,18 @@ class TestManagedPairedContentItemMetadata:
 
     def test_loosely_coupled_item_is_present_and_false(self, mocker, tmp_path):
         """A playbook is loosely coupled: the key must be PRESENT and False, never omitted."""
-        assert ContentType.PLAYBOOK not in TIGHTLY_COUPLED_TYPES, (
-            "test premise: a playbook must be loosely coupled, otherwise this case asserts nothing"
-        )
+        assert (
+            ContentType.PLAYBOOK not in TIGHTLY_COUPLED_TYPES
+        ), "test premise: a playbook must be loosely coupled, otherwise this case asserts nothing"
         self._enable_flag(mocker)
         pack = self._make_pack(with_playbook=True)
 
         metadata = self._dump(pack, tmp_path)
 
         playbooks = metadata["contentItems"]["playbook"]
-        assert len(playbooks) == 1, (
-            f"test premise: the pack must contribute exactly one playbook entry, got {playbooks!r}"
-        )
+        assert (
+            len(playbooks) == 1
+        ), f"test premise: the pack must contribute exactly one playbook entry, got {playbooks!r}"
         entry = playbooks[0]
         assert "managedPaired" in entry, (
             "`managedPaired` must be emitted on EVERY item while the flag is on, including loosely "
@@ -2423,9 +2428,9 @@ class TestManagedPairedContentItemMetadata:
         metadata = self._dump(pack, tmp_path)
 
         entry = metadata["contentItems"]["integration"][0]
-        assert "managedPaired" in entry, (
-            f"the key must still be emitted for an overridden item; got keys {sorted(entry)}"
-        )
+        assert (
+            "managedPaired" in entry
+        ), f"the key must still be emitted for an overridden item; got keys {sorted(entry)}"
         assert entry["managedPaired"] is False, (
             f"the integration is overridden to loosely_coupled, so it stays with the marketplace half and "
             f"its entry must be False rather than the content type default True, got {entry['managedPaired']!r}"
@@ -2544,12 +2549,12 @@ class TestManagedPairedEndToEnd:
         self, mocker, tmp_path
     ):
         """The marketplace half (the user's `Core` shape): pack True, integration True, playbook False."""
-        assert ContentType.INTEGRATION in TIGHTLY_COUPLED_TYPES, (
-            "test premise: an integration must be tightly coupled, otherwise this case asserts nothing"
-        )
-        assert ContentType.PLAYBOOK not in TIGHTLY_COUPLED_TYPES, (
-            "test premise: a playbook must be loosely coupled, otherwise this case asserts nothing"
-        )
+        assert (
+            ContentType.INTEGRATION in TIGHTLY_COUPLED_TYPES
+        ), "test premise: an integration must be tightly coupled, otherwise this case asserts nothing"
+        assert (
+            ContentType.PLAYBOOK not in TIGHTLY_COUPLED_TYPES
+        ), "test premise: a playbook must be loosely coupled, otherwise this case asserts nothing"
         self._set_both_flags(mocker, True)
         pack = self._make_pack(with_integration=True, with_playbook=True)
 
@@ -2707,9 +2712,9 @@ class TestManagedPairedEndToEnd:
             f"the integration is overridden to loosely_coupled, so the override must win over the "
             f"content type default, got {integration_entry['managedPaired']!r}"
         )
-        assert "managedPaired" in metadata, (
-            f"the top level key must still be emitted; got top level keys {sorted(metadata)}"
-        )
+        assert (
+            "managedPaired" in metadata
+        ), f"the top level key must still be emitted; got top level keys {sorted(metadata)}"
         assert metadata["managedPaired"] is False, (
             f"the override left the pack with zero tightly coupled items, so no twin would be "
             f"generated and the pack is not half of a pair, got {metadata['managedPaired']!r}"
@@ -2982,7 +2987,9 @@ class TestPackDestinationsSourceVsDumpedSource:
 
         assert resolved["source"] == "platform_feature"
 
-    def test_pack_destinations_records_the_unresolved_plain_source(self, tmp_path: Path):
+    def test_pack_destinations_records_the_unresolved_plain_source(
+        self, tmp_path: Path
+    ):
         """The destinations artifact records the PLAIN source, ignoring the platform override."""
         pack = _artifact_mock_pack("ProbePack", "ProbePack")
         pack.managed = True
@@ -3013,7 +3020,9 @@ class TestPackDestinationsSourceVsDumpedSource:
         assert destinations_source == "plain_feature"
         assert dumped_source != destinations_source
 
-    def test_the_two_sources_agree_when_no_suffixed_source_is_declared(self, tmp_path: Path):
+    def test_the_two_sources_agree_when_no_suffixed_source_is_declared(
+        self, tmp_path: Path
+    ):
         """Without a ``source:platform`` override the two artifacts agree, which is the common case."""
         from demisto_sdk.commands.common.constants import MarketplaceVersions
         from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer import (
@@ -3300,18 +3309,18 @@ class TestDerivedPackEligibility:
     def test_xsoar_supported_pack_yields_a_derived_pack(self):
         """Positive control: without it, the negative cases prove nothing."""
         parser = _make_pack_parser([_make_parser_content_item("MyIntegration")])
-        assert parser._generate_derived_pack() is not None, (
-            "an xsoar-supported pack with a live tightly coupled item must still yield a twin"
-        )
+        assert (
+            parser._generate_derived_pack() is not None
+        ), "an xsoar-supported pack with a live tightly coupled item must still yield a twin"
 
     @pytest.mark.parametrize("support", ["partner", "community", "developer"])
     def test_non_xsoar_supported_pack_yields_none(self, support: str):
         parser = _make_pack_parser(
             [_make_parser_content_item("MyIntegration")], support=support
         )
-        assert parser._generate_derived_pack() is None, (
-            f"a {support}-supported pack must never be split"
-        )
+        assert (
+            parser._generate_derived_pack() is None
+        ), f"a {support}-supported pack must never be split"
 
     @pytest.mark.parametrize("support", ["", None])
     def test_missing_support_yields_none(self, support):
@@ -3325,9 +3334,9 @@ class TestDerivedPackEligibility:
         parser = _make_pack_parser(
             [_make_parser_content_item("MyIntegration")], support="XSOAR"
         )
-        assert parser._generate_derived_pack() is not None, (
-            "support levels differing only in case must still be recognised as xsoar"
-        )
+        assert (
+            parser._generate_derived_pack() is not None
+        ), "support levels differing only in case must still be recognised as xsoar"
 
     def test_managed_pack_yields_none(self):
         parser = _make_pack_parser(
@@ -3368,9 +3377,9 @@ class TestDerivedPackEligibility:
     def test_exclusion_matching_is_case_insensitive(self, monkeypatch):
         monkeypatch.setenv(DERIVED_PACKS_EXCLUDE_ENV, "tEsTpAcK")
         parser = _make_pack_parser([_make_parser_content_item("MyIntegration")])
-        assert parser._generate_derived_pack() is None, (
-            "the exclusion list matches the pack id case-insensitively"
-        )
+        assert (
+            parser._generate_derived_pack() is None
+        ), "the exclusion list matches the pack id case-insensitively"
 
     def test_exclusion_matching_trims_whitespace(self, monkeypatch):
         monkeypatch.setenv(DERIVED_PACKS_EXCLUDE_ENV, " Other ,  TestPack  ")
@@ -3380,9 +3389,9 @@ class TestDerivedPackEligibility:
     def test_pack_absent_from_the_exclusion_list_is_unaffected(self, monkeypatch):
         monkeypatch.setenv(DERIVED_PACKS_EXCLUDE_ENV, "SomeOtherPack,AndAnother")
         parser = _make_pack_parser([_make_parser_content_item("MyIntegration")])
-        assert parser._generate_derived_pack() is not None, (
-            "an exclusion list that does not name this pack must not suppress its twin"
-        )
+        assert (
+            parser._generate_derived_pack() is not None
+        ), "an exclusion list that does not name this pack must not suppress its twin"
 
     def test_empty_exclusion_list_is_unaffected(self, monkeypatch):
         monkeypatch.setenv(DERIVED_PACKS_EXCLUDE_ENV, "")
@@ -3406,8 +3415,9 @@ class TestDeprecatedItemsAreNotTightlyCoupled:
 
         assert derived is not None
         live.add_to_pack.assert_called_once_with("TestPackManaged")
-        dead.add_to_pack.assert_not_called(), (
-            "a deprecated item must not get a second IN_PACK edge to the twin"
+        (
+            dead.add_to_pack.assert_not_called(),
+            ("a deprecated item must not get a second IN_PACK edge to the twin"),
         )
 
     def test_pack_with_one_live_and_one_deprecated_item_yields_exactly_one(self):
@@ -3417,20 +3427,16 @@ class TestDeprecatedItemsAreNotTightlyCoupled:
 
         parser._generate_derived_pack()
 
-        added = [
-            item for item in (live, dead) if item.add_to_pack.call_count
-        ]
-        assert added == [live], (
-            "exactly the live item is carried into the twin"
-        )
+        added = [item for item in (live, dead) if item.add_to_pack.call_count]
+        assert added == [live], "exactly the live item is carried into the twin"
 
     def test_pack_whose_only_tightly_coupled_item_is_deprecated_yields_none(self):
         parser = _make_pack_parser(
             [_make_parser_content_item("DeadIntegration", deprecated=True)]
         )
-        assert parser._generate_derived_pack() is None, (
-            "with nothing live left to split out, no twin is generated"
-        )
+        assert (
+            parser._generate_derived_pack() is None
+        ), "with nothing live left to split out, no twin is generated"
 
     def test_deprecated_item_is_dropped_even_with_a_tightly_coupled_override(self):
         """Deprecation wins over ``coupling_overrides`` in the parser too."""

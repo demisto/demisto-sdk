@@ -50,9 +50,7 @@ class DerivedPackNamingConflictValidator(BaseValidator[ContentTypes]):
                 results.append(
                     ValidationResult(
                         validator=self,
-                        message=self.error_message.format(
-                            pack.object_id, derived_id
-                        ),
+                        message=self.error_message.format(pack.object_id, derived_id),
                         content_object=pack,
                     )
                 )

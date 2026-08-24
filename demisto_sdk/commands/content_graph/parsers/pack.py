@@ -31,7 +31,6 @@ from demisto_sdk.commands.content_graph.common import (
     ENABLE_SPLIT_PACKS,
     PACK_CONTRIBUTORS_FILENAME,
     PACK_METADATA_FILENAME,
-    TIGHTLY_COUPLED_TYPES,
     ContentType,
     Relationships,
     RelationshipType,

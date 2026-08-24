@@ -38,10 +38,8 @@ from demisto_sdk.commands.common.tools import (
 )
 from demisto_sdk.commands.content_graph.common import (
     DERIVED_PACK_ALLOWED_SUPPORT_LEVELS,
-    DERIVED_PACK_SUFFIX,
     ENABLE_SPLIT_PACKS,
     PACK_METADATA_FILENAME,
-    TIGHTLY_COUPLED_TYPES,
     VERSION_CONFIG_FILENAME,
     ContentType,
     Nodes,

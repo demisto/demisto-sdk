@@ -130,9 +130,7 @@ def prepare_content(
         )
 
         # Write pack_destinations.json alongside the output
-        content_dto.write_pack_destinations(
-            output_path / "pack_destinations.json"
-        )
+        content_dto.write_pack_destinations(output_path / "pack_destinations.json")
 
         raise typer.Exit(0)
 

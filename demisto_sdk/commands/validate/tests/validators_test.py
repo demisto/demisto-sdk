@@ -1,6 +1,7 @@
 import os
 import tempfile
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Dict, List, Optional
 from unittest.mock import patch
 
@@ -1930,6 +1931,216 @@ class TestConnectorStatusMergePrecedence:
         assert results[connector_yaml] == GitStatuses.MODIFIED
 
 
+class TestHydrateIntegrationParams:
+    """Tests for ``ConnectorAwareInitializer._hydrate_integration_params``.
+
+    ``Integration.params`` is declared ``Field([], exclude=True)`` — it is
+    never persisted to Neo4j, so an Integration returned by
+    ``_graph_search_integration`` comes back with ``params == []``. Any
+    connector-aware validator that reaches into
+    ``handler.related_integration.params`` (CO116, CO121, CO190, …)
+    silently false-positives on every param lookup unless the helper
+    re-parses the on-disk YML and copies the fresh list back.
+
+    Coverage targets:
+
+    * The four early-return branches (``integration is None``, ``params``
+      already populated, ``path`` missing, ``from_path`` raises).
+    * The success path — ``from_path`` is called with the integration's
+      ``path`` and ``integration.params`` is mutated **in place**, not
+      reassigned to a new object. Downstream callers already hold a
+      reference (``handler.related_integration``, ``matched_ids``, the
+      ``integrations`` set) and would silently see stale data if the
+      helper swapped the object.
+    * The 'fresh integration also has empty params' branch — the helper
+      is a no-op then, not an erroneous ``params = []`` reassignment.
+    """
+
+    @staticmethod
+    def _fake_integration(**attrs):
+        """Stand-in for a graph-hydrated Integration.
+
+        The helper only reads ``integration.params``, ``integration.path``
+        and (for the log message) ``integration.object_id``, and only
+        writes ``integration.params``. A ``SimpleNamespace`` is enough
+        and avoids the cost of constructing a full Pydantic model.
+        """
+        return SimpleNamespace(**attrs)
+
+    def test_none_integration_is_noop(self, mocker):
+        """
+        Given: ``integration is None``.
+        When: ``_hydrate_integration_params`` runs.
+        Then: It returns without calling ``IntegrationModel.from_path``.
+              Guarding here prevents an ``AttributeError`` on the
+              subsequent ``getattr(integration, "params", …)`` when the
+              caller passes a missing match.
+        """
+        from_path_spy = mocker.patch(
+            "demisto_sdk.commands.content_graph.objects.integration."
+            "Integration.from_path"
+        )
+
+        ConnectorAwareInitializer._hydrate_integration_params(None)
+
+        from_path_spy.assert_not_called()
+
+    def test_already_populated_params_are_not_touched(self, mocker):
+        """
+        Given: An integration whose ``params`` list is already populated
+               (loaded from disk, not from the graph).
+        When: The helper runs.
+        Then: It short-circuits — ``from_path`` is NOT called and the
+              existing list is left exactly as-is (same object identity).
+              Any re-parse here would be wasted I/O and would also risk
+              overwriting caller-attached state.
+        """
+        existing_params = [SimpleNamespace(name="url"), SimpleNamespace(name="api_key")]
+        integration = self._fake_integration(
+            params=existing_params,
+            path=Path("/repo/Packs/Foo/Integrations/Foo/Foo.yml"),
+            object_id="Foo",
+        )
+        from_path_spy = mocker.patch(
+            "demisto_sdk.commands.content_graph.objects.integration."
+            "Integration.from_path"
+        )
+
+        ConnectorAwareInitializer._hydrate_integration_params(integration)
+
+        from_path_spy.assert_not_called()
+        assert integration.params is existing_params
+
+    def test_missing_path_is_noop(self, mocker):
+        """
+        Given: A graph-hydrated integration with empty ``params`` and no
+               ``path`` (some graph shapes don't attach one).
+        When: The helper runs.
+        Then: It returns without calling ``from_path``. Attempting to
+              re-parse ``Path(None)`` would raise ``TypeError`` and mask
+              the real (upstream) shape defect.
+        """
+        integration = self._fake_integration(
+            params=[], path=None, object_id="Foo"
+        )
+        from_path_spy = mocker.patch(
+            "demisto_sdk.commands.content_graph.objects.integration."
+            "Integration.from_path"
+        )
+
+        ConnectorAwareInitializer._hydrate_integration_params(integration)
+
+        from_path_spy.assert_not_called()
+        assert integration.params == []
+
+    def test_success_path_mutates_in_place_and_calls_from_path_with_path(
+        self, mocker
+    ):
+        """
+        Given: A graph-hydrated integration with ``params == []`` and a
+               valid on-disk ``path``; ``IntegrationModel.from_path``
+               returns a fresh integration whose ``params`` list is
+               populated.
+        When: The helper runs.
+        Then:
+          * ``from_path`` is called with ``Path(integration.path)`` (the
+            helper wraps the value defensively — a plain string caller
+            must still work).
+          * The fresh params are copied onto the EXISTING object in
+            place — same ``integration`` reference — because downstream
+            code (``handler.related_integration``, ``matched_ids``, the
+            ``integrations`` set) already holds that reference. A
+            reassignment to a new object would leave those references
+            pointing at the stale, empty-params instance.
+          * The stored list is a fresh copy (``list(...)``), not the
+            same object as ``fresh.params`` — otherwise mutations on
+            the graph object would leak into the fresh Pydantic model.
+        """
+        int_path = Path("/repo/Packs/Foo/Integrations/Foo/Foo.yml")
+        integration = self._fake_integration(
+            params=[], path=int_path, object_id="Foo"
+        )
+        original_ref = integration
+
+        fresh_params = [SimpleNamespace(name="url"), SimpleNamespace(name="api_key")]
+        fresh = SimpleNamespace(params=fresh_params)
+        from_path_spy = mocker.patch(
+            "demisto_sdk.commands.content_graph.objects.integration."
+            "Integration.from_path",
+            return_value=fresh,
+        )
+
+        ConnectorAwareInitializer._hydrate_integration_params(integration)
+
+        from_path_spy.assert_called_once_with(int_path)
+        # Same object identity — mutated in place.
+        assert integration is original_ref
+        # Params content copied over.
+        assert integration.params == fresh_params
+        # But NOT the same list — a defensive copy protects the fresh
+        # Pydantic model from downstream mutation.
+        assert integration.params is not fresh_params
+
+    def test_from_path_exception_is_swallowed_and_params_untouched(self, mocker):
+        """
+        Given: A graph-hydrated integration with empty ``params`` and a
+               ``path`` where ``from_path`` raises (malformed YML, deleted
+               file, permission error…).
+        When: The helper runs.
+        Then: The exception is swallowed (validators must keep running
+              across other integrations) and ``params`` remains ``[]``.
+              A CO116/CO121/CO190 false-positive downstream is preferable
+              to crashing every connector validator for one bad file, and
+              the caller's ``logger.debug`` records the failure.
+        """
+        integration = self._fake_integration(
+            params=[],
+            path=Path("/repo/Packs/Foo/Integrations/Foo/Foo.yml"),
+            object_id="Foo",
+        )
+        mocker.patch(
+            "demisto_sdk.commands.content_graph.objects.integration."
+            "Integration.from_path",
+            side_effect=RuntimeError("simulated parser failure"),
+        )
+
+        # Must not raise.
+        ConnectorAwareInitializer._hydrate_integration_params(integration)
+
+        assert integration.params == []
+
+    def test_fresh_integration_with_empty_params_is_still_a_noop(self, mocker):
+        """
+        Given: A graph-hydrated integration with empty ``params``, whose
+               on-disk YML re-parse ALSO yields an integration with
+               empty ``params`` (a legitimate zero-param integration).
+        When: The helper runs.
+        Then: ``integration.params`` is not reassigned — the guard
+              ``if fresh_params:`` protects against an otherwise
+              indistinguishable overwrite that would still preserve the
+              symptom (``params == []``) but obscure whether hydration
+              actually ran, and would defeat any later "already
+              populated" short-circuit if the caller re-runs the helper.
+        """
+        integration = self._fake_integration(
+            params=[],
+            path=Path("/repo/Packs/Foo/Integrations/Foo/Foo.yml"),
+            object_id="Foo",
+        )
+        original_list = integration.params
+
+        fresh = SimpleNamespace(params=[])
+        mocker.patch(
+            "demisto_sdk.commands.content_graph.objects.integration."
+            "Integration.from_path",
+            return_value=fresh,
+        )
+
+        ConnectorAwareInitializer._hydrate_integration_params(integration)
+
+        assert integration.params is original_list  # untouched
+
+
 class TestDedupByObjectId:
     """Tests for ConnectorAwareInitializer._dedup_by_object_id."""
 
@@ -2158,6 +2369,163 @@ class TestConnectorHandlerIgnoreFiltering:
                 [RelatedFileType.CONNECTOR_HANDLER],
             )
             is False
+        )
+
+    def test_should_run_preflight_not_suppressed_when_only_some_handlers_ignore(
+        self, mocker
+    ):
+        """
+        Given: A connector with three handlers (a, b, c). Only handler ``c``'s
+               ``.connector-ignore`` ignores CO130 (via
+               ``[file:c/serializer.yaml]``); handlers ``a`` and ``b`` do NOT.
+        When: ``ConnectorsValidator.is_error_ignored`` runs as part of the
+              ``should_run`` preflight for a per-handler validator with
+              ``related_file_type = [CONNECTOR_HANDLER, CONNECTOR_SERIALIZER]``.
+        Then: It returns ``False`` — the validator MUST still run so that
+              ``ValidateManager.filter_validation_results`` can drop only the
+              individual result for ``c`` while keeping ``a`` and ``b``.
+
+        Regression: the prior "any-match wins" behaviour returned ``True`` as
+        soon as any single handler ignored the code, which short-circuited
+        ``should_run`` for the whole connector and silenced legitimate CO130
+        defects on ``a`` and ``b``. Fix #1 requires universal suppression
+        (every handler dir must ignore) before the preflight blocks the run;
+        per-handler suppression is the job of ``filter_validation_results``,
+        which is exercised separately below.
+
+        This test drives ``is_error_ignored`` directly (the preflight seam)
+        rather than the per-result filter — the two chains are independent
+        and both must be covered.
+        """
+        from types import SimpleNamespace
+
+        from demisto_sdk.commands.content_graph.parsers.related_files import (
+            RelatedFileType,
+        )
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
+        )
+
+        validator = IsValidFetchValidator()
+
+        # Stand-in handler_files: each carries a ``_handler_dir_name`` so
+        # ``_resolve_ignore_file_keys`` expands the handler/serializer types
+        # into one key per dir — the shape ``obtain_invalid_content_items``
+        # would see for a real 3-handler connector.
+        handler_files = [
+            SimpleNamespace(_handler_dir_name="a"),
+            SimpleNamespace(_handler_dir_name="b"),
+            SimpleNamespace(_handler_dir_name="c"),
+        ]
+        ignored_per_key = {
+            "c/serializer.yaml": ["CO130"],
+        }
+        content_item = SimpleNamespace(
+            handler_files=handler_files,
+            get_ignored_errors=lambda key: ignored_per_key.get(key, []),
+        )
+
+        assert (
+            validator.is_error_ignored(
+                "CO130",
+                ["CO130"],
+                content_item,
+                [
+                    RelatedFileType.CONNECTOR_HANDLER,
+                    RelatedFileType.CONNECTOR_SERIALIZER,
+                ],
+            )
+            is False
+        )
+
+    def test_should_run_preflight_suppressed_when_every_handler_ignores(
+        self, mocker
+    ):
+        """
+        Given: A connector with three handlers (a, b, c), and EVERY handler's
+               ``.connector-ignore`` ignores CO130 via its
+               ``<h>/serializer.yaml`` key.
+        When: ``ConnectorsValidator.is_error_ignored`` runs as part of the
+              ``should_run`` preflight.
+        Then: It returns ``True`` — universal suppression IS a legitimate
+              reason to short-circuit the validator, because no per-result
+              output would survive ``filter_validation_results`` anyway.
+        """
+        from types import SimpleNamespace
+
+        from demisto_sdk.commands.content_graph.parsers.related_files import (
+            RelatedFileType,
+        )
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
+        )
+
+        validator = IsValidFetchValidator()
+
+        handler_files = [
+            SimpleNamespace(_handler_dir_name="a"),
+            SimpleNamespace(_handler_dir_name="b"),
+            SimpleNamespace(_handler_dir_name="c"),
+        ]
+        ignored_per_key = {
+            "a/serializer.yaml": ["CO130"],
+            "b/serializer.yaml": ["CO130"],
+            "c/serializer.yaml": ["CO130"],
+            # handler.yaml keys not needed — CONNECTOR_SERIALIZER alone
+            # already delivers a fully-covered expansion; the loop returns
+            # True on the first type whose expansion is fully covered.
+        }
+        content_item = SimpleNamespace(
+            handler_files=handler_files,
+            get_ignored_errors=lambda key: ignored_per_key.get(key, []),
+        )
+
+        assert (
+            validator.is_error_ignored(
+                "CO130",
+                ["CO130"],
+                content_item,
+                [RelatedFileType.CONNECTOR_SERIALIZER],
+            )
+            is True
+        )
+
+    def test_should_run_preflight_single_file_type_unchanged(self, mocker):
+        """
+        Given: A per-configurations-file validator (``related_file_type``
+               contains ``CONNECTOR_CONFIGURATIONS``) whose code is ignored
+               under ``[file:configurations.yaml]``.
+        When: ``is_error_ignored`` runs.
+        Then: It returns ``True`` — single-file types (which resolve to
+              exactly one key) keep the pre-existing single-match semantics.
+              This proves the per-handler AND-semantics fix did not
+              regress single-file types.
+        """
+        from types import SimpleNamespace
+
+        from demisto_sdk.commands.content_graph.parsers.related_files import (
+            RelatedFileType,
+        )
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
+        )
+
+        validator = IsValidFetchValidator()
+
+        ignored_per_key = {"configurations.yaml": ["CO130"]}
+        content_item = SimpleNamespace(
+            handler_files=[],
+            get_ignored_errors=lambda key: ignored_per_key.get(key, []),
+        )
+
+        assert (
+            validator.is_error_ignored(
+                "CO130",
+                ["CO130"],
+                content_item,
+                [RelatedFileType.CONNECTOR_CONFIGURATIONS],
+            )
+            is True
         )
 
     def test_filter_keeps_non_ignored_handler_and_drops_ignored_one(self, mocker):

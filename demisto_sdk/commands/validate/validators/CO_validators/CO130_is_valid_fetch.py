@@ -250,11 +250,30 @@ class IsValidFetchValidator(ConnectorsValidator[ContentTypes]):
     )
     related_field = "configurations"
     is_auto_fixable = False
-    # NOTE: CONNECTOR_SERIALIZER is required for the per-handler ignore
-    # branch of ``ValidateManager.filter_validation_results`` to trigger
-    # on Part 1 results (whose ``path`` is ``<handler>/serializer.yaml``).
-    # CONNECTOR_CONFIGURATIONS keeps Part 2 results discoverable under
-    # the configurations file.
+    # ``related_file_type`` feeds TWO independent ignore chains; each type
+    # is needed by a different one (mirrors CO171's NOTE):
+    #
+    #   1. ``ConnectorsValidator.should_run`` -> ``is_error_ignored`` ->
+    #      ``_resolve_ignore_file_keys``. This is the preflight; it expands
+    #      each type into ``.connector-ignore`` section keys and short-
+    #      circuits the validator when suppression is universal. Without
+    #      CONNECTOR_SERIALIZER, ``[file:<handler>/serializer.yaml]`` entries
+    #      are never consulted here and the validator runs even when every
+    #      handler explicitly opts out.
+    #
+    #   2. ``ValidateManager.filter_validation_results`` ->
+    #      ``_is_connector_handler_validation``. This is the post-hoc
+    #      per-result filter, and it triggers when EITHER
+    #      CONNECTOR_HANDLER OR CONNECTOR_SERIALIZER is present — so this
+    #      chain was already active before CONNECTOR_SERIALIZER was added
+    #      (CO130 has always carried CONNECTOR_HANDLER). What it does need
+    #      is the per-result ``path`` split done in ``obtain_invalid_content_items``
+    #      below, so each Part-1 result lands under
+    #      ``<handler>/serializer.yaml`` and the per-handler ignore key
+    #      resolves correctly.
+    #
+    # CONNECTOR_CONFIGURATIONS keeps Part-2 results discoverable under
+    # ``[file:configurations.yaml]`` in chain 1.
     related_file_type = [
         RelatedFileType.CONNECTOR_CONFIGURATIONS,
         RelatedFileType.CONNECTOR_HANDLER,
@@ -266,14 +285,18 @@ class IsValidFetchValidator(ConnectorsValidator[ContentTypes]):
         content_items: Iterable[ContentTypes],
     ) -> List[ValidationResult]:
         """Emit one ValidationResult per defect, keyed by the file that
-        owns the fix:
+        owns the fix. The per-result ``path`` is what
+        ``ValidateManager.filter_validation_results`` reads to route each
+        result through the correct ignore lookup — so the split below is
+        what makes per-handler ``.connector-ignore`` entries actually
+        drop the right result (and only the right result):
 
         * Part 1 (serializer missing ``isFetch`` computed_field) — one
           result per offending handler, ``path=<handler>/serializer.yaml``.
-          This is what makes per-handler ``.connector-ignore`` entries
-          (``[file:<handler-folder>/serializer.yaml]``) actually filter
-          the result. Sibling validators CO171/CO172 emit results the
-          same way.
+          Routed by ``filter_validation_results`` to the connector's
+          per-handler ignore check, which resolves
+          ``[file:<handler-folder>/serializer.yaml]``. Sibling validators
+          CO171/CO172 emit results the same way.
 
         * Part 2 (missing/wrong fields in ``configurations.yaml`` for a
           fetch-issues capability entry) — one result per offending

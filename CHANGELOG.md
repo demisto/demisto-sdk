@@ -1,4 +1,12 @@
 # Changelog
+## 1.39.8 (2026-08-24)
+### Fix
+* Fixed an issue where the pack-level `[pack]` section of `.pack-ignore` was not honored for validators listed in `ALWAYS_RUN_ON_ERROR_CODE`. `ValidateManager.filter_validation_results` now consults both the content item's per-file `ignored_errors` and the pack's `pack_level_ignored_errors`. [#5503](https://github.com/demisto/demisto-sdk/pull/5503)
+
+### Internal
+* Added CO116, CO130, and CO171 to the list of ignorable ConnectUs validators, refined CO130 diagnostics and CO171 serializer awareness, and fixed a should_run preflight over-suppression where per-handler `.connector-ignore` entries silenced whole-connector validation runs. [#5505](https://github.com/demisto/demisto-sdk/pull/5505)
+
+
 ## 1.39.7 (2026-08-18)
 ### Feature
 * Added the **modelTier** field under the **promptConfig** object in the Script schema, allowing AI Tasks to pin an LLM tier (Flash, Thinking or Pro) instead of a concrete model id. An absent tier remains valid and resolves to the default model. [#5492](https://github.com/demisto/demisto-sdk/pull/5492)

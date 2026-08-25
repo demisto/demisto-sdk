@@ -128,6 +128,9 @@ from demisto_sdk.commands.validate.validators.CO_validators.CO175_no_removed_con
 from demisto_sdk.commands.validate.validators.CO_validators.CO176_no_change_connector_ids import (
     NoChangeConnectorIDsValidator,
 )
+from demisto_sdk.commands.validate.validators.CO_validators.CO178_no_param_type_changed import (
+    NoParamTypeChangedValidator,
+)
 from demisto_sdk.commands.validate.validators.CO_validators.CO179_no_param_required_tightened import (
     NoParamRequiredTightenedValidator,
 )
@@ -136,6 +139,12 @@ from demisto_sdk.commands.validate.validators.CO_validators.CO181_no_removed_aut
 )
 from demisto_sdk.commands.validate.validators.CO_validators.CO183_no_grouped_flag_flipped import (
     NoGroupedFlagFlippedValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO186_no_changed_handler_module import (
+    NoChangedHandlerModuleValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO187_no_changed_handler_triggering_labels import (
+    NoChangedHandlerTriggeringLabelsValidator,
 )
 from demisto_sdk.commands.validate.validators.CO_validators.CO190_no_reserved_param_names import (
     NoReservedParamNamesValidator,
@@ -14281,3 +14290,694 @@ class TestCO192IsIntegrationCoveredByConnector:
         # `path` is not explicitly passed to ValidationResult, so it falls
         # back to `content_object.path`.
         assert results[0].content_object.path == integration.path
+
+
+# ---------------------------------------------------------------------------
+# CO178 tests
+# ---------------------------------------------------------------------------
+
+
+def _typed_field(field_id: str, field_type):
+    """Build a ConnectorField carrying the given `field_type`.
+
+    Pass ``field_type=None`` to leave the type unset (schema-legal).
+    Reuses `FieldOptions` only insofar as CO178's walker is happy with a
+    field carrying just id/field_type — no need for modifier machinery.
+    """
+    from demisto_sdk.commands.content_graph.objects.connector import ConnectorField
+
+    return ConnectorField(id=field_id, title=field_id, field_type=field_type)
+
+
+class TestCO178NoParamTypeChanged:
+    """Tests for CO178: no XSOAR-visible field on an XSOAR handler may
+    change its `field_type` between the prior and new versions.
+    """
+
+    def test_no_change_is_valid(self):
+        """
+        Given: A connector whose field types are identical to the prior
+               version.
+        When: CO178 runs.
+        Then: No validation errors.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_connection_general_fields(old_connector, [_typed_field("url", "input")])
+        _set_connection_general_fields(connector, [_typed_field("url", "input")])
+        connector.old_base_content_object = old_connector
+
+        results = NoParamTypeChangedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_type_changed_flagged(self):
+        """
+        Given: A field whose `field_type` flips input → text_area.
+        When: CO178 runs.
+        Then: One validation error citing the field id and both types.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_connection_general_fields(old_connector, [_typed_field("url", "input")])
+        _set_connection_general_fields(connector, [_typed_field("url", "text_area")])
+        connector.old_base_content_object = old_connector
+
+        results = NoParamTypeChangedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "url" in results[0].message
+        assert "input" in results[0].message
+        assert "text_area" in results[0].message
+
+    def test_unset_to_concrete_flagged(self):
+        """
+        Given: An old field with no `field_type` declared; new field
+               declares `input`.
+        When: CO178 runs.
+        Then: Flagged — None→concrete counts as a change (schema allows
+              omitting field_type, and the transition is destructive to
+              stored values regardless of the direction).
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_connection_general_fields(old_connector, [_typed_field("url", None)])
+        _set_connection_general_fields(connector, [_typed_field("url", "input")])
+        connector.old_base_content_object = old_connector
+
+        results = NoParamTypeChangedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "url" in results[0].message
+
+    def test_concrete_to_unset_flagged(self):
+        """
+        Given: An old field declaring `input`; new field omits
+               `field_type`.
+        When: CO178 runs.
+        Then: Flagged — the reverse direction of the previous test, same
+              destructive semantics on stored values.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_connection_general_fields(old_connector, [_typed_field("url", "input")])
+        _set_connection_general_fields(connector, [_typed_field("url", None)])
+        connector.old_base_content_object = old_connector
+
+        results = NoParamTypeChangedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "url" in results[0].message
+
+    def test_added_field_ignored(self):
+        """
+        Given: A brand-new field in the new version.
+        When: CO178 runs.
+        Then: No error — CO178 is strictly a type-change guard on ids
+              present in BOTH versions; adds are allowed.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_connection_general_fields(old_connector, [_typed_field("url", "input")])
+        _set_connection_general_fields(
+            connector,
+            [_typed_field("url", "input"), _typed_field("new_field", "checkbox")],
+        )
+        connector.old_base_content_object = old_connector
+
+        results = NoParamTypeChangedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_removed_field_ignored(self):
+        """
+        Given: A field present in old but absent from new.
+        When: CO178 runs.
+        Then: No error from CO178 (CO175 handles removals).
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_connection_general_fields(
+            old_connector,
+            [_typed_field("url", "input"), _typed_field("removed", "input")],
+        )
+        _set_connection_general_fields(connector, [_typed_field("url", "input")])
+        connector.old_base_content_object = old_connector
+
+        results = NoParamTypeChangedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_no_old_object_skipped(self):
+        """
+        Given: A connector with no old_base_content_object.
+        When: CO178 runs.
+        Then: No error — nothing to compare against.
+        """
+        connector = create_connector_object()
+        _set_connection_general_fields(connector, [_typed_field("url", "input")])
+        assert connector.old_base_content_object is None
+
+        results = NoParamTypeChangedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_non_xsoar_handler_ignored(self):
+        """
+        Given: A non-XSOAR handler whose field type changed.
+        When: CO178 runs.
+        Then: No error — only XSOAR handlers are diffed (matches
+              CO175/CO179).
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _clear_xsoar_signals(connector.handlers[0])
+        _clear_xsoar_signals(old_connector.handlers[0])
+
+        _set_connection_general_fields(old_connector, [_typed_field("url", "input")])
+        _set_connection_general_fields(connector, [_typed_field("url", "text_area")])
+        connector.old_base_content_object = old_connector
+
+        results = NoParamTypeChangedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_multiple_field_changes_aggregate(self):
+        """
+        Given: Two fields on the same handler both change type.
+        When: CO178 runs.
+        Then: One aggregated result citing both field ids.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_connection_general_fields(
+            old_connector,
+            [_typed_field("url", "input"), _typed_field("mode", "select")],
+        )
+        _set_connection_general_fields(
+            connector,
+            [_typed_field("url", "text_area"), _typed_field("mode", "multi_select")],
+        )
+        connector.old_base_content_object = old_connector
+
+        results = NoParamTypeChangedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "url" in results[0].message
+        assert "mode" in results[0].message
+
+    def test_error_path_points_to_handler_yaml(self):
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _set_connection_general_fields(old_connector, [_typed_field("url", "input")])
+        _set_connection_general_fields(connector, [_typed_field("url", "checkbox")])
+        connector.old_base_content_object = old_connector
+
+        results = NoParamTypeChangedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert results[0].path is not None
+        assert results[0].path == connector.handlers[0].file_path
+        assert str(results[0].path).endswith("handler.yaml")
+
+
+# ---------------------------------------------------------------------------
+# CO186 tests
+# ---------------------------------------------------------------------------
+
+
+class TestCO186NoChangedHandlerModule:
+    """Tests for CO186: a handler's `metadata.module` must not change
+    between versions. Applies to ALL handlers (not just XSOAR ones) —
+    the invariant is bidirectional (a flip TO `xsoar` is as breaking as
+    a flip away from it).
+    """
+
+    def test_no_change_is_valid(self):
+        """
+        Given: A default connector whose handler `metadata.module`
+               equals the prior version's.
+        When: CO186 runs.
+        Then: No validation errors.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+        connector.old_base_content_object = old_connector
+
+        # Sanity: defaults match.
+        assert connector.handlers[0].module == old_connector.handlers[0].module
+
+        results = NoChangedHandlerModuleValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_module_changed_flagged(self):
+        """
+        Given: A handler whose `metadata.module` flips xsoar → cwp.
+        When: CO186 runs.
+        Then: One error citing both module values.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        connector.handlers[0].metadata.module = "cwp"
+        connector.old_base_content_object = old_connector
+
+        results = NoChangedHandlerModuleValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "xsoar" in results[0].message
+        assert "cwp" in results[0].message
+
+    def test_module_set_to_unset_flagged(self):
+        """
+        Given: Old handler declares `module: xsoar`; new handler omits
+               it (`module = None`).
+        When: CO186 runs.
+        Then: Flagged — set→unset is still a change of ownership.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        connector.handlers[0].metadata.module = None
+        connector.old_base_content_object = old_connector
+
+        results = NoChangedHandlerModuleValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert connector.handlers[0].id in results[0].message
+
+    def test_module_unset_to_set_flagged(self):
+        """
+        Given: Old handler had no module declared; new handler declares
+               `module: xsoar` (silently opting into XSOAR contracts).
+        When: CO186 runs.
+        Then: Flagged — this is the bidirectional case the validator
+              exists to catch (unset→xsoar).
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        old_connector.handlers[0].metadata.module = None
+        connector.old_base_content_object = old_connector
+
+        results = NoChangedHandlerModuleValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "xsoar" in results[0].message
+
+    def test_non_xsoar_handler_module_change_flagged(self):
+        """
+        Given: A non-XSOAR handler flips its module value.
+        When: CO186 runs.
+        Then: Flagged — CO186 walks ALL handlers, not just XSOAR ones.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _clear_xsoar_signals(connector.handlers[0])
+        _clear_xsoar_signals(old_connector.handlers[0])
+        connector.handlers[0].metadata.module = "cwp"
+        # old_connector still has "third_party" from _clear_xsoar_signals
+        connector.old_base_content_object = old_connector
+
+        results = NoChangedHandlerModuleValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "third_party" in results[0].message
+        assert "cwp" in results[0].message
+
+    def test_no_old_object_skipped(self):
+        """
+        Given: A connector with no old_base_content_object.
+        When: CO186 runs.
+        Then: No error — nothing to compare against.
+        """
+        connector = create_connector_object()
+        connector.handlers[0].metadata.module = "cwp"
+        assert connector.old_base_content_object is None
+
+        results = NoChangedHandlerModuleValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_newly_added_handler_skipped(self):
+        """
+        Given: New version has an additional handler that wasn't in the
+               prior version.
+        When: CO186 runs.
+        Then: No error for the newly-added handler (CO176 owns id-set
+              changes).
+        """
+        connector = create_connector_object(
+            handlers=[{"id": "xsoar-old"}, {"id": "xsoar-new"}]
+        )
+        old_connector = create_connector_object(handlers=[{"id": "xsoar-old"}])
+        connector.old_base_content_object = old_connector
+
+        results = NoChangedHandlerModuleValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 0
+
+    def test_error_per_handler_not_per_connector(self):
+        """
+        Given: Two handlers each flip their `metadata.module`.
+        When: CO186 runs.
+        Then: One result per offending handler.
+        """
+        connector = create_connector_object(
+            handlers=[{"id": "xsoar-a"}, {"id": "xsoar-b"}]
+        )
+        old_connector = create_connector_object(
+            handlers=[{"id": "xsoar-a"}, {"id": "xsoar-b"}]
+        )
+        for h in connector.handlers:
+            h.metadata.module = "cwp"
+        connector.old_base_content_object = old_connector
+
+        results = NoChangedHandlerModuleValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 2
+        offenders = {r.message for r in results}
+        assert any("xsoar-a" in m for m in offenders)
+        assert any("xsoar-b" in m for m in offenders)
+
+    def test_error_path_points_to_handler_yaml(self):
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+        connector.handlers[0].metadata.module = "cwp"
+        connector.old_base_content_object = old_connector
+
+        results = NoChangedHandlerModuleValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert results[0].path is not None
+        assert results[0].path == connector.handlers[0].file_path
+        assert str(results[0].path).endswith("handler.yaml")
+
+
+# ---------------------------------------------------------------------------
+# CO187 tests
+# ---------------------------------------------------------------------------
+
+
+class TestCO187NoChangedHandlerTriggeringLabels:
+    """Tests for CO187: a handler's `triggering.labels.xsoar-integration-id`
+    and `triggering.labels.xsoar-pack-id` must not change between
+    versions. Applies to ALL handlers.
+    """
+
+    def _set_labels(self, handler, integration_id=None, pack_id=None):
+        """Mutate `handler.triggering.labels` for `xsoar-integration-id`
+        / `xsoar-pack-id`. Passing ``None`` removes the key. Uses the
+        raw dict rather than the property so tests can produce shapes
+        the property would refuse to write back."""
+        if handler.triggering.labels is None:
+            handler.triggering.labels = {}
+        if integration_id is None:
+            handler.triggering.labels.pop("xsoar-integration-id", None)
+        else:
+            handler.triggering.labels["xsoar-integration-id"] = integration_id
+        if pack_id is None:
+            handler.triggering.labels.pop("xsoar-pack-id", None)
+        else:
+            handler.triggering.labels["xsoar-pack-id"] = pack_id
+
+    def test_no_change_is_valid(self):
+        """
+        Given: A connector whose triggering labels equal the prior
+               version's.
+        When: CO187 runs.
+        Then: No validation errors.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+        connector.old_base_content_object = old_connector
+
+        # Sanity: defaults match.
+        assert (
+            connector.handlers[0].xsoar_integration_id
+            == old_connector.handlers[0].xsoar_integration_id
+        )
+        assert (
+            connector.handlers[0].xsoar_pack_id
+            == old_connector.handlers[0].xsoar_pack_id
+        )
+
+        results = (
+            NoChangedHandlerTriggeringLabelsValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 0
+
+    def test_integration_id_changed_flagged(self):
+        """
+        Given: `xsoar-integration-id` value changes (silent rerouting).
+        When: CO187 runs.
+        Then: One error citing both integration ids.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        self._set_labels(connector.handlers[0], integration_id="RerouteIntegration")
+        connector.old_base_content_object = old_connector
+
+        results = (
+            NoChangedHandlerTriggeringLabelsValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        assert "xsoar-integration-id" in results[0].message
+        assert "TestIntegration" in results[0].message
+        assert "RerouteIntegration" in results[0].message
+
+    def test_pack_id_changed_flagged(self):
+        """
+        Given: `xsoar-pack-id` value changes.
+        When: CO187 runs.
+        Then: One error citing both pack ids.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        self._set_labels(
+            connector.handlers[0],
+            integration_id=connector.handlers[0].xsoar_integration_id,
+            pack_id="ReroutePack",
+        )
+        connector.old_base_content_object = old_connector
+
+        results = (
+            NoChangedHandlerTriggeringLabelsValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        assert "xsoar-pack-id" in results[0].message
+        assert "TestPack" in results[0].message
+        assert "ReroutePack" in results[0].message
+
+    def test_both_labels_changed_aggregate(self):
+        """
+        Given: Both guarded labels change on the same handler.
+        When: CO187 runs.
+        Then: One aggregated result citing BOTH label keys.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        self._set_labels(
+            connector.handlers[0],
+            integration_id="OtherIntegration",
+            pack_id="OtherPack",
+        )
+        connector.old_base_content_object = old_connector
+
+        results = (
+            NoChangedHandlerTriggeringLabelsValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        assert "xsoar-integration-id" in results[0].message
+        assert "xsoar-pack-id" in results[0].message
+
+    def test_label_removed_flagged(self):
+        """
+        Given: `xsoar-pack-id` is removed in the new version (present
+               → absent).
+        When: CO187 runs.
+        Then: Flagged — going from a concrete value to missing counts
+              as a change (unroutes the handler from its pack).
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        self._set_labels(
+            connector.handlers[0],
+            integration_id=connector.handlers[0].xsoar_integration_id,
+            pack_id=None,
+        )
+        connector.old_base_content_object = old_connector
+
+        results = (
+            NoChangedHandlerTriggeringLabelsValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        assert "xsoar-pack-id" in results[0].message
+
+    def test_unrelated_label_change_ignored(self):
+        """
+        Given: A `triggering.labels` value that ISN'T one of the two
+               guarded keys changes.
+        When: CO187 runs.
+        Then: No error — CO187 guards only `xsoar-integration-id` and
+              `xsoar-pack-id`; other labels are outside its scope.
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        # Mutate an unrelated label that ships with the default template.
+        connector.handlers[0].triggering.labels["xsoar-content-id"] = "other"
+        connector.old_base_content_object = old_connector
+
+        results = (
+            NoChangedHandlerTriggeringLabelsValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 0
+
+    def test_non_xsoar_handler_label_change_flagged(self):
+        """
+        Given: A non-XSOAR handler flips its `xsoar-integration-id`.
+        When: CO187 runs.
+        Then: Flagged — CO187 walks ALL handlers (rerouting is bidirectional).
+        """
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+
+        _clear_xsoar_signals(connector.handlers[0])
+        _clear_xsoar_signals(old_connector.handlers[0])
+        self._set_labels(connector.handlers[0], integration_id="Reroute")
+        connector.old_base_content_object = old_connector
+
+        results = (
+            NoChangedHandlerTriggeringLabelsValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        assert "xsoar-integration-id" in results[0].message
+
+    def test_no_old_object_skipped(self):
+        """
+        Given: A connector with no old_base_content_object.
+        When: CO187 runs.
+        Then: No error — nothing to compare against.
+        """
+        connector = create_connector_object()
+        self._set_labels(connector.handlers[0], integration_id="Reroute")
+        assert connector.old_base_content_object is None
+
+        results = (
+            NoChangedHandlerTriggeringLabelsValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 0
+
+    def test_newly_added_handler_skipped(self):
+        """
+        Given: New version has an additional handler that wasn't in the
+               prior version.
+        When: CO187 runs.
+        Then: No error for the newly-added handler (CO176 owns id-set
+              changes).
+        """
+        connector = create_connector_object(
+            handlers=[{"id": "xsoar-old"}, {"id": "xsoar-new"}]
+        )
+        old_connector = create_connector_object(handlers=[{"id": "xsoar-old"}])
+        connector.old_base_content_object = old_connector
+
+        results = (
+            NoChangedHandlerTriggeringLabelsValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 0
+
+    def test_error_per_handler_not_per_connector(self):
+        """
+        Given: Two handlers each flip their integration-id.
+        When: CO187 runs.
+        Then: One result per offending handler.
+        """
+        connector = create_connector_object(
+            handlers=[{"id": "xsoar-a"}, {"id": "xsoar-b"}]
+        )
+        old_connector = create_connector_object(
+            handlers=[{"id": "xsoar-a"}, {"id": "xsoar-b"}]
+        )
+        for h in connector.handlers:
+            self._set_labels(h, integration_id=f"Reroute-{h.id}")
+        connector.old_base_content_object = old_connector
+
+        results = (
+            NoChangedHandlerTriggeringLabelsValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 2
+        offenders = {r.message for r in results}
+        assert any("xsoar-a" in m for m in offenders)
+        assert any("xsoar-b" in m for m in offenders)
+
+    def test_error_path_points_to_handler_yaml(self):
+        connector = create_connector_object()
+        old_connector = create_connector_object()
+        self._set_labels(connector.handlers[0], integration_id="Reroute")
+        connector.old_base_content_object = old_connector
+
+        results = (
+            NoChangedHandlerTriggeringLabelsValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        assert results[0].path is not None
+        assert results[0].path == connector.handlers[0].file_path
+        assert str(results[0].path).endswith("handler.yaml")

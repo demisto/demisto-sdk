@@ -1,4 +1,0 @@
-changes:
-- description: Added CO116, CO130, and CO171 to the list of ignorable ConnectUs validators, refined CO130 diagnostics and CO171 serializer awareness, and fixed a should_run preflight over-suppression where per-handler `.connector-ignore` entries silenced whole-connector validation runs.
-  type: internal
-pr_number: 5505

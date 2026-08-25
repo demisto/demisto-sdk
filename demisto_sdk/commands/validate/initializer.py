@@ -1,11 +1,12 @@
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, ClassVar, Dict, FrozenSet, List, Optional, Set, Tuple, Union
 
 from git import InvalidGitRepositoryError
 
 from demisto_sdk.commands.common.constants import (
     AUTHOR_IMAGE_FILE_NAME,
+    COMMUNITY_SUPPORT,
     DEMISTO_GIT_PRIMARY_BRANCH,
     DEMISTO_GIT_UPSTREAM,
     DEPLOYMENT_JSON_FILENAME,
@@ -19,6 +20,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_VERSION_CONFIG_FILE_NAME,
     PACKS_WHITELIST_FILE_NAME,
     PARSING_RULES_DIR,
+    PARTNER_SUPPORT,
     PLAYBOOKS_DIR,
     PRIVATE_REPO_STATUS_FILE_CONFIGURATION,
     PRIVATE_REPO_STATUS_FILE_PRIVATE,
@@ -30,6 +32,17 @@ from demisto_sdk.commands.common.constants import (
     GitStatuses,
     MarketplaceVersions,
     PathLevel,
+)
+
+# Support levels that are OUT OF SCOPE for the connector flow. Partner- and
+# community-supported integrations are not migrated through UCP, so any
+# integration carrying one of these support levels is dropped from the
+# connector-aware validation set - matching the doc's CO192 "in scope"
+# definition (PLATFORM marketplace, not deprecated, support not in
+# {partner, community}). ``developer`` support is intentionally NOT in this
+# set: developer-supported integrations remain in scope.
+_EXCLUDED_CONNECTOR_SUPPORT_LEVELS: FrozenSet[str] = frozenset(
+    {PARTNER_SUPPORT, COMMUNITY_SUPPORT}
 )
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -1372,12 +1385,39 @@ class ConnectorAwareInitializer(Initializer):
 
     1. Runs the normal file-collection flow (supports ``-g``, ``-i``, ``-a``).
     2. Filters the result to only ``Integration`` and ``Connector`` objects.
-    3. Applies marketplace / XSOAR-handler filters.
+    3. Applies marketplace / support-level / XSOAR-handler filters.
     4. Cross-matches connectors and integrations and expands with missing counterparts.
     """
 
+    # In-scope integrations no XSOAR handler references, byproduct of
+    # ``_cross_match_and_expand``. Read by CO192 via
+    # ``get_integrations_without_connector_handler``. Class-level (same shape
+    # as ``BaseValidator.graph_interface``) since validators have no
+    # initializer handle. Frozen so readers cannot mutate the stash.
+    _integrations_without_connector_handler: ClassVar[
+        FrozenSet[Integration]
+    ] = frozenset()
+
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
+
+    @classmethod
+    def get_integrations_without_connector_handler(
+        cls,
+    ) -> FrozenSet[Integration]:
+        """In-scope integrations that no XSOAR handler references.
+
+        Populated as a byproduct of ``gather_objects_to_run_on`` -- reading
+        this set costs nothing beyond returning it. "In scope" is exactly
+        the initializer's post-filter: PLATFORM marketplace, not deprecated,
+        and support level NOT in ``{partner, community}``.
+
+        Returns ``frozenset()`` when the connector flow did not run (e.g.
+        ``--run-connectors-validation`` was not passed) or when every
+        in-scope integration is covered by at least one handler. This lets a
+        consumer (CO192) be a plain ``for`` loop with no special-casing.
+        """
+        return cls._integrations_without_connector_handler
 
     @staticmethod
     def _is_relevant_path(path: Path) -> bool:
@@ -1437,7 +1477,15 @@ class ConnectorAwareInitializer(Initializer):
         # (MODIFIED over ADDED) so a modified connector is never reported twice.
         all_objects = self._dedup_by_object_id(all_objects)
 
-        # 2. Post-filter: keep only Integration and Connector objects
+        # 2. Post-filter: keep only Integration and Connector objects.
+        # For integrations, "in scope for the connector flow" means all of:
+        #   - not deprecated,
+        #   - PLATFORM marketplace,
+        #   - support level NOT in {partner, community} (see the
+        #     `_EXCLUDED_CONNECTOR_SUPPORT_LEVELS` docstring).
+        # An integration failing any of these is skipped for the same reason
+        # deprecated ones are: it cannot be instantiated through UCP, so no
+        # connector-aware validator has anything to say about it.
         filtered_integrations: Set[Integration] = set()
         filtered_connectors: Set[Connector] = set()
         for obj in all_objects:
@@ -1446,13 +1494,19 @@ class ConnectorAwareInitializer(Initializer):
                     logger.debug(
                         f"Skipping integration '{obj.object_id}' -- deprecated."
                     )
-                elif MarketplaceVersions.PLATFORM in obj.marketplaces:
-                    filtered_integrations.add(obj)
-                else:
+                elif MarketplaceVersions.PLATFORM not in obj.marketplaces:
                     logger.debug(
                         f"Skipping integration '{obj.object_id}' -- "
                         f"not in PLATFORM marketplace."
                     )
+                elif obj.support in _EXCLUDED_CONNECTOR_SUPPORT_LEVELS:
+                    logger.debug(
+                        f"Skipping integration '{obj.object_id}' -- "
+                        f"support level '{obj.support}' is out of scope for "
+                        f"the connector flow (partner/community)."
+                    )
+                else:
+                    filtered_integrations.add(obj)
             elif isinstance(obj, Connector):
                 if obj.xsoar_handlers:
                     filtered_connectors.add(obj)
@@ -1631,6 +1685,13 @@ class ConnectorAwareInitializer(Initializer):
         Returns:
             The union ``integrations | connectors`` with all cross-links set.
         """
+        # Reset the CO192 stash on entry so every exit path below leaves it
+        # equal to what THIS call dropped -- not a previous run's value.
+        type(self)._integrations_without_connector_handler = frozenset()
+
+        # Reset CO192 stash on entry: every exit path must reflect THIS call.
+        type(self)._integrations_without_connector_handler = frozenset()
+
         # Phase 1: Direct matching
         matched_ids, matched_keys = self._direct_match(integrations, connectors)
 
@@ -1850,6 +1911,25 @@ class ConnectorAwareInitializer(Initializer):
                         f"'{integration.object_id}' -- not PLATFORM."
                     )
                     continue
+                # Partner/community-supported integrations are out of scope
+                # for the connector flow too. Same rationale as the
+                # `gather_objects_to_run_on` post-filter: they are not
+                # migrated through UCP, so a link/add would create work for
+                # a validator that is meant to leave them alone. Skipping
+                # here also keeps them out of the CO192 "uncovered" stash --
+                # they would otherwise arrive with `related_content=None`
+                # and be reported as coverage gaps they are not.
+                if (
+                    getattr(integration, "support", "")
+                    in _EXCLUDED_CONNECTOR_SUPPORT_LEVELS
+                ):
+                    logger.debug(
+                        f"Skipping graph-found integration "
+                        f"'{integration.object_id}' -- support level "
+                        f"'{integration.support}' is out of scope for the "
+                        f"connector flow (partner/community)."
+                    )
+                    continue
 
                 # Always resolve the link so the handler's related_integration
                 # is populated, even for deprecated integrations. This lets
@@ -1879,19 +1959,34 @@ class ConnectorAwareInitializer(Initializer):
                     f"'{integration.object_id}' (graph)."
                 )
 
-    @staticmethod
-    def _remove_unmatched_integrations(integrations: Set[Integration]) -> None:
+    @classmethod
+    def _remove_unmatched_integrations(
+        cls, integrations: Set[Integration]
+    ) -> None:
         """Cleanup: Remove integrations that have no matching connector handler.
 
         After all matching phases, any integration whose ``related_content`` is
         ``None`` has no connector handler pointing to it and should be excluded
         from the validation set.
 
+        Also publishes the unmatched set on
+        ``cls._integrations_without_connector_handler`` (frozen) so CO192 --
+        and any future integration-coverage validator -- can read it without
+        re-scanning the graph. The assignment is unconditional so a run whose
+        every integration IS covered correctly resets the stash to an empty
+        frozenset (rather than inheriting a previous run's value).
+
         Args:
             integrations: Mutable set of integrations - unmatched entries are
                 removed in-place.
         """
         unmatched_final = {i for i in integrations if i.related_content is None}
+
+        # Publish BEFORE eviction: CO192 must see exactly the set the
+        # initializer is about to drop. Freezing prevents a validator that
+        # grabs the reference from mutating the initializer's view.
+        cls._integrations_without_connector_handler = frozenset(unmatched_final)
+
         if unmatched_final:
             logger.debug(
                 f"Removing {len(unmatched_final)} integration(s) with no matching "

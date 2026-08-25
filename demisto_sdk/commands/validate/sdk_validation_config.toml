@@ -135,6 +135,7 @@ select = [
   "CO171",
   "CO172",
   "CO190",
+  "CO192",
   "CO194"
 ]
 warning = []
@@ -192,6 +193,7 @@ select = [
   "CO171",
   "CO172",
   "CO190",
+  "CO192",
   "CO194"
 ]
 warning = []

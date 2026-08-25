@@ -140,6 +140,9 @@ from demisto_sdk.commands.validate.validators.CO_validators.CO183_no_grouped_fla
 from demisto_sdk.commands.validate.validators.CO_validators.CO190_no_reserved_param_names import (
     NoReservedParamNamesValidator,
 )
+from demisto_sdk.commands.validate.validators.CO_validators.CO192_is_integration_covered_by_connector import (
+    IsIntegrationCoveredByConnectorValidator,
+)
 from demisto_sdk.commands.validate.validators.CO_validators.CO194_is_sub_capability_title_derived import (
     IsSubCapabilityTitleDerivedValidator,
 )
@@ -14085,3 +14088,196 @@ class TestCO183NoGroupedFlagFlipped:
         assert len(results) == 1
         assert results[0].path is not None
         assert results[0].path == connector.path
+
+
+# ============================================================
+# CO192 - IsIntegrationCoveredByConnectorValidator
+# ============================================================
+
+
+class TestCO192IsIntegrationCoveredByConnector:
+    """Tests for CO192: every in-scope integration MUST be referenced by at
+    least one connector's XSOAR handler.
+
+    The validator is a thin reader of the stash populated by
+    ``ConnectorAwareInitializer._remove_unmatched_integrations`` during the
+    cross-match phases (see the class docstring on the validator for why
+    ``content_items`` is deliberately not read). These tests exercise that
+    read path by seeding the stash directly; the initializer-side tests
+    (``TestConnectorAwareInitializerStash`` in ``validators_test.py``) cover
+    the population side.
+    """
+
+    @pytest.fixture(autouse=True)
+    def _reset_stash(self):
+        """Isolate every test from stash state left over by earlier tests
+        (or by fixture setup in other test modules). The stash is a class
+        attribute on ``ConnectorAwareInitializer`` and would otherwise leak
+        across cases."""
+        from demisto_sdk.commands.validate.initializer import (
+            ConnectorAwareInitializer,
+        )
+
+        ConnectorAwareInitializer._integrations_without_connector_handler = (
+            frozenset()
+        )
+        yield
+        ConnectorAwareInitializer._integrations_without_connector_handler = (
+            frozenset()
+        )
+
+    def test_empty_stash_emits_nothing(self):
+        """
+        Given: The connector flow did not run (or every in-scope integration
+               is covered) -- stash is empty.
+        When: CO192 runs.
+        Then: No validation errors are returned. Content items are ignored
+              (passing an integration that IS in scope but is not in the
+              stash must not fire a false positive).
+        """
+        integration = create_integration_object()
+
+        validator = IsIntegrationCoveredByConnectorValidator()
+        results = validator.obtain_invalid_content_items([integration])
+
+        assert results == []
+
+    def test_content_items_are_not_read(self):
+        """
+        Given: A non-empty stash and a content_items iterable containing a
+               different integration.
+        When: CO192 runs.
+        Then: The reported integration is the one in the stash, not the one
+              in content_items. This is the contract that lets CO192 report
+              on integrations the initializer has already dropped from the
+              validation set.
+        """
+        from demisto_sdk.commands.validate.initializer import (
+            ConnectorAwareInitializer,
+        )
+
+        stashed = create_integration_object(
+            paths=["commonfields.id", "name"],
+            values=["StashedIntegration", "StashedIntegration"],
+        )
+        passed_in = create_integration_object(
+            paths=["commonfields.id", "name"],
+            values=["PassedInIntegration", "PassedInIntegration"],
+        )
+        ConnectorAwareInitializer._integrations_without_connector_handler = (
+            frozenset({stashed})
+        )
+
+        validator = IsIntegrationCoveredByConnectorValidator()
+        results = validator.obtain_invalid_content_items([passed_in])
+
+        # Compare by object_id, not identity: `create_integration_object`
+        # returns a fresh pydantic object per call (via `BaseContent.from_path`),
+        # and putting the object into a `frozenset` may not preserve identity
+        # in every pydantic + hashing path. The behavioural contract we care
+        # about is "the reported integration is the stashed one, not the one
+        # in content_items" -- which `object_id` captures unambiguously.
+        assert len(results) == 1
+        assert results[0].content_object.object_id == stashed.object_id
+        assert results[0].content_object.object_id != passed_in.object_id
+        assert "StashedIntegration" in results[0].message
+        assert "PassedInIntegration" not in results[0].message
+
+    def test_multiple_uncovered_emit_one_result_each(self):
+        """
+        Given: Several integrations in the stash.
+        When: CO192 runs.
+        Then: One validation error per integration (not aggregated) so each
+              can be silenced independently via `.pack-ignore`.
+        """
+        from demisto_sdk.commands.validate.initializer import (
+            ConnectorAwareInitializer,
+        )
+
+        int_a = create_integration_object(
+            paths=["commonfields.id", "name"], values=["IntA", "IntA"]
+        )
+        int_b = create_integration_object(
+            paths=["commonfields.id", "name"], values=["IntB", "IntB"]
+        )
+        ConnectorAwareInitializer._integrations_without_connector_handler = (
+            frozenset({int_a, int_b})
+        )
+
+        validator = IsIntegrationCoveredByConnectorValidator()
+        results = validator.obtain_invalid_content_items([])
+
+        assert len(results) == 2
+        offenders = {r.content_object for r in results}
+        assert offenders == {int_a, int_b}
+
+    def test_getter_returns_the_stash(self):
+        """
+        Given: The stash is populated.
+        When: `get_integrations_without_connector_handler` is called.
+        Then: It returns the exact frozen set stashed by the initializer.
+              The getter is the seam CO192 (and any future coverage
+              validator) reads through, so its contract is worth pinning.
+        """
+        from demisto_sdk.commands.validate.initializer import (
+            ConnectorAwareInitializer,
+        )
+
+        integration = create_integration_object()
+        stashed = frozenset({integration})
+        ConnectorAwareInitializer._integrations_without_connector_handler = (
+            stashed
+        )
+
+        got = (
+            ConnectorAwareInitializer.get_integrations_without_connector_handler()
+        )
+
+        assert got is stashed
+        assert isinstance(got, frozenset)
+
+    def test_getter_is_frozen(self):
+        """
+        Given: The stash's default empty value (a frozenset).
+        When: A caller tries to mutate the returned set.
+        Then: An AttributeError is raised. Frozenness matters because a
+              buggy validator that grabs the reference and mutates it would
+              silently corrupt the initializer's own view.
+        """
+        from demisto_sdk.commands.validate.initializer import (
+            ConnectorAwareInitializer,
+        )
+
+        got = (
+            ConnectorAwareInitializer.get_integrations_without_connector_handler()
+        )
+
+        assert isinstance(got, frozenset)
+        with pytest.raises(AttributeError):
+            got.add(create_integration_object())  # type: ignore[attr-defined]
+
+    def test_result_path_points_to_integration(self):
+        """
+        Given: A stashed integration.
+        When: CO192 runs.
+        Then: The ValidationResult has no explicit `path` override, so
+              `content_object.path` (the integration YML) becomes the
+              reported location -- which is what the developer needs to
+              open to fix the coverage gap.
+        """
+        from demisto_sdk.commands.validate.initializer import (
+            ConnectorAwareInitializer,
+        )
+
+        integration = create_integration_object()
+        ConnectorAwareInitializer._integrations_without_connector_handler = (
+            frozenset({integration})
+        )
+
+        validator = IsIntegrationCoveredByConnectorValidator()
+        results = validator.obtain_invalid_content_items([])
+
+        assert len(results) == 1
+        # `path` is not explicitly passed to ValidationResult, so it falls
+        # back to `content_object.path`.
+        assert results[0].content_object.path == integration.path

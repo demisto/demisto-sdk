@@ -11,14 +11,14 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = Connector
 
-CANONICAL_WORKLOADS = frozenset({"xsoar-automationhub-runner", "xsoar-pod"})
+CANONICAL_WORKLOADS = frozenset({"xsoar-automationhub-runner", "xsoar-pod", "pb-runner-v2"})
 
 
 class IsValidWorkloadsValidator(ConnectorsValidator[ContentTypes]):
     error_code = "CO162"
     description = (
         "Validates that every auth_option's workloads list equals the "
-        "canonical set {xsoar-automationhub-runner, xsoar-pod} (order "
+        "canonical set {xsoar-automationhub-runner, xsoar-pod, pb-runner-v2} (order "
         "insensitive), and that no capability declares the anonymous "
         "capability-level workloads shape."
     )
@@ -48,7 +48,7 @@ class IsValidWorkloadsValidator(ConnectorsValidator[ContentTypes]):
            ``auth_options``. A non-empty capability-level workloads list is
            a hard fail.
         2. Every ``auth_options[].workloads`` must equal the canonical set
-           ``{xsoar-automationhub-runner, xsoar-pod}`` (order-insensitive).
+           ``{xsoar-automationhub-runner, xsoar-pod, pb-runner-v2}`` (order-insensitive).
            Missing / empty lists fail, mismatched sets fail.
 
         Per-handler aggregated result. Path points at the offending

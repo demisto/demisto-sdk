@@ -11168,7 +11168,7 @@ def _cap_with_actions(cap_id: str, action_types: list, **extras):
         "auth_options": [
             {
                 "id": "plain.test",
-                "workloads": ["xsoar-pod", "xsoar-automationhub-runner"],
+                "workloads": ["xsoar-pod", "xsoar-automationhub-runner", "pb-runner-v2"],
             }
         ],
         "actions": [{"type": t} for t in action_types],
@@ -11517,7 +11517,7 @@ def _cap_with_workloads(
 
 class TestCO162IsValidWorkloads:
     """Tests for CO162: every auth_options[].workloads must equal the
-    canonical set {xsoar-automationhub-runner, xsoar-pod} (order-insensitive),
+    canonical set {xsoar-automationhub-runner, xsoar-pod, pb-runner-v2} (order-insensitive),
     and no capability may declare the anonymous capability-level workloads
     shape.
     """
@@ -11530,7 +11530,7 @@ class TestCO162IsValidWorkloads:
                     "capabilities": [
                         _cap_with_workloads(
                             "fetch-issues",
-                            [["xsoar-pod", "xsoar-automationhub-runner"]],
+                            [["xsoar-pod", "xsoar-automationhub-runner", "pb-runner-v2"]],
                         )
                     ],
                 }
@@ -11548,7 +11548,7 @@ class TestCO162IsValidWorkloads:
                     "capabilities": [
                         _cap_with_workloads(
                             "fetch-issues",
-                            [["xsoar-automationhub-runner", "xsoar-pod"]],
+                            [["xsoar-automationhub-runner", "xsoar-pod", "pb-runner-v2"]],
                         )
                     ],
                 }
@@ -11574,6 +11574,7 @@ class TestCO162IsValidWorkloads:
         assert "fetch-issues" in msg
         assert "plain.0" in msg
         assert "xsoar-automationhub-runner" in msg
+        assert "pb-runner-v2" in msg
 
     def test_extra_workload_fails(self):
         connector = create_connector_object(
@@ -11587,6 +11588,7 @@ class TestCO162IsValidWorkloads:
                                 [
                                     "xsoar-pod",
                                     "xsoar-automationhub-runner",
+                                    "pb-runner-v2",
                                     "xsoar-extra",
                                 ]
                             ],

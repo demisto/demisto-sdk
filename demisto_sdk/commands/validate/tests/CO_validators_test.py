@@ -11168,7 +11168,11 @@ def _cap_with_actions(cap_id: str, action_types: list, **extras):
         "auth_options": [
             {
                 "id": "plain.test",
-                "workloads": ["xsoar-pod", "xsoar-automationhub-runner", "pb-runner-v2"],
+                "workloads": [
+                    "xsoar-pod",
+                    "xsoar-automationhub-runner",
+                    "pb-runner-v2",
+                ],
             }
         ],
         "actions": [{"type": t} for t in action_types],
@@ -11530,7 +11534,13 @@ class TestCO162IsValidWorkloads:
                     "capabilities": [
                         _cap_with_workloads(
                             "fetch-issues",
-                            [["xsoar-pod", "xsoar-automationhub-runner", "pb-runner-v2"]],
+                            [
+                                [
+                                    "xsoar-pod",
+                                    "xsoar-automationhub-runner",
+                                    "pb-runner-v2",
+                                ]
+                            ],
                         )
                     ],
                 }
@@ -11548,7 +11558,13 @@ class TestCO162IsValidWorkloads:
                     "capabilities": [
                         _cap_with_workloads(
                             "fetch-issues",
-                            [["xsoar-automationhub-runner", "xsoar-pod", "pb-runner-v2"]],
+                            [
+                                [
+                                    "xsoar-automationhub-runner",
+                                    "xsoar-pod",
+                                    "pb-runner-v2",
+                                ]
+                            ],
                         )
                     ],
                 }

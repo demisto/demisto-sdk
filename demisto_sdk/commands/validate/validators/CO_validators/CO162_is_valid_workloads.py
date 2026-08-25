@@ -11,7 +11,9 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = Connector
 
-CANONICAL_WORKLOADS = frozenset({"xsoar-automationhub-runner", "xsoar-pod", "pb-runner-v2"})
+CANONICAL_WORKLOADS = frozenset(
+    {"xsoar-automationhub-runner", "xsoar-pod", "pb-runner-v2"}
+)
 
 
 class IsValidWorkloadsValidator(ConnectorsValidator[ContentTypes]):

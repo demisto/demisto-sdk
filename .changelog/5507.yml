@@ -1,0 +1,3 @@
+changes:
+- description: add pb-runner-v2 workload to validation CO162_is_valid_workloads
+pr_number: 5507

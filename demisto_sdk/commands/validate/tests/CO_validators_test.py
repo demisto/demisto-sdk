@@ -8400,6 +8400,472 @@ class TestCO144IsConfigOnSubCapability:
 
 
 # ============================================================
+# CO145 - NoImpliedFetchCheckboxValidator
+# ============================================================
+def _co145_make_resolved(name: str, source_file: str = "configurations.yaml"):
+    """Build a ResolvedParamMapping mimicking parser output for CO145.
+
+    CO145 keys on ``rp.content_param_name`` (post-serializer runtime
+    name). By default the raw connector id and the runtime name are
+    identical (non-namespaced case). Grouped-connector renames are
+    exercised by passing a different ``connector_param_name`` /
+    ``content_param_name`` pair directly.
+    """
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        ResolvedParamMapping,
+    )
+
+    return ResolvedParamMapping(
+        connector_param_name=name,
+        content_param_name=name,
+        is_serialized=False,
+        source_file=source_file,
+    )
+
+
+def _co145_set_resolved(handler, entries):
+    """Overwrite ``handler.resolved_params`` from a list of
+    ``(connector_param_name, content_param_name, source_file)`` tuples,
+    or a list of plain names (which get turned into
+    ``(name, name, "configurations.yaml")``).
+    """
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        ResolvedParamMapping,
+    )
+
+    resolved = []
+    for entry in entries:
+        if isinstance(entry, str):
+            resolved.append(_co145_make_resolved(entry))
+        else:
+            cn, rn, sf = entry
+            resolved.append(
+                ResolvedParamMapping(
+                    connector_param_name=cn,
+                    content_param_name=rn,
+                    is_serialized=(cn != rn),
+                    source_file=sf,
+                )
+            )
+    handler.resolved_params = resolved
+
+
+class TestCO145NoImpliedFetchCheckbox:
+    """Tests for CO145: the 5 implied-fetch checkboxes
+    (isFetch / feed / isFetchEvents / isFetchAssets /
+    isFetchCredentials) must never appear as user-visible YAML field
+    entries in the XSOAR-visible surface of a connector. The
+    equivalent backend flag delivered via serializer.yaml
+    `computed_fields` is legitimate and must NOT trigger CO145 -
+    that surface is structurally separate from
+    ``handler.resolved_params``.
+    """
+
+    # ------------------------------------------------------------
+    # Positive path: clean connector
+    # ------------------------------------------------------------
+    def test_no_forbidden_fields_passes(self):
+        """Handler exposes ordinary params only - no forbidden
+        checkboxes - CO145 emits nothing."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO145_no_implied_fetch_checkbox import (
+            NoImpliedFetchCheckboxValidator,
+        )
+
+        connector = create_connector_object()
+        assert connector.handlers[0].is_xsoar
+        _co145_set_resolved(
+            connector.handlers[0],
+            ["incidentType", "incidentFetchInterval", "proxy", "insecure"],
+        )
+
+        results = NoImpliedFetchCheckboxValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert results == []
+
+    def test_empty_resolved_params_passes(self):
+        """Handler with an empty ``resolved_params`` (rare, but
+        possible for a handler with no capabilities / no exposed
+        params) does not trigger CO145."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO145_no_implied_fetch_checkbox import (
+            NoImpliedFetchCheckboxValidator,
+        )
+
+        connector = create_connector_object()
+        _co145_set_resolved(connector.handlers[0], [])
+
+        results = NoImpliedFetchCheckboxValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert results == []
+
+    # ------------------------------------------------------------
+    # Negative path: each forbidden id in each source file
+    # ------------------------------------------------------------
+    def test_isFetch_in_configurations_yaml_fails(self):
+        """Bare ``isFetch`` in ``configurations.yaml`` -> flagged;
+        path resolves to configurations.yaml; message names the
+        fetch-issues capability."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO145_no_implied_fetch_checkbox import (
+            NoImpliedFetchCheckboxValidator,
+        )
+
+        connector = create_connector_object()
+        _co145_set_resolved(
+            connector.handlers[0],
+            [("isFetch", "isFetch", "configurations.yaml")],
+        )
+
+        results = NoImpliedFetchCheckboxValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "'isFetch'" in msg
+        assert "fetch-issues" in msg
+        assert "configurations.yaml" in msg
+        assert results[0].path is not None
+        assert str(results[0].path).endswith("configurations.yaml")
+
+    def test_feed_in_configurations_yaml_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO145_no_implied_fetch_checkbox import (
+            NoImpliedFetchCheckboxValidator,
+        )
+
+        connector = create_connector_object()
+        _co145_set_resolved(
+            connector.handlers[0],
+            [("feed", "feed", "configurations.yaml")],
+        )
+
+        results = NoImpliedFetchCheckboxValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "'feed'" in msg
+        assert "threat-intelligence-and-enrichment" in msg
+
+    def test_isFetchEvents_in_configurations_yaml_fails(self):
+        """This is exactly the akamai case: ``isFetchEvents`` under
+        ``log-collection_akamai-waf-siem``. It MUST fail here so
+        akamai has to explicitly ignore CO145 for
+        ``configurations.yaml``."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO145_no_implied_fetch_checkbox import (
+            NoImpliedFetchCheckboxValidator,
+        )
+
+        connector = create_connector_object()
+        _co145_set_resolved(
+            connector.handlers[0],
+            [("isFetchEvents", "isFetchEvents", "configurations.yaml")],
+        )
+
+        results = NoImpliedFetchCheckboxValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "'isFetchEvents'" in msg
+        assert "log-collection" in msg
+
+    def test_isFetchAssets_in_configurations_yaml_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO145_no_implied_fetch_checkbox import (
+            NoImpliedFetchCheckboxValidator,
+        )
+
+        connector = create_connector_object()
+        _co145_set_resolved(
+            connector.handlers[0],
+            [("isFetchAssets", "isFetchAssets", "configurations.yaml")],
+        )
+
+        results = NoImpliedFetchCheckboxValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+        assert "'isFetchAssets'" in results[0].message
+        assert "fetch-assets-and-vulnerabilities" in results[0].message
+
+    def test_isFetchCredentials_in_configurations_yaml_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO145_no_implied_fetch_checkbox import (
+            NoImpliedFetchCheckboxValidator,
+        )
+
+        connector = create_connector_object()
+        _co145_set_resolved(
+            connector.handlers[0],
+            [("isFetchCredentials", "isFetchCredentials", "configurations.yaml")],
+        )
+
+        results = NoImpliedFetchCheckboxValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+        assert "'isFetchCredentials'" in results[0].message
+        assert "fetch-secrets" in results[0].message
+
+    def test_isFetch_in_connection_yaml_fails(self):
+        """Defense-in-depth: ``isFetch`` never belongs in
+        ``connection.yaml`` either. Path routes to connection.yaml."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO145_no_implied_fetch_checkbox import (
+            NoImpliedFetchCheckboxValidator,
+        )
+
+        connector = create_connector_object()
+        _co145_set_resolved(
+            connector.handlers[0],
+            [("isFetch", "isFetch", "connection.yaml")],
+        )
+
+        results = NoImpliedFetchCheckboxValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+        assert results[0].path is not None
+        assert str(results[0].path).endswith("connection.yaml")
+
+    def test_isFetch_in_capabilities_yaml_fails(self):
+        """Defense-in-depth: ``isFetch`` never belongs in
+        ``capabilities.yaml`` general_configurations either.
+        Path routes to capabilities.yaml."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO145_no_implied_fetch_checkbox import (
+            NoImpliedFetchCheckboxValidator,
+        )
+
+        connector = create_connector_object()
+        _co145_set_resolved(
+            connector.handlers[0],
+            [("isFetch", "isFetch", "capabilities.yaml")],
+        )
+
+        results = NoImpliedFetchCheckboxValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+        assert results[0].path is not None
+        assert str(results[0].path).endswith("capabilities.yaml")
+
+    # ------------------------------------------------------------
+    # Grouped-connector namespaced id renamed back by serializer
+    # ------------------------------------------------------------
+    def test_namespaced_id_renamed_to_forbidden_still_fails(self):
+        """Grouped connector namespaces the field id
+        (``xsoar-akamai-waf-siem_isFetchEvents``) and the serializer
+        renames it back to the forbidden runtime name
+        (``isFetchEvents``). CO145 keys on the RUNTIME name, so
+        this still fails - because the integration would still
+        receive a user-controllable ``isFetchEvents`` value."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO145_no_implied_fetch_checkbox import (
+            NoImpliedFetchCheckboxValidator,
+        )
+
+        connector = create_connector_object()
+        _co145_set_resolved(
+            connector.handlers[0],
+            [
+                (
+                    "xsoar-akamai-waf-siem_isFetchEvents",
+                    "isFetchEvents",
+                    "configurations.yaml",
+                )
+            ],
+        )
+
+        results = NoImpliedFetchCheckboxValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+        assert "'isFetchEvents'" in results[0].message
+
+    def test_namespaced_id_NOT_renamed_to_forbidden_passes(self):
+        """Bare namespaced id (``foo_isFetch``) whose serializer does
+        NOT rename it back to ``isFetch`` runtime name lands in
+        resolved_params as ``content_param_name=foo_isFetch`` - not
+        in the forbidden set - so CO145 passes. Guards against
+        false positives on prefix-match style implementations."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO145_no_implied_fetch_checkbox import (
+            NoImpliedFetchCheckboxValidator,
+        )
+
+        connector = create_connector_object()
+        _co145_set_resolved(
+            connector.handlers[0],
+            [("foo_isFetch", "foo_isFetch", "configurations.yaml")],
+        )
+
+        results = NoImpliedFetchCheckboxValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert results == []
+
+    # ------------------------------------------------------------
+    # Serializer computed_fields carve-out
+    # ------------------------------------------------------------
+    def test_serializer_computed_fields_isFetch_does_not_trigger(self):
+        """Mirrors the akamai xsoar-guardicore-v2 setup:
+        ``isFetch: true`` is emitted via ``handler.serializer.computed_fields``,
+        and there is NO user-visible ``isFetch`` field entry in any
+        of the three YAML files. CO145 must NOT flag this - the
+        parser never puts computed_fields outputs into
+        ``resolved_params``, so the validator is structurally blind
+        to legitimate serializer-driven backend flags."""
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            ComputedConditionGroup,
+            ComputedCondition,
+            ComputedFieldRule,
+            ComputedOutput,
+            SerializerData,
+        )
+        from demisto_sdk.commands.validate.validators.CO_validators.CO145_no_implied_fetch_checkbox import (
+            NoImpliedFetchCheckboxValidator,
+        )
+
+        connector = create_connector_object()
+        # Ordinary user params (no forbidden checkbox) + a serializer
+        # with an isFetch computed_fields output. The serializer
+        # ``computed_fields`` field is structurally separate from
+        # ``resolved_params`` (parser never walks it), so this
+        # simulates the akamai xsoar-guardicore-v2 case.
+        _co145_set_resolved(
+            connector.handlers[0],
+            ["incidentType", "incidentFetchInterval", "proxy"],
+        )
+        connector.handlers[0].serializer = SerializerData(
+            field_mappings=[],
+            computed_fields=[
+                ComputedFieldRule(
+                    output=[ComputedOutput(id="isFetch", value=True)],
+                    any_of=[
+                        ComputedConditionGroup(
+                            conditions=[
+                                ComputedCondition(
+                                    type="capability",
+                                    options={
+                                        "capability_id": "fetch-issues_guardicore-v2",
+                                        "value": "on",
+                                    },
+                                )
+                            ]
+                        )
+                    ],
+                )
+            ],
+        )
+
+        results = NoImpliedFetchCheckboxValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert results == []
+
+    # ------------------------------------------------------------
+    # Non-XSOAR handler skipped
+    # ------------------------------------------------------------
+    def test_non_xsoar_handler_skipped(self):
+        """Non-XSOAR handler (e.g. SSPM) is skipped even if its
+        resolved_params include a forbidden checkbox. CO145 only
+        enforces the XSOAR migration contract."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO145_no_implied_fetch_checkbox import (
+            NoImpliedFetchCheckboxValidator,
+        )
+
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "sspm-myint",
+                    "metadata": {
+                        "module": "sspm",
+                        "ownership": {
+                            "team": "SSPM",
+                            "maintainers": ["@sspm-team"],
+                        },
+                    },
+                }
+            ]
+        )
+        assert not connector.handlers[0].is_xsoar
+        _co145_set_resolved(
+            connector.handlers[0],
+            [("isFetchEvents", "isFetchEvents", "configurations.yaml")],
+        )
+
+        results = NoImpliedFetchCheckboxValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert results == []
+
+    # ------------------------------------------------------------
+    # Aggregation semantics
+    # ------------------------------------------------------------
+    def test_multiple_forbidden_fields_emit_one_result_each(self):
+        """Two distinct forbidden ids on the same handler -> two
+        results, one per (handler, field). Confirms the per-finding
+        granularity that lets the akamai-style per-file ignore key
+        target a single defect without silencing others."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO145_no_implied_fetch_checkbox import (
+            NoImpliedFetchCheckboxValidator,
+        )
+
+        connector = create_connector_object()
+        _co145_set_resolved(
+            connector.handlers[0],
+            [
+                ("isFetch", "isFetch", "configurations.yaml"),
+                ("isFetchEvents", "isFetchEvents", "configurations.yaml"),
+            ],
+        )
+
+        results = NoImpliedFetchCheckboxValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 2
+        joined = " | ".join(r.message for r in results)
+        assert "'isFetch'" in joined
+        assert "'isFetchEvents'" in joined
+
+    def test_duplicate_forbidden_field_deduped_per_handler(self):
+        """The same forbidden id appearing twice in one handler's
+        resolved_params (e.g. mounted on two auth profiles both
+        exposing the same shared checkbox) emits ONE result, not
+        two. The author fixes it once at the source; the message
+        would be identical."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO145_no_implied_fetch_checkbox import (
+            NoImpliedFetchCheckboxValidator,
+        )
+
+        connector = create_connector_object()
+        _co145_set_resolved(
+            connector.handlers[0],
+            [
+                ("isFetch", "isFetch", "configurations.yaml"),
+                ("isFetch", "isFetch", "connection.yaml"),
+            ],
+        )
+
+        results = NoImpliedFetchCheckboxValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+        # First-seen wins - configurations.yaml was iterated first.
+        assert "configurations.yaml" in results[0].message
+
+
+# ============================================================
 # CO146 (merged CO146 + CO147) test helpers
 # ============================================================
 def _write_summary_yaml(connector, payload) -> None:

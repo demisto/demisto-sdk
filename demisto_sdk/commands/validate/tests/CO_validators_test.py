@@ -107,6 +107,9 @@ from demisto_sdk.commands.validate.validators.CO_validators.CO161_is_fetch_capab
 from demisto_sdk.commands.validate.validators.CO_validators.CO162_is_valid_workloads import (
     IsValidWorkloadsValidator,
 )
+from demisto_sdk.commands.validate.validators.CO_validators.CO163_handler_only_subscribed_to_sub_capabilities import (
+    HandlerOnlySubscribedToSubCapabilitiesValidator,
+)
 from demisto_sdk.commands.validate.validators.CO_validators.CO164_is_matching_integration_exist import (
     IsMatchingIntegrationExistValidator,
 )
@@ -7742,6 +7745,635 @@ class TestCO141IsMirroringOmitted:
 
 
 # ============================================================
+# CO138 - IsParamConfigTypeValidValidator
+# ============================================================
+#
+# Whitelist of 6 canonical field ids that MAY have
+# `metadata.xsoar.config_type: "backend"` (engine, engineGroup,
+# mappingId, incomingMapperId, defaultIgnore, integrationLogLevel).
+# All other fields with the backend marker are violations.
+# Two-directional check per handler; runtime-name matching through
+# serializer rename; walkers reused conceptually from CO145 / CO141.
+
+
+def _co138_field(
+    field_id: str,
+    config_type: object = "__unset__",
+) -> dict:
+    """Build a minimal field dict with an optional
+    ``metadata.xsoar.config_type`` value.
+
+    - Default (no ``config_type`` arg) → no ``metadata.xsoar`` block.
+    - ``config_type=None`` → ``metadata.xsoar: {}`` (block present,
+      config_type absent).
+    - ``config_type="backend"`` etc. → ``metadata.xsoar.config_type: "backend"``.
+    """
+    field: dict = {
+        "id": field_id,
+        "field_type": "input",
+        "title": field_id,
+    }
+    if config_type == "__unset__":
+        return field
+    if config_type is None:
+        field["metadata"] = {"xsoar": {}}
+    else:
+        field["metadata"] = {"xsoar": {"config_type": config_type}}
+    return field
+
+
+class TestCO138IsParamConfigTypeValid:
+    """Tests for CO138: exactly 6 canonical field ids
+    (engine, engineGroup, mappingId, incomingMapperId, defaultIgnore,
+    integrationLogLevel) may carry `metadata.xsoar.config_type:
+    "backend"`. All others may not."""
+
+    # ------------------------------------------------------------
+    # Whitelist half: canonical field WITH backend marker → passes
+    # ------------------------------------------------------------
+    def test_whitelisted_field_with_backend_marker_passes(self):
+        """`engine` field carrying `config_type: backend` in a
+        connection profile → no findings."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO138_is_param_config_type_valid import (
+            IsParamConfigTypeValidValidator,
+        )
+
+        connector = create_connector_object()
+        _co145_wire_handler(
+            connector,
+            capability_ids=["fetch-issues"],
+            auth_option_ids=["basic.default"],
+        )
+        _co145_write_connection(
+            connector,
+            profiles=[
+                {
+                    "id": "basic.default",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co138_field("engine", config_type="backend")
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+
+        results = IsParamConfigTypeValidValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert results == []
+
+    def test_all_six_whitelisted_fields_with_backend_pass(self):
+        """Sanity: all 6 canonical ids in various locations, each
+        with backend marker → clean."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO138_is_param_config_type_valid import (
+            IsParamConfigTypeValidValidator,
+        )
+
+        connector = create_connector_object()
+        _co145_wire_handler(
+            connector,
+            capability_ids=[
+                "fetch-issues",
+                "automation-and-remediation",
+            ],
+            auth_option_ids=["basic.default"],
+        )
+        # engine + engineGroup in profile; integrationLogLevel in
+        # capabilities.yaml general; incomingMapperId + mappingId
+        # in configurations.yaml under fetch-issues; defaultIgnore
+        # in configurations.yaml under automation-and-remediation.
+        _co145_write_connection(
+            connector,
+            profiles=[
+                {
+                    "id": "basic.default",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co138_field("engine", config_type="backend"),
+                                _co138_field(
+                                    "engineGroup", config_type="backend"
+                                ),
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        _co145_write_capabilities(
+            connector,
+            general={
+                "configurations": [
+                    {
+                        "fields": [
+                            _co138_field(
+                                "integrationLogLevel", config_type="backend"
+                            )
+                        ]
+                    }
+                ]
+            },
+        )
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co138_field(
+                                    "incomingMapperId", config_type="backend"
+                                ),
+                                _co138_field(
+                                    "mappingId", config_type="backend"
+                                ),
+                            ]
+                        }
+                    ],
+                },
+                {
+                    "id": "automation-and-remediation",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co138_field(
+                                    "defaultIgnore", config_type="backend"
+                                )
+                            ]
+                        }
+                    ],
+                },
+            ],
+        )
+
+        results = IsParamConfigTypeValidValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert results == []
+
+    # ------------------------------------------------------------
+    # Whitelist half: canonical field WITHOUT backend marker → fail
+    # ------------------------------------------------------------
+    def test_whitelisted_field_missing_backend_marker_fails(self):
+        """`engine` field without the marker → flagged with a
+        'missing backend' message."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO138_is_param_config_type_valid import (
+            IsParamConfigTypeValidValidator,
+        )
+
+        connector = create_connector_object()
+        _co145_wire_handler(
+            connector,
+            capability_ids=["fetch-issues"],
+            auth_option_ids=["basic.default"],
+        )
+        _co145_write_connection(
+            connector,
+            profiles=[
+                {
+                    "id": "basic.default",
+                    "configurations": [
+                        {"fields": [_co138_field("engine")]}  # no config_type
+                    ],
+                }
+            ],
+        )
+
+        results = IsParamConfigTypeValidValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "'engine'" in msg
+        assert "is missing" in msg
+        assert "connection.yaml" in msg
+
+    def test_whitelisted_field_wrong_config_type_fails(self):
+        """`engine` field with `config_type: frontend` (wrong value)
+        → flagged with 'must be backend' message."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO138_is_param_config_type_valid import (
+            IsParamConfigTypeValidValidator,
+        )
+
+        connector = create_connector_object()
+        _co145_wire_handler(
+            connector,
+            capability_ids=["fetch-issues"],
+            auth_option_ids=["basic.default"],
+        )
+        _co145_write_connection(
+            connector,
+            profiles=[
+                {
+                    "id": "basic.default",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co138_field(
+                                    "engine", config_type="frontend"
+                                )
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+
+        results = IsParamConfigTypeValidValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "'engine'" in msg
+        assert "\"frontend\"" in msg
+        assert "MUST be" in msg
+
+    # ------------------------------------------------------------
+    # Anti-whitelist half: non-canonical field WITH backend → fail
+    # ------------------------------------------------------------
+    def test_non_whitelisted_field_with_backend_marker_fails(self):
+        """`api_url` field with `config_type: backend` → violation."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO138_is_param_config_type_valid import (
+            IsParamConfigTypeValidValidator,
+        )
+
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co138_field("api_url", config_type="backend")
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+
+        results = IsParamConfigTypeValidValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "'api_url'" in msg
+        assert "is NOT one of the" in msg
+        assert "\"backend\"" in msg
+
+    def test_typo_of_whitelisted_field_with_backend_fails(self):
+        """Common typo (`integratoinLogLevel` misspelling) with
+        `config_type: backend` → CO138 catches it because runtime
+        name doesn't match the whitelist."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO138_is_param_config_type_valid import (
+            IsParamConfigTypeValidValidator,
+        )
+
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_capabilities(
+            connector,
+            general={
+                "configurations": [
+                    {
+                        "fields": [
+                            _co138_field(
+                                "integratoinLogLevel", config_type="backend"
+                            )
+                        ]
+                    }
+                ]
+            },
+        )
+
+        results = IsParamConfigTypeValidValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+        assert "'integratoinLogLevel'" in results[0].message
+
+    # ------------------------------------------------------------
+    # Non-whitelisted field WITHOUT backend → clean
+    # ------------------------------------------------------------
+    def test_non_whitelisted_field_without_backend_passes(self):
+        """Ordinary user field with no `config_type` at all → not
+        policed by CO138."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO138_is_param_config_type_valid import (
+            IsParamConfigTypeValidValidator,
+        )
+
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {"fields": [_co138_field("api_url")]}
+                    ],
+                }
+            ],
+        )
+
+        results = IsParamConfigTypeValidValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert results == []
+
+    def test_non_whitelisted_field_with_frontend_config_type_passes(self):
+        """`api_url` with `config_type: frontend` → CO138 only
+        polices the string "backend", other values ignored."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO138_is_param_config_type_valid import (
+            IsParamConfigTypeValidValidator,
+        )
+
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co138_field(
+                                    "api_url", config_type="frontend"
+                                )
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+
+        results = IsParamConfigTypeValidValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert results == []
+
+    # ------------------------------------------------------------
+    # Serializer-rename matching (runtime name resolution)
+    # ------------------------------------------------------------
+    def test_serializer_renamed_whitelisted_field_with_backend_passes(self):
+        """Grouped connector: raw id `xsoar-foo_engine` renamed by
+        serializer to `engine`. CO138 matches by runtime name so
+        the whitelist check applies to `engine`. Backend marker
+        present → passes."""
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            FieldMapping,
+            SerializerData,
+        )
+        from demisto_sdk.commands.validate.validators.CO_validators.CO138_is_param_config_type_valid import (
+            IsParamConfigTypeValidValidator,
+        )
+
+        connector = create_connector_object()
+        serializer = SerializerData(
+            field_mappings=[
+                FieldMapping(id="xsoar-foo_engine", field_name="engine")
+            ],
+            computed_fields=[],
+        )
+        _co145_wire_handler(
+            connector,
+            capability_ids=["fetch-issues"],
+            auth_option_ids=["basic.default"],
+            serializer=serializer,
+        )
+        _co145_write_connection(
+            connector,
+            profiles=[
+                {
+                    "id": "basic.default",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co138_field(
+                                    "xsoar-foo_engine", config_type="backend"
+                                )
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+
+        results = IsParamConfigTypeValidValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert results == []
+
+    def test_serializer_renamed_whitelisted_field_missing_backend_fails(self):
+        """Same rename setup but no backend marker → still fails
+        (CO138 checks whitelist by runtime name)."""
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            FieldMapping,
+            SerializerData,
+        )
+        from demisto_sdk.commands.validate.validators.CO_validators.CO138_is_param_config_type_valid import (
+            IsParamConfigTypeValidValidator,
+        )
+
+        connector = create_connector_object()
+        serializer = SerializerData(
+            field_mappings=[
+                FieldMapping(id="xsoar-foo_engine", field_name="engine")
+            ],
+            computed_fields=[],
+        )
+        _co145_wire_handler(
+            connector,
+            capability_ids=["fetch-issues"],
+            auth_option_ids=["basic.default"],
+            serializer=serializer,
+        )
+        _co145_write_connection(
+            connector,
+            profiles=[
+                {
+                    "id": "basic.default",
+                    "configurations": [
+                        {"fields": [_co138_field("xsoar-foo_engine")]}
+                    ],
+                }
+            ],
+        )
+
+        results = IsParamConfigTypeValidValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+        # Message uses the runtime name so authors see the platform-
+        # canonical id, not the namespaced raw id.
+        assert "'engine'" in results[0].message
+
+    # ------------------------------------------------------------
+    # Non-XSOAR handler skipped
+    # ------------------------------------------------------------
+    def test_non_xsoar_handler_skipped(self):
+        """Non-XSOAR handler: even a violating field on a whitelisted
+        or non-whitelisted id is not policed."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO138_is_param_config_type_valid import (
+            IsParamConfigTypeValidValidator,
+        )
+
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "sspm-myint",
+                    "metadata": {
+                        "module": "sspm",
+                        "ownership": {
+                            "team": "SSPM",
+                            "maintainers": ["@sspm-team"],
+                        },
+                    },
+                }
+            ]
+        )
+        assert not connector.handlers[0].is_xsoar
+        connector.handlers[0].capabilities = []
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co138_field(
+                                    "api_url", config_type="backend"
+                                ),
+                                _co138_field("engine"),
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+
+        results = IsParamConfigTypeValidValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert results == []
+
+    # ------------------------------------------------------------
+    # Two defects on one handler → two separate results
+    # ------------------------------------------------------------
+    def test_mixed_missing_and_unexpected_backend_emit_two_results(self):
+        """One handler: `engine` field missing backend (whitelist
+        defect) + `api_url` field with backend (anti-whitelist
+        defect) → two independent findings."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO138_is_param_config_type_valid import (
+            IsParamConfigTypeValidValidator,
+        )
+
+        connector = create_connector_object()
+        _co145_wire_handler(
+            connector,
+            capability_ids=["fetch-issues"],
+            auth_option_ids=["basic.default"],
+        )
+        _co145_write_connection(
+            connector,
+            profiles=[
+                {
+                    "id": "basic.default",
+                    "configurations": [
+                        {"fields": [_co138_field("engine")]}
+                    ],
+                }
+            ],
+        )
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co138_field(
+                                    "api_url", config_type="backend"
+                                )
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+
+        results = IsParamConfigTypeValidValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 2
+        joined = " | ".join(r.message for r in results)
+        assert "'engine'" in joined
+        assert "'api_url'" in joined
+
+    # ------------------------------------------------------------
+    # defaultIgnore edge: whitelisted field in configurations.yaml
+    # under a per-capability entry
+    # ------------------------------------------------------------
+    def test_defaultIgnore_in_automation_capability_backend_passes(self):
+        """`defaultIgnore` under automation-and-remediation entry
+        with `config_type: backend` → clean (mirrors CO136's happy
+        path shape)."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO138_is_param_config_type_valid import (
+            IsParamConfigTypeValidValidator,
+        )
+
+        connector = create_connector_object()
+        _co145_wire_handler(
+            connector, capability_ids=["automation-and-remediation"]
+        )
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "automation-and-remediation",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co138_field(
+                                    "defaultIgnore", config_type="backend"
+                                )
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+
+        results = IsParamConfigTypeValidValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert results == []
+
+
+# ============================================================
 # CO136 test helpers
 # ============================================================
 def _default_ignore_field(
@@ -13860,6 +14492,269 @@ class TestCO162IsValidWorkloads:
             ]
         )
         results = IsValidWorkloadsValidator().obtain_invalid_content_items([connector])
+        assert len(results) == 1
+        assert results[0].path is not None
+        assert results[0].path == connector.handlers[0].file_path
+        assert str(results[0].path).endswith("handler.yaml")
+
+
+# ---------------------------------------------------------------------------
+# CO163 tests
+# ---------------------------------------------------------------------------
+
+
+class TestCO163HandlerOnlySubscribedToSubCapabilities:
+    """Tests for CO163: in a grouped connector, every handler's
+    ``capabilities[].id`` MUST be a sub-capability id, never a bare
+    parent capability id. Parent detection is data-driven: any entry
+    in the connector's capabilities registry with a non-empty
+    ``sub_capabilities`` list is a parent.
+    """
+
+    # ------------------------------------------------------------------
+    # Short-circuit / skip cases
+    # ------------------------------------------------------------------
+
+    def test_non_grouped_short_circuits(self):
+        """Standard connector: even a handler subscribed to a bare
+        parent id must NOT be flagged - CO163 is grouped-only."""
+        connector = create_connector_object(
+            capabilities_data={
+                "capabilities": [_capability("fetch-issues", sub_ids=["fetch-issues_a"])]
+            },
+            handlers=[_xsoar_handler_subscribing_to("fetch-issues")],
+        )
+        # No settings override -> grouped defaults to False.
+        results = HandlerOnlySubscribedToSubCapabilitiesValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_grouped_no_parents_short_circuits(self):
+        """Grouped connector with no capability that has sub_capabilities
+        -> nothing to enforce (CO112 will fire elsewhere)."""
+        connector = _grouped_connector_with_capabilities(
+            capability_specs=[("fetch-issues", [])]
+        )
+        # Handler subscribes to the (childless) capability - not CO163's
+        # concern because no parent-with-children exists.
+        connector.handlers[0].capabilities = []
+        results = HandlerOnlySubscribedToSubCapabilitiesValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    # ------------------------------------------------------------------
+    # Passing cases
+    # ------------------------------------------------------------------
+
+    def test_grouped_handler_subscribed_to_sub_capability_passes(self):
+        """Grouped connector: handler subscribes to the sub-cap id (not
+        the parent) -> passes."""
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            HandlerCapability,
+        )
+
+        connector = _grouped_connector_with_capabilities(
+            capability_specs=[("fetch-issues", ["fetch-issues_myint"])]
+        )
+        connector.handlers[0].capabilities = [
+            HandlerCapability(
+                id="fetch-issues_myint", auth_options=[], workloads=[], actions=[]
+            )
+        ]
+        results = HandlerOnlySubscribedToSubCapabilitiesValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_grouped_multiple_handlers_all_on_sub_caps_passes(self):
+        """Grouped connector with 2 handlers each pinned to their own
+        sub-cap id -> passes."""
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            HandlerCapability,
+            HandlerData,
+        )
+
+        connector = _grouped_connector_with_capabilities(
+            capability_specs=[
+                ("fetch-issues", ["fetch-issues_a", "fetch-issues_b"]),
+            ]
+        )
+        # Replace default single handler with two handlers, each
+        # subscribed to its own sub-cap.
+        base = connector.handlers[0]
+        second = HandlerData(**base.dict())
+        second.id = f"{base.id}-b"
+        base.capabilities = [
+            HandlerCapability(
+                id="fetch-issues_a", auth_options=[], workloads=[], actions=[]
+            )
+        ]
+        second.capabilities = [
+            HandlerCapability(
+                id="fetch-issues_b", auth_options=[], workloads=[], actions=[]
+            )
+        ]
+        connector.handlers = [base, second]
+
+        results = HandlerOnlySubscribedToSubCapabilitiesValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    # ------------------------------------------------------------------
+    # Failing cases
+    # ------------------------------------------------------------------
+
+    def test_grouped_handler_subscribed_to_bare_parent_fails(self):
+        """Grouped connector: handler subscribes to the bare parent
+        capability id (which has sub-capabilities declared) -> fails."""
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            HandlerCapability,
+        )
+
+        connector = _grouped_connector_with_capabilities(
+            capability_specs=[("fetch-issues", ["fetch-issues_myint"])]
+        )
+        connector.handlers[0].capabilities = [
+            HandlerCapability(
+                id="fetch-issues", auth_options=[], workloads=[], actions=[]
+            )
+        ]
+        results = HandlerOnlySubscribedToSubCapabilitiesValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "fetch-issues" in msg
+        assert "fetch-issues_myint" in msg
+        assert connector.handlers[0].id in msg
+        assert "bare parent" in msg
+
+    def test_grouped_handler_mix_parent_and_sub_cap_flags_parent_only(self):
+        """Grouped connector: a handler subscribed to BOTH the parent
+        and one of its sub-caps -> exactly one finding, for the parent
+        only."""
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            HandlerCapability,
+        )
+
+        connector = _grouped_connector_with_capabilities(
+            capability_specs=[("fetch-issues", ["fetch-issues_myint"])]
+        )
+        connector.handlers[0].capabilities = [
+            HandlerCapability(
+                id="fetch-issues", auth_options=[], workloads=[], actions=[]
+            ),
+            HandlerCapability(
+                id="fetch-issues_myint", auth_options=[], workloads=[], actions=[]
+            ),
+        ]
+        results = HandlerOnlySubscribedToSubCapabilitiesValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        # The finding cites the parent id, not the sub-cap id.
+        assert "'fetch-issues'" in results[0].message
+
+    def test_grouped_handler_subscribed_to_two_parents_fires_twice(self):
+        """A handler subscribed to TWO different bare parent ids -> two
+        separate findings (per-(handler, cap_id) granularity)."""
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            HandlerCapability,
+        )
+
+        connector = _grouped_connector_with_capabilities(
+            capability_specs=[
+                ("fetch-issues", ["fetch-issues_a"]),
+                ("log-collection", ["log-collection_b"]),
+            ]
+        )
+        connector.handlers[0].capabilities = [
+            HandlerCapability(
+                id="fetch-issues", auth_options=[], workloads=[], actions=[]
+            ),
+            HandlerCapability(
+                id="log-collection", auth_options=[], workloads=[], actions=[]
+            ),
+        ]
+        results = HandlerOnlySubscribedToSubCapabilitiesValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 2
+        cited_caps = {r.message.split("'")[3] for r in results}
+        # Third quoted token in error_message is {cap_id}. Just check
+        # both parent ids appear somewhere in the aggregated messages.
+        joined = " ".join(r.message for r in results)
+        assert "fetch-issues" in joined
+        assert "log-collection" in joined
+
+    def test_grouped_handler_duplicate_parent_id_deduped(self):
+        """A handler with the same bare parent id listed twice -> one
+        finding (dedupe key = ``(handler.id, cap_id)``)."""
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            HandlerCapability,
+        )
+
+        connector = _grouped_connector_with_capabilities(
+            capability_specs=[("fetch-issues", ["fetch-issues_a"])]
+        )
+        connector.handlers[0].capabilities = [
+            HandlerCapability(
+                id="fetch-issues", auth_options=[], workloads=[], actions=[]
+            ),
+            HandlerCapability(
+                id="fetch-issues", auth_options=[], workloads=[], actions=[]
+            ),
+        ]
+        results = HandlerOnlySubscribedToSubCapabilitiesValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+
+    def test_non_xsoar_handler_still_policed(self):
+        """CO163 is ownership-agnostic (even though grouped connectors
+        are XSOAR-only per CO111, the routing invariant applies to any
+        handler). A non-XSOAR handler with a bare parent subscription
+        must still be flagged."""
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            HandlerCapability,
+        )
+
+        connector = _grouped_connector_with_capabilities(
+            capability_specs=[("fetch-issues", ["fetch-issues_a"])]
+        )
+        connector.handlers[0].capabilities = [
+            HandlerCapability(
+                id="fetch-issues", auth_options=[], workloads=[], actions=[]
+            )
+        ]
+        _clear_xsoar_signals(connector.handlers[0])
+
+        results = HandlerOnlySubscribedToSubCapabilitiesValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+
+    def test_error_path_points_to_handler_yaml(self):
+        """The finding's path must point at the offending handler's
+        ``handler.yaml`` so the per-handler ignore chain resolves."""
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            HandlerCapability,
+        )
+
+        connector = _grouped_connector_with_capabilities(
+            capability_specs=[("fetch-issues", ["fetch-issues_a"])]
+        )
+        connector.handlers[0].capabilities = [
+            HandlerCapability(
+                id="fetch-issues", auth_options=[], workloads=[], actions=[]
+            )
+        ]
+        results = HandlerOnlySubscribedToSubCapabilitiesValidator().obtain_invalid_content_items(
+            [connector]
+        )
         assert len(results) == 1
         assert results[0].path is not None
         assert results[0].path == connector.handlers[0].file_path

@@ -6447,6 +6447,1301 @@ class TestCO130IsValidFetch:
 
 
 # ============================================================
+# CO131 - IsValidFeedValidator (scoped-down v1)
+# ============================================================
+#
+# CO131 v1 enforces ONLY the serializer-flag half of the "feed"
+# contract: every XSOAR handler subscribing to
+# ``threat-intelligence-and-enrichment`` MUST emit ``feed: true`` via
+# ``serializer.yaml`` ``computed_fields`` gated on a capability
+# condition matching the subscribed cap id with ``value == "on"``.
+# The 6 user-visible feed params in configurations.yaml
+# (feedFetchInterval, feedReputation, feedReliability,
+# feedExpirationPolicy, feedExpirationInterval,
+# feedBypassExclusionList) are deferred pending decision.
+#
+# CO131 shares CO130's ``_make_valid_serializer`` shape - we just
+# swap the flag id from "isFetch" to "feed".
+
+
+def _co131_make_feed_serializer(capability_id: str = "threat-intelligence-and-enrichment"):
+    """Build a SerializerData with the correct ``feed: true``
+    computed_fields rule gated on ``capability_id``. Sibling of
+    ``_make_valid_serializer`` (which does the isFetch shape)."""
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        ComputedCondition,
+        ComputedConditionGroup,
+        ComputedFieldRule,
+        ComputedOutput,
+        SerializerData,
+    )
+
+    return SerializerData(
+        field_mappings=[],
+        computed_fields=[
+            ComputedFieldRule(
+                output=[ComputedOutput(id="feed", value=True)],
+                any_of=[
+                    ComputedConditionGroup(
+                        conditions=[
+                            ComputedCondition(
+                                type="capability",
+                                options={
+                                    "capability_id": capability_id,
+                                    "value": "on",
+                                },
+                            )
+                        ]
+                    )
+                ],
+            )
+        ],
+    )
+
+
+def _co131_wire_handler_for_feed(
+    connector,
+    capability_id: str = "threat-intelligence-and-enrichment",
+    serializer=None,
+    handler_index: int = 0,
+):
+    """Point ``connector.handlers[handler_index]`` at ``capability_id``
+    (adds it as a HandlerCapability), marks the handler XSOAR-owned,
+    and attaches a default valid feed serializer. Mirrors CO130's
+    ``_wire_handler_for_fetch_issues``.
+    """
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        HandlerCapability,
+    )
+
+    handler = connector.handlers[handler_index]
+    handler.metadata.module = "xsoar"
+    handler.capabilities = [
+        HandlerCapability(
+            id=capability_id,
+            auth_options=[],
+            workloads=[],
+            actions=[],
+        )
+    ]
+    handler.serializer = _co131_make_feed_serializer(capability_id=capability_id)
+    if serializer is not None:
+        handler.serializer = serializer
+
+
+class TestCO131IsValidFeed:
+    """Tests for CO131 v1: every XSOAR handler subscribing to
+    ``threat-intelligence-and-enrichment`` MUST emit ``feed: true``
+    via serializer computed_fields gated on the capability."""
+
+    # ------------------------------------------------------------
+    # Positive path
+    # ------------------------------------------------------------
+    def test_handler_with_feed_serializer_passes(self):
+        """Bare TI&E capability, correctly-shaped feed serializer -
+        no findings."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO131_is_valid_feed import (
+            IsValidFeedValidator,
+        )
+
+        connector = create_connector_object()
+        _co131_wire_handler_for_feed(connector)
+
+        results = IsValidFeedValidator().obtain_invalid_content_items([connector])
+
+        assert results == []
+
+    def test_handler_not_subscribing_to_TIE_ignored(self):
+        """Handler subscribes only to fetch-issues, not TI&E - CO131
+        does not fire even if the handler has no feed serializer."""
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            HandlerCapability,
+        )
+        from demisto_sdk.commands.validate.validators.CO_validators.CO131_is_valid_feed import (
+            IsValidFeedValidator,
+        )
+
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.metadata.module = "xsoar"
+        handler.capabilities = [
+            HandlerCapability(
+                id="fetch-issues",
+                auth_options=[],
+                workloads=[],
+                actions=[],
+            )
+        ]
+        handler.serializer = None
+
+        results = IsValidFeedValidator().obtain_invalid_content_items([connector])
+
+        assert results == []
+
+    # ------------------------------------------------------------
+    # Grouped-namespaced capability id
+    # ------------------------------------------------------------
+    def test_grouped_namespaced_capability_id_passes(self):
+        """Grouped connector namespaces the TI&E cap id (e.g.
+        ``threat-intelligence-and-enrichment_akamai``). CO131 matches
+        by base+prefix (via ``iter_handler_capability_ids``) and the
+        serializer condition must reference the SAME namespaced id."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO131_is_valid_feed import (
+            IsValidFeedValidator,
+        )
+
+        connector = create_connector_object()
+        _co131_wire_handler_for_feed(
+            connector,
+            capability_id="threat-intelligence-and-enrichment_myvendor",
+        )
+
+        results = IsValidFeedValidator().obtain_invalid_content_items([connector])
+
+        assert results == []
+
+    # ------------------------------------------------------------
+    # Negative paths - all shape drift
+    # ------------------------------------------------------------
+    def test_handler_missing_serializer_fails(self):
+        """XSOAR handler subscribes to TI&E but has NO serializer at
+        all - flagged."""
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            HandlerCapability,
+        )
+        from demisto_sdk.commands.validate.validators.CO_validators.CO131_is_valid_feed import (
+            IsValidFeedValidator,
+        )
+
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.metadata.module = "xsoar"
+        handler.capabilities = [
+            HandlerCapability(
+                id="threat-intelligence-and-enrichment",
+                auth_options=[],
+                workloads=[],
+                actions=[],
+            )
+        ]
+        handler.serializer = None
+
+        results = IsValidFeedValidator().obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "'feed: true'" in msg
+        assert "threat-intelligence-and-enrichment" in msg
+
+    def test_handler_serializer_missing_feed_output_fails(self):
+        """Handler subscribes to TI&E, has a serializer, but the
+        serializer emits NO ``feed`` output (only isFetch)."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO131_is_valid_feed import (
+            IsValidFeedValidator,
+        )
+
+        connector = create_connector_object()
+        # Wire an isFetch-shaped serializer at the TI&E cap id -
+        # the flag id is wrong, so CO131 fails.
+        wrong_ser = _make_valid_serializer(
+            capability_id="threat-intelligence-and-enrichment"
+        )
+        _co131_wire_handler_for_feed(connector, serializer=wrong_ser)
+
+        results = IsValidFeedValidator().obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "'feed: true'" in results[0].message
+
+    def test_handler_serializer_wrong_capability_gate_fails(self):
+        """Serializer emits ``feed: true`` but under the WRONG cap id
+        (e.g. gated on ``fetch-issues``, not TI&E)."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO131_is_valid_feed import (
+            IsValidFeedValidator,
+        )
+
+        connector = create_connector_object()
+        wrong_ser = _co131_make_feed_serializer(capability_id="fetch-issues")
+        _co131_wire_handler_for_feed(connector, serializer=wrong_ser)
+
+        results = IsValidFeedValidator().obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "'feed: true'" in results[0].message
+        assert "threat-intelligence-and-enrichment" in results[0].message
+
+    def test_handler_serializer_feed_output_value_false_fails(self):
+        """Serializer has a ``feed`` output but ``value: false`` -
+        CO131 requires truthy (via ``computed_field_emits_flag``
+        semantics, which checks ``value is True``)."""
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            ComputedCondition,
+            ComputedConditionGroup,
+            ComputedFieldRule,
+            ComputedOutput,
+            SerializerData,
+        )
+        from demisto_sdk.commands.validate.validators.CO_validators.CO131_is_valid_feed import (
+            IsValidFeedValidator,
+        )
+
+        connector = create_connector_object()
+        bad_ser = SerializerData(
+            field_mappings=[],
+            computed_fields=[
+                ComputedFieldRule(
+                    output=[ComputedOutput(id="feed", value=False)],
+                    any_of=[
+                        ComputedConditionGroup(
+                            conditions=[
+                                ComputedCondition(
+                                    type="capability",
+                                    options={
+                                        "capability_id": "threat-intelligence-and-enrichment",
+                                        "value": "on",
+                                    },
+                                )
+                            ]
+                        )
+                    ],
+                )
+            ],
+        )
+        _co131_wire_handler_for_feed(connector, serializer=bad_ser)
+
+        results = IsValidFeedValidator().obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "'feed: true'" in results[0].message
+
+    # ------------------------------------------------------------
+    # Non-XSOAR handler skipped
+    # ------------------------------------------------------------
+    def test_non_xsoar_handler_skipped(self):
+        """A non-XSOAR handler subscribing to TI&E is NOT policed
+        (mirrors CO130/CO145 - XSOAR-migration contract only)."""
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            HandlerCapability,
+        )
+        from demisto_sdk.commands.validate.validators.CO_validators.CO131_is_valid_feed import (
+            IsValidFeedValidator,
+        )
+
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "sspm-myint",
+                    "metadata": {
+                        "module": "sspm",
+                        "ownership": {
+                            "team": "SSPM",
+                            "maintainers": ["@sspm-team"],
+                        },
+                    },
+                }
+            ]
+        )
+        handler = connector.handlers[0]
+        assert not handler.is_xsoar
+        handler.capabilities = [
+            HandlerCapability(
+                id="threat-intelligence-and-enrichment",
+                auth_options=[],
+                workloads=[],
+                actions=[],
+            )
+        ]
+        handler.serializer = None  # missing - but non-XSOAR is skipped
+
+        results = IsValidFeedValidator().obtain_invalid_content_items([connector])
+
+        assert results == []
+
+    # ------------------------------------------------------------
+    # Result routing: path -> handler's serializer.yaml
+    # ------------------------------------------------------------
+    def test_error_path_points_to_handler_serializer_yaml(self):
+        """One result per offending handler; ``path`` resolves to
+        ``<handler-folder>/serializer.yaml`` so the per-handler
+        ignore chain in ``.connector-ignore`` targets it (mirrors
+        CO130 Part 1 / CO171 / CO172)."""
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            HandlerCapability,
+        )
+        from demisto_sdk.commands.validate.validators.CO_validators.CO131_is_valid_feed import (
+            IsValidFeedValidator,
+        )
+
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.metadata.module = "xsoar"
+        handler.capabilities = [
+            HandlerCapability(
+                id="threat-intelligence-and-enrichment",
+                auth_options=[],
+                workloads=[],
+                actions=[],
+            )
+        ]
+        handler.serializer = None
+
+        results = IsValidFeedValidator().obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert results[0].path is not None
+        assert str(results[0].path).endswith("serializer.yaml")
+
+
+# ============================================================
+# CO132 / CO133 / CO134 - fetch-family sibling validators
+# ============================================================
+#
+# CO132 (`IsValidFetchAssets`), CO133 (`IsValidFetchEvents`), CO134
+# (`IsValidFetchCredentials`) all share CO131's shape with different
+# constants. CO132/CO133 also enforce a required interval field
+# (assetsFetchInterval / eventFetchInterval) via the CO145-style
+# raw-YAML configurations.yaml walker.
+#
+# CO134 is serializer-flag-only (no interval per doc row).
+#
+# The serializer-flag half overlaps CO171 (which enumerates all 5
+# collection caps in one loop). The overlap is accepted by design:
+# each validator gets its own error code so authors can ignore
+# per-capability rather than muting the whole CO171 sweep.
+
+
+def _make_flag_serializer(flag_id: str, capability_id: str):
+    """Build a SerializerData with a computed_field rule that emits
+    ``flag_id: true`` gated on ``capability_id`` with ``value: on``.
+
+    Sibling of ``_make_valid_serializer`` (isFetch) and
+    ``_co131_make_feed_serializer`` (feed) - parameterized so CO132,
+    CO133, CO134 can all reuse it.
+    """
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        ComputedCondition,
+        ComputedConditionGroup,
+        ComputedFieldRule,
+        ComputedOutput,
+        SerializerData,
+    )
+
+    return SerializerData(
+        field_mappings=[],
+        computed_fields=[
+            ComputedFieldRule(
+                output=[ComputedOutput(id=flag_id, value=True)],
+                any_of=[
+                    ComputedConditionGroup(
+                        conditions=[
+                            ComputedCondition(
+                                type="capability",
+                                options={
+                                    "capability_id": capability_id,
+                                    "value": "on",
+                                },
+                            )
+                        ]
+                    )
+                ],
+            )
+        ],
+    )
+
+
+def _wire_handler_for_capability(
+    connector,
+    capability_id: str,
+    serializer=None,
+    handler_index: int = 0,
+):
+    """Point ``connector.handlers[handler_index]`` at ``capability_id``
+    (adds it as a HandlerCapability) and mark the handler XSOAR-owned.
+    Attaches an optional serializer (if None, leaves handler.serializer
+    at its default). Mirrors CO131's helper, kept generic so
+    CO132/CO133/CO134 test blocks can all use it.
+    """
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        HandlerCapability,
+    )
+
+    handler = connector.handlers[handler_index]
+    handler.metadata.module = "xsoar"
+    handler.capabilities = [
+        HandlerCapability(
+            id=capability_id,
+            auth_options=[],
+            workloads=[],
+            actions=[],
+        )
+    ]
+    handler.serializer = serializer
+
+
+# ============================================================
+# CO132 - IsValidFetchAssetsValidator
+# ============================================================
+
+
+def _co132_write_configurations_with_interval(
+    connector, cap_id: str, include_interval: bool = True
+):
+    """Write a configurations.yaml entry for ``cap_id`` containing
+    ``assetsFetchInterval`` (or omitting it if ``include_interval``
+    is False). Reuses the CO145 3-layer cache buster."""
+    payload: dict = {
+        "metadata": {"title": "Configuration"},
+        "configurations": [
+            {
+                "id": cap_id,
+                "configurations": [
+                    {
+                        "fields": (
+                            [
+                                {
+                                    "id": "assetsFetchInterval",
+                                    "field_type": "duration",
+                                    "title": "Assets Fetch Interval",
+                                }
+                            ]
+                            if include_interval
+                            else [
+                                {
+                                    "id": "some_other_field",
+                                    "field_type": "input",
+                                    "title": "Other",
+                                }
+                            ]
+                        )
+                    }
+                ],
+            }
+        ],
+    }
+    _write_connector_yaml_file(connector, "configurations.yaml", payload)
+    _co145_bust_related_file_cache(connector, "configurations_file")
+
+
+class TestCO132IsValidFetchAssets:
+    """Tests for CO132: fetch-assets-and-vulnerabilities capability
+    → serializer emits `isFetchAssets: true` + configurations.yaml
+    entry declares `assetsFetchInterval`."""
+
+    def test_valid_handler_passes(self):
+        """Serializer emits isFetchAssets: true gated on the cap,
+        configurations.yaml declares assetsFetchInterval → passes."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO132_is_valid_fetch_assets import (
+            IsValidFetchAssetsValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_capability(
+            connector,
+            capability_id="fetch-assets-and-vulnerabilities",
+            serializer=_make_flag_serializer(
+                "isFetchAssets", "fetch-assets-and-vulnerabilities"
+            ),
+        )
+        _co132_write_configurations_with_interval(
+            connector, "fetch-assets-and-vulnerabilities"
+        )
+
+        results = IsValidFetchAssetsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert results == []
+
+    def test_handler_not_subscribing_ignored(self):
+        """Handler subscribes to fetch-issues (not fetch-assets) →
+        CO132 does not fire even with no serializer."""
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            HandlerCapability,
+        )
+        from demisto_sdk.commands.validate.validators.CO_validators.CO132_is_valid_fetch_assets import (
+            IsValidFetchAssetsValidator,
+        )
+
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.metadata.module = "xsoar"
+        handler.capabilities = [
+            HandlerCapability(
+                id="fetch-issues",
+                auth_options=[],
+                workloads=[],
+                actions=[],
+            )
+        ]
+        handler.serializer = None
+
+        results = IsValidFetchAssetsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert results == []
+
+    def test_missing_serializer_flag_fails(self):
+        """Handler subscribes to fetch-assets, has configurations
+        entry, but serializer does not emit isFetchAssets."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO132_is_valid_fetch_assets import (
+            IsValidFetchAssetsValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_capability(
+            connector,
+            capability_id="fetch-assets-and-vulnerabilities",
+            serializer=None,
+        )
+        _co132_write_configurations_with_interval(
+            connector, "fetch-assets-and-vulnerabilities"
+        )
+
+        results = IsValidFetchAssetsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "'isFetchAssets: true'" in msg
+        assert results[0].path is not None
+        assert str(results[0].path).endswith("serializer.yaml")
+
+    def test_missing_interval_field_fails(self):
+        """Serializer OK, but configurations entry missing
+        assetsFetchInterval → one finding pointing at
+        configurations.yaml."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO132_is_valid_fetch_assets import (
+            IsValidFetchAssetsValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_capability(
+            connector,
+            capability_id="fetch-assets-and-vulnerabilities",
+            serializer=_make_flag_serializer(
+                "isFetchAssets", "fetch-assets-and-vulnerabilities"
+            ),
+        )
+        _co132_write_configurations_with_interval(
+            connector,
+            "fetch-assets-and-vulnerabilities",
+            include_interval=False,
+        )
+
+        results = IsValidFetchAssetsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+        assert "'assetsFetchInterval'" in results[0].message
+        assert str(results[0].path).endswith("configurations.yaml")
+
+    def test_missing_configurations_entry_fails(self):
+        """Serializer OK, configurations.yaml has NO entry for the
+        cap → one finding (missing entry)."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO132_is_valid_fetch_assets import (
+            IsValidFetchAssetsValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_capability(
+            connector,
+            capability_id="fetch-assets-and-vulnerabilities",
+            serializer=_make_flag_serializer(
+                "isFetchAssets", "fetch-assets-and-vulnerabilities"
+            ),
+        )
+        # Write an empty configurations file (default create leaves
+        # it templated with unrelated data; overwrite for clarity).
+        _write_connector_yaml_file(
+            connector,
+            "configurations.yaml",
+            {"metadata": {"title": "Configuration"}, "configurations": []},
+        )
+        _co145_bust_related_file_cache(connector, "configurations_file")
+
+        results = IsValidFetchAssetsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+        assert "no `configurations[]` entry" in results[0].message
+
+    def test_grouped_namespaced_cap_id_passes(self):
+        """Grouped connector: cap id
+        ``fetch-assets-and-vulnerabilities_myvendor``. Serializer +
+        configurations entry both use the namespaced id → passes."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO132_is_valid_fetch_assets import (
+            IsValidFetchAssetsValidator,
+        )
+
+        connector = create_connector_object()
+        namespaced = "fetch-assets-and-vulnerabilities_myvendor"
+        _wire_handler_for_capability(
+            connector,
+            capability_id=namespaced,
+            serializer=_make_flag_serializer("isFetchAssets", namespaced),
+        )
+        _co132_write_configurations_with_interval(connector, namespaced)
+
+        results = IsValidFetchAssetsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert results == []
+
+    def test_non_xsoar_handler_skipped(self):
+        """Non-XSOAR handler with fetch-assets cap → not policed."""
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            HandlerCapability,
+        )
+        from demisto_sdk.commands.validate.validators.CO_validators.CO132_is_valid_fetch_assets import (
+            IsValidFetchAssetsValidator,
+        )
+
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "sspm-myint",
+                    "metadata": {
+                        "module": "sspm",
+                        "ownership": {
+                            "team": "SSPM",
+                            "maintainers": ["@sspm-team"],
+                        },
+                    },
+                }
+            ]
+        )
+        handler = connector.handlers[0]
+        assert not handler.is_xsoar
+        handler.capabilities = [
+            HandlerCapability(
+                id="fetch-assets-and-vulnerabilities",
+                auth_options=[],
+                workloads=[],
+                actions=[],
+            )
+        ]
+        handler.serializer = None
+
+        results = IsValidFetchAssetsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert results == []
+
+
+# ============================================================
+# CO133 - IsValidFetchEventsValidator
+# ============================================================
+
+
+def _co133_write_configurations_with_interval(
+    connector, cap_id: str, include_interval: bool = True
+):
+    """Sibling of ``_co132_write_configurations_with_interval`` but
+    for eventFetchInterval."""
+    payload: dict = {
+        "metadata": {"title": "Configuration"},
+        "configurations": [
+            {
+                "id": cap_id,
+                "configurations": [
+                    {
+                        "fields": (
+                            [
+                                {
+                                    "id": "eventFetchInterval",
+                                    "field_type": "duration",
+                                    "title": "Event Fetch Interval",
+                                }
+                            ]
+                            if include_interval
+                            else [
+                                {
+                                    "id": "some_other_field",
+                                    "field_type": "input",
+                                    "title": "Other",
+                                }
+                            ]
+                        )
+                    }
+                ],
+            }
+        ],
+    }
+    _write_connector_yaml_file(connector, "configurations.yaml", payload)
+    _co145_bust_related_file_cache(connector, "configurations_file")
+
+
+class TestCO133IsValidFetchEvents:
+    """Tests for CO133: log-collection capability → serializer emits
+    `isFetchEvents: true` + configurations.yaml entry declares
+    `eventFetchInterval`."""
+
+    def test_valid_handler_passes(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO133_is_valid_fetch_events import (
+            IsValidFetchEventsValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_capability(
+            connector,
+            capability_id="log-collection",
+            serializer=_make_flag_serializer("isFetchEvents", "log-collection"),
+        )
+        _co133_write_configurations_with_interval(connector, "log-collection")
+
+        results = IsValidFetchEventsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert results == []
+
+    def test_missing_serializer_flag_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO133_is_valid_fetch_events import (
+            IsValidFetchEventsValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_capability(
+            connector, capability_id="log-collection", serializer=None
+        )
+        _co133_write_configurations_with_interval(connector, "log-collection")
+
+        results = IsValidFetchEventsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+        assert "'isFetchEvents: true'" in results[0].message
+
+    def test_missing_interval_field_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO133_is_valid_fetch_events import (
+            IsValidFetchEventsValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_capability(
+            connector,
+            capability_id="log-collection",
+            serializer=_make_flag_serializer("isFetchEvents", "log-collection"),
+        )
+        _co133_write_configurations_with_interval(
+            connector, "log-collection", include_interval=False
+        )
+
+        results = IsValidFetchEventsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+        assert "'eventFetchInterval'" in results[0].message
+        assert str(results[0].path).endswith("configurations.yaml")
+
+    def test_grouped_namespaced_cap_id_passes(self):
+        """The akamai regression case: grouped connector cap id
+        ``log-collection_akamai-waf-siem`` correctly wired."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO133_is_valid_fetch_events import (
+            IsValidFetchEventsValidator,
+        )
+
+        connector = create_connector_object()
+        namespaced = "log-collection_akamai-waf-siem"
+        _wire_handler_for_capability(
+            connector,
+            capability_id=namespaced,
+            serializer=_make_flag_serializer("isFetchEvents", namespaced),
+        )
+        _co133_write_configurations_with_interval(connector, namespaced)
+
+        results = IsValidFetchEventsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert results == []
+
+    def test_non_xsoar_handler_skipped(self):
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            HandlerCapability,
+        )
+        from demisto_sdk.commands.validate.validators.CO_validators.CO133_is_valid_fetch_events import (
+            IsValidFetchEventsValidator,
+        )
+
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "sspm-myint",
+                    "metadata": {
+                        "module": "sspm",
+                        "ownership": {
+                            "team": "SSPM",
+                            "maintainers": ["@sspm-team"],
+                        },
+                    },
+                }
+            ]
+        )
+        handler = connector.handlers[0]
+        assert not handler.is_xsoar
+        handler.capabilities = [
+            HandlerCapability(
+                id="log-collection",
+                auth_options=[],
+                workloads=[],
+                actions=[],
+            )
+        ]
+        handler.serializer = None
+
+        results = IsValidFetchEventsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert results == []
+
+
+# ============================================================
+# CO134 - IsValidFetchCredentialsValidator (serializer-flag only)
+# ============================================================
+
+
+class TestCO134IsValidFetchCredentials:
+    """Tests for CO134: fetch-secrets capability → serializer emits
+    `isFetchCredentials: true`. No interval field (fetch-secrets is
+    stateless per CO161)."""
+
+    def test_valid_handler_passes(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO134_is_valid_fetch_credentials import (
+            IsValidFetchCredentialsValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_capability(
+            connector,
+            capability_id="fetch-secrets",
+            serializer=_make_flag_serializer(
+                "isFetchCredentials", "fetch-secrets"
+            ),
+        )
+
+        results = IsValidFetchCredentialsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert results == []
+
+    def test_missing_serializer_flag_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO134_is_valid_fetch_credentials import (
+            IsValidFetchCredentialsValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_capability(
+            connector, capability_id="fetch-secrets", serializer=None
+        )
+
+        results = IsValidFetchCredentialsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+        assert "'isFetchCredentials: true'" in results[0].message
+        assert str(results[0].path).endswith("serializer.yaml")
+
+    def test_wrong_capability_gate_fails(self):
+        """Serializer emits isFetchCredentials but gated on a
+        different cap → fails."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO134_is_valid_fetch_credentials import (
+            IsValidFetchCredentialsValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_capability(
+            connector,
+            capability_id="fetch-secrets",
+            serializer=_make_flag_serializer(
+                "isFetchCredentials", "fetch-issues"
+            ),
+        )
+
+        results = IsValidFetchCredentialsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+
+    def test_non_xsoar_handler_skipped(self):
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            HandlerCapability,
+        )
+        from demisto_sdk.commands.validate.validators.CO_validators.CO134_is_valid_fetch_credentials import (
+            IsValidFetchCredentialsValidator,
+        )
+
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "sspm-myint",
+                    "metadata": {
+                        "module": "sspm",
+                        "ownership": {
+                            "team": "SSPM",
+                            "maintainers": ["@sspm-team"],
+                        },
+                    },
+                }
+            ]
+        )
+        handler = connector.handlers[0]
+        assert not handler.is_xsoar
+        handler.capabilities = [
+            HandlerCapability(
+                id="fetch-secrets",
+                auth_options=[],
+                workloads=[],
+                actions=[],
+            )
+        ]
+        handler.serializer = None
+
+        results = IsValidFetchCredentialsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert results == []
+
+
+# ============================================================
+# CO141 - IsMirroringOmittedValidator (near-copy of CO145)
+# ============================================================
+#
+# Same walker shape as CO145 with a 2-item forbidden set
+# ({outgoingMapperId, defaultMapperOut}). Reuses the same
+# _co145_wire_handler / _co145_write_configurations /
+# _co145_bust_related_file_cache helpers so the test scaffolding
+# stays lockstep with CO145.
+
+
+def _co141_forbidden_field(field_id: str) -> dict:
+    """Minimal mirroring param field dict for the forbidden set."""
+    return {
+        "id": field_id,
+        "field_type": "select",
+        "title": field_id,
+    }
+
+
+class TestCO141IsMirroringOmitted:
+    """Tests for CO141: forbid `outgoingMapperId` and
+    `defaultMapperOut` as user-visible field entries anywhere in the
+    connector's XSOAR-visible surface."""
+
+    def test_no_mirroring_fields_passes(self):
+        """Clean connector - no forbidden fields."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO141_is_mirroring_omitted import (
+            IsMirroringOmittedValidator,
+        )
+
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {"fields": [_co145_ok_field("incidentType")]}
+                    ],
+                }
+            ],
+        )
+
+        results = IsMirroringOmittedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert results == []
+
+    def test_outgoingMapperId_in_configurations_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO141_is_mirroring_omitted import (
+            IsMirroringOmittedValidator,
+        )
+
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {"fields": [_co141_forbidden_field("outgoingMapperId")]}
+                    ],
+                }
+            ],
+        )
+
+        results = IsMirroringOmittedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "'outgoingMapperId'" in msg
+        assert "configurations.yaml" in msg
+        assert str(results[0].path).endswith("configurations.yaml")
+
+    def test_defaultMapperOut_in_configurations_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO141_is_mirroring_omitted import (
+            IsMirroringOmittedValidator,
+        )
+
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {"fields": [_co141_forbidden_field("defaultMapperOut")]}
+                    ],
+                }
+            ],
+        )
+
+        results = IsMirroringOmittedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+        assert "'defaultMapperOut'" in results[0].message
+
+    def test_outgoingMapperId_in_connection_general_fails(self):
+        """Defense-in-depth: forbidden field in connection.yaml
+        general_configurations is also flagged."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO141_is_mirroring_omitted import (
+            IsMirroringOmittedValidator,
+        )
+
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_connection(
+            connector,
+            general={
+                "configurations": [
+                    {"fields": [_co141_forbidden_field("outgoingMapperId")]}
+                ]
+            },
+        )
+
+        results = IsMirroringOmittedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+        assert "'outgoingMapperId'" in results[0].message
+        assert "connection.yaml" in results[0].message
+        assert str(results[0].path).endswith("connection.yaml")
+
+    def test_outgoingMapperId_in_capabilities_general_fails(self):
+        """Defense-in-depth: capabilities.yaml general_configurations
+        also walked."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO141_is_mirroring_omitted import (
+            IsMirroringOmittedValidator,
+        )
+
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_capabilities(
+            connector,
+            general={
+                "configurations": [
+                    {"fields": [_co141_forbidden_field("outgoingMapperId")]}
+                ]
+            },
+        )
+
+        results = IsMirroringOmittedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+        assert "'outgoingMapperId'" in results[0].message
+        assert "capabilities.yaml" in results[0].message
+
+    def test_namespaced_id_renamed_to_forbidden_still_fails(self):
+        """Grouped connector namespaces
+        ``xsoar-foo_outgoingMapperId`` and serializer renames back
+        to ``outgoingMapperId`` → still fails (integration receives
+        the runtime name)."""
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            FieldMapping,
+            SerializerData,
+        )
+        from demisto_sdk.commands.validate.validators.CO_validators.CO141_is_mirroring_omitted import (
+            IsMirroringOmittedValidator,
+        )
+
+        connector = create_connector_object()
+        serializer = SerializerData(
+            field_mappings=[
+                FieldMapping(
+                    id="xsoar-foo_outgoingMapperId",
+                    field_name="outgoingMapperId",
+                )
+            ],
+            computed_fields=[],
+        )
+        _co145_wire_handler(
+            connector,
+            capability_ids=["log-collection_foo"],
+            serializer=serializer,
+        )
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "log-collection_foo",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co141_forbidden_field(
+                                    "xsoar-foo_outgoingMapperId"
+                                )
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+
+        results = IsMirroringOmittedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+        assert "'outgoingMapperId'" in results[0].message
+
+    def test_namespaced_id_NOT_renamed_passes(self):
+        """A namespaced id that the serializer does NOT rename is
+        compared against the forbidden set as-is → not in the set
+        → passes. Guards against prefix-match false positives."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO141_is_mirroring_omitted import (
+            IsMirroringOmittedValidator,
+        )
+
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co141_forbidden_field(
+                                    "foo_outgoingMapperId"
+                                )
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+
+        results = IsMirroringOmittedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert results == []
+
+    def test_non_xsoar_handler_skipped(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO141_is_mirroring_omitted import (
+            IsMirroringOmittedValidator,
+        )
+
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "sspm-myint",
+                    "metadata": {
+                        "module": "sspm",
+                        "ownership": {
+                            "team": "SSPM",
+                            "maintainers": ["@sspm-team"],
+                        },
+                    },
+                }
+            ]
+        )
+        assert not connector.handlers[0].is_xsoar
+        connector.handlers[0].capabilities = []
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {"fields": [_co141_forbidden_field("outgoingMapperId")]}
+                    ],
+                }
+            ],
+        )
+
+        results = IsMirroringOmittedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert results == []
+
+    def test_both_forbidden_fields_emit_separate_results(self):
+        """One handler with both outgoingMapperId AND defaultMapperOut
+        under different cap entries → two results."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO141_is_mirroring_omitted import (
+            IsMirroringOmittedValidator,
+        )
+
+        connector = create_connector_object()
+        _co145_wire_handler(
+            connector,
+            capability_ids=["fetch-issues", "log-collection_akamai"],
+        )
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {"fields": [_co141_forbidden_field("outgoingMapperId")]}
+                    ],
+                },
+                {
+                    "id": "log-collection_akamai",
+                    "configurations": [
+                        {"fields": [_co141_forbidden_field("defaultMapperOut")]}
+                    ],
+                },
+            ],
+        )
+
+        results = IsMirroringOmittedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 2
+        joined = " | ".join(r.message for r in results)
+        assert "'outgoingMapperId'" in joined
+        assert "'defaultMapperOut'" in joined
+
+
+# ============================================================
 # CO136 test helpers
 # ============================================================
 def _default_ignore_field(

@@ -147,12 +147,8 @@ class IsValidFetchAssetsValidator(ConnectorsValidator[ContentTypes]):
         results: List[ValidationResult] = []
         for handler in connector.xsoar_handlers:
             per_handler_issues: List[str] = []
-            for cap_id in iter_handler_capability_ids(
-                handler, FETCH_ASSETS_CAPABILITY
-            ):
-                if not computed_field_emits_flag(
-                    handler, FETCH_ASSETS_FLAG, cap_id
-                ):
+            for cap_id in iter_handler_capability_ids(handler, FETCH_ASSETS_CAPABILITY):
+                if not computed_field_emits_flag(handler, FETCH_ASSETS_FLAG, cap_id):
                     per_handler_issues.append(
                         f"handler '{handler.id}' subscribes to "
                         f"capability '{cap_id}' but its serializer.yaml "
@@ -196,9 +192,7 @@ class IsValidFetchAssetsValidator(ConnectorsValidator[ContentTypes]):
         # Collect unique cap ids subscribed by ANY XSOAR handler.
         subscribed_cap_ids: Set[str] = set()
         for handler in connector.xsoar_handlers:
-            for cap_id in iter_handler_capability_ids(
-                handler, FETCH_ASSETS_CAPABILITY
-            ):
+            for cap_id in iter_handler_capability_ids(handler, FETCH_ASSETS_CAPABILITY):
                 subscribed_cap_ids.add(cap_id)
 
         if not subscribed_cap_ids:

@@ -82,7 +82,6 @@ long-running-server integrations.
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any, Dict, Iterable, Iterator, List, Optional, Set, Tuple
 
 from demisto_sdk.commands.content_graph.objects.connector import (
@@ -170,9 +169,7 @@ class IsLongRunningPortGatedValidator(ConnectorsValidator[ContentTypes]):
 
         for handler in connector.xsoar_handlers:
             rename_map = self._serializer_rename_map(handler)
-            for field, _source_file, _hint in self._iter_all_fields(
-                connector, handler
-            ):
+            for field, _source_file, _hint in self._iter_all_fields(connector, handler):
                 raw_id = field.get("id")
                 if not isinstance(raw_id, str):
                     continue
@@ -356,9 +353,7 @@ class IsLongRunningPortGatedValidator(ConnectorsValidator[ContentTypes]):
     ) -> bool:
         """Return True if a user-visible ``longRunning`` checkbox is
         emitted somewhere in the handler's XSOAR-visible surface."""
-        for field, _source_file, _hint in self._iter_all_fields(
-            connector, handler
-        ):
+        for field, _source_file, _hint in self._iter_all_fields(connector, handler):
             raw_id = field.get("id")
             if not isinstance(raw_id, str):
                 continue
@@ -378,9 +373,7 @@ class IsLongRunningPortGatedValidator(ConnectorsValidator[ContentTypes]):
         rename_map: Dict[str, str],
         runtime_name_target: str,
     ) -> bool:
-        for field, _source_file, _hint in self._iter_all_fields(
-            connector, handler
-        ):
+        for field, _source_file, _hint in self._iter_all_fields(connector, handler):
             raw_id = field.get("id")
             if not isinstance(raw_id, str):
                 continue
@@ -577,7 +570,10 @@ class IsLongRunningPortGatedValidator(ConnectorsValidator[ContentTypes]):
             options = child.get("options")
             if not isinstance(options, dict):
                 return False
-            if capability_id is not None and options.get("capability_id") != capability_id:
+            if (
+                capability_id is not None
+                and options.get("capability_id") != capability_id
+            ):
                 return False
             return options.get("value") in ("on", True, "true", "True")
         return False

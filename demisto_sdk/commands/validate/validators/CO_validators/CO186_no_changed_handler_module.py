@@ -91,9 +91,7 @@ class NoChangedHandlerModuleValidator(ConnectorsValidator[ContentTypes]):
         return results
 
     @staticmethod
-    def _module_changed(
-        old_handler: HandlerData, new_handler: HandlerData
-    ) -> bool:
+    def _module_changed(old_handler: HandlerData, new_handler: HandlerData) -> bool:
         """True iff `metadata.module` differs between the two snapshots.
 
         `HandlerData.module` is the property view over

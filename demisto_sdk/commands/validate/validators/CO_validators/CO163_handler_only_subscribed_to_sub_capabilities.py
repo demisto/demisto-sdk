@@ -61,7 +61,9 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Connector
 
 
-class HandlerOnlySubscribedToSubCapabilitiesValidator(ConnectorsValidator[ContentTypes]):
+class HandlerOnlySubscribedToSubCapabilitiesValidator(
+    ConnectorsValidator[ContentTypes]
+):
     error_code = "CO163"
     description = (
         "Grouped-only. Every handler's `capabilities[].id` MUST be a "

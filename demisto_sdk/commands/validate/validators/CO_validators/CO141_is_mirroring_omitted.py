@@ -282,9 +282,7 @@ class IsMirroringOmittedValidator(ConnectorsValidator[ContentTypes]):
                         handler_id=handler.id,
                         field_id=runtime_name,
                         source_file=source_file,
-                        location_hint=(
-                            f" ({location_hint})" if location_hint else ""
-                        ),
+                        location_hint=(f" ({location_hint})" if location_hint else ""),
                     ),
                     content_object=connector,
                     path=path,

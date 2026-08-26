@@ -6485,7 +6485,9 @@ class TestCO130IsValidFetch:
 # swap the flag id from "isFetch" to "feed".
 
 
-def _co131_make_feed_serializer(capability_id: str = "threat-intelligence-and-enrichment"):
+def _co131_make_feed_serializer(
+    capability_id: str = "threat-intelligence-and-enrichment",
+):
     """Build a SerializerData with the correct ``feed: true``
     computed_fields rule gated on ``capability_id``. Sibling of
     ``_make_valid_serializer`` (which does the isFetch shape)."""
@@ -7345,9 +7347,7 @@ class TestCO134IsValidFetchCredentials:
         _wire_handler_for_capability(
             connector,
             capability_id="fetch-secrets",
-            serializer=_make_flag_serializer(
-                "isFetchCredentials", "fetch-secrets"
-            ),
+            serializer=_make_flag_serializer("isFetchCredentials", "fetch-secrets"),
         )
 
         results = IsValidFetchCredentialsValidator().obtain_invalid_content_items(
@@ -7385,9 +7385,7 @@ class TestCO134IsValidFetchCredentials:
         _wire_handler_for_capability(
             connector,
             capability_id="fetch-secrets",
-            serializer=_make_flag_serializer(
-                "isFetchCredentials", "fetch-issues"
-            ),
+            serializer=_make_flag_serializer("isFetchCredentials", "fetch-issues"),
         )
 
         results = IsValidFetchCredentialsValidator().obtain_invalid_content_items(
@@ -7475,9 +7473,7 @@ class TestCO141IsMirroringOmitted:
             entries=[
                 {
                     "id": "fetch-issues",
-                    "configurations": [
-                        {"fields": [_co145_ok_field("incidentType")]}
-                    ],
+                    "configurations": [{"fields": [_co145_ok_field("incidentType")]}],
                 }
             ],
         )
@@ -7632,9 +7628,7 @@ class TestCO141IsMirroringOmitted:
                     "configurations": [
                         {
                             "fields": [
-                                _co141_forbidden_field(
-                                    "xsoar-foo_outgoingMapperId"
-                                )
+                                _co141_forbidden_field("xsoar-foo_outgoingMapperId")
                             ]
                         }
                     ],
@@ -7665,13 +7659,7 @@ class TestCO141IsMirroringOmitted:
                 {
                     "id": "fetch-issues",
                     "configurations": [
-                        {
-                            "fields": [
-                                _co141_forbidden_field(
-                                    "foo_outgoingMapperId"
-                                )
-                            ]
-                        }
+                        {"fields": [_co141_forbidden_field("foo_outgoingMapperId")]}
                     ],
                 }
             ],
@@ -8106,9 +8094,7 @@ class TestCO143IsSelectSearchableClearable:
                     "configurations": [
                         {
                             "fields": [
-                                _co143_select_field(
-                                    "sel", dynamic=True, clearable=True
-                                )
+                                _co143_select_field("sel", dynamic=True, clearable=True)
                             ]
                         }
                     ],
@@ -8209,7 +8195,9 @@ class TestCO143IsSelectSearchableClearable:
             [connector]
         )
         assert len(results) == 2
-        defects = {("searchable" in r.message, "clearable" in r.message) for r in results}
+        defects = {
+            ("searchable" in r.message, "clearable" in r.message) for r in results
+        }
         # One (searchable) and one (clearable).
         assert (True, False) in defects
         assert (False, True) in defects
@@ -8451,11 +8439,7 @@ class TestCO138IsParamConfigTypeValid:
                 {
                     "id": "basic.default",
                     "configurations": [
-                        {
-                            "fields": [
-                                _co138_field("engine", config_type="backend")
-                            ]
-                        }
+                        {"fields": [_co138_field("engine", config_type="backend")]}
                     ],
                 }
             ],
@@ -8496,9 +8480,7 @@ class TestCO138IsParamConfigTypeValid:
                         {
                             "fields": [
                                 _co138_field("engine", config_type="backend"),
-                                _co138_field(
-                                    "engineGroup", config_type="backend"
-                                ),
+                                _co138_field("engineGroup", config_type="backend"),
                             ]
                         }
                     ],
@@ -8511,9 +8493,7 @@ class TestCO138IsParamConfigTypeValid:
                 "configurations": [
                     {
                         "fields": [
-                            _co138_field(
-                                "integrationLogLevel", config_type="backend"
-                            )
+                            _co138_field("integrationLogLevel", config_type="backend")
                         ]
                     }
                 ]
@@ -8527,12 +8507,8 @@ class TestCO138IsParamConfigTypeValid:
                     "configurations": [
                         {
                             "fields": [
-                                _co138_field(
-                                    "incomingMapperId", config_type="backend"
-                                ),
-                                _co138_field(
-                                    "mappingId", config_type="backend"
-                                ),
+                                _co138_field("incomingMapperId", config_type="backend"),
+                                _co138_field("mappingId", config_type="backend"),
                             ]
                         }
                     ],
@@ -8542,9 +8518,7 @@ class TestCO138IsParamConfigTypeValid:
                     "configurations": [
                         {
                             "fields": [
-                                _co138_field(
-                                    "defaultIgnore", config_type="backend"
-                                )
+                                _co138_field("defaultIgnore", config_type="backend")
                             ]
                         }
                     ],
@@ -8615,13 +8589,7 @@ class TestCO138IsParamConfigTypeValid:
                 {
                     "id": "basic.default",
                     "configurations": [
-                        {
-                            "fields": [
-                                _co138_field(
-                                    "engine", config_type="frontend"
-                                )
-                            ]
-                        }
+                        {"fields": [_co138_field("engine", config_type="frontend")]}
                     ],
                 }
             ],
@@ -8634,7 +8602,7 @@ class TestCO138IsParamConfigTypeValid:
         assert len(results) == 1
         msg = results[0].message
         assert "'engine'" in msg
-        assert "\"frontend\"" in msg
+        assert '"frontend"' in msg
         assert "MUST be" in msg
 
     # ------------------------------------------------------------
@@ -8654,11 +8622,7 @@ class TestCO138IsParamConfigTypeValid:
                 {
                     "id": "fetch-issues",
                     "configurations": [
-                        {
-                            "fields": [
-                                _co138_field("api_url", config_type="backend")
-                            ]
-                        }
+                        {"fields": [_co138_field("api_url", config_type="backend")]}
                     ],
                 }
             ],
@@ -8672,7 +8636,7 @@ class TestCO138IsParamConfigTypeValid:
         msg = results[0].message
         assert "'api_url'" in msg
         assert "is NOT one of the" in msg
-        assert "\"backend\"" in msg
+        assert '"backend"' in msg
 
     def test_typo_of_whitelisted_field_with_backend_fails(self):
         """Common typo (`integratoinLogLevel` misspelling) with
@@ -8690,9 +8654,7 @@ class TestCO138IsParamConfigTypeValid:
                 "configurations": [
                     {
                         "fields": [
-                            _co138_field(
-                                "integratoinLogLevel", config_type="backend"
-                            )
+                            _co138_field("integratoinLogLevel", config_type="backend")
                         ]
                     }
                 ]
@@ -8723,9 +8685,7 @@ class TestCO138IsParamConfigTypeValid:
             entries=[
                 {
                     "id": "fetch-issues",
-                    "configurations": [
-                        {"fields": [_co138_field("api_url")]}
-                    ],
+                    "configurations": [{"fields": [_co138_field("api_url")]}],
                 }
             ],
         )
@@ -8751,13 +8711,7 @@ class TestCO138IsParamConfigTypeValid:
                 {
                     "id": "fetch-issues",
                     "configurations": [
-                        {
-                            "fields": [
-                                _co138_field(
-                                    "api_url", config_type="frontend"
-                                )
-                            ]
-                        }
+                        {"fields": [_co138_field("api_url", config_type="frontend")]}
                     ],
                 }
             ],
@@ -8787,9 +8741,7 @@ class TestCO138IsParamConfigTypeValid:
 
         connector = create_connector_object()
         serializer = SerializerData(
-            field_mappings=[
-                FieldMapping(id="xsoar-foo_engine", field_name="engine")
-            ],
+            field_mappings=[FieldMapping(id="xsoar-foo_engine", field_name="engine")],
             computed_fields=[],
         )
         _co145_wire_handler(
@@ -8806,9 +8758,7 @@ class TestCO138IsParamConfigTypeValid:
                     "configurations": [
                         {
                             "fields": [
-                                _co138_field(
-                                    "xsoar-foo_engine", config_type="backend"
-                                )
+                                _co138_field("xsoar-foo_engine", config_type="backend")
                             ]
                         }
                     ],
@@ -8835,9 +8785,7 @@ class TestCO138IsParamConfigTypeValid:
 
         connector = create_connector_object()
         serializer = SerializerData(
-            field_mappings=[
-                FieldMapping(id="xsoar-foo_engine", field_name="engine")
-            ],
+            field_mappings=[FieldMapping(id="xsoar-foo_engine", field_name="engine")],
             computed_fields=[],
         )
         _co145_wire_handler(
@@ -8851,9 +8799,7 @@ class TestCO138IsParamConfigTypeValid:
             profiles=[
                 {
                     "id": "basic.default",
-                    "configurations": [
-                        {"fields": [_co138_field("xsoar-foo_engine")]}
-                    ],
+                    "configurations": [{"fields": [_co138_field("xsoar-foo_engine")]}],
                 }
             ],
         )
@@ -8901,9 +8847,7 @@ class TestCO138IsParamConfigTypeValid:
                     "configurations": [
                         {
                             "fields": [
-                                _co138_field(
-                                    "api_url", config_type="backend"
-                                ),
+                                _co138_field("api_url", config_type="backend"),
                                 _co138_field("engine"),
                             ]
                         }
@@ -8940,9 +8884,7 @@ class TestCO138IsParamConfigTypeValid:
             profiles=[
                 {
                     "id": "basic.default",
-                    "configurations": [
-                        {"fields": [_co138_field("engine")]}
-                    ],
+                    "configurations": [{"fields": [_co138_field("engine")]}],
                 }
             ],
         )
@@ -8952,13 +8894,7 @@ class TestCO138IsParamConfigTypeValid:
                 {
                     "id": "fetch-issues",
                     "configurations": [
-                        {
-                            "fields": [
-                                _co138_field(
-                                    "api_url", config_type="backend"
-                                )
-                            ]
-                        }
+                        {"fields": [_co138_field("api_url", config_type="backend")]}
                     ],
                 }
             ],
@@ -8986,9 +8922,7 @@ class TestCO138IsParamConfigTypeValid:
         )
 
         connector = create_connector_object()
-        _co145_wire_handler(
-            connector, capability_ids=["automation-and-remediation"]
-        )
+        _co145_wire_handler(connector, capability_ids=["automation-and-remediation"])
         _co145_write_configurations(
             connector,
             entries=[
@@ -8997,9 +8931,7 @@ class TestCO138IsParamConfigTypeValid:
                     "configurations": [
                         {
                             "fields": [
-                                _co138_field(
-                                    "defaultIgnore", config_type="backend"
-                                )
+                                _co138_field("defaultIgnore", config_type="backend")
                             ]
                         }
                     ],
@@ -11008,8 +10940,7 @@ def _co145_wire_handler(
     handler = connector.handlers[handler_index]
     handler.metadata.module = "xsoar"
     auth_options = [
-        HandlerAuthOption(id=aid, workloads=[], methods=[])
-        for aid in auth_option_ids
+        HandlerAuthOption(id=aid, workloads=[], methods=[]) for aid in auth_option_ids
     ]
     handler.capabilities = [
         HandlerCapability(
@@ -11153,9 +11084,7 @@ class TestCO145NoImpliedFetchCheckbox:
             entries=[
                 {
                     "id": "fetch-issues_sub",
-                    "configurations": [
-                        {"fields": [_co145_ok_field("incidentType")]}
-                    ],
+                    "configurations": [{"fields": [_co145_ok_field("incidentType")]}],
                 }
             ],
         )
@@ -11202,9 +11131,7 @@ class TestCO145NoImpliedFetchCheckbox:
             entries=[
                 {
                     "id": "fetch-issues",
-                    "configurations": [
-                        {"fields": [_co145_forbidden_field("isFetch")]}
-                    ],
+                    "configurations": [{"fields": [_co145_forbidden_field("isFetch")]}],
                 }
             ],
         )
@@ -11294,9 +11221,7 @@ class TestCO145NoImpliedFetchCheckbox:
             entries=[
                 {
                     "id": "threat-intelligence-and-enrichment",
-                    "configurations": [
-                        {"fields": [_co145_forbidden_field("feed")]}
-                    ],
+                    "configurations": [{"fields": [_co145_forbidden_field("feed")]}],
                 }
             ],
         )
@@ -11352,11 +11277,7 @@ class TestCO145NoImpliedFetchCheckbox:
                 {
                     "id": "fetch-secrets",
                     "configurations": [
-                        {
-                            "fields": [
-                                _co145_forbidden_field("isFetchCredentials")
-                            ]
-                        }
+                        {"fields": [_co145_forbidden_field("isFetchCredentials")]}
                     ],
                 }
             ],
@@ -11385,9 +11306,7 @@ class TestCO145NoImpliedFetchCheckbox:
         _co145_write_connection(
             connector,
             general={
-                "configurations": [
-                    {"fields": [_co145_forbidden_field("isFetch")]}
-                ]
+                "configurations": [{"fields": [_co145_forbidden_field("isFetch")]}]
             },
         )
 
@@ -11420,9 +11339,7 @@ class TestCO145NoImpliedFetchCheckbox:
             profiles=[
                 {
                     "id": "passthrough.my_profile",
-                    "configurations": [
-                        {"fields": [_co145_forbidden_field("isFetch")]}
-                    ],
+                    "configurations": [{"fields": [_co145_forbidden_field("isFetch")]}],
                 }
             ],
         )
@@ -11454,9 +11371,7 @@ class TestCO145NoImpliedFetchCheckbox:
             profiles=[
                 {
                     "id": "some.other.profile",
-                    "configurations": [
-                        {"fields": [_co145_forbidden_field("isFetch")]}
-                    ],
+                    "configurations": [{"fields": [_co145_forbidden_field("isFetch")]}],
                 }
             ],
         )
@@ -11482,9 +11397,7 @@ class TestCO145NoImpliedFetchCheckbox:
         _co145_write_capabilities(
             connector,
             general={
-                "configurations": [
-                    {"fields": [_co145_forbidden_field("isFetch")]}
-                ]
+                "configurations": [{"fields": [_co145_forbidden_field("isFetch")]}]
             },
         )
 
@@ -11640,9 +11553,7 @@ class TestCO145NoImpliedFetchCheckbox:
             entries=[
                 {
                     "id": "fetch-issues_guardicore-v2",
-                    "configurations": [
-                        {"fields": [_co145_ok_field("incidentType")]}
-                    ],
+                    "configurations": [{"fields": [_co145_ok_field("incidentType")]}],
                 }
             ],
         )
@@ -11727,9 +11638,7 @@ class TestCO145NoImpliedFetchCheckbox:
             entries=[
                 {
                     "id": "fetch-issues",
-                    "configurations": [
-                        {"fields": [_co145_forbidden_field("isFetch")]}
-                    ],
+                    "configurations": [{"fields": [_co145_forbidden_field("isFetch")]}],
                 },
                 {
                     "id": "log-collection_akamai-waf-siem",
@@ -11765,9 +11674,7 @@ class TestCO145NoImpliedFetchCheckbox:
         _co145_write_connection(
             connector,
             general={
-                "configurations": [
-                    {"fields": [_co145_forbidden_field("isFetch")]}
-                ]
+                "configurations": [{"fields": [_co145_forbidden_field("isFetch")]}]
             },
         )
         _co145_write_configurations(
@@ -11775,9 +11682,7 @@ class TestCO145NoImpliedFetchCheckbox:
             entries=[
                 {
                     "id": "fetch-issues",
-                    "configurations": [
-                        {"fields": [_co145_forbidden_field("isFetch")]}
-                    ],
+                    "configurations": [{"fields": [_co145_forbidden_field("isFetch")]}],
                 }
             ],
         )
@@ -13822,9 +13727,7 @@ class TestCO151IsFeedExpirationIntervalGated:
         _co145_wire_handler(
             connector, capability_ids=["threat-intelligence-and-enrichment"]
         )
-        interval = _co151_interval_field(
-            "xsoar-misp-feed_feedExpirationInterval"
-        )
+        interval = _co151_interval_field("xsoar-misp-feed_feedExpirationInterval")
         policy = _co151_policy_field("xsoar-misp-feed_feedExpirationPolicy")
         _co145_write_configurations(
             connector,
@@ -14142,9 +14045,7 @@ class TestCO152IsLongRunningPortGated:
                 }
             ],
         )
-        _co152_write_triggers(
-            connector, [_co152_shape1_trigger(include_engine=True)]
-        )
+        _co152_write_triggers(connector, [_co152_shape1_trigger(include_engine=True)])
 
         results = IsLongRunningPortGatedValidator().obtain_invalid_content_items(
             [connector]
@@ -14287,9 +14188,7 @@ class TestCO152IsLongRunningPortGated:
                 }
             ],
         )
-        _co152_write_triggers(
-            connector, [_co152_shape1_trigger(include_engine=True)]
-        )
+        _co152_write_triggers(connector, [_co152_shape1_trigger(include_engine=True)])
         results = IsLongRunningPortGatedValidator().obtain_invalid_content_items(
             [connector]
         )
@@ -14400,11 +14299,7 @@ class TestCO152IsLongRunningPortGated:
         )
         _co152_write_triggers(
             connector,
-            [
-                _co152_shape2_trigger(
-                    capability_id="collector", include_engine=True
-                )
-            ],
+            [_co152_shape2_trigger(capability_id="collector", include_engine=True)],
         )
         results = IsLongRunningPortGatedValidator().obtain_invalid_content_items(
             [connector]
@@ -14503,11 +14398,7 @@ class TestCO152IsLongRunningPortGated:
         )
         _co152_write_triggers(
             connector,
-            [
-                _co152_shape1_trigger(
-                    include_engine=True, engine_id="plain_foo_engine"
-                )
-            ],
+            [_co152_shape1_trigger(include_engine=True, engine_id="plain_foo_engine")],
         )
         results = IsLongRunningPortGatedValidator().obtain_invalid_content_items(
             [connector]
@@ -14656,9 +14547,7 @@ class TestCO154IsHandlerIdXsoarPrefixed:
         connector = create_connector_object()
         h = connector.handlers[0]
         h.id = "xsoar-servicedeskplus-on-premise"
-        h.related_integration = _co154_stub_integration(
-            "ServiceDeskPlus (On-Premise)"
-        )
+        h.related_integration = _co154_stub_integration("ServiceDeskPlus (On-Premise)")
 
         results = IsHandlerIdXsoarPrefixedValidator().obtain_invalid_content_items(
             [connector]
@@ -14671,9 +14560,7 @@ class TestCO154IsHandlerIdXsoarPrefixed:
         connector = create_connector_object()
         h = connector.handlers[0]
         h.id = "xsoar-palo-alto-traps-esm-beta"
-        h.related_integration = _co154_stub_integration(
-            "Palo Alto Traps ESM (Beta)"
-        )
+        h.related_integration = _co154_stub_integration("Palo Alto Traps ESM (Beta)")
 
         results = IsHandlerIdXsoarPrefixedValidator().obtain_invalid_content_items(
             [connector]
@@ -15461,21 +15348,19 @@ class TestCO169IsNoDuplicateHandlerIntegration:
             handlers=[
                 {
                     "id": "xsoar-a",
-                    "triggering": {
-                        "labels": {"xsoar-integration-id": "IntegrationA"}
-                    },
+                    "triggering": {"labels": {"xsoar-integration-id": "IntegrationA"}},
                 },
                 {
                     "id": "xsoar-b",
-                    "triggering": {
-                        "labels": {"xsoar-integration-id": "IntegrationB"}
-                    },
+                    "triggering": {"labels": {"xsoar-integration-id": "IntegrationB"}},
                 },
             ]
         )
 
-        results = IsNoDuplicateHandlerIntegrationValidator().obtain_invalid_content_items(
-            [connector]
+        results = (
+            IsNoDuplicateHandlerIntegrationValidator().obtain_invalid_content_items(
+                [connector]
+            )
         )
         assert results == []
 
@@ -15486,21 +15371,19 @@ class TestCO169IsNoDuplicateHandlerIntegration:
             handlers=[
                 {
                     "id": "xsoar-a",
-                    "triggering": {
-                        "labels": {"xsoar-integration-id": "SharedInt"}
-                    },
+                    "triggering": {"labels": {"xsoar-integration-id": "SharedInt"}},
                 },
                 {
                     "id": "xsoar-b",
-                    "triggering": {
-                        "labels": {"xsoar-integration-id": "SharedInt"}
-                    },
+                    "triggering": {"labels": {"xsoar-integration-id": "SharedInt"}},
                 },
             ]
         )
 
-        results = IsNoDuplicateHandlerIntegrationValidator().obtain_invalid_content_items(
-            [connector]
+        results = (
+            IsNoDuplicateHandlerIntegrationValidator().obtain_invalid_content_items(
+                [connector]
+            )
         )
         assert len(results) == 1
         msg = results[0].message
@@ -15515,27 +15398,23 @@ class TestCO169IsNoDuplicateHandlerIntegration:
             handlers=[
                 {
                     "id": "xsoar-a",
-                    "triggering": {
-                        "labels": {"xsoar-integration-id": "SharedInt"}
-                    },
+                    "triggering": {"labels": {"xsoar-integration-id": "SharedInt"}},
                 },
                 {
                     "id": "xsoar-b",
-                    "triggering": {
-                        "labels": {"xsoar-integration-id": "SharedInt"}
-                    },
+                    "triggering": {"labels": {"xsoar-integration-id": "SharedInt"}},
                 },
                 {
                     "id": "xsoar-c",
-                    "triggering": {
-                        "labels": {"xsoar-integration-id": "SharedInt"}
-                    },
+                    "triggering": {"labels": {"xsoar-integration-id": "SharedInt"}},
                 },
             ]
         )
 
-        results = IsNoDuplicateHandlerIntegrationValidator().obtain_invalid_content_items(
-            [connector]
+        results = (
+            IsNoDuplicateHandlerIntegrationValidator().obtain_invalid_content_items(
+                [connector]
+            )
         )
         assert len(results) == 1
         msg = results[0].message
@@ -15553,8 +15432,10 @@ class TestCO169IsNoDuplicateHandlerIntegration:
             ]
         )
 
-        results = IsNoDuplicateHandlerIntegrationValidator().obtain_invalid_content_items(
-            [connector]
+        results = (
+            IsNoDuplicateHandlerIntegrationValidator().obtain_invalid_content_items(
+                [connector]
+            )
         )
         assert results == []
 
@@ -15565,33 +15446,27 @@ class TestCO169IsNoDuplicateHandlerIntegration:
             handlers=[
                 {
                     "id": "xsoar-a",
-                    "triggering": {
-                        "labels": {"xsoar-integration-id": "IntA"}
-                    },
+                    "triggering": {"labels": {"xsoar-integration-id": "IntA"}},
                 },
                 {
                     "id": "xsoar-b",
-                    "triggering": {
-                        "labels": {"xsoar-integration-id": "IntA"}
-                    },
+                    "triggering": {"labels": {"xsoar-integration-id": "IntA"}},
                 },
                 {
                     "id": "xsoar-c",
-                    "triggering": {
-                        "labels": {"xsoar-integration-id": "IntB"}
-                    },
+                    "triggering": {"labels": {"xsoar-integration-id": "IntB"}},
                 },
                 {
                     "id": "xsoar-d",
-                    "triggering": {
-                        "labels": {"xsoar-integration-id": "IntB"}
-                    },
+                    "triggering": {"labels": {"xsoar-integration-id": "IntB"}},
                 },
             ]
         )
 
-        results = IsNoDuplicateHandlerIntegrationValidator().obtain_invalid_content_items(
-            [connector]
+        results = (
+            IsNoDuplicateHandlerIntegrationValidator().obtain_invalid_content_items(
+                [connector]
+            )
         )
         assert len(results) == 2
         joined = " | ".join(r.message for r in results)
@@ -15604,20 +15479,18 @@ class TestCO169IsNoDuplicateHandlerIntegration:
             handlers=[
                 {
                     "id": "xsoar-a",
-                    "triggering": {
-                        "labels": {"xsoar-integration-id": "Shared"}
-                    },
+                    "triggering": {"labels": {"xsoar-integration-id": "Shared"}},
                 },
                 {
                     "id": "xsoar-b",
-                    "triggering": {
-                        "labels": {"xsoar-integration-id": "Shared"}
-                    },
+                    "triggering": {"labels": {"xsoar-integration-id": "Shared"}},
                 },
             ]
         )
-        results = IsNoDuplicateHandlerIntegrationValidator().obtain_invalid_content_items(
-            [connector]
+        results = (
+            IsNoDuplicateHandlerIntegrationValidator().obtain_invalid_content_items(
+                [connector]
+            )
         )
         assert len(results) == 1
         assert results[0].path is not None
@@ -16686,7 +16559,9 @@ class TestCO163HandlerOnlySubscribedToSubCapabilities:
         parent id must NOT be flagged - CO163 is grouped-only."""
         connector = create_connector_object(
             capabilities_data={
-                "capabilities": [_capability("fetch-issues", sub_ids=["fetch-issues_a"])]
+                "capabilities": [
+                    _capability("fetch-issues", sub_ids=["fetch-issues_a"])
+                ]
             },
             handlers=[_xsoar_handler_subscribing_to("fetch-issues")],
         )
@@ -16849,9 +16724,8 @@ class TestCO163HandlerOnlySubscribedToSubCapabilities:
             [connector]
         )
         assert len(results) == 2
-        cited_caps = {r.message.split("'")[3] for r in results}
-        # Third quoted token in error_message is {cap_id}. Just check
-        # both parent ids appear somewhere in the aggregated messages.
+        # Just check both parent ids appear somewhere in the aggregated
+        # messages (order of results is not guaranteed).
         joined = " ".join(r.message for r in results)
         assert "fetch-issues" in joined
         assert "log-collection" in joined
@@ -19339,13 +19213,9 @@ class TestCO192IsIntegrationCoveredByConnector:
             ConnectorAwareInitializer,
         )
 
-        ConnectorAwareInitializer._integrations_without_connector_handler = (
-            frozenset()
-        )
+        ConnectorAwareInitializer._integrations_without_connector_handler = frozenset()
         yield
-        ConnectorAwareInitializer._integrations_without_connector_handler = (
-            frozenset()
-        )
+        ConnectorAwareInitializer._integrations_without_connector_handler = frozenset()
 
     def test_empty_stash_emits_nothing(self):
         """
@@ -19385,8 +19255,8 @@ class TestCO192IsIntegrationCoveredByConnector:
             paths=["commonfields.id", "name"],
             values=["PassedInIntegration", "PassedInIntegration"],
         )
-        ConnectorAwareInitializer._integrations_without_connector_handler = (
-            frozenset({stashed})
+        ConnectorAwareInitializer._integrations_without_connector_handler = frozenset(
+            {stashed}
         )
 
         validator = IsIntegrationCoveredByConnectorValidator()
@@ -19421,8 +19291,8 @@ class TestCO192IsIntegrationCoveredByConnector:
         int_b = create_integration_object(
             paths=["commonfields.id", "name"], values=["IntB", "IntB"]
         )
-        ConnectorAwareInitializer._integrations_without_connector_handler = (
-            frozenset({int_a, int_b})
+        ConnectorAwareInitializer._integrations_without_connector_handler = frozenset(
+            {int_a, int_b}
         )
 
         validator = IsIntegrationCoveredByConnectorValidator()
@@ -19446,13 +19316,9 @@ class TestCO192IsIntegrationCoveredByConnector:
 
         integration = create_integration_object()
         stashed = frozenset({integration})
-        ConnectorAwareInitializer._integrations_without_connector_handler = (
-            stashed
-        )
+        ConnectorAwareInitializer._integrations_without_connector_handler = stashed
 
-        got = (
-            ConnectorAwareInitializer.get_integrations_without_connector_handler()
-        )
+        got = ConnectorAwareInitializer.get_integrations_without_connector_handler()
 
         assert got is stashed
         assert isinstance(got, frozenset)
@@ -19469,9 +19335,7 @@ class TestCO192IsIntegrationCoveredByConnector:
             ConnectorAwareInitializer,
         )
 
-        got = (
-            ConnectorAwareInitializer.get_integrations_without_connector_handler()
-        )
+        got = ConnectorAwareInitializer.get_integrations_without_connector_handler()
 
         assert isinstance(got, frozenset)
         with pytest.raises(AttributeError):
@@ -19491,8 +19355,8 @@ class TestCO192IsIntegrationCoveredByConnector:
         )
 
         integration = create_integration_object()
-        ConnectorAwareInitializer._integrations_without_connector_handler = (
-            frozenset({integration})
+        ConnectorAwareInitializer._integrations_without_connector_handler = frozenset(
+            {integration}
         )
 
         validator = IsIntegrationCoveredByConnectorValidator()

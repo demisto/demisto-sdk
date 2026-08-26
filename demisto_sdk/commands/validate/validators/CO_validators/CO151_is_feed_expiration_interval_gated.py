@@ -162,9 +162,7 @@ class IsFeedExpirationIntervalGatedValidator(ConnectorsValidator[ContentTypes]):
 
         for handler in connector.xsoar_handlers:
             rename_map = self._serializer_rename_map(handler)
-            for field, _source_file, _hint in self._iter_all_fields(
-                connector, handler
-            ):
+            for field, _source_file, _hint in self._iter_all_fields(connector, handler):
                 raw_id = field.get("id")
                 if not isinstance(raw_id, str):
                     continue

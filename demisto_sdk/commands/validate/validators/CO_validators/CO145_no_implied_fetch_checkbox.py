@@ -413,9 +413,7 @@ class NoImpliedFetchCheckboxValidator(ConnectorsValidator[ContentTypes]):
                         field_id=runtime_name,
                         capability_id=capability_id,
                         source_file=source_file,
-                        location_hint=(
-                            f" ({location_hint})" if location_hint else ""
-                        ),
+                        location_hint=(f" ({location_hint})" if location_hint else ""),
                     ),
                     content_object=connector,
                     path=path,

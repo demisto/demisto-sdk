@@ -33,17 +33,6 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
     PathLevel,
 )
-
-# Support levels that are OUT OF SCOPE for the connector flow. Partner- and
-# community-supported integrations are not migrated through UCP, so any
-# integration carrying one of these support levels is dropped from the
-# connector-aware validation set - matching the doc's CO192 "in scope"
-# definition (PLATFORM marketplace, not deprecated, support not in
-# {partner, community}). ``developer`` support is intentionally NOT in this
-# set: developer-supported integrations remain in scope.
-_EXCLUDED_CONNECTOR_SUPPORT_LEVELS: FrozenSet[str] = frozenset(
-    {PARTNER_SUPPORT, COMMUNITY_SUPPORT}
-)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER
@@ -74,6 +63,17 @@ from demisto_sdk.commands.content_graph.objects.repository import (
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     InvalidContentItemException,
     NotAContentItemException,
+)
+
+# Support levels that are OUT OF SCOPE for the connector flow. Partner- and
+# community-supported integrations are not migrated through UCP, so any
+# integration carrying one of these support levels is dropped from the
+# connector-aware validation set - matching the doc's CO192 "in scope"
+# definition (PLATFORM marketplace, not deprecated, support not in
+# {partner, community}). ``developer`` support is intentionally NOT in this
+# set: developer-supported integrations remain in scope.
+_EXCLUDED_CONNECTOR_SUPPORT_LEVELS: FrozenSet[str] = frozenset(
+    {PARTNER_SUPPORT, COMMUNITY_SUPPORT}
 )
 
 # Precedence for merging conflicting git statuses that collapse onto the same
@@ -1394,9 +1394,9 @@ class ConnectorAwareInitializer(Initializer):
     # ``get_integrations_without_connector_handler``. Class-level (same shape
     # as ``BaseValidator.graph_interface``) since validators have no
     # initializer handle. Frozen so readers cannot mutate the stash.
-    _integrations_without_connector_handler: ClassVar[
-        FrozenSet[Integration]
-    ] = frozenset()
+    _integrations_without_connector_handler: ClassVar[FrozenSet[Integration]] = (
+        frozenset()
+    )
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
@@ -1960,9 +1960,7 @@ class ConnectorAwareInitializer(Initializer):
                 )
 
     @classmethod
-    def _remove_unmatched_integrations(
-        cls, integrations: Set[Integration]
-    ) -> None:
+    def _remove_unmatched_integrations(cls, integrations: Set[Integration]) -> None:
         """Cleanup: Remove integrations that have no matching connector handler.
 
         After all matching phases, any integration whose ``related_content`` is

@@ -101,7 +101,7 @@ _DEFECT_UNEXPECTED_BACKEND = "unexpected_backend"
 class IsParamConfigTypeValidValidator(ConnectorsValidator[ContentTypes]):
     error_code = "CO138"
     description = (
-        "Validates that the `metadata.xsoar.config_type: \"backend\"` "
+        'Validates that the `metadata.xsoar.config_type: "backend"` '
         "marker is set on EXACTLY the 6 whitelisted canonical field "
         "ids (engine, engineGroup, mappingId, incomingMapperId, "
         "defaultIgnore, integrationLogLevel) and on no other field. "
@@ -294,9 +294,7 @@ class IsParamConfigTypeValidValidator(ConnectorsValidator[ContentTypes]):
         rename_map = self._serializer_rename_map(handler)
 
         def _iter_all() -> Iterator[Tuple[Dict[str, Any], str, str]]:
-            for field, hint in self._iter_connection_yaml_fields(
-                connector, handler
-            ):
+            for field, hint in self._iter_connection_yaml_fields(connector, handler):
                 yield field, "connection.yaml", hint
             for field, hint in self._iter_capabilities_yaml_fields(connector):
                 yield field, "capabilities.yaml", hint
@@ -328,15 +326,15 @@ class IsParamConfigTypeValidValidator(ConnectorsValidator[ContentTypes]):
                 if actual is None:
                     problem = (
                         f"is missing `metadata.xsoar.config_type: "
-                        f"\"{BACKEND_CONFIG_TYPE}\"` - this canonical "
+                        f'"{BACKEND_CONFIG_TYPE}"` - this canonical '
                         f"field is BE-managed and MUST carry the "
                         f"backend marker"
                     )
                 else:
                     problem = (
                         f"has `metadata.xsoar.config_type: "
-                        f"\"{actual}\"` - canonical field MUST be "
-                        f"`\"{BACKEND_CONFIG_TYPE}\"`"
+                        f'"{actual}"` - canonical field MUST be '
+                        f'`"{BACKEND_CONFIG_TYPE}"`'
                     )
             elif not is_whitelisted and is_backend:
                 defect = _DEFECT_UNEXPECTED_BACKEND
@@ -363,9 +361,7 @@ class IsParamConfigTypeValidValidator(ConnectorsValidator[ContentTypes]):
                         handler_id=handler.id,
                         field_id=runtime_name,
                         source_file=source_file,
-                        location_hint=(
-                            f" ({location_hint})" if location_hint else ""
-                        ),
+                        location_hint=(f" ({location_hint})" if location_hint else ""),
                         problem=problem,
                     ),
                     content_object=connector,

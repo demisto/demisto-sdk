@@ -1686,13 +1686,9 @@ class TestConnectorAwareInitializerStash:
     def _reset_stash(self):
         # Isolate every test from a prior test's stash. The stash is a
         # class attribute, so leakage across cases is easy to miss.
-        ConnectorAwareInitializer._integrations_without_connector_handler = (
-            frozenset()
-        )
+        ConnectorAwareInitializer._integrations_without_connector_handler = frozenset()
         yield
-        ConnectorAwareInitializer._integrations_without_connector_handler = (
-            frozenset()
-        )
+        ConnectorAwareInitializer._integrations_without_connector_handler = frozenset()
 
     def test_unmatched_integration_populates_stash(self):
         """
@@ -1717,9 +1713,7 @@ class TestConnectorAwareInitializerStash:
             result = initializer._cross_match_and_expand({integration}, set())
 
         assert integration not in result  # matches existing cleanup behaviour
-        stash = (
-            ConnectorAwareInitializer.get_integrations_without_connector_handler()
-        )
+        stash = ConnectorAwareInitializer.get_integrations_without_connector_handler()
         assert isinstance(stash, frozenset)
         # Compare by object_id -- pydantic models may go through
         # copy/hash-round-trip when placed into a frozenset in some code
@@ -1744,8 +1738,8 @@ class TestConnectorAwareInitializerStash:
         # Seed the stash with a stale value from a hypothetical previous run
         # so the assertion below actually proves the cleanup step overwrites
         # it rather than accidentally leaving the fixture's reset in place.
-        ConnectorAwareInitializer._integrations_without_connector_handler = (
-            frozenset({create_integration_object()})
+        ConnectorAwareInitializer._integrations_without_connector_handler = frozenset(
+            {create_integration_object()}
         )
 
         with patch.object(
@@ -1766,9 +1760,7 @@ class TestConnectorAwareInitializerStash:
               validator from corrupting the initializer's view by
               ``got.add(...)``-ing on the returned set.
         """
-        stash = (
-            ConnectorAwareInitializer.get_integrations_without_connector_handler()
-        )
+        stash = ConnectorAwareInitializer.get_integrations_without_connector_handler()
 
         assert isinstance(stash, frozenset)
         with pytest.raises(AttributeError):
@@ -1830,9 +1822,7 @@ class TestConnectorAwareInitializerStash:
         ):
             initializer._cross_match_and_expand({int_a, int_b}, set())
 
-        stash = (
-            ConnectorAwareInitializer.get_integrations_without_connector_handler()
-        )
+        stash = ConnectorAwareInitializer.get_integrations_without_connector_handler()
         stash_ids = {i.object_id for i in stash}
         assert {"OrphA", "OrphB"}.issubset(stash_ids)
 

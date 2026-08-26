@@ -50,7 +50,9 @@ class NoChangedHandlerTriggeringLabelsValidator(ConnectorsValidator[ContentTypes
         "and pack in the content graph and must remain stable across "
         "versions."
     )
-    related_field = "triggering.labels.xsoar-integration-id,triggering.labels.xsoar-pack-id"
+    related_field = (
+        "triggering.labels.xsoar-integration-id,triggering.labels.xsoar-pack-id"
+    )
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]
 

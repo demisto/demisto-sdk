@@ -532,6 +532,46 @@ def test_verify_image_available_after_push_for_gar_image_uses_daemon(mocker):
     sleep_mock.assert_not_called()
 
 
+def test_verify_image_available_after_push_for_registry_qualified_gar_image_uses_daemon(
+    mocker,
+):
+    """
+    Given:
+        - A registry-qualified GAR-hosted image, i.e. the exact form produced in CI
+          where the extended image keeps its ``gcr.io/xsoar-registry`` prefix
+          (``gcr.io/xsoar-registry/devtestdemistoextended/python3:...``).
+    When:
+        - _verify_image_available_after_push is called and the image is available.
+    Then:
+        - It is correctly detected as a GAR image and verified via
+          is_image_available(use_registry_prefix=True), NOT the DockerHub API.
+
+    Regression test: a string-prefix check (repo.startswith(...)) failed for the
+    registry-qualified form, so extended images fell through to the DockerHub
+    verification branch, which cannot see a private GCR image ("manifest unknown").
+    """
+    # Given
+    image = (
+        f"{dhelper.DEFAULT_EXTENDED_REGISTRY}/"
+        f"{dhelper.DEVTEST_DEMISTO_EXTENDED_REPOSITORY}/python3:1.0.0-abcdef"
+    )
+    is_available_mock = mocker.patch.object(
+        dhelper.DockerBase, "is_image_available", return_value=True
+    )
+    dockerhub_api_mock = mocker.patch.object(
+        dhelper.DockerBase, "_is_image_available_on_registry"
+    )
+    sleep_mock = mocker.patch.object(dhelper.time, "sleep")
+
+    # When
+    dhelper.DockerBase._verify_image_available_after_push(image)
+
+    # Then
+    is_available_mock.assert_called_once_with(image, use_registry_prefix=True)
+    dockerhub_api_mock.assert_not_called()
+    sleep_mock.assert_not_called()
+
+
 def test_verify_image_available_after_push_for_gar_image_retries_then_raises(mocker):
     """
     Given:
@@ -1350,3 +1390,91 @@ class TestGetPythonVersionDemistoextendedFallback:
 
         with pytest.raises(Exception, match="docker pull failed"):
             get_python_version("demisto/python3:3.10.11.54799-unique-test")
+
+
+class TestGetPythonVersionOrDefault:
+    """Tests for get_python_version_or_default, which pins the fallback
+    behavior that replaced the previously inline pre-commit logic."""
+
+    def test_returns_resolved_version_without_warning(self, mocker):
+        """
+        Given:
+         - get_python_version resolves a version for the image.
+
+        When:
+         - calling get_python_version_or_default.
+
+        Then:
+         - the resolved version is returned and no warning is emitted.
+        """
+        mocker.patch.object(dhelper, "get_python_version", return_value=Version("3.9"))
+        warning = mocker.patch.object(dhelper.logger, "warning")
+
+        result = dhelper.get_python_version_or_default(
+            "demisto/python3:3.9.8.24399", context="the dev/test image"
+        )
+
+        assert result == Version("3.9")
+        warning.assert_not_called()
+
+    def test_falls_back_to_default_with_warning_no_identifier(self, mocker):
+        """
+        Given:
+         - get_python_version cannot resolve a version (returns None).
+         - no identifier is passed.
+
+        When:
+         - calling get_python_version_or_default.
+
+        Then:
+         - Version(DEFAULT_PYTHON_VERSION) is returned.
+         - a warning is emitted whose subject is just the repr of the image.
+        """
+        mocker.patch.object(dhelper, "get_python_version", return_value=None)
+        warning = mocker.patch.object(dhelper.logger, "warning")
+
+        result = dhelper.get_python_version_or_default(
+            "some-repo/some-image:1.0.0.1", context="the dev/test image"
+        )
+
+        assert result == Version(dhelper.DEFAULT_PYTHON_VERSION)
+        warning.assert_called_once()
+        message = warning.call_args[0][0]
+        assert (
+            "Could not resolve the python version for "
+            "'some-repo/some-image:1.0.0.1'; "
+            f"assuming {dhelper.DEFAULT_PYTHON_VERSION} for the dev/test image."
+            == message
+        )
+
+    def test_falls_back_to_default_with_warning_with_identifier(self, mocker):
+        """
+        Given:
+         - get_python_version cannot resolve a version (returns None).
+         - an identifier (e.g. a yml path) is passed.
+
+        When:
+         - calling get_python_version_or_default.
+
+        Then:
+         - Version(DEFAULT_PYTHON_VERSION) is returned.
+         - the warning subject includes the identifier and the image repr.
+        """
+        mocker.patch.object(dhelper, "get_python_version", return_value=None)
+        warning = mocker.patch.object(dhelper.logger, "warning")
+
+        result = dhelper.get_python_version_or_default(
+            "some-repo/some-image:1.0.0.1",
+            context="mypy-in-docker",
+            identifier="Packs/Foo/Scripts/Bar/Bar.yml",
+        )
+
+        assert result == Version(dhelper.DEFAULT_PYTHON_VERSION)
+        warning.assert_called_once()
+        message = warning.call_args[0][0]
+        assert (
+            "Could not resolve the python version for "
+            "Packs/Foo/Scripts/Bar/Bar.yml "
+            "(docker image 'some-repo/some-image:1.0.0.1'); "
+            f"assuming {dhelper.DEFAULT_PYTHON_VERSION} for mypy-in-docker." == message
+        )

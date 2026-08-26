@@ -35,9 +35,7 @@ class CrossDestinationDependencyValidator(BaseValidator[ContentTypes], ABC):
     def obtain_invalid_content_items_using_graph(
         self, content_items: Iterable[ContentTypes], validate_all_files: bool
     ) -> List[ValidationResult]:
-        content_id_to_objects = {
-            item.object_id: item for item in content_items
-        }
+        content_id_to_objects = {item.object_id: item for item in content_items}
 
         results: List[ValidationResult] = []
         for pack in content_items:

@@ -12,7 +12,10 @@ from demisto_sdk.commands.content_graph.parsers.connector import ConnectorParser
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     NotAContentItemException,
 )
-from demisto_sdk.commands.content_graph.parsers.pack import DerivedPackParser, PackParser
+from demisto_sdk.commands.content_graph.parsers.pack import (
+    DerivedPackParser,
+    PackParser,
+)
 
 IGNORED_PACKS_FOR_PARSING = ["NonSupported"]
 

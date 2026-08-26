@@ -28,6 +28,7 @@ from demisto_sdk.commands.content_graph.objects.connector import (
     ComputedFieldRule,
     ComputedOutput,
     ConnectionProfile,
+    ConnectorCapabilitiesData,
     ConnectorConnectionData,
     ConnectorField,
     FieldBehavior,
@@ -123,6 +124,9 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
 
         # Parse sub-models from related files
         self.connection: Optional[ConnectorConnectionData] = self._parse_connection()
+        self.capabilities_metadata: Optional[ConnectorCapabilitiesData] = (
+            self._parse_capabilities_metadata()
+        )
         self.capabilities: List[CapabilityData] = (
             self._parse_capabilities_with_configs()
         )
@@ -222,6 +226,29 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
             view_groups=view_groups,
             general_configurations=general_configs,
             profiles=profiles,
+        )
+
+    def _parse_capabilities_metadata(self) -> Optional[ConnectorCapabilitiesData]:
+        """Parse the capabilities.yaml ``metadata`` and file-level
+        ``general_configurations`` blocks.
+
+        Only the file-level metadata (title/description/help) and the
+        general_configurations block are captured here; the individual
+        capability items are parsed by ``_parse_capabilities_with_configs``.
+        """
+        data = self._capabilities_rf.file_content
+        if not data:
+            return None
+
+        metadata = data.get("metadata", {})
+        general_configs = self._parse_general_configurations(
+            data.get("general_configurations")
+        )
+        return ConnectorCapabilitiesData(
+            title=metadata.get("title"),
+            description=metadata.get("description"),
+            help=metadata.get("help"),
+            general_configurations=general_configs,
         )
 
     def _parse_connection_profile(self, profile_data: dict) -> ConnectionProfile:

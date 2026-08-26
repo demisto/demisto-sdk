@@ -14,9 +14,7 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR116_cross_destinat
 ContentTypes = Pack
 
 
-class CrossDestinationDependencyValidatorAllFiles(
-    CrossDestinationDependencyValidator
-):
+class CrossDestinationDependencyValidatorAllFiles(CrossDestinationDependencyValidator):
     expected_execution_mode = [ExecutionMode.ALL_FILES]
 
     def obtain_invalid_content_items(

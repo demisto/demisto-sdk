@@ -14,7 +14,6 @@ from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
-    DERIVED_PACK_SUFFIX,
     PackDestination,
 )
 from demisto_sdk.commands.content_graph.objects.connector import Connector
@@ -241,7 +240,9 @@ class ContentDTO(BaseModel):
         """
         managed_pack_ids = managed_pack_ids or {}
         entries: List[Dict[str, Any]] = []
-        no_managed_artifacts = artifacts_dir is not None and managed_artifacts_dir is None
+        no_managed_artifacts = (
+            artifacts_dir is not None and managed_artifacts_dir is None
+        )
         for pack in self.packs:
             # The managed counterpart id comes from the graph when it carries
             # one, and otherwise from the caller-supplied mapping. An empty
@@ -282,7 +283,9 @@ class ContentDTO(BaseModel):
                 base_dir = output_path.parent
             elif pack.managed:
                 base_dir = (
-                    None if managed_artifacts_dir is None else managed_artifacts_dir.absolute()
+                    None
+                    if managed_artifacts_dir is None
+                    else managed_artifacts_dir.absolute()
                 )
             else:
                 base_dir = artifacts_dir.absolute()

@@ -132,4 +132,3 @@ class StrictPackMetadata(BaseStrictModel):
                         f"Must be one of: {', '.join(sorted(valid_values))}."
                     )
         return values
-

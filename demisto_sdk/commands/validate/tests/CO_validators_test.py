@@ -92,6 +92,21 @@ from demisto_sdk.commands.validate.validators.CO_validators.CO126_is_valid_engin
 from demisto_sdk.commands.validate.validators.CO_validators.CO129_is_valid_configurations_metadata import (
     IsValidConfigurationsMetadataValidator,
 )
+from demisto_sdk.commands.validate.validators.CO_validators.CO143_is_select_searchable_clearable import (
+    IsSelectSearchableClearableValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO151_is_feed_expiration_interval_gated import (
+    IsFeedExpirationIntervalGatedValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO152_is_long_running_port_gated import (
+    IsLongRunningPortGatedValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO153_is_handler_folder_name_matches_id import (
+    IsHandlerFolderNameMatchesIdValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO154_is_handler_id_xsoar_prefixed import (
+    IsHandlerIdXsoarPrefixedValidator,
+)
 from demisto_sdk.commands.validate.validators.CO_validators.CO155_is_handler_module_xsoar import (
     IsHandlerModuleXsoarValidator,
 )
@@ -115,6 +130,9 @@ from demisto_sdk.commands.validate.validators.CO_validators.CO164_is_matching_in
 )
 from demisto_sdk.commands.validate.validators.CO_validators.CO165_is_handler_matching_pack_exist import (
     IsHandlerMatchingPackExistValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO169_is_no_duplicate_handler_integration import (
+    IsNoDuplicateHandlerIntegrationValidator,
 )
 from demisto_sdk.commands.validate.validators.CO_validators.CO170_is_handler_migration_constants import (
     IsHandlerMigrationConstantsValidator,
@@ -7745,6 +7763,629 @@ class TestCO141IsMirroringOmitted:
 
 
 # ============================================================
+# CO143 - IsSelectSearchableClearableValidator
+# ============================================================
+#
+# Structural sibling of CO141/CO145: raw-YAML walker over the same
+# 3 files (connection.yaml + capabilities.yaml + configurations.yaml).
+# Only `select` / `multi_select` field_types participate. Every such
+# field must set `options.clearable: true`; `searchable: true` is
+# required when static `options.values` has >5 items OR when the
+# field is dynamic (values resolved at runtime via `dynamicField`).
+
+
+def _co143_select_field(
+    field_id: str = "sel",
+    values=None,
+    clearable: object = True,
+    searchable: object = "__unset__",
+    field_type: str = "select",
+    dynamic: bool = False,
+    legacy_dynamic: bool = False,
+) -> dict:
+    """Build a minimal select/multi_select field dict.
+
+    - ``values``: dict, list, or None. Written under ``options.values``
+      unless ``dynamic``/``legacy_dynamic`` sets a dynamicField instead.
+    - ``clearable`` / ``searchable``: ``True``/``False`` writes the flag;
+      ``"__unset__"`` omits the key. ``clearable`` defaults to ``True``
+      so tests focused on the searchable rule don't accidentally fail
+      the clearable rule too.
+    - ``dynamic``: sets ``options.dynamic_values.dynamicField``.
+    - ``legacy_dynamic``: sets the legacy ``options.dynamicField``.
+    """
+    options: dict = {}
+    if values is not None:
+        options["values"] = values
+    if clearable != "__unset__":
+        options["clearable"] = clearable
+    if searchable != "__unset__":
+        options["searchable"] = searchable
+    if dynamic:
+        options.setdefault("dynamic_values", {})["dynamicField"] = "some-picker"
+    if legacy_dynamic:
+        options["dynamicField"] = "some-picker"
+    return {
+        "id": field_id,
+        "field_type": field_type,
+        "title": field_id,
+        "options": options,
+    }
+
+
+class TestCO143IsSelectSearchableClearable:
+    """Tests for CO143: every `select` / `multi_select` field in the
+    XSOAR-visible surface must set `options.clearable: true`; and
+    `options.searchable: true` when values may exceed 5 items (static
+    >5 or dynamicField)."""
+
+    # ------------------------------------------------------------
+    # Passing cases
+    # ------------------------------------------------------------
+    def test_select_with_2_values_no_searchable_passes(self):
+        """≤5 static values → searchable not required. clearable=True → ok."""
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co143_select_field(
+                                    "sel", values={"a": 1, "b": 2}, clearable=True
+                                )
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+
+        results = IsSelectSearchableClearableValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_select_with_5_values_no_searchable_passes(self):
+        """Exactly 5 static values → searchable not required (boundary)."""
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co143_select_field(
+                                    "sel",
+                                    values=["a", "b", "c", "d", "e"],
+                                    clearable=True,
+                                )
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        results = IsSelectSearchableClearableValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_dynamic_field_with_searchable_and_clearable_passes(self):
+        """Dynamic-value field with both flags set → passes."""
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co143_select_field(
+                                    "sel",
+                                    dynamic=True,
+                                    clearable=True,
+                                    searchable=True,
+                                )
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        results = IsSelectSearchableClearableValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_non_select_field_type_ignored(self):
+        """`input`/`checkbox`/anything not select is ignored."""
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {
+                            "fields": [
+                                {
+                                    "id": "not-select",
+                                    "field_type": "input",
+                                    "title": "x",
+                                    # No clearable / searchable at all.
+                                }
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        results = IsSelectSearchableClearableValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_non_xsoar_handler_skipped(self):
+        """Non-XSOAR handler is not walked."""
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _clear_xsoar_signals(connector.handlers[0])
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co143_select_field(
+                                    "sel", values={"a": 1}, clearable=False
+                                )
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        results = IsSelectSearchableClearableValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    # ------------------------------------------------------------
+    # Clearable failure
+    # ------------------------------------------------------------
+    def test_select_with_2_values_no_clearable_fails(self):
+        """Even 1 value: clearable is always required."""
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co143_select_field(
+                                    "sel",
+                                    values={"a": 1, "b": 2},
+                                    clearable="__unset__",
+                                )
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        results = IsSelectSearchableClearableValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "clearable" in msg
+        assert "'sel'" in msg
+        assert "configurations.yaml" in msg
+        assert str(results[0].path).endswith("configurations.yaml")
+
+    def test_dynamic_field_no_clearable_fails(self):
+        """Dynamic field: clearable still required (values_count reported as 'dynamic')."""
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co143_select_field(
+                                    "sel",
+                                    dynamic=True,
+                                    clearable="__unset__",
+                                    searchable=True,
+                                )
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        results = IsSelectSearchableClearableValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "clearable" in msg
+        assert "dynamic" in msg
+
+    # ------------------------------------------------------------
+    # Searchable failure
+    # ------------------------------------------------------------
+    def test_select_with_6_values_no_searchable_fails(self):
+        """>5 static values → searchable required."""
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        values = {f"v{i}": i for i in range(6)}
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co143_select_field(
+                                    "sel", values=values, clearable=True
+                                )
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        results = IsSelectSearchableClearableValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "searchable" in msg
+        assert "values_count=6" in msg
+
+    def test_multi_select_with_6_values_no_searchable_fails(self):
+        """multi_select field type is also policed."""
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co143_select_field(
+                                    "ms",
+                                    field_type="multi_select",
+                                    values=["a", "b", "c", "d", "e", "f"],
+                                    clearable=True,
+                                )
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        results = IsSelectSearchableClearableValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "searchable" in results[0].message
+        assert "'ms'" in results[0].message
+
+    def test_dynamic_field_no_searchable_fails(self):
+        """Dynamic field: searchable required (count unknown → assume >5)."""
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co143_select_field(
+                                    "sel", dynamic=True, clearable=True
+                                )
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        results = IsSelectSearchableClearableValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "searchable" in msg
+        assert "values_count=dynamic" in msg
+
+    def test_legacy_dynamic_field_no_searchable_fails(self):
+        """Legacy `options.dynamicField` shape triggers the same dynamic rule."""
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co143_select_field(
+                                    "sel", legacy_dynamic=True, clearable=True
+                                )
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        results = IsSelectSearchableClearableValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "searchable" in results[0].message
+
+    def test_values_as_list_length_counted_correctly(self):
+        """When `values` is a list, its length is the count."""
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co143_select_field(
+                                    "sel",
+                                    values=["a", "b", "c", "d", "e", "f", "g"],
+                                    clearable=True,
+                                )
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        results = IsSelectSearchableClearableValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "values_count=7" in results[0].message
+
+    def test_both_defects_emit_two_findings(self):
+        """A single field missing both clearable and searchable →
+        one finding per defect (per-(field, defect) granularity)."""
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        values = {f"v{i}": i for i in range(10)}
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co143_select_field(
+                                    "sel",
+                                    values=values,
+                                    clearable="__unset__",
+                                    searchable="__unset__",
+                                )
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        results = IsSelectSearchableClearableValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 2
+        defects = {("searchable" in r.message, "clearable" in r.message) for r in results}
+        # One (searchable) and one (clearable).
+        assert (True, False) in defects
+        assert (False, True) in defects
+
+    def test_select_field_in_connection_general_fails(self):
+        """Discovery covers `connection.yaml` general_configurations."""
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_connection(
+            connector,
+            general={
+                "configurations": [
+                    {
+                        "fields": [
+                            _co143_select_field(
+                                "sel", values={"a": 1}, clearable="__unset__"
+                            )
+                        ]
+                    }
+                ]
+            },
+        )
+        results = IsSelectSearchableClearableValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "connection.yaml" in results[0].message
+        assert str(results[0].path).endswith("connection.yaml")
+
+    def test_select_field_in_connection_profile_fails(self):
+        """Discovery covers handler-bound `connection.yaml` profiles."""
+        connector = create_connector_object()
+        _co145_wire_handler(
+            connector,
+            capability_ids=["fetch-issues"],
+            auth_option_ids=["my_profile"],
+        )
+        _co145_write_connection(
+            connector,
+            profiles=[
+                {
+                    "id": "my_profile",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co143_select_field(
+                                    "sel", values={"a": 1}, clearable="__unset__"
+                                )
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        results = IsSelectSearchableClearableValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "my_profile" in results[0].message
+
+    def test_select_field_in_capabilities_general_fails(self):
+        """Discovery covers `capabilities.yaml` general_configurations."""
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_capabilities(
+            connector,
+            general={
+                "configurations": [
+                    {
+                        "fields": [
+                            _co143_select_field(
+                                "sel", values={"a": 1}, clearable="__unset__"
+                            )
+                        ]
+                    }
+                ]
+            },
+        )
+        results = IsSelectSearchableClearableValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "capabilities.yaml" in results[0].message
+        assert str(results[0].path).endswith("capabilities.yaml")
+
+    def test_serializer_renamed_field_id_used_in_error_message(self):
+        """Namespaced id renamed via serializer field_mappings → runtime
+        name used in the finding."""
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            FieldMapping,
+            SerializerData,
+        )
+
+        connector = create_connector_object()
+        serializer = SerializerData(
+            field_mappings=[
+                FieldMapping(id="xsoar-foo_sel", field_name="sel"),
+            ],
+            computed_fields=[],
+        )
+        _co145_wire_handler(
+            connector,
+            capability_ids=["log-collection_foo"],
+            serializer=serializer,
+        )
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "log-collection_foo",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co143_select_field(
+                                    "xsoar-foo_sel",
+                                    values={"a": 1},
+                                    clearable="__unset__",
+                                )
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        results = IsSelectSearchableClearableValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        # Runtime name (post-rename) is reported, not the namespaced raw id.
+        assert "'sel'" in results[0].message
+
+    def test_same_defect_across_two_files_deduped(self):
+        """Same runtime field appearing in two source files with the
+        same defect fires once per handler (dedupe key = (runtime, defect))."""
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        # Same field in both capabilities.yaml general + configurations.yaml
+        # per-cap. Should only fire once.
+        _co145_write_capabilities(
+            connector,
+            general={
+                "configurations": [
+                    {
+                        "fields": [
+                            _co143_select_field(
+                                "sel", values={"a": 1}, clearable="__unset__"
+                            )
+                        ]
+                    }
+                ]
+            },
+        )
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co143_select_field(
+                                    "sel", values={"a": 1}, clearable="__unset__"
+                                )
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        results = IsSelectSearchableClearableValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+
+
+# ============================================================
 # CO138 - IsParamConfigTypeValidValidator
 # ============================================================
 #
@@ -12857,6 +13498,1050 @@ class TestCO150IsCollectionAutoEnablesAutomation:
 
 
 # ---------------------------------------------------------------------------
+# CO151 tests
+# ---------------------------------------------------------------------------
+
+
+def _co151_interval_field(field_id: str = "feedExpirationInterval") -> dict:
+    """Minimal duration-typed feedExpirationInterval field dict."""
+    return {
+        "id": field_id,
+        "title": "Feed Expiration Interval",
+        "field_type": "duration",
+        "options": {
+            "units": ["days", "hours"],
+            "default_value": {"days": 7},
+        },
+    }
+
+
+def _co151_policy_field(field_id: str = "feedExpirationPolicy") -> dict:
+    """Minimal select feedExpirationPolicy field dict."""
+    return {
+        "id": field_id,
+        "title": "Feed Expiration Policy",
+        "field_type": "select",
+        "options": {
+            "values": {"interval": "Time Interval", "never": "Never"},
+            "clearable": True,
+        },
+    }
+
+
+def _co151_write_triggers(connector, triggers: list) -> None:
+    """Write triggers.yaml AND bust the cached related-file so the
+    next ``.file_content`` sees the fresh disk write."""
+    _write_connector_yaml_file(connector, "triggers.yaml", {"triggers": triggers})
+    _co145_bust_related_file_cache(connector, "triggers_file")
+
+
+def _co151_canonical_trigger(
+    interval_id: str = "feedExpirationInterval",
+    policy_id: str = "feedExpirationPolicy",
+    value: str = "interval",
+) -> dict:
+    """eq-form trigger: hide=false when policy == value."""
+    return {
+        "conditions": {
+            "id": policy_id,
+            "behavior": "value",
+            "operator": "eq",
+            "value": value,
+        },
+        "effects": [
+            {"id": interval_id, "action": {"hidden": False}},
+        ],
+    }
+
+
+def _co151_negated_trigger(
+    interval_id: str = "feedExpirationInterval",
+    policy_id: str = "feedExpirationPolicy",
+    value: str = "interval",
+) -> dict:
+    """neq-form trigger: hide=true when policy != value."""
+    return {
+        "conditions": {
+            "id": policy_id,
+            "behavior": "value",
+            "operator": "neq",
+            "value": value,
+        },
+        "effects": [
+            {"id": interval_id, "action": {"hidden": True}},
+        ],
+    }
+
+
+class TestCO151IsFeedExpirationIntervalGated:
+    """Tests for CO151: feedExpirationInterval visibility must be
+    gated by a trigger keyed on the sibling feedExpirationPolicy
+    field selecting the interval option."""
+
+    def test_no_feed_expiration_interval_short_circuits(self):
+        """No interval field anywhere → validator emits nothing."""
+        connector = create_connector_object()
+        _co145_wire_handler(
+            connector, capability_ids=["threat-intelligence-and-enrichment"]
+        )
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "threat-intelligence-and-enrichment",
+                    "configurations": [{"fields": [_co145_ok_field()]}],
+                }
+            ],
+        )
+
+        results = IsFeedExpirationIntervalGatedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_bare_ids_with_correct_trigger_passes(self):
+        """Canonical bare interval + policy pair + eq/hidden=false
+        trigger → passes."""
+        connector = create_connector_object()
+        _co145_wire_handler(
+            connector, capability_ids=["threat-intelligence-and-enrichment"]
+        )
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "threat-intelligence-and-enrichment",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co151_interval_field(),
+                                _co151_policy_field(),
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        _co151_write_triggers(connector, [_co151_canonical_trigger()])
+
+        results = IsFeedExpirationIntervalGatedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_negated_shape_neq_hidden_true_passes(self):
+        """Equivalent negated form (neq + hidden=true) → passes."""
+        connector = create_connector_object()
+        _co145_wire_handler(
+            connector, capability_ids=["threat-intelligence-and-enrichment"]
+        )
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "threat-intelligence-and-enrichment",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co151_interval_field(),
+                                _co151_policy_field(),
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        _co151_write_triggers(connector, [_co151_negated_trigger()])
+
+        results = IsFeedExpirationIntervalGatedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_real_world_time_interval_value_passes(self):
+        """Real-world abuse.ch shape uses `value: Time Interval`
+        (with a space) instead of the canonical `interval` → still
+        accepted (case-insensitive substring match)."""
+        connector = create_connector_object()
+        _co145_wire_handler(
+            connector, capability_ids=["threat-intelligence-and-enrichment"]
+        )
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "threat-intelligence-and-enrichment",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co151_interval_field(),
+                                _co151_policy_field(),
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        _co151_write_triggers(
+            connector, [_co151_canonical_trigger(value="Time Interval")]
+        )
+        results = IsFeedExpirationIntervalGatedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_bare_ids_missing_trigger_fails(self):
+        """Interval + policy present but no trigger at all →
+        missing-trigger finding, path routes to triggers.yaml."""
+        connector = create_connector_object()
+        _co145_wire_handler(
+            connector, capability_ids=["threat-intelligence-and-enrichment"]
+        )
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "threat-intelligence-and-enrichment",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co151_interval_field(),
+                                _co151_policy_field(),
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        _co151_write_triggers(connector, [])
+
+        results = IsFeedExpirationIntervalGatedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "missing-trigger" in msg
+        assert "'feedExpirationInterval'" in msg
+        assert str(results[0].path).endswith("triggers.yaml")
+
+    def test_bare_ids_wrong_condition_value_fails(self):
+        """Trigger targets interval but conditions gate on
+        `value: never` → wrong-condition finding."""
+        connector = create_connector_object()
+        _co145_wire_handler(
+            connector, capability_ids=["threat-intelligence-and-enrichment"]
+        )
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "threat-intelligence-and-enrichment",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co151_interval_field(),
+                                _co151_policy_field(),
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        _co151_write_triggers(connector, [_co151_canonical_trigger(value="never")])
+
+        results = IsFeedExpirationIntervalGatedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "wrong-condition" in results[0].message
+
+    def test_bare_ids_wrong_target_field_fails(self):
+        """Trigger effect targets a different id → missing-trigger."""
+        connector = create_connector_object()
+        _co145_wire_handler(
+            connector, capability_ids=["threat-intelligence-and-enrichment"]
+        )
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "threat-intelligence-and-enrichment",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co151_interval_field(),
+                                _co151_policy_field(),
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        bad = _co151_canonical_trigger()
+        bad["effects"] = [{"id": "some-other-field", "action": {"hidden": False}}]
+        _co151_write_triggers(connector, [bad])
+
+        results = IsFeedExpirationIntervalGatedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "missing-trigger" in results[0].message
+
+    def test_missing_policy_sibling_fails(self):
+        """Interval field present without matching policy field →
+        missing-policy-sibling; path routes to configurations.yaml."""
+        connector = create_connector_object()
+        _co145_wire_handler(
+            connector, capability_ids=["threat-intelligence-and-enrichment"]
+        )
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "threat-intelligence-and-enrichment",
+                    "configurations": [{"fields": [_co151_interval_field()]}],
+                }
+            ],
+        )
+        _co151_write_triggers(connector, [])
+
+        results = IsFeedExpirationIntervalGatedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "no matching feedExpirationPolicy" in msg
+        assert str(results[0].path).endswith("configurations.yaml")
+
+    def test_grouped_namespaced_ids_pass(self):
+        """Grouped connector namespaces both ids as
+        ``<X>feedExpirationInterval``/``<X>feedExpirationPolicy``;
+        the sibling suffix substitution finds the policy, and a
+        trigger keyed on the namespaced ids passes."""
+        connector = create_connector_object()
+        _co145_wire_handler(
+            connector, capability_ids=["threat-intelligence-and-enrichment"]
+        )
+        interval = _co151_interval_field(
+            "xsoar-misp-feed_feedExpirationInterval"
+        )
+        policy = _co151_policy_field("xsoar-misp-feed_feedExpirationPolicy")
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "threat-intelligence-and-enrichment",
+                    "configurations": [{"fields": [interval, policy]}],
+                }
+            ],
+        )
+        _co151_write_triggers(
+            connector,
+            [
+                _co151_canonical_trigger(
+                    interval_id="xsoar-misp-feed_feedExpirationInterval",
+                    policy_id="xsoar-misp-feed_feedExpirationPolicy",
+                )
+            ],
+        )
+
+        results = IsFeedExpirationIntervalGatedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_grouped_namespaced_serializer_renamed_ids_pass(self):
+        """Field raw id is namespaced (`xsoar-foo_feedExpirationInterval`)
+        but serializer renames to canonical runtime name. Discovery
+        should still key on the raw id and sibling substitution
+        should still find the raw policy id."""
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            FieldMapping,
+            SerializerData,
+        )
+
+        connector = create_connector_object()
+        serializer = SerializerData(
+            field_mappings=[
+                FieldMapping(
+                    id="xsoar-foo_feedExpirationInterval",
+                    field_name="feedExpirationInterval",
+                ),
+                FieldMapping(
+                    id="xsoar-foo_feedExpirationPolicy",
+                    field_name="feedExpirationPolicy",
+                ),
+            ],
+            computed_fields=[],
+        )
+        _co145_wire_handler(
+            connector,
+            capability_ids=["threat-intelligence-and-enrichment"],
+            serializer=serializer,
+        )
+        interval = _co151_interval_field("xsoar-foo_feedExpirationInterval")
+        policy = _co151_policy_field("xsoar-foo_feedExpirationPolicy")
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "threat-intelligence-and-enrichment",
+                    "configurations": [{"fields": [interval, policy]}],
+                }
+            ],
+        )
+        _co151_write_triggers(
+            connector,
+            [
+                _co151_canonical_trigger(
+                    interval_id="xsoar-foo_feedExpirationInterval",
+                    policy_id="xsoar-foo_feedExpirationPolicy",
+                )
+            ],
+        )
+        results = IsFeedExpirationIntervalGatedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_missing_triggers_yaml_with_interval_present_fails(self):
+        """No triggers.yaml at all + interval present → hard fail
+        (missing-trigger)."""
+        connector = create_connector_object()
+        _co145_wire_handler(
+            connector, capability_ids=["threat-intelligence-and-enrichment"]
+        )
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "threat-intelligence-and-enrichment",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co151_interval_field(),
+                                _co151_policy_field(),
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        # Do NOT write triggers.yaml at all.
+
+        results = IsFeedExpirationIntervalGatedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "missing-trigger" in results[0].message
+
+
+# ---------------------------------------------------------------------------
+# CO152 tests
+# ---------------------------------------------------------------------------
+
+
+def _co152_port_field(field_id: str = "longRunningPort") -> dict:
+    """Minimal longRunningPort field dict (field_type=input)."""
+    return {
+        "id": field_id,
+        "title": "Long Running Port",
+        "field_type": "input",
+    }
+
+
+def _co152_long_running_checkbox(field_id: str = "longRunning") -> dict:
+    """User-visible longRunning checkbox field."""
+    return {
+        "id": field_id,
+        "title": "Long running",
+        "field_type": "checkbox",
+        "options": {"default_value": False},
+    }
+
+
+def _co152_engine_field(field_id: str = "engine") -> dict:
+    return {
+        "id": field_id,
+        "title": "Engine",
+        "field_type": "select",
+        "options": {"clearable": True},
+    }
+
+
+def _co152_engine_group_field(field_id: str = "engineGroup") -> dict:
+    return {
+        "id": field_id,
+        "title": "Engine Group",
+        "field_type": "select",
+        "options": {"clearable": True},
+    }
+
+
+def _co152_write_triggers(connector, triggers: list) -> None:
+    _write_connector_yaml_file(connector, "triggers.yaml", {"triggers": triggers})
+    _co145_bust_related_file_cache(connector, "triggers_file")
+
+
+def _co152_shape1_trigger(
+    port_id: str = "longRunningPort",
+    include_engine: bool = False,
+    include_engine_group: bool = False,
+    engine_id: str = "engine",
+    engine_group_id: str = "engineGroup",
+) -> dict:
+    """Shape-1 gating trigger with optional engine children."""
+    children: list = [
+        {
+            "id": "longRunning",
+            "behavior": "value",
+            "operator": "eq",
+            "value": True,
+        }
+    ]
+    if include_engine:
+        children.append({"id": engine_id, "behavior": "value", "operator": "is_empty"})
+    if include_engine_group:
+        children.append(
+            {"id": engine_group_id, "behavior": "value", "operator": "is_empty"}
+        )
+    return {
+        "conditions": {"operator": "AND", "children": children},
+        "effects": [{"id": port_id, "action": {"hidden": False}}],
+    }
+
+
+def _co152_shape2_trigger(
+    capability_id: str,
+    port_id: str = "longRunningPort",
+    include_engine: bool = False,
+    engine_id: str = "engine",
+) -> dict:
+    """Shape-2 gating trigger keyed on a capability condition."""
+    children: list = [
+        {
+            "type": "capability",
+            "options": {"capability_id": capability_id, "value": "on"},
+        }
+    ]
+    if include_engine:
+        children.append({"id": engine_id, "behavior": "value", "operator": "is_empty"})
+    return {
+        "conditions": {"operator": "AND", "children": children},
+        "effects": [{"id": port_id, "action": {"hidden": False}}],
+    }
+
+
+def _co152_serializer_with_long_running(capability_id: str):
+    """Build a SerializerData that emits longRunning: true gated on
+    a capability condition — matches shape-2."""
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        ComputedCondition,
+        ComputedConditionGroup,
+        ComputedFieldRule,
+        ComputedOutput,
+        SerializerData,
+    )
+
+    return SerializerData(
+        field_mappings=[],
+        computed_fields=[
+            ComputedFieldRule(
+                output=[ComputedOutput(id="longRunning", value=True)],
+                any_of=[
+                    ComputedConditionGroup(
+                        conditions=[
+                            ComputedCondition(
+                                type="capability",
+                                options={
+                                    "capability_id": capability_id,
+                                    "value": "on",
+                                },
+                            )
+                        ]
+                    )
+                ],
+            )
+        ],
+    )
+
+
+class TestCO152IsLongRunningPortGated:
+    """Tests for CO152: longRunningPort visibility must be gated
+    by a trigger keyed on the long-running signal AND on
+    engine/engineGroup being empty when those fields exist."""
+
+    # ------------------------------------------------------------------
+    # Short-circuit / passing shape-1
+    # ------------------------------------------------------------------
+
+    def test_no_longRunningPort_short_circuits(self):
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [{"fields": [_co145_ok_field()]}],
+                }
+            ],
+        )
+
+        results = IsLongRunningPortGatedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_shape1_no_engine_no_enginegroup_valid_passes(self):
+        """Shape-1 (checkbox) + no engine/engineGroup fields → AND
+        collapses to a single longRunning child."""
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co152_port_field(),
+                                _co152_long_running_checkbox(),
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        _co152_write_triggers(connector, [_co152_shape1_trigger()])
+
+        results = IsLongRunningPortGatedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_shape1_with_engine_only_valid_passes(self):
+        """Engine field present → AND includes engine=is_empty."""
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co152_port_field(),
+                                _co152_long_running_checkbox(),
+                                _co152_engine_field(),
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        _co152_write_triggers(
+            connector, [_co152_shape1_trigger(include_engine=True)]
+        )
+
+        results = IsLongRunningPortGatedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_shape1_with_engine_and_enginegroup_valid_passes(self):
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co152_port_field(),
+                                _co152_long_running_checkbox(),
+                                _co152_engine_field(),
+                                _co152_engine_group_field(),
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        _co152_write_triggers(
+            connector,
+            [_co152_shape1_trigger(include_engine=True, include_engine_group=True)],
+        )
+
+        results = IsLongRunningPortGatedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_shape1_missing_trigger_fails(self):
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co152_port_field(),
+                                _co152_long_running_checkbox(),
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        _co152_write_triggers(connector, [])
+        results = IsLongRunningPortGatedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "missing-trigger" in results[0].message
+
+    def test_shape1_wrong_condition_value_fails(self):
+        """`value: false` instead of `true` → wrong-conditions."""
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co152_port_field(),
+                                _co152_long_running_checkbox(),
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        bad = _co152_shape1_trigger()
+        bad["conditions"]["children"][0]["value"] = False
+        _co152_write_triggers(connector, [bad])
+
+        results = IsLongRunningPortGatedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "wrong-conditions" in results[0].message
+
+    def test_shape1_missing_engine_child_when_engine_exists_fails(self):
+        """Engine present but trigger lacks the engine=is_empty child."""
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co152_port_field(),
+                                _co152_long_running_checkbox(),
+                                _co152_engine_field(),
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        _co152_write_triggers(connector, [_co152_shape1_trigger()])
+        results = IsLongRunningPortGatedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "wrong-conditions" in results[0].message
+
+    def test_shape1_extra_engine_child_when_engine_doesnt_exist_fails(self):
+        """Trigger has engine=is_empty but no engine field exists →
+        wrong-conditions (extraneous child)."""
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co152_port_field(),
+                                _co152_long_running_checkbox(),
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        _co152_write_triggers(
+            connector, [_co152_shape1_trigger(include_engine=True)]
+        )
+        results = IsLongRunningPortGatedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "wrong-conditions" in results[0].message
+
+    # ------------------------------------------------------------------
+    # Shape 2 (serializer emit)
+    # ------------------------------------------------------------------
+
+    def test_shape2_capability_gate_valid_passes(self):
+        """Serializer emits longRunning: true gated on capability →
+        trigger keyed on that capability_id passes."""
+        connector = create_connector_object()
+        serializer = _co152_serializer_with_long_running("collector")
+        _co145_wire_handler(
+            connector, capability_ids=["fetch-issues"], serializer=serializer
+        )
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [{"fields": [_co152_port_field()]}],
+                }
+            ],
+        )
+        _co152_write_triggers(
+            connector, [_co152_shape2_trigger(capability_id="collector")]
+        )
+
+        results = IsLongRunningPortGatedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_shape2_missing_capability_gate_fails(self):
+        """Serializer emits shape-2 signal but trigger uses shape-1
+        style → wrong-conditions."""
+        connector = create_connector_object()
+        serializer = _co152_serializer_with_long_running("collector")
+        _co145_wire_handler(
+            connector, capability_ids=["fetch-issues"], serializer=serializer
+        )
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [{"fields": [_co152_port_field()]}],
+                }
+            ],
+        )
+        _co152_write_triggers(connector, [_co152_shape1_trigger()])
+
+        results = IsLongRunningPortGatedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "wrong-conditions" in results[0].message
+
+    def test_shape2_wrong_capability_id_fails(self):
+        connector = create_connector_object()
+        serializer = _co152_serializer_with_long_running("collector")
+        _co145_wire_handler(
+            connector, capability_ids=["fetch-issues"], serializer=serializer
+        )
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [{"fields": [_co152_port_field()]}],
+                }
+            ],
+        )
+        _co152_write_triggers(
+            connector,
+            [_co152_shape2_trigger(capability_id="some-other-cap")],
+        )
+        results = IsLongRunningPortGatedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "wrong-conditions" in results[0].message
+
+    def test_shape2_with_engine_child_valid_passes(self):
+        connector = create_connector_object()
+        serializer = _co152_serializer_with_long_running("collector")
+        _co145_wire_handler(
+            connector, capability_ids=["fetch-issues"], serializer=serializer
+        )
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co152_port_field(),
+                                _co152_engine_field(),
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        _co152_write_triggers(
+            connector,
+            [
+                _co152_shape2_trigger(
+                    capability_id="collector", include_engine=True
+                )
+            ],
+        )
+        results = IsLongRunningPortGatedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    # ------------------------------------------------------------------
+    # Cross-cutting
+    # ------------------------------------------------------------------
+
+    def test_ambiguous_no_longRunning_signal_fails(self):
+        """longRunningPort present but neither checkbox nor
+        serializer emit → missing-longRunning-signal."""
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [{"fields": [_co152_port_field()]}],
+                }
+            ],
+        )
+        _co152_write_triggers(connector, [])
+        results = IsLongRunningPortGatedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "no long-running signal" in results[0].message
+
+    def test_missing_triggers_yaml_with_port_present_fails(self):
+        """No triggers.yaml + shape-1 signal + port field → hard
+        fail (missing-trigger)."""
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co152_port_field(),
+                                _co152_long_running_checkbox(),
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        # Do NOT write triggers.yaml.
+        results = IsLongRunningPortGatedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "missing-trigger" in results[0].message
+
+    def test_grouped_namespaced_engine_id_resolved_via_serializer_passes(self):
+        """Engine field is namespaced (`plain_foo_engine`) and
+        renamed to `engine` via serializer. Trigger keyed on the
+        namespaced raw id passes because runtime-name presence is
+        detected and the raw id is inverted via the rename map."""
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            FieldMapping,
+            SerializerData,
+        )
+
+        connector = create_connector_object()
+        serializer = SerializerData(
+            field_mappings=[
+                FieldMapping(id="plain_foo_engine", field_name="engine"),
+            ],
+            computed_fields=[],
+        )
+        _co145_wire_handler(
+            connector, capability_ids=["fetch-issues"], serializer=serializer
+        )
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co152_port_field(),
+                                _co152_long_running_checkbox(),
+                                _co152_engine_field("plain_foo_engine"),
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        _co152_write_triggers(
+            connector,
+            [
+                _co152_shape1_trigger(
+                    include_engine=True, engine_id="plain_foo_engine"
+                )
+            ],
+        )
+        results = IsLongRunningPortGatedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_error_path_routes_to_triggers_yaml(self):
+        connector = create_connector_object()
+        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
+        _co145_write_configurations(
+            connector,
+            entries=[
+                {
+                    "id": "fetch-issues",
+                    "configurations": [
+                        {
+                            "fields": [
+                                _co152_port_field(),
+                                _co152_long_running_checkbox(),
+                            ]
+                        }
+                    ],
+                }
+            ],
+        )
+        _co152_write_triggers(connector, [])
+        results = IsLongRunningPortGatedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert str(results[0].path).endswith("triggers.yaml")
+
+
+# ---------------------------------------------------------------------------
 # CO155 tests
 # ---------------------------------------------------------------------------
 
@@ -12866,6 +14551,180 @@ def _clear_xsoar_signals(handler) -> None:
     handler.metadata.module = "third_party"
     handler.metadata.ownership.team = "third_party"
     handler.metadata.ownership.maintainers = ["@third-party-content"]
+
+
+# ---------------------------------------------------------------------------
+# CO154 tests
+# ---------------------------------------------------------------------------
+
+
+def _co154_stub_integration(object_id: str):
+    """Build a minimal integration-like stub. CO154 only reads
+    ``related_integration.object_id`` so a SimpleNamespace suffices
+    (mirrors ``_stub_integration`` at the top of this file)."""
+    return SimpleNamespace(object_id=object_id)
+
+
+class TestCO154IsHandlerIdXsoarPrefixed:
+    """Tests for CO154: every XSOAR handler's ``id`` MUST equal
+    ``xsoar-<normalize_integration_id(related_integration.object_id)>``.
+    """
+
+    def test_matching_xsoar_id_passes(self):
+        """Handler ``xsoar-testintegration`` + integration
+        ``TestIntegration`` → normalized slug is ``testintegration``
+        → expected id matches → passes."""
+        connector = create_connector_object()
+        h = connector.handlers[0]
+        h.id = "xsoar-testintegration"
+        h.related_integration = _co154_stub_integration("TestIntegration")
+
+        results = IsHandlerIdXsoarPrefixedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_id_missing_xsoar_prefix_fails(self):
+        """Handler id without the ``xsoar-`` prefix."""
+        connector = create_connector_object()
+        h = connector.handlers[0]
+        h.id = "testintegration"
+        h.related_integration = _co154_stub_integration("TestIntegration")
+
+        results = IsHandlerIdXsoarPrefixedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "'xsoar-testintegration'" in msg
+        assert "'TestIntegration'" in msg
+
+    def test_id_with_wrong_normalization_fails(self):
+        """Handler id keeps the original casing / omits normalization
+        → fails."""
+        connector = create_connector_object()
+        h = connector.handlers[0]
+        h.id = "xsoar-TestIntegration"  # not lowercased.
+        h.related_integration = _co154_stub_integration("TestIntegration")
+
+        results = IsHandlerIdXsoarPrefixedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "'xsoar-testintegration'" in results[0].message
+
+    def test_dot_in_integration_id_normalized_correctly(self):
+        """``Logz.io`` → normalize to ``logz-io`` → expected
+        ``xsoar-logz-io``."""
+        connector = create_connector_object()
+        h = connector.handlers[0]
+        h.id = "xsoar-logz-io"
+        h.related_integration = _co154_stub_integration("Logz.io")
+
+        results = IsHandlerIdXsoarPrefixedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_ampersand_in_integration_id_stripped(self):
+        """``MITRE ATT&CK`` → normalize collapses `&` → `mitre-att-ck`."""
+        connector = create_connector_object()
+        h = connector.handlers[0]
+        h.id = "xsoar-mitre-att-ck"
+        h.related_integration = _co154_stub_integration("MITRE ATT&CK")
+
+        results = IsHandlerIdXsoarPrefixedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_question_mark_stripped(self):
+        """``Where is the egg?`` → ``where-is-the-egg``."""
+        connector = create_connector_object()
+        h = connector.handlers[0]
+        h.id = "xsoar-where-is-the-egg"
+        h.related_integration = _co154_stub_integration("Where is the egg?")
+
+        results = IsHandlerIdXsoarPrefixedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_parentheses_stripped(self):
+        """``ServiceDeskPlus (On-Premise)`` →
+        ``servicedeskplus-on-premise``."""
+        connector = create_connector_object()
+        h = connector.handlers[0]
+        h.id = "xsoar-servicedeskplus-on-premise"
+        h.related_integration = _co154_stub_integration(
+            "ServiceDeskPlus (On-Premise)"
+        )
+
+        results = IsHandlerIdXsoarPrefixedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_multi_special_chars_combined(self):
+        """``Palo Alto Traps ESM (Beta)`` →
+        ``palo-alto-traps-esm-beta``."""
+        connector = create_connector_object()
+        h = connector.handlers[0]
+        h.id = "xsoar-palo-alto-traps-esm-beta"
+        h.related_integration = _co154_stub_integration(
+            "Palo Alto Traps ESM (Beta)"
+        )
+
+        results = IsHandlerIdXsoarPrefixedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_unresolved_integration_hard_fails(self):
+        """XSOAR handler with ``related_integration = None`` → hard
+        fail (``unresolved-integration`` defect)."""
+        connector = create_connector_object()
+        h = connector.handlers[0]
+        h.id = "xsoar-anything"
+        h.related_integration = None
+
+        results = IsHandlerIdXsoarPrefixedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "no related integration" in msg
+        assert h.id in msg
+        assert results[0].path is not None
+        assert str(results[0].path).endswith("handler.yaml")
+
+    def test_non_xsoar_handler_skipped(self):
+        """Non-XSOAR handler is not policed by CO154."""
+        connector = create_connector_object()
+        h = connector.handlers[0]
+        _clear_xsoar_signals(h)
+        h.id = "not-xsoar-prefixed"
+        h.related_integration = _co154_stub_integration("TestIntegration")
+
+        results = IsHandlerIdXsoarPrefixedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_error_path_points_to_handler_yaml(self):
+        """Path routes to the handler's own ``handler.yaml`` so per-
+        handler ignores resolve."""
+        connector = create_connector_object()
+        h = connector.handlers[0]
+        h.id = "wrong"
+        h.related_integration = _co154_stub_integration("TestIntegration")
+
+        results = IsHandlerIdXsoarPrefixedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert results[0].path == h.file_path
+        assert str(results[0].path).endswith("handler.yaml")
 
 
 class TestCO155IsHandlerModuleXsoar:
@@ -13583,6 +15442,185 @@ class TestCO165IsHandlerMatchingPackExist:
         assert len(results) == 1
         assert results[0].path is not None
         assert results[0].path == connector.handlers[0].file_path
+        assert str(results[0].path).endswith("handler.yaml")
+
+
+# ---------------------------------------------------------------------------
+# CO169 tests
+# ---------------------------------------------------------------------------
+
+
+class TestCO169IsNoDuplicateHandlerIntegration:
+    """Tests for CO169: no two handlers in the same connector may share
+    the same ``triggering.labels.xsoar-integration-id`` (handler ↔
+    integration is 1:1 per connector)."""
+
+    def test_unique_labels_passes(self):
+        """Two handlers, distinct integration ids → passes."""
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-a",
+                    "triggering": {
+                        "labels": {"xsoar-integration-id": "IntegrationA"}
+                    },
+                },
+                {
+                    "id": "xsoar-b",
+                    "triggering": {
+                        "labels": {"xsoar-integration-id": "IntegrationB"}
+                    },
+                },
+            ]
+        )
+
+        results = IsNoDuplicateHandlerIntegrationValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_two_handlers_same_label_fails_once(self):
+        """Two handlers claim the same integration id → one aggregated
+        finding listing both handler ids."""
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-a",
+                    "triggering": {
+                        "labels": {"xsoar-integration-id": "SharedInt"}
+                    },
+                },
+                {
+                    "id": "xsoar-b",
+                    "triggering": {
+                        "labels": {"xsoar-integration-id": "SharedInt"}
+                    },
+                },
+            ]
+        )
+
+        results = IsNoDuplicateHandlerIntegrationValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "'SharedInt'" in msg
+        assert "xsoar-a" in msg
+        assert "xsoar-b" in msg
+
+    def test_three_handlers_same_label_fails_once_listing_all_three(self):
+        """Three handlers share one integration id → single finding
+        naming all three."""
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-a",
+                    "triggering": {
+                        "labels": {"xsoar-integration-id": "SharedInt"}
+                    },
+                },
+                {
+                    "id": "xsoar-b",
+                    "triggering": {
+                        "labels": {"xsoar-integration-id": "SharedInt"}
+                    },
+                },
+                {
+                    "id": "xsoar-c",
+                    "triggering": {
+                        "labels": {"xsoar-integration-id": "SharedInt"}
+                    },
+                },
+            ]
+        )
+
+        results = IsNoDuplicateHandlerIntegrationValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        for hid in ("xsoar-a", "xsoar-b", "xsoar-c"):
+            assert hid in msg
+
+    def test_missing_labels_ignored(self):
+        """Handlers with no ``xsoar-integration-id`` label are ignored
+        (CO164 covers that case). Two label-less handlers → no
+        duplicate finding."""
+        connector = create_connector_object(
+            handlers=[
+                {"id": "xsoar-a", "triggering": {"labels": None}},
+                {"id": "xsoar-b", "triggering": {"labels": None}},
+            ]
+        )
+
+        results = IsNoDuplicateHandlerIntegrationValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_two_pairs_of_duplicates_emit_two_findings(self):
+        """Two distinct integration ids each shared by 2 handlers → 2
+        separate findings."""
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-a",
+                    "triggering": {
+                        "labels": {"xsoar-integration-id": "IntA"}
+                    },
+                },
+                {
+                    "id": "xsoar-b",
+                    "triggering": {
+                        "labels": {"xsoar-integration-id": "IntA"}
+                    },
+                },
+                {
+                    "id": "xsoar-c",
+                    "triggering": {
+                        "labels": {"xsoar-integration-id": "IntB"}
+                    },
+                },
+                {
+                    "id": "xsoar-d",
+                    "triggering": {
+                        "labels": {"xsoar-integration-id": "IntB"}
+                    },
+                },
+            ]
+        )
+
+        results = IsNoDuplicateHandlerIntegrationValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 2
+        joined = " | ".join(r.message for r in results)
+        assert "'IntA'" in joined
+        assert "'IntB'" in joined
+
+    def test_error_path_points_to_handler_yaml(self):
+        """Path routes to one of the offending handlers' handler.yaml."""
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-a",
+                    "triggering": {
+                        "labels": {"xsoar-integration-id": "Shared"}
+                    },
+                },
+                {
+                    "id": "xsoar-b",
+                    "triggering": {
+                        "labels": {"xsoar-integration-id": "Shared"}
+                    },
+                },
+            ]
+        )
+        results = IsNoDuplicateHandlerIntegrationValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert results[0].path is not None
         assert str(results[0].path).endswith("handler.yaml")
 
 
@@ -14496,6 +16534,134 @@ class TestCO162IsValidWorkloads:
         assert results[0].path is not None
         assert results[0].path == connector.handlers[0].file_path
         assert str(results[0].path).endswith("handler.yaml")
+
+
+# ---------------------------------------------------------------------------
+# CO153 tests
+# ---------------------------------------------------------------------------
+
+
+class TestCO153IsHandlerFolderNameMatchesId:
+    """Tests for CO153: every handler's folder name under
+    ``components/handlers/`` MUST equal ``handler.id`` verbatim
+    (case-sensitive, no normalization)."""
+
+    def test_matching_folder_and_id_verbatim_passes(self):
+        """Folder = id (e.g. ``xsoar-foo``) → passes."""
+        connector = create_connector_object()
+        h = connector.handlers[0]
+        h.id = "xsoar-foo"
+        h.handler_dir_name = "xsoar-foo"
+
+        results = IsHandlerFolderNameMatchesIdValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_underscore_in_both_matches_passes(self):
+        """Real-world case ``xsoar-qualys_fim`` — underscore in both →
+        passes (no normalization is applied)."""
+        connector = create_connector_object()
+        h = connector.handlers[0]
+        h.id = "xsoar-qualys_fim"
+        h.handler_dir_name = "xsoar-qualys_fim"
+
+        results = IsHandlerFolderNameMatchesIdValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_case_drift_fails(self):
+        """Folder ``Xsoar-Foo`` vs id ``xsoar-foo`` → case-sensitive
+        mismatch fires."""
+        connector = create_connector_object()
+        h = connector.handlers[0]
+        h.id = "xsoar-foo"
+        h.handler_dir_name = "Xsoar-Foo"
+
+        results = IsHandlerFolderNameMatchesIdValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "'Xsoar-Foo'" in msg
+        assert "'xsoar-foo'" in msg
+        assert results[0].path is not None
+        assert str(results[0].path).endswith("handler.yaml")
+
+    def test_underscore_vs_dash_drift_fails(self):
+        """Folder ``xsoar-jira_v3`` vs id ``xsoar-jira-v3`` → literal
+        mismatch (no `_`↔`-` normalization)."""
+        connector = create_connector_object()
+        h = connector.handlers[0]
+        h.id = "xsoar-jira-v3"
+        h.handler_dir_name = "xsoar-jira_v3"
+
+        results = IsHandlerFolderNameMatchesIdValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "'xsoar-jira_v3'" in results[0].message
+        assert "'xsoar-jira-v3'" in results[0].message
+
+    def test_trailing_whitespace_drift_fails(self):
+        """Trailing whitespace anywhere → mismatch (strict verbatim)."""
+        connector = create_connector_object()
+        h = connector.handlers[0]
+        h.id = "xsoar-foo "
+        h.handler_dir_name = "xsoar-foo"
+
+        results = IsHandlerFolderNameMatchesIdValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+
+    def test_multiple_handlers_only_offender_flagged(self):
+        """With 2 handlers, only the mismatched one is flagged."""
+        connector = create_connector_object(
+            handlers=[{"id": "xsoar-a"}, {"id": "xsoar-b"}]
+        )
+        by_id = {h.id: h for h in connector.handlers}
+        # xsoar-a: matches (id equals folder).
+        by_id["xsoar-a"].handler_dir_name = "xsoar-a"
+        # xsoar-b: folder drifts.
+        by_id["xsoar-b"].handler_dir_name = "xsoar_b"
+
+        results = IsHandlerFolderNameMatchesIdValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "xsoar-b" in results[0].message
+        assert "xsoar_b" in results[0].message
+        assert "xsoar-a" not in results[0].message
+
+    def test_non_xsoar_handler_also_flagged(self):
+        """CO153 is ownership-agnostic — tooling breakage applies to
+        any handler, so non-XSOAR mismatches are flagged too."""
+        connector = create_connector_object()
+        h = connector.handlers[0]
+        h.id = "third-party-foo"
+        h.handler_dir_name = "third_party_foo"
+        _clear_xsoar_signals(h)
+
+        results = IsHandlerFolderNameMatchesIdValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+
+    def test_missing_file_path_skipped(self):
+        """Handler without a resolvable ``file_path`` (e.g. an
+        in-memory stub) is skipped — nothing to compare against."""
+        connector = create_connector_object()
+        h = connector.handlers[0]
+        h.id = "xsoar-foo"
+        # Setting connector_path to None makes file_path return None.
+        h.connector_path = None
+
+        results = IsHandlerFolderNameMatchesIdValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
 
 
 # ---------------------------------------------------------------------------

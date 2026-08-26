@@ -22,17 +22,7 @@ class TestStrictReleaseNotesConfigForceUpdate:
                 "breakingChanges": True,
                 "forceUpdate": {"breakingChangesNotesLoosely": "Loosely BC note."},
             },
-            # forceUpdate with the tightly note as an object (message + moreInfo).
-            {
-                "breakingChanges": True,
-                "forceUpdate": {
-                    "breakingChangesNotesTightly": {
-                        "message": "Short banner text.",
-                        "moreInfo": "Detailed modal text.",
-                    }
-                },
-            },
-            # forceUpdate with the tightly note as a plain string.
+            # forceUpdate with only the tightly note (a Markdown string).
             {
                 "breakingChanges": True,
                 "forceUpdate": {"breakingChangesNotesTightly": "Tightly BC note."},
@@ -42,10 +32,15 @@ class TestStrictReleaseNotesConfigForceUpdate:
                 "breakingChanges": True,
                 "forceUpdate": {
                     "breakingChangesNotesLoosely": "Loosely BC note.",
-                    "breakingChangesNotesTightly": {
-                        "message": "Short banner text.",
-                        "moreInfo": "Detailed modal text.",
-                    },
+                    "breakingChangesNotesTightly": "Tightly BC note.",
+                },
+            },
+            # forceUpdate with empty-string notes (as authored in content).
+            {
+                "breakingChanges": True,
+                "forceUpdate": {
+                    "breakingChangesNotesLoosely": "",
+                    "breakingChangesNotesTightly": "",
                 },
             },
         ],
@@ -65,20 +60,24 @@ class TestStrictReleaseNotesConfigForceUpdate:
             {"breakingChanges": True, "unknownField": "value"},
             # Unknown field nested inside forceUpdate.
             {"breakingChanges": True, "forceUpdate": {"unknownField": "value"}},
-            # Unknown field nested inside breakingChangesNotesTightly.
+            # breakingChangesNotesTightly is now a plain string - an object is rejected.
             {
                 "breakingChanges": True,
                 "forceUpdate": {
-                    "breakingChangesNotesTightly": {"unknownField": "value"}
+                    "breakingChangesNotesTightly": {
+                        "message": "Short banner text.",
+                        "moreInfo": "Detailed modal text.",
+                    }
                 },
             },
         ],
     )
-    def test_invalid_force_update_configs_reject_extra_fields(self, config: dict):
+    def test_invalid_force_update_configs(self, config: dict):
         """
-        Given: A release-notes-config dict with an unknown field (top-level or nested).
+        Given: A release-notes-config dict with an invalid forceUpdate (unknown field, or a non-string
+            breakingChangesNotesTightly).
         When: Parsing it with StrictReleaseNotesConfig.
-        Then: A ValidationError is raised (Extra.forbid).
+        Then: A ValidationError is raised.
         """
         with pytest.raises(ValidationError):
             StrictReleaseNotesConfig.parse_obj(config)

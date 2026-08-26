@@ -788,18 +788,6 @@ class TestGetMatchingRegex:
         (
             {
                 "breakingChanges": True,
-                "forceUpdate": {
-                    "breakingChangesNotesTightly": {
-                        "message": "Short banner text.",
-                        "moreInfo": "Detailed modal text.",
-                    }
-                },
-            },
-            True,
-        ),
-        (
-            {
-                "breakingChanges": True,
                 "forceUpdate": {"breakingChangesNotesTightly": "Tightly BC note."},
             },
             True,
@@ -809,10 +797,7 @@ class TestGetMatchingRegex:
                 "breakingChanges": True,
                 "forceUpdate": {
                     "breakingChangesNotesLoosely": "Loosely BC note.",
-                    "breakingChangesNotesTightly": {
-                        "message": "Short banner text.",
-                        "moreInfo": "Detailed modal text.",
-                    },
+                    "breakingChangesNotesTightly": "Tightly BC note.",
                 },
             },
             True,

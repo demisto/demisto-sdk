@@ -1,4 +1,0 @@
-changes:
-- description: Extended the release-notes-config schema (**ReleaseNotes/x_x_x.json**) to allow an optional **forceUpdate** object with **breakingChangesNotesLoosely** and **breakingChangesNotesTightly** fields, used by the ConnectUS (Managed Content) upload flow. Omitting **forceUpdate** preserves full backward compatibility.
-  type: feature
-pr_number: 'XXXX'

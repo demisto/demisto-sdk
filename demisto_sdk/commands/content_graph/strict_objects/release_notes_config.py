@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import List, Optional
 
 from pydantic import Field
 
@@ -6,18 +6,6 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel
-
-
-class StrictBreakingChangesNotesTightly(BaseStrictModel):
-    """
-    Coupling-aware breaking-change notes for Tightly Coupled content items, nested under
-    `forceUpdate.breakingChangesNotesTightly` in a per-version breaking-changes config file
-    (ReleaseNotes/x_x_x.json). Consumed by the Managed Content upload to build the changelog.json
-    release notice. See CIAC-17086.
-    """
-
-    message: Optional[str] = None
-    more_info: Optional[str] = Field(None, alias="moreInfo")
 
 
 class StrictForceUpdate(BaseStrictModel):
@@ -28,15 +16,15 @@ class StrictForceUpdate(BaseStrictModel):
 
     - `breakingChangesNotesLoosely`: Breaking-change notes for Loosely Coupled items only.
     - `breakingChangesNotesTightly`: Breaking-change notes for Tightly Coupled items only
-      (either a plain string or a {message, moreInfo} object).
+      (a Markdown string, mapped into the changelog.json `releaseNotice`).
     """
 
     breaking_changes_notes_loosely: Optional[str] = Field(
         None, alias="breakingChangesNotesLoosely"
     )
-    breaking_changes_notes_tightly: Optional[
-        Union[str, StrictBreakingChangesNotesTightly]
-    ] = Field(None, alias="breakingChangesNotesTightly")
+    breaking_changes_notes_tightly: Optional[str] = Field(
+        None, alias="breakingChangesNotesTightly"
+    )
 
 
 class StrictReleaseNotesConfig(BaseStrictModel):

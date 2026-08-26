@@ -22,6 +22,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     NAME_DYNAMIC_MODEL,
     REQUIRED_DYNAMIC_MODEL,
     BaseStrictModel,
+    SupportedFeaturesList,
     create_dynamic_model,
     create_model,
 )
@@ -150,7 +151,9 @@ class _BaseIntegrationScript(BaseStrictModel):
     )
     marketplaces: Optional[Union[MarketplaceVersions, List[MarketplaceVersions]]] = None
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
-    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
+    supportedFeatures: Optional[SupportedFeaturesList] = Field(
+        None, alias="supportedFeatures"
+    )
 
 
 BaseIntegrationScript = create_model(
@@ -174,7 +177,9 @@ class ExtractSettings(BaseStrictModel):
 
 
 class _StrictGenericIncidentType(BaseStrictModel):
-    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
+    supportedFeatures: Optional[SupportedFeaturesList] = Field(
+        None, alias="supportedFeatures"
+    )
     vc_should_ignore: Optional[bool] = Field(None, alias="vcShouldIgnore")
     sort_values: Optional[Any] = Field(None, alias="sortValues")
     locked: Optional[bool] = None
@@ -255,4 +260,6 @@ class AgentixBase(BaseStrictModel):
     to_version: Optional[str] = Field(None, alias="toversion")
     marketplaces: Optional[Union[MarketplaceVersions, List[MarketplaceVersions]]] = None
     supportedModules: Optional[List[str]] = None
-    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
+    supportedFeatures: Optional[SupportedFeaturesList] = Field(
+        None, alias="supportedFeatures"
+    )

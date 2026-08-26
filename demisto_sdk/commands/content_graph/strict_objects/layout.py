@@ -10,6 +10,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     ID_DYNAMIC_MODEL,
     NAME_DYNAMIC_MODEL,
     BaseStrictModel,
+    SupportedFeaturesList,
     create_model,
 )
 
@@ -113,7 +114,9 @@ class _StrictLayout(BaseStrictModel):
     details_v2: Optional[Mapping] = Field(None, alias="detailsV2")
     mobile: Optional[Mapping] = None
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
-    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
+    supportedFeatures: Optional[SupportedFeaturesList] = Field(
+        None, alias="supportedFeatures"
+    )
 
 
 StrictLayout = create_model(

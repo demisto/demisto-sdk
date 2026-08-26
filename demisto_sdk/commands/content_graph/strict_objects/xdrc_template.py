@@ -8,6 +8,7 @@ from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import 
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     NAME_DYNAMIC_MODEL,
     BaseStrictModel,
+    SupportedFeaturesList,
     create_model,
 )
 
@@ -21,7 +22,9 @@ class _StrictXDRCTemplate(BaseStrictModel):
     from_xdr_version: str
     yaml_template: str
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
-    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
+    supportedFeatures: Optional[SupportedFeaturesList] = Field(
+        None, alias="supportedFeatures"
+    )
 
 
 StrictXDRCTemplate = create_model(

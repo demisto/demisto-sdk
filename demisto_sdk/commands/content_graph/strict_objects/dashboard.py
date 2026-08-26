@@ -14,6 +14,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     NAME_DYNAMIC_MODEL,
     SUFFIXED_ID_DYNAMIC_MODEL,
     BaseStrictModel,
+    SupportedFeaturesList,
     create_model,
 )
 
@@ -97,7 +98,9 @@ class _StrictDashboard(BaseStrictModel):
     layout: Optional[List[DashboardLayout]] = Field(default_factory=list)  # type:ignore[valid-type]
     marketplaces: Optional[List[MarketplaceVersions]] = None
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
-    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
+    supportedFeatures: Optional[SupportedFeaturesList] = Field(
+        None, alias="supportedFeatures"
+    )
 
 
 StrictDashboard = create_model(

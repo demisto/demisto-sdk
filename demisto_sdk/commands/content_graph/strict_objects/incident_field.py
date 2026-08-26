@@ -6,6 +6,7 @@ from demisto_sdk.commands.common.constants import IncidentFieldType
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     NAME_DYNAMIC_MODEL,
     BaseStrictModel,
+    SupportedFeaturesList,
     create_model,
 )
 from demisto_sdk.commands.content_graph.strict_objects.indicator_field import (
@@ -27,7 +28,9 @@ class _StrictIncidentField(BaseStrictModel):
     This class inherits from StrictIndicatorField, since the other class is contained in this class.
     """
 
-    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
+    supportedFeatures: Optional[SupportedFeaturesList] = Field(
+        None, alias="supportedFeatures"
+    )
 
     pretty_name: Optional[str] = Field(None, alias="prettyName")
     run_script_after_inc_update: Optional[bool] = Field(

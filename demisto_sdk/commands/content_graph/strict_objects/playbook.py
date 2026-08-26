@@ -21,6 +21,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     SCRIPT_ID_DYNAMIC_MODEL,
     VALUE_DYNAMIC_MODEL,
     BaseStrictModel,
+    SupportedFeaturesList,
     create_model,
 )
 
@@ -315,6 +316,8 @@ class StrictPlaybook(BaseStrictModel):
     role_name: Optional[List[str]] = Field(None, alias="rolename")
     marketplaces: Optional[List[MarketplaceVersions]] = None
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
-    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
+    supportedFeatures: Optional[SupportedFeaturesList] = Field(
+        None, alias="supportedFeatures"
+    )
     is_silent: Optional[bool] = Field(alias="issilent")
     adopted: Optional[bool] = None

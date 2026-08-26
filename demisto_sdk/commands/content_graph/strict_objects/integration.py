@@ -27,6 +27,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     NAME_DYNAMIC_MODEL,
     QUICK_ACTION_DYNAMIC_MODEL,
     REQUIRED_DYNAMIC_MODEL,
+    SupportedFeaturesList,
     create_dynamic_model,
     create_model,
 )
@@ -73,7 +74,9 @@ class _Configuration(BaseStrictModel):
             Field(min_length=1, max_length=len(PlatformSupportedModules)),
         ]
     ] = None
-    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
+    supportedFeatures: Optional[SupportedFeaturesList] = Field(
+        None, alias="supportedFeatures"
+    )
 
 
 Configuration = create_model(
@@ -116,7 +119,9 @@ class _Command(BaseStrictModel):
             Field(min_length=1, max_length=len(PlatformSupportedModules)),
         ]
     ]
-    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
+    supportedFeatures: Optional[SupportedFeaturesList] = Field(
+        None, alias="supportedFeatures"
+    )
 
 
 Command = create_model(
@@ -238,7 +243,9 @@ class _StrictIntegration(BaseStrictModel):
     supportedModules: Optional[
         Annotated[List[PlatformSupportedModules], Field(min_length=1, max_length=7)]
     ]
-    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
+    supportedFeatures: Optional[SupportedFeaturesList] = Field(
+        None, alias="supportedFeatures"
+    )
 
     def __init__(self, **data):
         """

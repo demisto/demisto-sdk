@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 from pydantic import Field
 
@@ -11,12 +11,15 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     REQUIRED_DYNAMIC_MODEL,
     SUFFIXED_ID_DYNAMIC_MODEL,
     BaseStrictModel,
+    SupportedFeaturesList,
     create_model,
 )
 
 
 class _StrictGenericField(BaseStrictModel):
-    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
+    supportedFeatures: Optional[SupportedFeaturesList] = Field(
+        None, alias="supportedFeatures"
+    )
     id: str
     version: Optional[int] = None
     modified: Optional[str] = None

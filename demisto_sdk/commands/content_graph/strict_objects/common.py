@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Any, Dict, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence
 
 import pydantic
 from pydantic import BaseModel, Extra, validator
@@ -8,6 +8,43 @@ from pydantic.fields import FieldInfo
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 marketplace_suffixes = tuple((marketplace.value for marketplace in MarketplaceVersions))
+
+
+class SupportedFeaturesList(List[str]):
+    """A `supportedFeatures` value: a non-empty list of non-blank strings.
+
+    The field itself is optional - omitting it entirely is how a content item
+    declares "no required features". But when it *is* authored it must carry
+    real values, so both an empty list and blank/whitespace-only entries are
+    rejected rather than silently accepted as meaningless data.
+    """
+
+    @classmethod
+    def __get_validators__(cls):
+        yield cls._validate
+
+    @classmethod
+    def _validate(cls, value: Any) -> List[str]:
+        if not isinstance(value, list):
+            raise TypeError("supportedFeatures must be a list of strings")
+
+        if not value:
+            raise ValueError(
+                "supportedFeatures cannot be an empty list. "
+                "Omit the field entirely if no features are required."
+            )
+
+        for item in value:
+            if not isinstance(item, str):
+                raise TypeError(
+                    f"supportedFeatures must contain only strings, got {type(item).__name__}"
+                )
+            if not item.strip():
+                raise ValueError(
+                    "supportedFeatures cannot contain empty or whitespace-only values."
+                )
+
+        return value
 
 
 class BaseStrictModel(BaseModel, ABC):

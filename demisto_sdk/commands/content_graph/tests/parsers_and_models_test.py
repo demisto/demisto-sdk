@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Set
 
 import pytest
 from pydantic import DirectoryPath
+from pydantic import ValidationError as PydanticValidationError
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
@@ -2160,9 +2161,7 @@ class TestParsersAndModels:
         [
             pytest.param(None, None, None, id="neither authored -> None"),
             pytest.param(["feat_a"], None, ["feat_a"], id="inherited from pack"),
-            pytest.param([], None, [], id="inherited empty list from pack"),
             pytest.param(["feat_a"], ["feat_b"], ["feat_b"], id="item overrides pack"),
-            pytest.param(["feat_a"], [], [], id="item empty list beats pack"),
         ],
     )
     def test_supported_features_resolution(
@@ -2171,16 +2170,14 @@ class TestParsersAndModels:
         """
         Given:
         - A pack and an integration authoring `supportedFeatures` in every
-          combination of absent / populated / explicitly empty
+          valid combination of absent / populated
 
         When:
         - Parsing the pack
 
         Then:
         - Ensure the item inherits the pack's value when it does not author one
-        - Ensure an explicitly authored empty list is preserved rather than
-          being replaced by the pack's value (an empty list is intentional and
-          distinct from an absent key)
+        - Ensure the item's own value takes precedence when it does
         """
         pack = repo.create_pack("HelloWorld")
         if pack_features is not None:
@@ -2220,35 +2217,82 @@ class TestParsersAndModels:
         assert "supportedFeatures" not in tools.get_json(metadata_path)
         assert "supportedFeatures" not in model.content_items.integration[0].summary()
 
-    def test_supported_features_empty_list_survives_output(self, repo: Repo):
+    @pytest.mark.parametrize(
+        "invalid_value",
+        [
+            pytest.param([], id="empty list"),
+            pytest.param([""], id="empty string"),
+            pytest.param([" "], id="whitespace-only string"),
+            pytest.param(["\t\n"], id="tab and newline only"),
+            pytest.param(["valid_feature", ""], id="one blank among valid values"),
+            pytest.param([1], id="non-string value"),
+        ],
+    )
+    def test_supported_features_rejects_empty_and_blank_values(
+        self, repo: Repo, invalid_value
+    ):
         """
         Given:
-        - A pack and an integration that author `supportedFeatures` as an
-          explicitly empty list
+        - An integration authoring `supportedFeatures` with a value that carries
+          no real feature name: an empty list, or a list containing blank or
+          non-string entries
 
         When:
-        - Dumping the pack metadata and generating the content item summary
+        - Parsing the pack
 
         Then:
-        - Ensure the key is present as an empty list in both outputs, since an
-          empty list is an intentional "no features" declaration
+        - Ensure a structure error is raised for the field. The field is
+          optional, so "no required features" is expressed by omitting the key
+          entirely rather than by authoring an empty or blank value.
         """
         pack = repo.create_pack("HelloWorld")
-        pack_metadata = load_json("pack_metadata.json")
-        pack_metadata.update({"supportedFeatures": []})
-        pack.pack_metadata.write_json(pack_metadata)
-
         integration = pack.create_integration("MyIntegration")
         yml = integration.yml.read_dict()
-        yml["supportedFeatures"] = []
+        yml["supportedFeatures"] = invalid_value
         integration.yml.write_dict(yml)
 
         model = PackModel.from_orm(PackParser(Path(pack.path)))
-        metadata_path = Path(pack.path) / "metadata.json"
-        model.dump_metadata(metadata_path, MarketplaceVersions.XSOAR)
 
-        assert tools.get_json(metadata_path)["supportedFeatures"] == []
-        assert model.content_items.integration[0].summary()["supportedFeatures"] == []
+        assert [
+            error
+            for error in model.content_items.integration[0].structure_errors
+            if "supportedFeatures" in str(error)
+        ], f"{invalid_value!r} should have been rejected"
+
+    def test_supported_features_rejects_blank_values_in_pack_metadata(self, repo: Repo):
+        """
+        Given:
+        - A pack whose `pack_metadata.json` authors `supportedFeatures` as an
+          empty list
+
+        When:
+        - Validating the pack metadata against its strict model
+
+        Then:
+        - Ensure the value is rejected, so the rule is enforced on
+          pack_metadata.json and not only on content items.
+        """
+        from demisto_sdk.commands.content_graph.strict_objects.pack_meta_data import (
+            StrictPackMetadata,
+        )
+
+        with pytest.raises(PydanticValidationError) as exc_info:
+            StrictPackMetadata.parse_obj(
+                {
+                    "name": "HelloWorld",
+                    "support": "xsoar",
+                    "author": "Cortex XSOAR",
+                    "currentVersion": "1.0.0",
+                    "serverMinVersion": "6.10.0",
+                    "supportedFeatures": [],
+                }
+            )
+
+        assert [
+            error
+            for error in exc_info.value.errors()
+            if error["loc"][:1] == ("supportedFeatures",)
+        ]
 
     def test_supported_features_is_valid_on_all_content_types(self, repo: Repo):
         """

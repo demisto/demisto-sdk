@@ -12,6 +12,7 @@ from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import 
 )
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     BaseStrictModel,
+    SupportedFeaturesList,
     create_model,
 )
 
@@ -74,7 +75,9 @@ class _StrictCaseField(BaseStrictModel):
         MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM
     ] = Field(default_factory=list)
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
-    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
+    supportedFeatures: Optional[SupportedFeaturesList] = Field(
+        None, alias="supportedFeatures"
+    )
     aliases: Optional[List[StrictAliases]] = Field(None, alias="Aliases")
     alias_to: Optional[str] = Field(None, alias="aliasTo")
 

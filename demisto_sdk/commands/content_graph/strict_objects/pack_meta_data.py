@@ -7,7 +7,10 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.StrEnum import StrEnum
-from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel
+from demisto_sdk.commands.content_graph.strict_objects.common import (
+    BaseStrictModel,
+    SupportedFeaturesList,
+)
 
 
 class PackSupportOption(StrEnum):
@@ -100,7 +103,9 @@ class StrictPackMetadata(BaseStrictModel):
     disable_monthly: Optional[bool] = Field(None, alias="disableMonthly")
     content_commit_hash: Optional[str] = Field(None, alias="contentCommitHash")
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
-    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
+    supportedFeatures: Optional[SupportedFeaturesList] = Field(
+        None, alias="supportedFeatures"
+    )
     source: Optional[str] = Field("", alias="source")
     managed: Optional[bool] = Field(False, alias="managed")
     internal: Optional[bool] = Field(False, alias="internal")

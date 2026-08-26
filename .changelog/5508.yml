@@ -1,4 +1,4 @@
 changes:
-- description: Added a new optional **supportedFeatures** field (list of strings) to all content item types and to pack_metadata.json. A content item that does not declare the field inherits it from its pack. When neither declares it, the key is omitted entirely from the output and marketplace artifacts.
+- description: Added a new optional **supportedFeatures** field (list of strings) to all content item types and to pack_metadata.json. A content item that does not declare the field inherits it from its pack. When neither declares it, the key is omitted entirely from the output and marketplace artifacts. When the field is declared it must hold real feature names - an empty list, or a list containing empty or whitespace-only values, is rejected.
   type: feature
 pr_number: 5508

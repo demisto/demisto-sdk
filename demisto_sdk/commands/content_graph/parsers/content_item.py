@@ -213,13 +213,15 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     ) -> None:
         """Resolves the item's `supportedFeatures`, inheriting the pack's value.
 
-        An item that does not author the key inherits the pack's value. Using
-        `.get` with a default (rather than a truthiness check) means an
-        explicitly authored empty list is preserved as an intentional empty
-        list, and is never replaced by the pack's value.
+        An item that does not author the key inherits the pack's value; an item
+        that does author one keeps it. Only the absence of the key triggers
+        inheritance, so `.get` with a default is used rather than a truthiness
+        check.
 
         Stays `None` when neither the item nor its pack declare the field, so
-        the key can be omitted entirely from the output.
+        the key can be omitted entirely from the output. Authored values are
+        validated separately by `SupportedFeaturesList`, which rejects empty
+        lists and blank entries.
         """
         raw_data = self.raw_data if isinstance(self.raw_data, dict) else {}
         self.supportedFeatures: Optional[List[str]] = raw_data.get(

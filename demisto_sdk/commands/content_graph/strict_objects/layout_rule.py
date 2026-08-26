@@ -9,6 +9,7 @@ from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import 
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
     BaseStrictModel,
+    SupportedFeaturesList,
     create_model,
 )
 
@@ -25,7 +26,9 @@ class _StrictLayoutRule(BaseStrictModel):
     description: Optional[str] = None
     alerts_filter: Optional[AlertsFilter] = None
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
-    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
+    supportedFeatures: Optional[SupportedFeaturesList] = Field(
+        None, alias="supportedFeatures"
+    )
     marketplaces: Optional[List[MarketplaceVersions]] = None
 
 

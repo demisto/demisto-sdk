@@ -1,9 +1,9 @@
 commonfields:
-  id: sample_collection
+  id: sample_knowledge
   version: -1
-name: Sample Collection
+name: Sample Knowledge
 description: |-
-    A sample collection for testing purposes.
+    A sample knowledge for testing purposes.
 marketplaces:
 - platform
 supportedModules:

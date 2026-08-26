@@ -16,6 +16,7 @@ from demisto_sdk.commands.common.constants import (
     BASE_PACK,
     CONTRIBUTORS_README_TEMPLATE,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
+    KNOWLEDGE_DIR,
     MANDATORY_PACK_METADATA_FIELDS,
     MARKETPLACE_MIN_VERSION,
     PACKS_PACK_IGNORE_FILE_NAME,
@@ -601,6 +602,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 # The content structure is different from the server
                 if folder == "CaseLayouts":
                     folder = "Layouts"
+                # Knowledge items live under a 'Knowledge' folder in the source,
+                # but the server expects them under 'Collections'
+                if folder == KNOWLEDGE_DIR:
+                    folder = "Collections"
                 dir = path / folder
                 content_item.upload_path = dir / content_item.normalize_name
                 content_item.dump(

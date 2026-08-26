@@ -740,7 +740,7 @@ WITH DISTINCT a
 OPTIONAL MATCH (a)-[:{RelationshipType.USES}]->(dep)
 WHERE dep.content_type IN [
     '{ContentType.AGENTIX_ACTION}', '{ContentType.AGENTIX_SKILL}',
-    '{ContentType.COLLECTION}'
+    '{ContentType.KNOWLEDGE}'
 ]
 RETURN a AS agent, collect(DISTINCT dep) AS deps
 """

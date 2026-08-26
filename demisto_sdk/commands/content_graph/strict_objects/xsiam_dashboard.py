@@ -83,6 +83,7 @@ class _StrictXSIAMDashboard(BaseStrictModel):
     widgets_data: List[WidgetsData]  # type:ignore[valid-type]
     metadata: Optional[Metadata] = None
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
+    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
 
 
 StrictXSIAMDashboard = create_model(

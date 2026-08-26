@@ -1,3 +1,5 @@
+from typing import List, Optional
+
 from pydantic import Field
 
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
@@ -10,6 +12,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
 
 
 class _StrictGenericType(BaseStrictModel):
+    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
     definition_id: str = Field(..., alias="definitionId")
     generic_module_id: str = Field(..., alias="genericModuleId")
 

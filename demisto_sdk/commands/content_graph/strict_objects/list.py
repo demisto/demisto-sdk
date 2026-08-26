@@ -42,6 +42,7 @@ class _StrictList(BaseStrictModel):
     source: Optional[str] = None
     marketplaces: Optional[List[MarketplaceVersions]] = None
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
+    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
 
 
 StrictList = create_model(

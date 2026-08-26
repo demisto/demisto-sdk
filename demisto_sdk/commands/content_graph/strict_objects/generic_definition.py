@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import Field
 
@@ -11,6 +11,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
 
 
 class _StrictGenericDefinition(BaseStrictModel):
+    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
     id_: str = Field(alias="id")
     name: str
     partitioned: Optional[bool] = None

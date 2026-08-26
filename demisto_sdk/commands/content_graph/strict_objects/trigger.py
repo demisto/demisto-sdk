@@ -29,6 +29,7 @@ class _StrictTrigger(BaseStrictModel):
     automation_type: Optional[str]
     automation_id: Optional[str]
     supportedModules: Optional[list[str]] = Field(None, alias="supportedModules")
+    supportedFeatures: Optional[list[str]] = Field(None, alias="supportedFeatures")
     issilent: Optional[bool] = Field(default=False)
     grouping_element: Optional[str] = None
     is_auto_enabled: Optional[bool] = None

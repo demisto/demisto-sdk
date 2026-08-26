@@ -73,6 +73,7 @@ class _Configuration(BaseStrictModel):
             Field(min_length=1, max_length=len(PlatformSupportedModules)),
         ]
     ] = None
+    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
 
 
 Configuration = create_model(
@@ -115,6 +116,7 @@ class _Command(BaseStrictModel):
             Field(min_length=1, max_length=len(PlatformSupportedModules)),
         ]
     ]
+    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
 
 
 Command = create_model(
@@ -236,6 +238,7 @@ class _StrictIntegration(BaseStrictModel):
     supportedModules: Optional[
         Annotated[List[PlatformSupportedModules], Field(min_length=1, max_length=7)]
     ]
+    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
 
     def __init__(self, **data):
         """

@@ -27,6 +27,8 @@ class _StrictIncidentField(BaseStrictModel):
     This class inherits from StrictIndicatorField, since the other class is contained in this class.
     """
 
+    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
+
     pretty_name: Optional[str] = Field(None, alias="prettyName")
     run_script_after_inc_update: Optional[bool] = Field(
         None, alias="runScriptAfterIncUpdate"

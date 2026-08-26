@@ -72,6 +72,7 @@ class _StrictXSIAMReport(BaseStrictModel):
     templates_data: List[TemplatesData]
     widgets_data: Optional[List[WidgetsData]] = None  # type:ignore[valid-type]
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
+    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
 
 
 StrictXSIAMReport = create_model(

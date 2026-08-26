@@ -22,6 +22,10 @@ mapping:
       cache_ttl:
         type: number
         required: false
+  supportedFeatures:
+    type: seq
+    sequence:
+    - type: str
 
 
 schema;dashboards_data_schema:

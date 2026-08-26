@@ -37,6 +37,7 @@ class _StrictCorrelationRule(BaseStrictModel):
     investigation_query_link: Optional[str] = None
     mapping_strategy: Optional[str] = None
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
+    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
 
 
 StrictCorrelationRule = create_model(

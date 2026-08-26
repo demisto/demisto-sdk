@@ -38,6 +38,7 @@ class _StrictClassifier(BaseStrictModel):
         None, alias="marketplaces"
     )
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
+    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
     id_: str = Field(..., alias="id")
     version: int
 

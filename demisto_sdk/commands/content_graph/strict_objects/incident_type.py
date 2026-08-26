@@ -19,6 +19,7 @@ class _StrictIncidentType(BaseStrictModel):
         None, alias="marketplaces"
     )
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
+    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
 
 
 StrictIncidentType = create_model(

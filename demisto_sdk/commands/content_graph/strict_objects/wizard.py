@@ -78,6 +78,7 @@ class Wizard(BaseStrictModel):
 
 
 class _StrictWizard(BaseStrictModel):
+    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
     id_: str = Field(alias="id")
     version: Optional[int] = None
     name: str

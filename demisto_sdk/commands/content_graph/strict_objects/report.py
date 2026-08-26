@@ -90,6 +90,7 @@ DecoderItem = create_model(
 
 
 class _StrictReport(BaseStrictModel):
+    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
     id_: str = Field(alias="id")
     name: str
     description: str

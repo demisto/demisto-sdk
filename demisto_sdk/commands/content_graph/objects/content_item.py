@@ -316,6 +316,11 @@ class ContentItem(BaseContent):
         exclude_fields: Dict[Union[int, str], Any] = {}
         if not self.supportedModules:
             exclude_fields["supportedModules"] = True
+        # Unlike supportedModules, only an absent (None) value is excluded here:
+        # an explicitly authored empty list is an intentional "no features" and
+        # must survive into the metadata rather than being dropped.
+        if self.supportedFeatures is None:
+            exclude_fields["supportedFeatures"] = True
 
         summary_res = self.dict(
             include=self.metadata_fields(), by_alias=True, exclude=exclude_fields
@@ -352,6 +357,7 @@ class ContentItem(BaseContent):
             "toversion",
             "deprecated",
             "supportedModules",
+            "supportedFeatures",
         }
 
     @property

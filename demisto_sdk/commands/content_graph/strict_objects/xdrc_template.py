@@ -21,6 +21,7 @@ class _StrictXDRCTemplate(BaseStrictModel):
     from_xdr_version: str
     yaml_template: str
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
+    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
 
 
 StrictXDRCTemplate = create_model(

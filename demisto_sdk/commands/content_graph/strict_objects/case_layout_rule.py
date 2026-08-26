@@ -18,3 +18,4 @@ class StrictCaseLayoutRule(BaseStrictModel):
     incidents_filter: Optional[AlertsFilter] = None
     marketplaces: Optional[List[MarketplaceVersions]] = None
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
+    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")

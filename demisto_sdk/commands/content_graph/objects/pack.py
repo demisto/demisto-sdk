@@ -138,6 +138,7 @@ def upload_zip(
 class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     path: Path
     supportedModules: Optional[List[str]] = None
+    supportedFeatures: Optional[List[str]] = None
     contributors: Optional[List[str]] = None
     relationships: Relationships = Field(Relationships(), exclude=True)
     deprecated: bool = False
@@ -489,6 +490,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         metadata = replace_marketplace_references(metadata, marketplace, str(self.path))
         if "supportedModules" in metadata and not metadata["supportedModules"]:
             del metadata["supportedModules"]
+        # Only an absent (None) value is removed: an explicitly authored empty
+        # list is an intentional "no features" and must be published as [].
+        if "supportedFeatures" in metadata and metadata["supportedFeatures"] is None:
+            del metadata["supportedFeatures"]
         write_dict(path, data=metadata, indent=4, sort_keys=True)
 
     def dump_readme(self, path: Path, marketplace: MarketplaceVersions) -> None:

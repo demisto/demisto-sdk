@@ -2155,6 +2155,168 @@ class TestParsersAndModels:
         assert script1_model.supportedModules == ["C1", "C3"]
         assert script2_model.supportedModules is None
 
+    @pytest.mark.parametrize(
+        "pack_features, item_features, expected",
+        [
+            pytest.param(None, None, None, id="neither authored -> None"),
+            pytest.param(["feat_a"], None, ["feat_a"], id="inherited from pack"),
+            pytest.param([], None, [], id="inherited empty list from pack"),
+            pytest.param(["feat_a"], ["feat_b"], ["feat_b"], id="item overrides pack"),
+            pytest.param(["feat_a"], [], [], id="item empty list beats pack"),
+        ],
+    )
+    def test_supported_features_resolution(
+        self, repo: Repo, pack_features, item_features, expected
+    ):
+        """
+        Given:
+        - A pack and an integration authoring `supportedFeatures` in every
+          combination of absent / populated / explicitly empty
+
+        When:
+        - Parsing the pack
+
+        Then:
+        - Ensure the item inherits the pack's value when it does not author one
+        - Ensure an explicitly authored empty list is preserved rather than
+          being replaced by the pack's value (an empty list is intentional and
+          distinct from an absent key)
+        """
+        pack = repo.create_pack("HelloWorld")
+        if pack_features is not None:
+            pack_metadata = load_json("pack_metadata.json")
+            pack_metadata.update({"supportedFeatures": pack_features})
+            pack.pack_metadata.write_json(pack_metadata)
+
+        integration = pack.create_integration("MyIntegration")
+        if item_features is not None:
+            yml = integration.yml.read_dict()
+            yml["supportedFeatures"] = item_features
+            integration.yml.write_dict(yml)
+
+        model = PackModel.from_orm(PackParser(Path(pack.path)))
+
+        assert model.content_items.integration[0].supportedFeatures == expected
+
+    def test_supported_features_absent_from_output_when_unauthored(self, repo: Repo):
+        """
+        Given:
+        - A pack and an integration that do not author `supportedFeatures`
+
+        When:
+        - Dumping the pack metadata and generating the content item summary
+
+        Then:
+        - Ensure the key is absent entirely from both outputs, rather than
+          being emitted as null or as an empty list
+        """
+        pack = repo.create_pack("HelloWorld")
+        pack.create_integration("MyIntegration")
+
+        model = PackModel.from_orm(PackParser(Path(pack.path)))
+        metadata_path = Path(pack.path) / "metadata.json"
+        model.dump_metadata(metadata_path, MarketplaceVersions.XSOAR)
+
+        assert "supportedFeatures" not in tools.get_json(metadata_path)
+        assert "supportedFeatures" not in model.content_items.integration[0].summary()
+
+    def test_supported_features_empty_list_survives_output(self, repo: Repo):
+        """
+        Given:
+        - A pack and an integration that author `supportedFeatures` as an
+          explicitly empty list
+
+        When:
+        - Dumping the pack metadata and generating the content item summary
+
+        Then:
+        - Ensure the key is present as an empty list in both outputs, since an
+          empty list is an intentional "no features" declaration
+        """
+        pack = repo.create_pack("HelloWorld")
+        pack_metadata = load_json("pack_metadata.json")
+        pack_metadata.update({"supportedFeatures": []})
+        pack.pack_metadata.write_json(pack_metadata)
+
+        integration = pack.create_integration("MyIntegration")
+        yml = integration.yml.read_dict()
+        yml["supportedFeatures"] = []
+        integration.yml.write_dict(yml)
+
+        model = PackModel.from_orm(PackParser(Path(pack.path)))
+        metadata_path = Path(pack.path) / "metadata.json"
+        model.dump_metadata(metadata_path, MarketplaceVersions.XSOAR)
+
+        assert tools.get_json(metadata_path)["supportedFeatures"] == []
+        assert model.content_items.integration[0].summary()["supportedFeatures"] == []
+
+    def test_supported_features_is_valid_on_all_content_types(self, repo: Repo):
+        """
+        Given:
+        - A pack whose content items of every supported type all author
+          `supportedFeatures`
+
+        When:
+        - Parsing the pack
+
+        Then:
+        - Ensure no structure errors are raised for the field on any type,
+          i.e. the schemas and strict models accept it everywhere. This covers
+          types that never had `supportedModules`, which would otherwise reject
+          the new field as an extra key.
+        """
+        pack = repo.create_pack("HelloWorld")
+
+        for create, name in (
+            (pack.create_integration, "MyIntegration"),
+            (pack.create_script, "MyScript"),
+            (pack.create_playbook, "MyPlaybook"),
+            (pack.create_parsing_rule, "MyParsingRule"),
+            (pack.create_modeling_rule, "MyModelingRule"),
+        ):
+            item = create(name)
+            yml = item.yml.read_dict()
+            yml["supportedFeatures"] = ["feat_a"]
+            item.yml.write_dict(yml)
+
+        for create, name in (
+            (pack.create_incident_field, "MyIncidentField"),
+            (pack.create_incident_type, "MyIncidentType"),
+            (pack.create_indicator_field, "MyIndicatorField"),
+            (pack.create_indicator_type, "MyIndicatorType"),
+            (pack.create_classifier, "MyClassifier"),
+            (pack.create_mapper, "MyMapper"),
+            (pack.create_widget, "MyWidget"),
+            (pack.create_dashboard, "MyDashboard"),
+            (pack.create_report, "MyReport"),
+            (pack.create_generic_field, "MyGenericField"),
+            (pack.create_generic_type, "MyGenericType"),
+            (pack.create_generic_module, "MyGenericModule"),
+            (pack.create_generic_definition, "MyGenericDefinition"),
+            (pack.create_list, "MyList"),
+            (pack.create_wizard, "MyWizard"),
+            (pack.create_xsiam_dashboard, "MyXSIAMDashboard"),
+            (pack.create_case_field, "MyCaseField"),
+        ):
+            item = create(name)
+            data = item.read_json_as_dict()
+            data["supportedFeatures"] = ["feat_a"]
+            item.write_json(data)
+
+        model = PackModel.from_orm(PackParser(Path(pack.path)))
+
+        content_items = list(model.content_items)
+        assert content_items, "expected the pack to contain content items"
+        for content_item in content_items:
+            assert content_item.supportedFeatures == [
+                "feat_a"
+            ], f"{content_item.content_type} did not resolve supportedFeatures"
+            assert not [
+                error
+                for error in content_item.structure_errors
+                if "supportedFeatures" in str(error)
+            ], f"{content_item.content_type} rejected supportedFeatures"
+
 
 class TestFindContentType:
     def test_integration_outside_content_path(self, git_repo):

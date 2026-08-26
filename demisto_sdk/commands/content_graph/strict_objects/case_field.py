@@ -74,6 +74,7 @@ class _StrictCaseField(BaseStrictModel):
         MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM
     ] = Field(default_factory=list)
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
+    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
     aliases: Optional[List[StrictAliases]] = Field(None, alias="Aliases")
     alias_to: Optional[str] = Field(None, alias="aliasTo")
 

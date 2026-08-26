@@ -18,6 +18,7 @@ class Period(BaseStrictModel):
 
 
 class _StrictPreProcessRule(BaseStrictModel):
+    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
     action: str
     enabled: bool
     existing_events_filters: List[Any] = Field(

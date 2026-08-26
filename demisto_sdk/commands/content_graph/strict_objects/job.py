@@ -108,6 +108,7 @@ class _StrictJob(BaseStrictModel):
     locked: Optional[bool] = None
     system: Optional[bool] = None
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
+    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
 
 
 StrictJob = create_model(

@@ -113,6 +113,7 @@ class _StrictLayout(BaseStrictModel):
     details_v2: Optional[Mapping] = Field(None, alias="detailsV2")
     mobile: Optional[Mapping] = None
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
+    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
 
 
 StrictLayout = create_model(

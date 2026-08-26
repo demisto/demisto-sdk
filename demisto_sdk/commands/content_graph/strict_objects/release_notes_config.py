@@ -13,3 +13,4 @@ class StrictReleaseNotesConfig(BaseStrictModel):
     breaking_changes_notes: Optional[str] = Field(None, alias="breakingChangesNotes")
     marketplaces: Optional[List[MarketplaceVersions]] = None
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
+    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")

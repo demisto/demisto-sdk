@@ -25,6 +25,7 @@ class _StrictLayoutRule(BaseStrictModel):
     description: Optional[str] = None
     alerts_filter: Optional[AlertsFilter] = None
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
+    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
     marketplaces: Optional[List[MarketplaceVersions]] = None
 
 

@@ -202,6 +202,7 @@ class PackMetadataParser:
         self.hybrid: bool = metadata.get("hybrid") or False
         self.pack_metadata_dict: dict = metadata
         self.supportedModules: Optional[List[str]] = metadata.get("supportedModules")
+        self.supportedFeatures: Optional[List[str]] = metadata.get("supportedFeatures")
         self.source: str = metadata.get("source", "")
         self.managed: bool = metadata.get("managed", False)
         self.internal: bool = metadata.get("internal", False)
@@ -395,7 +396,10 @@ class PackParser(BaseContentParser, PackMetadataParser):
         """
         try:
             content_item = ContentItemParser.from_path(
-                content_item_path, self.marketplaces, self.supportedModules
+                content_item_path,
+                self.marketplaces,
+                self.supportedModules,
+                pack_supported_features=self.supportedFeatures,
             )
             content_item.add_to_pack(self.object_id)
             self.content_items.append(content_item)
@@ -464,6 +468,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
             "excluded_dependencies": "excludedDependencies",
             "modules": "modules",
             "supportedModules": "supportedModules",
+            "supportedFeatures": "supportedFeatures",
             "disable_monthly": "disableMonthly",
             "content_commit_hash": "contentCommitHash",
             "default_data_source_id": "defaultDataSource",

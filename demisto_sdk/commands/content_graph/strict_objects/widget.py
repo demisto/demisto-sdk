@@ -41,6 +41,7 @@ class _StrictWidget(BaseStrictModel):
         ],
     )
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
+    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
 
 
 StrictWidget = create_model(

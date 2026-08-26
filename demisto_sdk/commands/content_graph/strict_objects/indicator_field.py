@@ -58,6 +58,7 @@ class _StrictIndicatorField(BaseStrictModel):
     open_ended: Optional[bool] = Field(None, alias="openEnded")
     marketplaces: Optional[Union[MarketplaceVersions, List[MarketplaceVersions]]] = None
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
+    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
     id_: str = Field(..., alias="id")
     version: int
 

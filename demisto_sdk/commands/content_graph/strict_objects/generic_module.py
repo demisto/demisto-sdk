@@ -30,6 +30,7 @@ class View(BaseStrictModel):
 
 
 class _StrictGenericModule(BaseStrictModel):
+    supportedFeatures: Optional[List[str]] = Field(None, alias="supportedFeatures")
     id_: str = Field(alias="id")
     version: int
     locked: Optional[bool] = None

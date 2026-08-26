@@ -26,5 +26,5 @@ mapping:
         type: str
         required: false
       breakingChangesNotesTightly:
-        type: any
+        type: str
         required: false

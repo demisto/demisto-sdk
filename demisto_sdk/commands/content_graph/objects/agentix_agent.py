@@ -1,6 +1,8 @@
 from functools import cached_property
 from pathlib import Path
 
+from pydantic import BaseModel
+
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.agentix_base import AgentixBase
@@ -12,6 +14,10 @@ from demisto_sdk.commands.prepare_content.agentix_markdown_unifier import (
     AGENTIX_AGENT_TARGET_FIELD,
     AgentixMarkdownUnifier,
 )
+
+
+class Mcp(BaseModel):
+    server_url: str
 
 
 class AgentixAgent(AgentixBase, content_type=ContentType.AGENTIX_AGENT):
@@ -26,6 +32,7 @@ class AgentixAgent(AgentixBase, content_type=ContentType.AGENTIX_AGENT):
     roles: list[str] = []
     sharedwithroles: list[str] = []
     collectionids: list[str] = []
+    mcps: list[Mcp] = []
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:

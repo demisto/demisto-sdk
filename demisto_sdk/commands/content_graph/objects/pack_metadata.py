@@ -218,6 +218,14 @@ class PackMetadata(BaseModel):
         """
         collected_content_items: dict = {}
         content_displays: dict = {}
+        # Computed once per dump: `is_managed_paired()` scans every content item of the pack,
+        # so evaluating it per item would be O(n^2) (and the incident-to-alert recursion below
+        # would recompute it yet again). It is threaded down as an explicit argument.
+        pack_is_managed_paired: bool = (
+            bool(self.is_managed_paired())  # type:ignore[attr-defined]
+            if ENABLE_SPLIT_PACKS
+            else False
+        )
         for content_item in content_items:
             if should_ignore_item_in_metadata(
                 content_item, marketplace, strip_internal=strip_internal
@@ -236,6 +244,7 @@ class PackMetadata(BaseModel):
                 collected_content_items=collected_content_items,
                 content_item=content_item,
                 marketplace=marketplace,
+                pack_is_managed_paired=pack_is_managed_paired,
             )
 
             content_displays[content_item.content_type.metadata_name] = (
@@ -554,6 +563,7 @@ class PackMetadata(BaseModel):
         content_item: ContentItem,
         marketplace: MarketplaceVersions,
         incident_to_alert: bool = False,
+        pack_is_managed_paired: bool = False,
     ):
         """
         Adds the given content item to the metadata content items list.
@@ -567,22 +577,27 @@ class PackMetadata(BaseModel):
             content_item (ContentItem): The current content item to check.
             marketplace (MarketplaceVersions): The marketplace to prepare the pack to upload.
             incident_to_alert (bool, optional): Whether should replace incident to alert. Defaults to False.
+            pack_is_managed_paired (bool, optional): Whether the owning pack actually splits, i.e. the
+                value of `Pack.is_managed_paired()`, computed once per dump by the caller. Defaults to False.
         """
         collected_content_items.setdefault(content_item.content_type.metadata_name, [])
         content_item_summary = content_item.summary(
             marketplace, incident_to_alert=incident_to_alert
         )
-        # CIAC-16414: expose per content item whether it is tightly coupled, i.e. whether it is
-        # one of the items paired into the pack's managed twin. Flag-gated: while ENABLE_SPLIT_PACKS
-        # is off the key is omitted entirely.
+        # CIAC-16414: expose per content item whether it is actually paired into the pack's managed
+        # twin, i.e. `managedPaired == (the pack splits) AND (the item is tightly coupled)`.
+        # A pack that does not split - for any reason: non-xsoar support, hidden, deprecated,
+        # natively managed, or excluded - yields no twin at all, so every one of its items is
+        # `false` regardless of its own coupling. Flag-gated: while ENABLE_SPLIT_PACKS is off the
+        # key is omitted entirely.
         # Injected here, at the single funnel every per-item summary dict passes through, rather
         # than inside `summary()`: the caller re-parses each item from disk, so the item's own `pack`
         # back-reference is unreliable, and only the owning pack can apply `coupling_overrides`.
         # `self` is always a `Pack` at runtime (`Pack` inherits `PackMetadata`), so the resolver
         # defined on `Pack` is available here.
         if ENABLE_SPLIT_PACKS:
-            content_item_summary["managedPaired"] = self._is_item_tightly_coupled(  # type:ignore[attr-defined]
-                content_item
+            content_item_summary["managedPaired"] = bool(
+                pack_is_managed_paired and self._is_item_tightly_coupled(content_item)  # type:ignore[attr-defined]
             )
 
         if content_item_metadata := self._search_content_item_metadata_object(
@@ -618,6 +633,7 @@ class PackMetadata(BaseModel):
                 content_item,
                 marketplace,
                 incident_to_alert=True,
+                pack_is_managed_paired=pack_is_managed_paired,
             )
 
     def _replace_item_if_has_higher_toversion(

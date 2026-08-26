@@ -147,8 +147,8 @@ class TestResolveDerivedPackSource:
 
     def test_default_is_connectus(self, monkeypatch):
         monkeypatch.delenv("DERIVED_PACK_SOURCE", raising=False)
-        assert resolve_derived_pack_source() == "force-update"
-        assert DEFAULT_DERIVED_PACK_SOURCE == "force-update"
+        assert resolve_derived_pack_source() == "connectus"
+        assert DEFAULT_DERIVED_PACK_SOURCE == "connectus"
 
     def test_env_var_overrides_default(self, monkeypatch):
         monkeypatch.setenv("DERIVED_PACK_SOURCE", "other_feature")

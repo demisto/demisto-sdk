@@ -577,7 +577,6 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
             FieldMapping(
                 id=fm["id"],
                 field_name=fm.get("field_name"),
-                field_value=fm.get("field_value"),
             )
             for fm in ser_data.get("field_mappings", [])
         ]
@@ -642,7 +641,6 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
                     ResolvedParamMapping(
                         connector_param_name=field_id,
                         content_param_name=fm.field_name,
-                        field_value_transform=fm.field_value,
                         is_serialized=True,
                         source_file=source_file,
                     )

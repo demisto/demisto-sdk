@@ -470,16 +470,13 @@ class CapabilityData(BaseModel):
 class FieldMapping(BaseModel):
     """Raw serializer entry from serializer.yaml (SerializerEntry).
 
-    The schema requires only ``id`` and at least one of ``field_name`` /
-    ``field_value``, so ``field_name`` is optional here (transform-only
-    entries omit it).
+    Bridges a manifest field ``id`` (as it appears in the yaml files)
+    to the runtime ``field_name`` the handler / integration expects.
     """
 
     id: str  # connector field ID (connector_param_name)
-    # Target field name for the handler (rename). Optional for transform-only
-    # entries.
+    # Target field name for the handler (rename).
     field_name: Optional[str] = None
-    field_value: Optional[str] = None  # optional value transform (e.g. "toString")
 
 
 class ComputedCondition(BaseModel):
@@ -530,7 +527,6 @@ class ResolvedParamMapping(BaseModel):
 
     connector_param_name: str  # field ID in connector YAML (e.g. "domain")
     content_param_name: str  # param name in integration YAML (e.g. "InstanceURL")
-    field_value_transform: Optional[str] = None  # optional value transform
     is_serialized: bool = False  # True if mapping came from serializer.yaml
     source_file: str = ""  # which connector file defines this field
 

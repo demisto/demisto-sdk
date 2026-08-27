@@ -49,6 +49,7 @@ from typing import Any, Dict, FrozenSet, Iterable, Iterator, List, Optional, Set
 from demisto_sdk.commands.content_graph.objects.connector import (
     Connector,
     HandlerData,
+    general_configurations_field_group_visible_for_handler,
 )
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -164,6 +165,33 @@ class IsMirroringOmittedValidator(ConnectorsValidator[ContentTypes]):
                 if isinstance(field, dict):
                     yield field
 
+    @staticmethod
+    def _iter_visible_general_config_field_groups(
+        groups: Any,
+        connector: Connector,
+        handler: HandlerData,
+    ) -> Iterator[Dict[str, Any]]:
+        """Yield each ``general_configurations`` field group that is
+        visible to ``handler`` per
+        :func:`general_configurations_field_group_visible_for_handler`.
+
+        Mirrors CO138's implementation — same latent
+        cross-view_group leak in grouped connectors, same fix. Applied
+        only to ``general_configurations`` surfaces; profile-scoped and
+        capability-entry-scoped groups are already narrowed by their
+        enclosing entity.
+        """
+        if not isinstance(groups, list):
+            return
+        for group in groups:
+            if not isinstance(group, dict):
+                continue
+            if not general_configurations_field_group_visible_for_handler(
+                group, connector, handler
+            ):
+                continue
+            yield group
+
     def _iter_connection_yaml_fields(
         self, connector: Connector, handler: HandlerData
     ) -> Iterator[Tuple[Dict[str, Any], str]]:
@@ -173,9 +201,12 @@ class IsMirroringOmittedValidator(ConnectorsValidator[ContentTypes]):
 
         general = raw.get("general_configurations")
         if isinstance(general, dict):
-            for field in self._iter_field_dicts_from_field_groups(
-                general.get("configurations")
-            ):
+            visible_groups = list(
+                self._iter_visible_general_config_field_groups(
+                    general.get("configurations"), connector, handler
+                )
+            )
+            for field in self._iter_field_dicts_from_field_groups(visible_groups):
                 yield field, "general_configurations"
 
         auth_ids: Set[str] = {
@@ -196,7 +227,7 @@ class IsMirroringOmittedValidator(ConnectorsValidator[ContentTypes]):
                 yield field, f"profile '{profile_id}'"
 
     def _iter_capabilities_yaml_fields(
-        self, connector: Connector
+        self, connector: Connector, handler: HandlerData
     ) -> Iterator[Tuple[Dict[str, Any], str]]:
         raw = connector.capabilities_file.file_content
         if not isinstance(raw, dict):
@@ -204,9 +235,12 @@ class IsMirroringOmittedValidator(ConnectorsValidator[ContentTypes]):
         general = raw.get("general_configurations")
         if not isinstance(general, dict):
             return
-        for field in self._iter_field_dicts_from_field_groups(
-            general.get("configurations")
-        ):
+        visible_groups = list(
+            self._iter_visible_general_config_field_groups(
+                general.get("configurations"), connector, handler
+            )
+        )
+        for field in self._iter_field_dicts_from_field_groups(visible_groups):
             yield field, "general_configurations"
 
     def _iter_configurations_yaml_fields(
@@ -218,9 +252,12 @@ class IsMirroringOmittedValidator(ConnectorsValidator[ContentTypes]):
 
         general = raw.get("general_configurations")
         if isinstance(general, dict):
-            for field in self._iter_field_dicts_from_field_groups(
-                general.get("configurations")
-            ):
+            visible_groups = list(
+                self._iter_visible_general_config_field_groups(
+                    general.get("configurations"), connector, handler
+                )
+            )
+            for field in self._iter_field_dicts_from_field_groups(visible_groups):
                 yield field, "general_configurations"
 
         handler_cap_ids: Set[str] = {hc.id for hc in handler.capabilities}
@@ -251,7 +288,9 @@ class IsMirroringOmittedValidator(ConnectorsValidator[ContentTypes]):
         def _iter_all() -> Iterator[Tuple[Dict[str, Any], str, str]]:
             for field, hint in self._iter_connection_yaml_fields(connector, handler):
                 yield field, "connection.yaml", hint
-            for field, hint in self._iter_capabilities_yaml_fields(connector):
+            for field, hint in self._iter_capabilities_yaml_fields(
+                connector, handler
+            ):
                 yield field, "capabilities.yaml", hint
             for field, hint in self._iter_configurations_yaml_fields(
                 connector, handler

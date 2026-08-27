@@ -1,7 +1,7 @@
 from functools import cached_property
 from pathlib import Path
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -32,7 +32,7 @@ class AgentixAgent(AgentixBase, content_type=ContentType.AGENTIX_AGENT):
     roles: list[str] = []
     sharedwithroles: list[str] = []
     collectionids: list[str] = []
-    mcps: list[Mcp] = []
+    mcps: list[Mcp] = Field(default_factory=list, exclude=True)
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:

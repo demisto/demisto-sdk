@@ -37,9 +37,9 @@ class AgentixAction(AgentixBase, content_type=ContentType.AGENTIX_ACTION):
     underlying_content_item_command: Optional[str] = None
     underlying_content_item_version: int
     requires_user_approval: bool = Field(False, alias="requiresuserapproval")
-    is_long_running: bool = Field(False, alias="islongrunning")
+    is_long_running: bool = Field(False, alias="is_long_running")
     long_running_timeout_seconds: Optional[int] = Field(
-        None, alias="longrunningtimeoutseconds"
+        None, alias="long_running_timeout_seconds"
     )
     few_shots: Optional[list[str]] = Field(None, alias="fewshots")
 

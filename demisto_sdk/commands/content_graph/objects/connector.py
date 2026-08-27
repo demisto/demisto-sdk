@@ -13,7 +13,7 @@ from configparser import ConfigParser
 from enum import Enum
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, FrozenSet, List, Optional, Union
 
 from pydantic import BaseModel, Field, root_validator, validator
 
@@ -265,6 +265,78 @@ class ViewGroup(BaseModel):
     id: str
     label: Optional[str] = None
     help_text: Optional[str] = None
+
+
+# ============================================================
+# general_configurations visibility predicate
+# ============================================================
+
+
+def general_configurations_field_group_visible_for_handler(
+    group: Any,
+    connector: "Connector",
+    handler: "HandlerData",
+) -> bool:
+    """Whether a ``general_configurations`` field group is visible to
+    ``handler`` on ``connector``.
+
+    Implements the visibility predicate verbatim:
+
+        visible(field_group, handler) :=
+            if field_group.view_group is set:
+                return field_group.view_group in
+                       handler_owned_view_groups(handler)
+            if field_group.required_for_capabilities is set:
+                return any(cap in handler_capability_ids(handler)
+                           for cap in field_group.required_for_capabilities)
+            return True   # shared / no scoping marker
+
+    Both markers set simultaneously is authoring drift and not expected
+    in real content; this predicate ANDs them defensively (narrower
+    visibility on authoring bugs).
+
+    ``group`` may be either a raw YAML dict OR a pydantic ``FieldGroup``
+    model. Anything without recognisable scoping markers defaults to
+    visible (shared), including malformed / non-dict inputs — a defensive
+    default that keeps validators from crashing on garbage content.
+
+    This predicate MUST NOT be applied outside ``general_configurations``
+    surfaces. Field groups inside a ``connection.yaml`` profile or a
+    ``configurations.yaml.configurations[<cap>]`` entry are already
+    scoped by the enclosing entity; running this predicate on them would
+    be a semantic error (their view_group is a UI hint, not a scoping
+    marker).
+    """
+
+    def _get(attr: str) -> Any:
+        if isinstance(group, dict):
+            return group.get(attr)
+        return getattr(group, attr, None)
+
+    if not isinstance(group, (dict, FieldGroup)):
+        return True
+
+    view_group = _get("view_group")
+    required_for_caps = _get("required_for_capabilities")
+
+    has_view_group_marker = isinstance(view_group, str) and view_group
+    has_required_caps_marker = (
+        isinstance(required_for_caps, list) and len(required_for_caps) > 0
+    )
+
+    if not has_view_group_marker and not has_required_caps_marker:
+        return True  # shared
+
+    if has_view_group_marker:
+        if view_group not in connector.owned_view_groups_for_handler(handler):
+            return False
+
+    if has_required_caps_marker:
+        handler_caps = handler.capability_ids
+        if not any(cap in handler_caps for cap in required_for_caps):
+            return False
+
+    return True
 
 
 class GeneralConfigurations(BaseModel):
@@ -676,6 +748,23 @@ class HandlerData(BaseModel):
             return self.triggering.labels.get("xsoar-pack-id")
         return None
 
+    @property
+    def capability_ids(self) -> FrozenSet[str]:
+        """Flat set of ``(sub-)capability`` ids this handler subscribes to.
+
+        Corresponds to ``handler_capability_ids(handler)`` in
+        ``plans/connector-data-model-reference.md`` §Handler-derived
+        helper sets. Each entry is a capability id or sub-capability id
+        exactly as declared in ``handler.yaml``; no sub-capability
+        expansion is performed.
+
+        Consumers: any validator scoping fields by handler capability
+        subscription (e.g. ``configurations.yaml.configurations[<cap>]``
+        entry-id filtering, ``required_for_capabilities`` predicate on
+        ``general_configurations``).
+        """
+        return frozenset(hc.id for hc in self.capabilities)
+
 
 # ============================================================
 # Capability-handler mapping
@@ -962,6 +1051,42 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
     @property
     def all_connection_profile_ids(self) -> List[str]:
         return [p.id for p in (self.connection.profiles if self.connection else [])]
+
+    def owned_view_groups_for_handler(self, handler: "HandlerData") -> FrozenSet[str]:
+        """Set of ``view_group`` ids ``handler`` transitively owns via
+        its auth-bound profiles on this connector.
+
+        Resolves the chain
+        ``handler.capabilities[].auth_options[].id →
+         connection.profiles[].id → profile.view_group``.
+
+        Empty result cases:
+        - Standard connector — no profile carries ``view_group``.
+        - Grouped connector, anonymous handler — no ``auth_options``
+          to walk (this should not be valid case, 
+          but is caught as a hard error at a higher layer;
+          this helper stays silent so it can be called during error
+          reporting without extra guards).
+        - Grouped connector, handler auth-bound to a profile id that
+          isn't present in ``connection.profiles`` — authoring drift;
+          returns empty rather than raising.
+        """
+        if not self.connection or not self.connection.profiles:
+            logger.debug(
+                "Connector %s has no connection.profiles; owned_view_groups_for_handler returns empty set",
+                self.object_id,
+            )
+            return frozenset()
+        view_group_by_profile_id: Dict[str, Optional[str]] = {
+            p.id: p.view_group for p in self.connection.profiles
+        }
+        owned: set = set()
+        for hc in handler.capabilities:
+            for ao in hc.auth_options:
+                vg = view_group_by_profile_id.get(ao.id)
+                if isinstance(vg, str) and vg:
+                    owned.add(vg)
+        return frozenset(owned)
 
     # === Path resolution ===
 

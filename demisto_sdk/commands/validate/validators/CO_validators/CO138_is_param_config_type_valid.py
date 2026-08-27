@@ -56,6 +56,7 @@ from typing import Any, Dict, FrozenSet, Iterable, Iterator, List, Optional, Set
 from demisto_sdk.commands.content_graph.objects.connector import (
     Connector,
     HandlerData,
+    general_configurations_field_group_visible_for_handler,
 )
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -188,6 +189,36 @@ class IsParamConfigTypeValidValidator(ConnectorsValidator[ContentTypes]):
                 if isinstance(field, dict):
                     yield field
 
+    @staticmethod
+    def _iter_visible_general_config_field_groups(
+        groups: Any,
+        connector: Connector,
+        handler: HandlerData,
+    ) -> Iterator[Dict[str, Any]]:
+        """Yield each ``general_configurations`` field group that is
+        visible to ``handler`` per
+        :func:`general_configurations_field_group_visible_for_handler`.
+
+        This is the per-general_configurations-surface filter that
+        replaces the previous unconditional walk. It is what fixes the
+        grouped-connector cross-view_group leak (servicenow-*).
+
+        MUST NOT be applied outside ``general_configurations`` surfaces:
+        groups inside a ``connection.yaml`` profile or a
+        ``configurations.yaml.configurations[<cap>]`` entry are already
+        scoped by the enclosing entity.
+        """
+        if not isinstance(groups, list):
+            return
+        for group in groups:
+            if not isinstance(group, dict):
+                continue
+            if not general_configurations_field_group_visible_for_handler(
+                group, connector, handler
+            ):
+                continue
+            yield group
+
     def _iter_connection_yaml_fields(
         self, connector: Connector, handler: HandlerData
     ) -> Iterator[Tuple[Dict[str, Any], str]]:
@@ -197,9 +228,17 @@ class IsParamConfigTypeValidValidator(ConnectorsValidator[ContentTypes]):
 
         general = raw.get("general_configurations")
         if isinstance(general, dict):
-            for field in self._iter_field_dicts_from_field_groups(
-                general.get("configurations")
-            ):
+            # general_configurations groups are scoped per-handler by
+            # the view_group / required_for_capabilities predicate — an
+            # unfiltered walk leaks other handlers' fields into this
+            # handler's check (the grouped-connector cross-view_group
+            # false positive that motivated the visibility helper).
+            visible_groups = list(
+                self._iter_visible_general_config_field_groups(
+                    general.get("configurations"), connector, handler
+                )
+            )
+            for field in self._iter_field_dicts_from_field_groups(visible_groups):
                 yield field, "general_configurations"
 
         auth_ids: Set[str] = {
@@ -214,13 +253,16 @@ class IsParamConfigTypeValidValidator(ConnectorsValidator[ContentTypes]):
             profile_id = profile.get("id")
             if profile_id not in auth_ids:
                 continue
+            # Inside a profile the enclosing entity IS the scoping (the
+            # handler auth-binds to this profile); the
+            # general_configurations predicate does NOT apply here.
             for field in self._iter_field_dicts_from_field_groups(
                 profile.get("configurations")
             ):
                 yield field, f"profile '{profile_id}'"
 
     def _iter_capabilities_yaml_fields(
-        self, connector: Connector
+        self, connector: Connector, handler: HandlerData
     ) -> Iterator[Tuple[Dict[str, Any], str]]:
         raw = connector.capabilities_file.file_content
         if not isinstance(raw, dict):
@@ -228,9 +270,17 @@ class IsParamConfigTypeValidValidator(ConnectorsValidator[ContentTypes]):
         general = raw.get("general_configurations")
         if not isinstance(general, dict):
             return
-        for field in self._iter_field_dicts_from_field_groups(
-            general.get("configurations")
-        ):
+        # Same predicate as the other general_configurations surfaces.
+        # For grouped connectors this file's groups never carry
+        # view_group so every group passes through as shared; for
+        # standard connectors the required_for_capabilities branch
+        # narrows visibility.
+        visible_groups = list(
+            self._iter_visible_general_config_field_groups(
+                general.get("configurations"), connector, handler
+            )
+        )
+        for field in self._iter_field_dicts_from_field_groups(visible_groups):
             yield field, "general_configurations"
 
     def _iter_configurations_yaml_fields(
@@ -242,9 +292,12 @@ class IsParamConfigTypeValidValidator(ConnectorsValidator[ContentTypes]):
 
         general = raw.get("general_configurations")
         if isinstance(general, dict):
-            for field in self._iter_field_dicts_from_field_groups(
-                general.get("configurations")
-            ):
+            visible_groups = list(
+                self._iter_visible_general_config_field_groups(
+                    general.get("configurations"), connector, handler
+                )
+            )
+            for field in self._iter_field_dicts_from_field_groups(visible_groups):
                 yield field, "general_configurations"
 
         handler_cap_ids: Set[str] = {hc.id for hc in handler.capabilities}
@@ -296,7 +349,9 @@ class IsParamConfigTypeValidValidator(ConnectorsValidator[ContentTypes]):
         def _iter_all() -> Iterator[Tuple[Dict[str, Any], str, str]]:
             for field, hint in self._iter_connection_yaml_fields(connector, handler):
                 yield field, "connection.yaml", hint
-            for field, hint in self._iter_capabilities_yaml_fields(connector):
+            for field, hint in self._iter_capabilities_yaml_fields(
+                connector, handler
+            ):
                 yield field, "capabilities.yaml", hint
             for field, hint in self._iter_configurations_yaml_fields(
                 connector, handler

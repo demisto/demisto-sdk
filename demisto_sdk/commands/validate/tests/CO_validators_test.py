@@ -8945,6 +8945,161 @@ class TestCO138IsParamConfigTypeValid:
 
         assert results == []
 
+    # ------------------------------------------------------------
+    # Grouped-connector view_group scoping: servicenow reproducer
+    # ------------------------------------------------------------
+    def test_grouped_connector_isolates_view_group_general_configurations(self):
+        """Real reproducer distilled from
+        ``unified-connectors-content/connectors/servicenow-automation-and-collection``.
+
+        Setup:
+        - Grouped connector with 2 xsoar handlers (``handler-a`` owns
+          view_group ``vgA`` via profile ``basic.a``; ``handler-b`` owns
+          ``vgB`` via profile ``basic.b``).
+        - ``configurations.yaml.general_configurations`` has 2 field
+          groups, one per view_group, each carrying a namespaced
+          ``integrationLogLevel`` with ``config_type: backend``.
+        - Each handler's serializer renames ONLY its own field back to
+          the canonical ``integrationLogLevel``.
+
+        Contract: CO138 must produce ZERO results. Each handler's
+        general_configurations view is filtered to its own view_group
+        FIRST, then the serializer rename resolves the runtime name to
+        the whitelisted ``integrationLogLevel``. The cross-view_group
+        leak that today produces ``handler-a`` complaining about
+        ``xsoar-vgB_integrationLogLevel`` (and vice versa) MUST NOT
+        fire.
+
+        This is a RED test until the general_configurations visibility
+        predicate is wired into CO138's walker.
+        """
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            ConnectionProfile,
+            FieldMapping,
+            HandlerAuthOption,
+            HandlerCapability,
+            ProfileTypeEnum,
+            SerializerData,
+        )
+        from demisto_sdk.commands.validate.validators.CO_validators.CO138_is_param_config_type_valid import (
+            IsParamConfigTypeValidValidator,
+        )
+
+        connector = create_connector_object(
+            handlers=[{"id": "handler-a"}, {"id": "handler-b"}],
+            connector_overrides={"settings": {"grouped": True}},
+        )
+
+        # Wire each handler to its own capability + auth profile + serializer.
+        for idx, (handler_id, vg, profile_id) in enumerate(
+            [
+                ("handler-a", "vgA", "basic.a"),
+                ("handler-b", "vgB", "basic.b"),
+            ]
+        ):
+            handler = connector.handlers[idx]
+            handler.metadata.module = "xsoar"
+            handler.capabilities = [
+                HandlerCapability(
+                    id="fetch-issues",
+                    auth_options=[
+                        HandlerAuthOption(id=profile_id, workloads=[], methods=[]),
+                    ],
+                    workloads=[],
+                    actions=[],
+                )
+            ]
+            # Serializer renames ONLY this handler's own namespaced id.
+            handler.serializer = SerializerData(
+                field_mappings=[
+                    FieldMapping(
+                        id=f"xsoar-{vg}_integrationLogLevel",
+                        field_name="integrationLogLevel",
+                    )
+                ],
+                computed_fields=[],
+            )
+
+        # Replace the parsed connection.profiles with the 2 view_group
+        # profiles so `owned_view_groups_for(handler)` resolves them.
+        # (create_connector_object gave us a single "default" profile;
+        # we replace it with the pair we actually need.)
+        connector.connection.profiles = [
+            ConnectionProfile(
+                id="basic.a",
+                type=ProfileTypeEnum.PLAIN,
+                view_group="vgA",
+                configurations=[],
+            ),
+            ConnectionProfile(
+                id="basic.b",
+                type=ProfileTypeEnum.PLAIN,
+                view_group="vgB",
+                configurations=[],
+            ),
+        ]
+
+        # Write connection.yaml on disk too — the walker reads raw
+        # file_content, not the parsed connection model.
+        _co145_write_connection(
+            connector,
+            profiles=[
+                {
+                    "id": "basic.a",
+                    "view_group": "vgA",
+                    "configurations": [],
+                },
+                {
+                    "id": "basic.b",
+                    "view_group": "vgB",
+                    "configurations": [],
+                },
+            ],
+        )
+
+        # configurations.yaml.general_configurations with 2 view_group
+        # scoped groups — the servicenow shape.
+        _co145_write_configurations(
+            connector,
+            general={
+                "configurations": [
+                    {
+                        "advanced": True,
+                        "view_group": "vgA",
+                        "fields": [
+                            _co138_field(
+                                "xsoar-vgA_integrationLogLevel",
+                                config_type="backend",
+                            )
+                        ],
+                    },
+                    {
+                        "advanced": True,
+                        "view_group": "vgB",
+                        "fields": [
+                            _co138_field(
+                                "xsoar-vgB_integrationLogLevel",
+                                config_type="backend",
+                            )
+                        ],
+                    },
+                ]
+            },
+        )
+
+        results = IsParamConfigTypeValidValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        # RED: today the walker leaks other view_groups' fields into
+        # each handler's check, producing 2 cross-view_group false
+        # positives (a on b's field + b on a's field).
+        # GREEN: after the visibility predicate is wired, each handler
+        # only sees its OWN view_group's group, serializer rename
+        # resolves to `integrationLogLevel` (whitelisted + backend), no
+        # findings.
+        assert results == [], "\n".join(r.message for r in results)
+
 
 # ============================================================
 # CO136 test helpers

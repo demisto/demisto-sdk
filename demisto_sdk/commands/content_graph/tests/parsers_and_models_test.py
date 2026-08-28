@@ -3539,7 +3539,7 @@ class TestAgentixBaseParser:
     def test_agentix_action_parser_long_running_fields(self, pack: Pack):
         """
         Given:
-            - An agentix action with is_long_running and long_running_timeout_seconds set.
+            - An agentix action with islongrunning and longrunningtimeoutseconds set.
         When:
             - Creating the content item's parser.
         Then:
@@ -3551,8 +3551,8 @@ class TestAgentixBaseParser:
 
         # given
         agentix_action_data = load_yaml("agentix_action.yml")
-        agentix_action_data["is_long_running"] = True
-        agentix_action_data["long_running_timeout_seconds"] = 120
+        agentix_action_data["islongrunning"] = True
+        agentix_action_data["longrunningtimeoutseconds"] = 120
         agentix_action = pack.create_agentix_action(
             "TestAgentixActionLongRunning", agentix_action_data
         )
@@ -3583,8 +3583,8 @@ class TestAgentixBaseParser:
 
         # given
         agentix_action_data = load_yaml("agentix_action.yml")
-        agentix_action_data.pop("is_long_running", None)
-        agentix_action_data.pop("long_running_timeout_seconds", None)
+        agentix_action_data.pop("islongrunning", None)
+        agentix_action_data.pop("longrunningtimeoutseconds", None)
         agentix_action = pack.create_agentix_action(
             "TestAgentixActionNoLongRunning", agentix_action_data
         )

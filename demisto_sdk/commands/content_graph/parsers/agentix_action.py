@@ -30,9 +30,9 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
         self.requires_user_approval: Optional[bool] = self.yml_data.get(
             "requiresuserapproval"
         )
-        self.is_long_running: bool = bool(self.yml_data.get("is_long_running", False))
+        self.is_long_running: bool = bool(self.yml_data.get("islongrunning", False))
         self.long_running_timeout_seconds: Optional[int] = self.yml_data.get(
-            "long_running_timeout_seconds"
+            "longrunningtimeoutseconds"
         )
         self.is_test: bool = False
         self.connect_to_dependencies()

@@ -207,7 +207,6 @@ class ContentDTO(BaseModel):
     def write_pack_destinations(
         self,
         output_path: Path,
-        managed_pack_ids: Optional[Dict[str, str]] = None,
         artifacts_dir: Optional[Path] = None,
         managed_artifacts_dir: Optional[Path] = None,
     ) -> None:
@@ -215,11 +214,6 @@ class ContentDTO(BaseModel):
 
         Args:
             output_path: File path to write the JSON artifact.
-            managed_pack_ids: Optional ``{pack_id: managed_pack_id}`` mapping,
-                used to resolve the managed counterpart id of a pack when the
-                graph itself does not carry it. Defaults to an empty mapping,
-                in which case every pack without a managed counterpart on the
-                graph gets ``null``.
             artifacts_dir: Directory that regular (non-managed) packs are
                 dumped into — i.e. the ``dir`` passed to ``ContentDTO.dump``.
                 Relative paths are made absolute. When ``None`` (legacy
@@ -238,24 +232,14 @@ class ContentDTO(BaseModel):
         ``currentVersion``). An empty value is normalized to ``None`` so
         consumers can decide what to upload without opening the artifact.
         """
-        managed_pack_ids = managed_pack_ids or {}
         entries: List[Dict[str, Any]] = []
         no_managed_artifacts = (
             artifacts_dir is not None and managed_artifacts_dir is None
         )
         for pack in self.packs:
-            # The managed counterpart id comes from the graph when it carries
-            # one, and otherwise from the caller-supplied mapping. An empty
-            # value is normalized to ``None`` so consumers never see an empty
+            # The pack version is surfaced as-is from the graph, with empty
+            # values normalized to ``None`` so consumers never see an empty
             # string.
-            graph_managed_pack_id = getattr(pack, "managed_pack_id", None)
-            managed_pack_id: Optional[str] = (
-                graph_managed_pack_id
-                if isinstance(graph_managed_pack_id, str) and graph_managed_pack_id
-                else managed_pack_ids.get(pack.object_id) or None
-            )
-            # The pack version is surfaced as-is from the graph, with the same
-            # empty-value normalization applied to ``managed_pack_id`` above.
             graph_current_version = getattr(pack, "current_version", None)
             current_version: Optional[str] = (
                 graph_current_version
@@ -272,7 +256,6 @@ class ContentDTO(BaseModel):
                 "parent_pack_id": getattr(pack, "derived_from", None),
                 "managed": pack.managed or False,
                 "source": pack.source or "",
-                "managed_pack_id": managed_pack_id,
             }
             # ``dump()`` writes managed packs into ``managed_artifacts_dir``
             # and regular packs into ``artifacts_dir``. When no dump directory

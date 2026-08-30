@@ -901,7 +901,7 @@ class TestPackDestinationsJson:
 
 
 # ---------------------------------------------------------------------------
-# pack_destinations.json managed_pack_id tests
+# pack_destinations.json shared helpers
 # ---------------------------------------------------------------------------
 
 
@@ -911,21 +911,15 @@ def _mock_pack(
     destination: PackDestination = PackDestination.MARKETPLACE,
     managed: bool = False,
     source: str = "",
-    managed_pack_id: Optional[str] = None,
     current_version: Optional[str] = "1.0.0",
 ) -> MagicMock:
     """Build a mock pack for the destinations writer.
 
-    ``managed_pack_id`` defaults to ``None``, which *deletes* the attribute
-    from the mock rather than setting it. This matters: on a bare ``MagicMock``
-    every attribute access auto-creates a truthy child mock, so a pack that is
-    supposed to have no graph-provided managed counterpart must have the
-    attribute genuinely absent for ``getattr(pack, "managed_pack_id", None)``
-    to return ``None``.
-
-    ``current_version`` follows the same convention: passing ``None`` deletes
-    the attribute so a pack whose graph object carries no version at all can be
-    expressed.
+    ``current_version`` passing ``None`` *deletes* the attribute from the mock
+    rather than setting it. This matters: on a bare ``MagicMock`` every
+    attribute access auto-creates a truthy child mock, so a pack whose graph
+    object carries no version at all must have the attribute genuinely absent
+    for ``getattr(pack, "current_version", None)`` to return ``None``.
     """
     pack = MagicMock()
     pack.object_id = object_id
@@ -937,10 +931,6 @@ def _mock_pack(
     pack.managed = managed
     pack.source = source
     pack.content_items = []
-    if managed_pack_id is None:
-        del pack.managed_pack_id
-    else:
-        pack.managed_pack_id = managed_pack_id
     if current_version is None:
         del pack.current_version
     else:
@@ -951,7 +941,6 @@ def _mock_pack(
 def _write_and_read(
     tmp_path: Path,
     packs: List[MagicMock],
-    managed_pack_ids: Optional[dict] = None,
 ) -> dict:
     """Run the real writer over mock packs and return the parsed JSON."""
     from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
@@ -964,85 +953,9 @@ def _write_and_read(
     )
 
     output_file = tmp_path / "pack_destinations.json"
-    if managed_pack_ids is None:
-        dto.write_pack_destinations(output_file)
-    else:
-        dto.write_pack_destinations(output_file, managed_pack_ids)
+    dto.write_pack_destinations(output_file)
 
     return stdlib_json.loads(output_file.read_text())
-
-
-class TestPackDestinationsManagedPackId:
-    """Tests for the ``managed_pack_id`` field in the destinations output."""
-
-    def test_every_entry_has_a_managed_pack_id_key(self, tmp_path: Path):
-        """The key must be present on every entry, whether or not it has a value."""
-        packs = [
-            _mock_pack("AWS", managed=True, managed_pack_id="AWSManaged"),
-            _mock_pack("PackA"),
-        ]
-
-        data = _write_and_read(tmp_path, packs)
-
-        assert len(data["packs"]) == 2
-        for entry in data["packs"]:
-            assert "managed_pack_id" in entry
-
-    def test_graph_provided_managed_pack_id_is_emitted(self, tmp_path: Path):
-        """A pack whose graph object carries a renamed id emits that id."""
-        packs = [_mock_pack("AWS", managed=True, managed_pack_id="AWSManaged")]
-
-        data = _write_and_read(tmp_path, packs)
-
-        assert data["packs"][0]["managed_pack_id"] == "AWSManaged"
-
-    def test_managed_pack_id_falls_back_to_the_caller_supplied_mapping(
-        self, tmp_path: Path
-    ):
-        """When the graph carries no id, the caller mapping supplies it."""
-        packs = [_mock_pack("Azure", managed=True)]
-
-        data = _write_and_read(tmp_path, packs, {"Azure": "AzureManaged"})
-
-        assert data["packs"][0]["managed_pack_id"] == "AzureManaged"
-
-    def test_graph_value_wins_over_the_caller_supplied_mapping(self, tmp_path: Path):
-        """The graph is the more authoritative source of the renamed id."""
-        packs = [_mock_pack("GCP", managed=True, managed_pack_id="GCPManaged")]
-
-        data = _write_and_read(tmp_path, packs, {"GCP": "FromMapping"})
-
-        assert data["packs"][0]["managed_pack_id"] == "GCPManaged"
-
-    def test_managed_pack_id_is_null_when_there_is_no_counterpart(self, tmp_path: Path):
-        """A pack with no managed counterpart serializes as JSON null."""
-        packs = [_mock_pack("PackA")]
-
-        data = _write_and_read(tmp_path, packs)
-
-        assert data["packs"][0]["managed_pack_id"] is None
-        assert (
-            '"managed_pack_id": null'
-            in (tmp_path / "pack_destinations.json").read_text()
-        )
-
-    def test_managed_pack_id_is_null_when_the_mapping_omits_the_pack(
-        self, tmp_path: Path
-    ):
-        """A non-empty mapping that does not mention the pack still yields null."""
-        packs = [_mock_pack("PackA")]
-
-        data = _write_and_read(tmp_path, packs, {"AWS": "AWSManaged"})
-
-        assert data["packs"][0]["managed_pack_id"] is None
-
-    def test_empty_graph_value_is_normalized_to_null(self, tmp_path: Path):
-        """An empty string must never reach consumers as an empty string."""
-        packs = [_mock_pack("PackA", managed_pack_id="")]
-
-        data = _write_and_read(tmp_path, packs)
-
-        assert data["packs"][0]["managed_pack_id"] is None
 
 
 # ---------------------------------------------------------------------------
@@ -1143,8 +1056,6 @@ def _artifact_mock_pack(
     pack.current_version = "1.0.0"
     pack.content_items = []
     pack._is_item_tightly_coupled = MagicMock(return_value=True)
-    # Absent by design - see ``_mock_pack`` for why this must be deleted.
-    del pack.managed_pack_id
     return pack
 
 
@@ -1276,9 +1187,7 @@ def _write_destinations_with_dump_dirs(
     if artifacts_dir is None and managed_artifacts_dir is None:
         dto.write_pack_destinations(output_path)
     else:
-        dto.write_pack_destinations(
-            output_path, None, artifacts_dir, managed_artifacts_dir
-        )
+        dto.write_pack_destinations(output_path, artifacts_dir, managed_artifacts_dir)
 
     return stdlib_json.loads(output_path.read_text())
 

@@ -3419,6 +3419,9 @@ def _make_pack_parser(
     parser._is_derived_pack_eligible = PackParser._is_derived_pack_eligible.__get__(
         parser, PackParser
     )
+    parser._has_eligible_integration = PackParser._has_eligible_integration.__get__(
+        parser, PackParser
+    )
     parser._generate_derived_pack = PackParser._generate_derived_pack.__get__(
         parser, PackParser
     )
@@ -3580,3 +3583,29 @@ class TestDeprecatedItemsAreNotTightlyCoupled:
         dead.description = "Deprecated. No available replacement."
         parser = _make_pack_parser([dead])
         assert parser._generate_derived_pack() is None
+
+
+class TestDerivedPackRequiresAnIntegration:
+    """A derived pack is created only for a pack that owns a qualifying integration."""
+
+    def test_pack_without_any_integration_yields_none(self):
+        """Tightly coupled non-integration items alone must not trigger a split."""
+        parser = _make_pack_parser(
+            [_make_parser_content_item("MyIncidentField", ContentType.INCIDENT_FIELD)]
+        )
+        assert (
+            parser._generate_derived_pack() is None
+        ), "a pack with no integration must never yield a derived pack"
+
+    def test_pack_with_a_qualifying_integration_yields_a_derived_pack(self):
+        parser = _make_pack_parser(
+            [
+                _make_parser_content_item("MyIntegration"),
+                _make_parser_content_item(
+                    "MyIncidentField", ContentType.INCIDENT_FIELD
+                ),
+            ]
+        )
+        assert (
+            parser._generate_derived_pack() is not None
+        ), "a pack holding a live integration must still yield a derived pack"

@@ -420,6 +420,24 @@ class PackParser(BaseContentParser, PackMetadataParser):
             return False
         return True
 
+    def _has_eligible_integration(self) -> bool:
+        """Whether the pack holds at least one integration fit for a derived pack.
+
+        An integration qualifies under the very same filtering applied to every
+        content item carried into the derived pack, i.e.
+        ``_is_item_tightly_coupled`` (which excludes deprecated integrations and
+        honors ``coupling_overrides``).
+
+        Returns:
+            True if at least one integration qualifies, False otherwise.
+        """
+        return any(
+            item.content_type == ContentType.INTEGRATION
+            and self._is_item_tightly_coupled(item)
+            for item_list in self.content_items.iter_lists()
+            for item in item_list
+        )
+
     def _generate_derived_pack(self) -> Optional["DerivedPackParser"]:
         """Generate a derived pack for split-pack candidates.
 
@@ -427,6 +445,8 @@ class PackParser(BaseContentParser, PackMetadataParser):
         - It is eligible per ``_is_derived_pack_eligible``: not ``managed``,
           xsoar-supported, not deprecated, not ``hidden``, and not listed in the
           ``DERIVED_PACKS_EXCLUDE`` environment variable
+        - It holds at least one qualifying integration per
+          ``_has_eligible_integration``
         - It contains at least one tightly coupled content item that is not
           deprecated (respecting ``coupling_overrides``)
 
@@ -434,6 +454,13 @@ class PackParser(BaseContentParser, PackMetadataParser):
             A ``DerivedPackParser`` if the pack qualifies, otherwise ``None``.
         """
         if not self._is_derived_pack_eligible():
+            return None
+
+        if not self._has_eligible_integration():
+            logger.debug(
+                f"Pack '{self.object_id}' yields no derived pack: "
+                "it has no eligible integration"
+            )
             return None
 
         tightly_coupled_items = [

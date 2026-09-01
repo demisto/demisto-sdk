@@ -4,11 +4,11 @@ Covers:
 - ContentType coupling classification
 - PackDestination enum
 - Pack.destination property
-- Pack._is_item_tightly_coupled with overrides
+- Pack._is_item_tightly_coupled
 - DerivedPackParser generation
 - ContentDTO destination filtering
 - pack_destinations.json generation
-- Validators: PA135, PA136, PA137
+- Validators: PA136, PA137
 """
 
 from __future__ import annotations
@@ -226,7 +226,7 @@ class TestPackDestinationProperty:
 
 
 class TestIsItemTightlyCoupled:
-    """Tests for Pack._is_item_tightly_coupled with overrides."""
+    """Tests for Pack._is_item_tightly_coupled."""
 
     def _make_content_item(
         self,
@@ -246,11 +246,10 @@ class TestIsItemTightlyCoupled:
         mock.description = description
         return mock
 
-    def _make_pack_with_overrides(self, overrides: Optional[dict] = None) -> MagicMock:
+    def _make_pack(self) -> MagicMock:
         from demisto_sdk.commands.content_graph.objects.pack import Pack
 
         mock = MagicMock(spec=Pack)
-        mock.coupling_overrides = overrides
         # Bind the real method
         mock._is_item_tightly_coupled = Pack._is_item_tightly_coupled.__get__(
             mock, Pack
@@ -258,34 +257,19 @@ class TestIsItemTightlyCoupled:
         return mock
 
     def test_integration_default_tightly_coupled(self):
-        pack = self._make_pack_with_overrides(None)
+        pack = self._make_pack()
         item = self._make_content_item("MyIntegration", ContentType.INTEGRATION)
         assert pack._is_item_tightly_coupled(item) is True
 
     def test_script_default_loosely_coupled(self):
-        pack = self._make_pack_with_overrides(None)
+        pack = self._make_pack()
         item = self._make_content_item("MyScript", ContentType.SCRIPT)
         assert pack._is_item_tightly_coupled(item) is False
-
-    def test_override_script_to_tightly_coupled(self):
-        pack = self._make_pack_with_overrides({"MyScript": "tightly_coupled"})
-        item = self._make_content_item("MyScript", ContentType.SCRIPT)
-        assert pack._is_item_tightly_coupled(item) is True
-
-    def test_override_integration_to_loosely_coupled(self):
-        pack = self._make_pack_with_overrides({"MyIntegration": "loosely_coupled"})
-        item = self._make_content_item("MyIntegration", ContentType.INTEGRATION)
-        assert pack._is_item_tightly_coupled(item) is False
-
-    def test_override_only_affects_specified_item(self):
-        pack = self._make_pack_with_overrides({"MyScript": "tightly_coupled"})
-        other_script = self._make_content_item("OtherScript", ContentType.SCRIPT)
-        assert pack._is_item_tightly_coupled(other_script) is False
 
     def test_deprecated_item_is_never_tightly_coupled(self):
         """A deprecated integration must not be carried into a derived pack,
         even though its content type is tightly coupled."""
-        pack = self._make_pack_with_overrides(None)
+        pack = self._make_pack()
         item = self._make_content_item(
             "MyIntegration", ContentType.INTEGRATION, deprecated=True
         )
@@ -293,19 +277,10 @@ class TestIsItemTightlyCoupled:
             pack._is_item_tightly_coupled(item) is False
         ), "a deprecated item is never tightly coupled, regardless of its content type"
 
-    def test_deprecated_item_overrides_an_explicit_tightly_coupled_override(self):
-        """Deprecation wins over ``coupling_overrides``: an author cannot force a
-        dead item into the managed twin."""
-        pack = self._make_pack_with_overrides({"MyScript": "tightly_coupled"})
-        item = self._make_content_item("MyScript", ContentType.SCRIPT, deprecated=True)
-        assert (
-            pack._is_item_tightly_coupled(item) is False
-        ), "deprecation must be evaluated before coupling_overrides, so the override cannot resurrect it"
-
     def test_item_deprecated_by_name_and_description_convention(self):
         """The shared predicate also honours the legacy name/description
         convention, not just the explicit ``deprecated`` field."""
-        pack = self._make_pack_with_overrides(None)
+        pack = self._make_pack()
         item = self._make_content_item(
             "MyIntegration",
             ContentType.INTEGRATION,
@@ -369,7 +344,6 @@ class TestDerivedPackParser:
         mock.hybrid = False
         mock.pack_metadata_dict = {"name": "Test Pack"}
         mock.supportedModules = None
-        mock.coupling_overrides = None
         mock.derived_source = None
         mock.internal = False
         mock.managed = False
@@ -490,68 +464,6 @@ class TestDerivedPackParser:
 # ---------------------------------------------------------------------------
 
 
-class TestPA135CouplingOverrideReferences:
-    """Tests for PA135 - coupling override references validator."""
-
-    def _make_pack(
-        self,
-        object_id: str,
-        coupling_overrides: Optional[dict],
-        content_item_ids: List[str],
-    ) -> MagicMock:
-        from demisto_sdk.commands.content_graph.objects.pack import Pack
-
-        mock = MagicMock(spec=Pack)
-        mock.object_id = object_id
-        mock.coupling_overrides = coupling_overrides
-        items = []
-        for item_id in content_item_ids:
-            item = MagicMock()
-            item.object_id = item_id
-            items.append(item)
-        mock.content_items = items
-        return mock
-
-    def test_no_overrides_passes(self):
-        from demisto_sdk.commands.validate.validators.PA_validators.PA135_coupling_override_references import (
-            CouplingOverrideReferencesValidator,
-        )
-
-        pack = self._make_pack("TestPack", None, ["Item1", "Item2"])
-        validator = CouplingOverrideReferencesValidator()
-        results = validator.obtain_invalid_content_items([pack])
-        assert len(results) == 0
-
-    def test_valid_overrides_passes(self):
-        from demisto_sdk.commands.validate.validators.PA_validators.PA135_coupling_override_references import (
-            CouplingOverrideReferencesValidator,
-        )
-
-        pack = self._make_pack(
-            "TestPack",
-            {"Item1": "tightly_coupled"},
-            ["Item1", "Item2"],
-        )
-        validator = CouplingOverrideReferencesValidator()
-        results = validator.obtain_invalid_content_items([pack])
-        assert len(results) == 0
-
-    def test_unknown_override_id_fails(self):
-        from demisto_sdk.commands.validate.validators.PA_validators.PA135_coupling_override_references import (
-            CouplingOverrideReferencesValidator,
-        )
-
-        pack = self._make_pack(
-            "TestPack",
-            {"NonExistentItem": "tightly_coupled"},
-            ["Item1", "Item2"],
-        )
-        validator = CouplingOverrideReferencesValidator()
-        results = validator.obtain_invalid_content_items([pack])
-        assert len(results) == 1
-        assert "NonExistentItem" in results[0].message
-
-
 class TestPA136DerivedPackNamingConflict:
     """Tests for PA136 - derived pack naming conflict validator."""
 
@@ -661,64 +573,12 @@ class TestPA137ManagedPackMustHaveSource:
 
 
 # ---------------------------------------------------------------------------
-# StrictPackMetadata coupling_overrides validation tests
+# StrictPackMetadata validation tests
 # ---------------------------------------------------------------------------
 
 
-class TestStrictPackMetadataCouplingOverrides:
-    """Tests for coupling_overrides validation in StrictPackMetadata."""
-
-    def test_valid_coupling_overrides(self):
-        from demisto_sdk.commands.content_graph.strict_objects.pack_meta_data import (
-            StrictPackMetadata,
-        )
-
-        data = {
-            "name": "TestPack",
-            "support": "xsoar",
-            "author": "Test",
-            "currentVersion": "1.0.0",
-            "serverMinVersion": "6.0.0",
-            "coupling_overrides": {
-                "MyScript": "tightly_coupled",
-                "MyMapper": "loosely_coupled",
-            },
-        }
-        # Should not raise
-        StrictPackMetadata.parse_obj(data)
-
-    def test_invalid_coupling_override_value(self):
-        from demisto_sdk.commands.content_graph.strict_objects.pack_meta_data import (
-            StrictPackMetadata,
-        )
-
-        data = {
-            "name": "TestPack",
-            "support": "xsoar",
-            "author": "Test",
-            "currentVersion": "1.0.0",
-            "serverMinVersion": "6.0.0",
-            "coupling_overrides": {
-                "MyScript": "invalid_value",
-            },
-        }
-        with pytest.raises(Exception):  # pydantic ValidationError
-            StrictPackMetadata.parse_obj(data)
-
-    def test_no_coupling_overrides_passes(self):
-        from demisto_sdk.commands.content_graph.strict_objects.pack_meta_data import (
-            StrictPackMetadata,
-        )
-
-        data = {
-            "name": "TestPack",
-            "support": "xsoar",
-            "author": "Test",
-            "currentVersion": "1.0.0",
-            "serverMinVersion": "6.0.0",
-        }
-        # Should not raise
-        StrictPackMetadata.parse_obj(data)
+class TestStrictPackMetadata:
+    """Tests for StrictPackMetadata schema validation."""
 
     def test_derived_source_is_accepted_by_the_strict_schema(self):
         """StrictPackMetadata sets ``extra = Extra.forbid``, so an undeclared
@@ -768,7 +628,6 @@ class TestContentDTODestinationFiltering:
             f"{object_id.replace(DERIVED_PACK_SUFFIX, '')}" if is_derived else None
         )
         mock.content_items = []
-        mock.coupling_overrides = None
         mock._is_item_tightly_coupled = MagicMock(return_value=True)
         return mock
 
@@ -1851,7 +1710,6 @@ class TestIsManagedPaired:
         content_items: List[MagicMock],
         managed: bool = False,
         is_derived: bool = False,
-        coupling_overrides: Optional[dict] = None,
         support: str = "xsoar",
         hidden: bool = False,
         deprecated: bool = False,
@@ -1862,7 +1720,6 @@ class TestIsManagedPaired:
         mock = MagicMock(spec=Pack)
         mock.managed = managed
         mock.is_derived = is_derived
-        mock.coupling_overrides = coupling_overrides
         mock.content_items = content_items
         # Eligibility inputs, all set explicitly for the same reason as above.
         mock.object_id = object_id
@@ -1925,16 +1782,6 @@ class TestIsManagedPaired:
         assert (
             pack.is_managed_paired() is False
         ), "a pack whose only items are loosely coupled (a playbook here) produces no twin"
-
-    def test_override_to_loosely_coupled_makes_pack_not_managed_paired(self):
-        """The predicate must honour coupling_overrides, not the raw content type."""
-        pack = self._make_pack(
-            [self._make_content_item("MyIntegration", ContentType.INTEGRATION)],
-            coupling_overrides={"MyIntegration": "loosely_coupled"},
-        )
-        assert (
-            pack.is_managed_paired() is False
-        ), "the pack's only integration is overridden to loosely_coupled, so nothing is left to split into a twin"
 
     @pytest.mark.parametrize("support", ["partner", "community", "developer", ""])
     def test_non_xsoar_supported_pack_is_not_managed_paired(self, support: str):
@@ -2172,7 +2019,6 @@ class TestManagedPairedContentItemMetadata:
         cls,
         with_integration: bool = False,
         with_playbook: bool = False,
-        coupling_overrides: Optional[Dict[str, str]] = None,
         support: str = "xsoar",
         hidden: bool = False,
         deprecated: bool = False,
@@ -2230,7 +2076,6 @@ class TestManagedPairedContentItemMetadata:
             managed=managed,
             is_derived=is_derived,
             derived_from=derived_from,
-            coupling_overrides=coupling_overrides,
         )
 
     @staticmethod
@@ -2365,25 +2210,6 @@ class TestManagedPairedContentItemMetadata:
         assert not offenders, (
             "while ENABLE_SPLIT_PACKS is off no content item entry may carry `managedPaired` at all "
             f"(not even False), keeping the blast radius at zero; offending entries: {offenders!r}"
-        )
-
-    def test_coupling_override_reaches_the_per_item_key(self, mocker, tmp_path):
-        """`coupling_overrides` must win over the raw content type, per item."""
-        self._enable_flag(mocker)
-        pack = self._make_pack(
-            with_integration=True,
-            coupling_overrides={self.INTEGRATION_ID: "loosely_coupled"},
-        )
-
-        metadata = self._dump(pack, tmp_path)
-
-        entry = metadata["contentItems"]["integration"][0]
-        assert (
-            "managedPaired" in entry
-        ), f"the key must still be emitted for an overridden item; got keys {sorted(entry)}"
-        assert entry["managedPaired"] is False, (
-            f"the integration is overridden to loosely_coupled, so it stays with the marketplace half and "
-            f"its entry must be False rather than the content type default True, got {entry['managedPaired']!r}"
         )
 
     # -- the per item key must also respect whether the OWNING PACK splits at all ------------
@@ -2812,40 +2638,6 @@ class TestManagedPairedEndToEnd:
             "with both gates off no content item entry may carry `managedPaired` either - the check "
             f"covers every entry, not just the first; offending entries: {offenders!r}"
         )
-
-    def test_override_removing_the_only_tightly_coupled_item_turns_both_levels_false(
-        self, mocker, tmp_path
-    ):
-        """`coupling_overrides` propagates to both levels: the item flips False, and so does the pack.
-
-        The pack's only tightly coupled item is overridden away, so nothing is left to split into a
-        twin and the pack stops being half of a pair.
-        """
-        self._set_both_flags(mocker, True)
-        pack = self._make_pack(
-            with_integration=True,
-            coupling_overrides={self.INTEGRATION_ID: "loosely_coupled"},
-        )
-
-        metadata = self._dump(pack, tmp_path)
-
-        integration_entry = metadata["contentItems"]["integration"][0]
-        assert "managedPaired" in integration_entry, (
-            f"the key must still be emitted for an overridden item; "
-            f"got keys {sorted(integration_entry)}"
-        )
-        assert integration_entry["managedPaired"] is False, (
-            f"the integration is overridden to loosely_coupled, so the override must win over the "
-            f"content type default, got {integration_entry['managedPaired']!r}"
-        )
-        assert (
-            "managedPaired" in metadata
-        ), f"the top level key must still be emitted; got top level keys {sorted(metadata)}"
-        assert metadata["managedPaired"] is False, (
-            f"the override left the pack with zero tightly coupled items, so no twin would be "
-            f"generated and the pack is not half of a pair, got {metadata['managedPaired']!r}"
-        )
-
 
 class TestSplitPackDependencySweep:
     """Tests for the final sweep that severs dependencies of managed packs.
@@ -3351,7 +3143,6 @@ def _make_pack_parser(
     hidden: bool = False,
     deprecated: bool = False,
     pack_metadata_dict: Optional[dict] = None,
-    coupling_overrides: Optional[dict] = None,
 ) -> MagicMock:
     """A ``PackParser`` stand-in with the real eligibility/coupling/generation
     methods bound, so the tests drive the production code paths."""
@@ -3367,7 +3158,6 @@ def _make_pack_parser(
     parser.hidden = hidden
     parser.deprecated = deprecated
     parser.pack_metadata_dict = pack_metadata_dict or {}
-    parser.coupling_overrides = coupling_overrides
     parser.derived_source = None
     # Remaining fields exist only so a real DerivedPackParser can be constructed
     # in the positive cases; their values are irrelevant to these assertions.
@@ -3566,16 +3356,6 @@ class TestDeprecatedItemsAreNotTightlyCoupled:
         assert (
             parser._generate_derived_pack() is None
         ), "with nothing live left to split out, no twin is generated"
-
-    def test_deprecated_item_is_dropped_even_with_a_tightly_coupled_override(self):
-        """Deprecation wins over ``coupling_overrides`` in the parser too."""
-        dead_script = _make_parser_content_item(
-            "DeadScript", ContentType.SCRIPT, deprecated=True
-        )
-        parser = _make_pack_parser(
-            [dead_script], coupling_overrides={"DeadScript": "tightly_coupled"}
-        )
-        assert parser._generate_derived_pack() is None
 
     def test_item_deprecated_by_name_and_description_is_dropped(self):
         dead = _make_parser_content_item("DeadIntegration")

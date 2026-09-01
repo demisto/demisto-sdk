@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 import pytest
 
@@ -163,7 +163,6 @@ CONTENT_TYPE_TO_PACK_FIELD = {
 def _make_pack(
     content_items: List[ContentItem],
     support: str = "xsoar",
-    coupling_overrides: Optional[dict] = None,
 ) -> Pack:
     """Build a real ``Pack`` holding the given real content items.
 
@@ -197,7 +196,6 @@ def _make_pack(
         useCases=[],
         keywords=[],
         contentItems=pack_content_items,
-        coupling_overrides=coupling_overrides,
     )
     for item in content_items:
         item.pack = pack
@@ -320,29 +318,6 @@ def test_MC102_non_xsoar_supported_pack_passes():
     _make_pack(
         [_make_integration("MyIntegration"), added_playbook],
         support="partner",
-    )
-
-    assert not NoLooseItemAddedToTightlyCoupledPackValidator().obtain_invalid_content_items(
-        [added_playbook]
-    )
-
-
-def test_MC102_coupling_override_to_tightly_coupled_passes():
-    """
-    Given:
-        - An existing pack holding only a tightly coupled integration.
-        - A newly added playbook that the pack's coupling_overrides declares tightly coupled.
-
-    When:
-        - Running the validator on the added playbook.
-
-    Then:
-        - Nothing is reported: the override, not the content type, decides.
-    """
-    added_playbook = _make_playbook("MyPlaybook")
-    _make_pack(
-        [_make_integration("MyIntegration"), added_playbook],
-        coupling_overrides={"MyPlaybook": "tightly_coupled"},
     )
 
     assert not NoLooseItemAddedToTightlyCoupledPackValidator().obtain_invalid_content_items(

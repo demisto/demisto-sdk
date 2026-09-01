@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Union
+from typing import List, Optional, Union
 
 from packaging.version import Version
 from pydantic import Field, root_validator, validator
@@ -103,9 +103,6 @@ class StrictPackMetadata(BaseStrictModel):
     source: Optional[str] = Field("", alias="source")
     managed: Optional[bool] = Field(False, alias="managed")
     internal: Optional[bool] = Field(False, alias="internal")
-    coupling_overrides: Optional[Dict[str, str]] = Field(
-        None, alias="coupling_overrides"
-    )
     # Per-pack override for the feature name this pack's derived (split) twin is
     # published under. When unset, resolve_derived_pack_source() falls back to
     # the DERIVED_PACK_SOURCE env var and then to DEFAULT_DERIVED_PACK_SOURCE.
@@ -115,20 +112,3 @@ class StrictPackMetadata(BaseStrictModel):
     # Resolved into the plain managed/source per-marketplace during dump.
     managed_platform: Optional[bool] = Field(None, alias="managed:platform")
     source_platform: Optional[str] = Field(None, alias="source:platform")
-
-    @root_validator
-    def validate_coupling_overrides(cls, values):
-        """
-        Validator ensures that coupling_overrides values are valid coupling
-        classifications ('tightly_coupled' or 'loosely_coupled').
-        """
-        overrides = values.get("coupling_overrides")
-        if overrides:
-            valid_values = {"tightly_coupled", "loosely_coupled"}
-            for item_id, coupling in overrides.items():
-                if coupling not in valid_values:
-                    raise ValueError(
-                        f"Invalid coupling override value '{coupling}' for item '{item_id}'. "
-                        f"Must be one of: {', '.join(sorted(valid_values))}."
-                    )
-        return values

@@ -74,9 +74,6 @@ class PackMetadata(BaseModel):
     hybrid: bool = Field(False, alias="hybrid")
     default_data_source_id: Optional[str] = Field("", alias="defaultDataSource")
     default_data_source_name: Optional[str] = Field("", exclude=True)
-    coupling_overrides: Optional[Dict[str, str]] = Field(
-        None, alias="coupling_overrides"
-    )
     # Per-pack override for the feature name this pack's derived (split) twin is
     # published under. See resolve_derived_pack_source().
     derived_source: Optional[str] = Field(None, alias="derived_source")
@@ -592,7 +589,7 @@ class PackMetadata(BaseModel):
         # key is omitted entirely.
         # Injected here, at the single funnel every per-item summary dict passes through, rather
         # than inside `summary()`: the caller re-parses each item from disk, so the item's own `pack`
-        # back-reference is unreliable, and only the owning pack can apply `coupling_overrides`.
+        # back-reference is unreliable, and only the owning pack can classify its items' coupling.
         # `self` is always a `Pack` at runtime (`Pack` inherits `PackMetadata`), so the resolver
         # defined on `Pack` is available here.
         if ENABLE_SPLIT_PACKS:

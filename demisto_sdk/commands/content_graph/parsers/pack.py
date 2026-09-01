@@ -212,9 +212,6 @@ class PackMetadataParser:
         self.source: str = metadata.get("source", "")
         self.managed: bool = metadata.get("managed", False)
         self.internal: bool = metadata.get("internal", False)
-        self.coupling_overrides: Optional[Dict[str, str]] = metadata.get(
-            "coupling_overrides"
-        )
         # Per-pack override for the feature name this pack's derived twin is
         # published under. Highest-precedence input to
         # resolve_derived_pack_source().
@@ -357,21 +354,16 @@ class PackParser(BaseContentParser, PackMetadataParser):
         return self.path.name
 
     def _is_item_tightly_coupled(self, content_item: "ContentItemParser") -> bool:
-        """Check if a content item is tightly coupled, respecting overrides.
+        """Check if a content item is tightly coupled.
 
         A deprecated item is never tightly coupled: it must not be carried into a
-        derived pack even when an explicit override says otherwise, so the
-        deprecation check deliberately precedes ``coupling_overrides``.
+        derived pack.
 
         Kept in sync with ``Pack._is_item_tightly_coupled``
         (``objects/pack.py``), which mirrors this rule on the object side.
         """
         if is_deprecated_content_item(content_item):
             return False
-        overrides = self.coupling_overrides or {}
-        item_id = content_item.object_id
-        if item_id and item_id in overrides:
-            return overrides[item_id] == "tightly_coupled"
         return content_item.content_type.is_tightly_coupled
 
     def _is_derived_pack_eligible(self) -> bool:
@@ -425,8 +417,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
 
         An integration qualifies under the very same filtering applied to every
         content item carried into the derived pack, i.e.
-        ``_is_item_tightly_coupled`` (which excludes deprecated integrations and
-        honors ``coupling_overrides``).
+        ``_is_item_tightly_coupled`` (which excludes deprecated integrations).
 
         Returns:
             True if at least one integration qualifies, False otherwise.
@@ -448,7 +439,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         - It holds at least one qualifying integration per
           ``_has_eligible_integration``
         - It contains at least one tightly coupled content item that is not
-          deprecated (respecting ``coupling_overrides``)
+          deprecated
 
         Returns:
             A ``DerivedPackParser`` if the pack qualifies, otherwise ``None``.
@@ -624,7 +615,6 @@ class PackParser(BaseContentParser, PackMetadataParser):
             "source": "source",
             "managed": "managed",
             "internal": "internal",
-            "coupling_overrides": "coupling_overrides",
             "derived_source": "derived_source",
         }
 
@@ -734,7 +724,6 @@ class DerivedPackParser:
         self.hybrid = original_parser.hybrid
         self.pack_metadata_dict = original_parser.pack_metadata_dict.copy()
         self.supportedModules = original_parser.supportedModules
-        self.coupling_overrides = original_parser.coupling_overrides
 
         # Override fields for derived identity
         self.managed = True

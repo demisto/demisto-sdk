@@ -190,21 +190,16 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         return PackDestination.MARKETPLACE
 
     def _is_item_tightly_coupled(self, content_item: ContentItem) -> bool:
-        """Check if a content item is tightly coupled, respecting overrides.
+        """Check if a content item is tightly coupled.
 
         A deprecated item is never tightly coupled: it must not be carried into a
-        derived pack even when an explicit override says otherwise, so the
-        deprecation check deliberately precedes ``coupling_overrides``.
+        derived pack.
 
         Kept in sync with ``PackParser._is_item_tightly_coupled``
         (``parsers/pack.py``), which mirrors this rule on the parser side.
         """
         if is_deprecated_content_item(content_item):
             return False
-        overrides = self.coupling_overrides or {}
-        item_id = content_item.object_id
-        if item_id in overrides:
-            return overrides[item_id] == "tightly_coupled"
         return content_item.content_type.is_tightly_coupled
 
     def _is_derived_pack_eligible(self) -> bool:

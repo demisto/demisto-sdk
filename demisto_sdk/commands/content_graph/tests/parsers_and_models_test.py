@@ -2226,16 +2226,19 @@ class TestParsersAndModels:
             pytest.param(["\t\n"], id="tab and newline only"),
             pytest.param(["valid_feature", ""], id="one blank among valid values"),
             pytest.param([1], id="non-string value"),
+            pytest.param(["feat_a", "feat_a"], id="duplicate entry"),
+            pytest.param(
+                ["feat_a", "feat_b", "feat_a"],
+                id="duplicate entry among distinct values",
+            ),
         ],
     )
-    def test_supported_features_rejects_empty_and_blank_values(
-        self, repo: Repo, invalid_value
-    ):
+    def test_supported_features_rejects_invalid_values(self, repo: Repo, invalid_value):
         """
         Given:
         - An integration authoring `supportedFeatures` with a value that carries
-          no real feature name: an empty list, or a list containing blank or
-          non-string entries
+          no real feature name: an empty list, a list containing blank or
+          non-string entries, or a list repeating the same feature
 
         When:
         - Parsing the pack
@@ -2243,7 +2246,8 @@ class TestParsersAndModels:
         Then:
         - Ensure a structure error is raised for the field. The field is
           optional, so "no required features" is expressed by omitting the key
-          entirely rather than by authoring an empty or blank value.
+          entirely rather than by authoring an empty or blank value, and a
+          feature declared twice conveys nothing beyond declaring it once.
         """
         pack = repo.create_pack("HelloWorld")
         integration = pack.create_integration("MyIntegration")

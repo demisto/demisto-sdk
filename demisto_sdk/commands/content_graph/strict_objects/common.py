@@ -11,12 +11,12 @@ marketplace_suffixes = tuple((marketplace.value for marketplace in MarketplaceVe
 
 
 class SupportedFeaturesList(List[str]):
-    """A `supportedFeatures` value: a non-empty list of non-blank strings.
+    """A `supportedFeatures` value: a non-empty list of unique, non-blank strings.
 
     The field itself is optional - omitting it entirely is how a content item
     declares "no required features". But when it *is* authored it must carry
-    real values, so both an empty list and blank/whitespace-only entries are
-    rejected rather than silently accepted as meaningless data.
+    real values, so an empty list, blank/whitespace-only entries and repeated
+    entries are all rejected rather than silently accepted as meaningless data.
     """
 
     @classmethod
@@ -34,6 +34,8 @@ class SupportedFeaturesList(List[str]):
                 "Omit the field entirely if no features are required."
             )
 
+        seen: set = set()
+        duplicates: List[str] = []
         for item in value:
             if not isinstance(item, str):
                 raise TypeError(
@@ -43,6 +45,17 @@ class SupportedFeaturesList(List[str]):
                 raise ValueError(
                     "supportedFeatures cannot contain empty or whitespace-only values."
                 )
+            # Track duplicates rather than raising immediately, so the error
+            # can name every repeated value in one pass.
+            if item in seen and item not in duplicates:
+                duplicates.append(item)
+            seen.add(item)
+
+        if duplicates:
+            raise ValueError(
+                "supportedFeatures cannot contain duplicate values: "
+                f"{', '.join(duplicates)}."
+            )
 
         return value
 

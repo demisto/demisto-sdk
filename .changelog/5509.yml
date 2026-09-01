@@ -1,0 +1,14 @@
+changes:
+- description: The **GR105** duplicate-ID validation is now region-aware - content items may share an ID as long as they are never active in the same region, according to **Config/regional_rules.json**.
+  type: feature
+- description: Added the **ST115** validation, ensuring a content item's **supportedFeatures** are a subset of its pack's.
+  type: feature
+- description: Added the **BA134** validation, ensuring every declared **supportedFeatures** value exists under **supported_features** in **Config/regional_rules.json**.
+  type: feature
+- description: Added the **BA135** validation, warning when a content item's **supportedFeatures** is identical to its pack's and can therefore be omitted.
+  type: feature
+- description: The **supportedFeatures** field now rejects duplicate entries.
+  type: feature
+- description: Added a shared resolver for a content item's effective **supportedFeatures**, and a reader for **Config/regional_rules.json**.
+  type: internal
+pr_number: 5509

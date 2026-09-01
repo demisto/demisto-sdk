@@ -101,6 +101,7 @@ class ActionTypeEnum(str, Enum):
     RESET_INCIDENTS_LAST_RUN = "reset_incidents_last_run"
     RESET_FEED_LAST_RUN = "reset_feed_last_run"
     RESET_EVENTS_LAST_RUN = "reset_events_last_run"
+    SHOW_CLASSIFIER = "show_classifier"
 
 
 class RequiredLicenseEnum(str, Enum):

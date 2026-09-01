@@ -143,6 +143,9 @@ from demisto_sdk.commands.validate.validators.CO_validators.CO190_no_reserved_pa
 from demisto_sdk.commands.validate.validators.CO_validators.CO194_is_sub_capability_title_derived import (
     IsSubCapabilityTitleDerivedValidator,
 )
+from demisto_sdk.commands.validate.validators.CO_validators.CO195_is_classifier_field_has_show_action import (
+    IsClassifierFieldHasShowActionValidator,
+)
 
 VALID_CONNECTION_DESCRIPTION = (
     "Enter the credentials to securely authorize the connection"
@@ -11489,6 +11492,297 @@ class TestCO161IsFetchCapabilitiesContainActions:
         assert results[0].path is not None
         assert results[0].path == connector.handlers[0].file_path
         assert str(results[0].path).endswith("handler.yaml")
+
+
+# ---------------------------------------------------------------------------
+# CO195 tests
+# ---------------------------------------------------------------------------
+
+
+def _classifier_config(field_id: str = "mappingId") -> dict:
+    """Build a configurations.yaml-shaped dict declaring a single config
+    field with the given raw id under ``general_configurations`` (which the
+    parser merges into every capability's unified configurations, so the
+    field is discoverable regardless of the template capability id).
+    """
+    return {
+        "general_configurations": {
+            "configurations": [
+                {"fields": [{"id": field_id, "title": "Classifier"}]}
+            ]
+        }
+    }
+
+
+class TestCO195ClassifierFieldHasShowAction:
+    """Tests for CO195: every handler that delivers a classifier field
+    (resolving to the backend 'mappingId' field, via serializer rename or a
+    raw config id) must declare a 'show_classifier' action on its fetch-issues
+    capability. Handlers with no classifier field are skipped.
+    """
+
+    def test_strict_valid_config_mappingid_with_show_action_passes(self):
+        """
+        Given: A config field id 'mappingId' (no serializer) and a
+               fetch-issues capability whose actions include
+               ['reset_incidents_last_run', 'show_classifier'].
+        When: CO195 runs.
+        Then: No errors.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-classifier",
+                    "capabilities": [
+                        _cap_with_actions(
+                            "fetch-issues",
+                            ["reset_incidents_last_run", "show_classifier"],
+                        )
+                    ],
+                }
+            ],
+            configurations_data=_classifier_config(),
+        )
+        results = (
+            IsClassifierFieldHasShowActionValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 0
+
+    def test_strict_violation_config_mappingid_without_show_action_fails(self):
+        """
+        Given: A config field id 'mappingId' (no serializer) and a
+               fetch-issues capability whose actions are only
+               ['reset_incidents_last_run'] (no 'show_classifier').
+        When: CO195 runs.
+        Then: One result whose message mentions 'show_classifier'.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-classifier",
+                    "capabilities": [
+                        _cap_with_actions(
+                            "fetch-issues", ["reset_incidents_last_run"]
+                        )
+                    ],
+                }
+            ],
+            configurations_data=_classifier_config(),
+        )
+        results = (
+            IsClassifierFieldHasShowActionValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "show_classifier" in msg
+        assert "mappingId" in msg
+        # Per-handler path points at the offending handler.yaml.
+        assert results[0].path is not None
+        assert str(results[0].path).endswith("handler.yaml")
+
+    def test_prefixed_valid_serializer_rename_with_show_action_passes(self):
+        """
+        Given: A serializer field_mappings entry
+               [{id: 'xsoar-foo_mappingId', field_name: 'mappingId'}] and a
+               fetch-issues capability whose actions include 'show_classifier'.
+        When: CO195 runs.
+        Then: No errors.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-prefixed",
+                    "serializer": {
+                        "field_mappings": [
+                            {
+                                "id": "xsoar-foo_mappingId",
+                                "field_name": "mappingId",
+                            }
+                        ]
+                    },
+                    "capabilities": [
+                        _cap_with_actions(
+                            "fetch-issues",
+                            ["reset_incidents_last_run", "show_classifier"],
+                        )
+                    ],
+                }
+            ],
+        )
+        results = (
+            IsClassifierFieldHasShowActionValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 0
+
+    def test_prefixed_violation_serializer_rename_without_show_action_fails(self):
+        """
+        Given: The same serializer rename to 'mappingId' but a fetch-issues
+               capability with no 'show_classifier' action.
+        When: CO195 runs.
+        Then: One result whose message mentions 'show_classifier' and the
+              renamed source field id.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-prefixed",
+                    "serializer": {
+                        "field_mappings": [
+                            {
+                                "id": "xsoar-foo_mappingId",
+                                "field_name": "mappingId",
+                            }
+                        ]
+                    },
+                    "capabilities": [
+                        _cap_with_actions(
+                            "fetch-issues", ["reset_incidents_last_run"]
+                        )
+                    ],
+                }
+            ],
+        )
+        results = (
+            IsClassifierFieldHasShowActionValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "show_classifier" in msg
+        assert "xsoar-foo_mappingId" in msg
+
+    def test_no_classifier_field_passes(self):
+        """
+        Given: A handler with no 'mappingId' config field and no serializer
+               mapping to 'mappingId'.
+        When: CO195 runs.
+        Then: No errors - the rule does not apply.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-plain",
+                    "capabilities": [
+                        _cap_with_actions(
+                            "fetch-issues", ["reset_incidents_last_run"]
+                        )
+                    ],
+                }
+            ],
+        )
+        results = (
+            IsClassifierFieldHasShowActionValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 0
+
+    def test_classifier_field_but_no_fetch_issues_capability_fails(self):
+        """
+        Given: A serializer rename to 'mappingId' but the handler subscribes
+               to no fetch-issues capability at all.
+        When: CO195 runs.
+        Then: One result (fail closed) noting the missing fetch-issues
+              capability.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-nofetch",
+                    "serializer": {
+                        "field_mappings": [
+                            {
+                                "id": "xsoar-foo_mappingId",
+                                "field_name": "mappingId",
+                            }
+                        ]
+                    },
+                    "capabilities": [
+                        _cap_with_actions(
+                            "automation-and-remediation", ["show_classifier"]
+                        )
+                    ],
+                }
+            ],
+        )
+        results = (
+            IsClassifierFieldHasShowActionValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        assert "fetch-issues" in results[0].message
+
+    def test_namespaced_fetch_issues_capability_passes(self):
+        """
+        Given: A serializer rename to 'mappingId' and a namespaced
+               'fetch-issues_akamai-waf-siem' capability with 'show_classifier'.
+        When: CO195 runs.
+        Then: No errors - the base id is stripped before the fetch-issues
+              lookup (mirrors CO161's namespacing behaviour).
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-ns",
+                    "serializer": {
+                        "field_mappings": [
+                            {
+                                "id": "xsoar-foo_mappingId",
+                                "field_name": "mappingId",
+                            }
+                        ]
+                    },
+                    "capabilities": [
+                        _cap_with_actions(
+                            "fetch-issues_akamai-waf-siem", ["show_classifier"]
+                        )
+                    ],
+                }
+            ],
+        )
+        results = (
+            IsClassifierFieldHasShowActionValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 0
+
+    def test_non_xsoar_handler_ignored(self):
+        """
+        Given: A handler that delivers a classifier field but is not an XSOAR
+               handler.
+        When: CO195 runs.
+        Then: No errors - only XSOAR handlers are checked.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-nx",
+                    "capabilities": [
+                        _cap_with_actions(
+                            "fetch-issues", ["reset_incidents_last_run"]
+                        )
+                    ],
+                }
+            ],
+            configurations_data=_classifier_config(),
+        )
+        _clear_xsoar_signals(connector.handlers[0])
+
+        results = (
+            IsClassifierFieldHasShowActionValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 0
 
 
 # ---------------------------------------------------------------------------

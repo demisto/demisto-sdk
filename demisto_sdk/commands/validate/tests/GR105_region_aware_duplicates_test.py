@@ -228,3 +228,46 @@ class TestErrorMessage:
         assert "feat_a" in explanation
         assert "feat_b" in explanation
         assert "same region" in explanation
+
+
+class TestUnresolvableRegions:
+    """A pair whose regions cannot be resolved must still be reported.
+
+    Region-awareness may only ever excuse a duplicate ID that is *proven* not to
+    overlap; when nothing can be proven, GR105 falls back to its original
+    behaviour of reporting every duplicate.
+    """
+
+    def test_features_unknown_to_every_region_still_collide(self):
+        """
+        Given:
+        - Two items declaring the same feature, which no region enables.
+
+        When:
+        - Determining whether they collide.
+
+        Then:
+        - Ensure the collision is reported. Neither item maps to a region, so
+          non-overlap cannot be proven and the duplicate must not be excused.
+        """
+        assert (
+            _collide(FakeItem(["feat_unknown"]), FakeItem(["feat_unknown"])) is not None
+        )
+
+    def test_unrestricted_items_collide_when_no_regions_are_declared(self):
+        """
+        Given:
+        - A rules file declaring no region blocks, and two unrestricted items.
+
+        When:
+        - Determining whether they collide.
+
+        Then:
+        - Ensure the collision is reported, matching the behaviour before GR105
+          became region-aware.
+        """
+        global_only = RegionalRules(
+            {"_meta": {"supported_features": "union"}, "global": {}}
+        )
+
+        assert _collide(FakeItem(None), FakeItem(None), rules=global_only) is not None

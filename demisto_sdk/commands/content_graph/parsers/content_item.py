@@ -115,7 +115,6 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         pack_marketplaces: Optional[List[MarketplaceVersions]] = None,
         pack_supported_modules: Optional[List[str]] = None,
         git_sha: Optional[str] = None,
-        pack_supported_features: Optional[List[str]] = None,
     ) -> "ContentItemParser":
         """Tries to parse a content item by its path.
         If during the attempt we detected the file is not a content item, `None` is returned.
@@ -165,12 +164,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         if parser_cls := ContentItemParser.content_type_to_parser.get(content_type):
             try:
                 return ContentItemParser.parse(
-                    parser_cls,
-                    path,
-                    pack_marketplaces,
-                    pack_supported_modules,
-                    git_sha,
-                    pack_supported_features=pack_supported_features,
+                    parser_cls, path, pack_marketplaces, pack_supported_modules, git_sha
                 )
             except IncorrectParserException as e:
                 return ContentItemParser.parse(
@@ -179,7 +173,6 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
                     pack_marketplaces,
                     pack_supported_modules,
                     git_sha,
-                    pack_supported_features=pack_supported_features,
                     **e.kwargs,
                 )
             except NotAContentItemException:
@@ -198,35 +191,23 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         pack_marketplaces: List[MarketplaceVersions],
         pack_supported_modules: Optional[List[str]] = [],
         git_sha: Optional[str] = None,
-        pack_supported_features: Optional[List[str]] = None,
         **kwargs,
     ) -> "ContentItemParser":
         parser = parser_cls(
             path, pack_marketplaces, pack_supported_modules, git_sha=git_sha, **kwargs
         )
-        parser._resolve_supported_features(pack_supported_features)
         logger.debug(f"Parsed {parser.node_id}")
         return parser
 
-    def _resolve_supported_features(
-        self, pack_supported_features: Optional[List[str]]
-    ) -> None:
-        """Resolves the item's `supportedFeatures`, inheriting the pack's value.
+    @property
+    def supportedFeatures(self) -> Optional[List[str]]:
+        """The item's own authored `supportedFeatures`, or None if it declares none.
 
-        An item that does not author the key inherits the pack's value; an item
-        that does author one keeps it. Only the absence of the key triggers
-        inheritance, so `.get` with a default is used rather than a truthiness
-        check.
-
-        Stays `None` when neither the item nor its pack declare the field, so
-        the key can be omitted entirely from the output. Authored values are
-        validated separately by `SupportedFeaturesList`, which rejects empty
-        lists and blank entries.
+        Deliberately not resolved against the pack: use
+        `get_content_item_supported_features` when you need the effective value.
         """
         raw_data = self.raw_data if isinstance(self.raw_data, dict) else {}
-        self.supportedFeatures: Optional[List[str]] = raw_data.get(
-            "supportedFeatures", pack_supported_features
-        )
+        return raw_data.get("supportedFeatures")
 
     @property
     @abstractmethod

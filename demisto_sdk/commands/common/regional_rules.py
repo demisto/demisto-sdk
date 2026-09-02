@@ -13,11 +13,8 @@ enabled. Its shape is::
 values, and every other top-level key is a region (exactly two lower-case
 ASCII letters).
 
-This module only *reads* the file and resolves effective values. Structural
-validation of the file lives in
-``demisto_sdk/scripts/validate_regional_rules.py`` and is intentionally kept
-separate, so that consumers can rely on a validated file while the validator
-itself can report every problem rather than failing on the first one.
+This module only *reads* the file and resolves effective values; it does not
+validate its structure.
 """
 
 from __future__ import annotations
@@ -50,9 +47,7 @@ class MergeStrategy(str, Enum):
     REGIONAL_FALLBACK = "regional_fallback"
 
 
-#: Applied when a field has no explicit ``_meta`` entry. Note that a missing
-#: ``_meta`` entry is itself a validation error, so this default only keeps
-#: read-side behaviour predictable for files that skipped validation.
+#: Applied when a field has no explicit ``_meta`` entry.
 DEFAULT_STRATEGY = MergeStrategy.UNION
 
 
@@ -75,12 +70,8 @@ class RegionalRules:
 
     @classmethod
     def from_path(cls, path: Path = REGIONAL_RULES_PATH) -> Optional["RegionalRules"]:
-        """Loads the file, returning ``None`` when it is absent or unreadable.
-
-        Returning ``None`` rather than raising lets consumers degrade
-        gracefully: the SDK is frequently run outside the content repo (for
-        example on a contributor's pack-only checkout), where the file simply
-        does not exist and its absence is not an error.
+        """Loads the file, returning ``None`` when it is absent or unreadable,
+        since the SDK is often run outside the content repo.
         """
         if not path.exists():
             logger.debug(f"No regional rules file at {path}")
@@ -88,8 +79,7 @@ class RegionalRules:
         try:
             return cls(json.loads(path.read_text()))
         except Exception as error:
-            # A malformed file is reported by the dedicated validator; here we
-            # must not take down every unrelated command that reads it.
+            # Never take down unrelated commands over a malformed file.
             logger.warning(f"Could not read regional rules from {path}: {error}")
             return None
 
@@ -144,9 +134,7 @@ class RegionalRules:
 
     def all_supported_features(self) -> Set[str]:
         """Every feature named anywhere in the file - ``global`` and all regions.
-
-        This is the set a content item's declared feature must belong to; a
-        value outside it does not exist as far as the platform is concerned.
+        A content item's declared feature must belong to this set.
         """
         features: Set[str] = set(self._global.get(SUPPORTED_FEATURES_FIELD) or [])
         for region_block in self._regions.values():
@@ -164,16 +152,8 @@ class RegionalRules:
     def regions_for_features(self, features: Optional[FrozenSet[str]]) -> Set[str]:
         """The regions an item is active in, given its resolved features.
 
-        Uses UNION / ANY semantics: an item declaring ``["a", "b"]`` where
-        ``a`` is enabled in ``us`` and ``b`` in ``eu`` is active in *both*.
-
-        ``None`` means "supported everywhere" - the item carries no feature
-        restriction at all - and therefore maps to every declared region. Note
-        that this is distinct from an empty set, which would mean the item
-        declared features that no region enables.
-
-        This is the single place the ANY-vs-ALL rule is expressed; every
-        consumer must go through here rather than reimplementing it.
+        ANY semantics: ``["a", "b"]`` with ``a`` in ``us`` and ``b`` in ``eu``
+        is active in both. ``None`` means unrestricted, so every region.
         """
         if features is None:
             return set(self._regions)

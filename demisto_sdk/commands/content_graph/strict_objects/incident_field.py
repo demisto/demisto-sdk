@@ -6,7 +6,7 @@ from demisto_sdk.commands.common.constants import IncidentFieldType
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     NAME_DYNAMIC_MODEL,
     BaseStrictModel,
-    SupportedFeaturesList,
+    SupportedFeaturesMixin,
     create_model,
 )
 from demisto_sdk.commands.content_graph.strict_objects.indicator_field import (
@@ -23,14 +23,10 @@ class _Aliases(BaseStrictModel):
 Aliases = create_model(model_name="Aliases", base_models=(_Aliases, NAME_DYNAMIC_MODEL))
 
 
-class _StrictIncidentField(BaseStrictModel):
+class _StrictIncidentField(SupportedFeaturesMixin):
     """
     This class inherits from StrictIndicatorField, since the other class is contained in this class.
     """
-
-    supportedFeatures: Optional[SupportedFeaturesList] = Field(
-        None, alias="supportedFeatures"
-    )
 
     pretty_name: Optional[str] = Field(None, alias="prettyName")
     run_script_after_inc_update: Optional[bool] = Field(

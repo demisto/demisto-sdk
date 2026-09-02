@@ -158,25 +158,26 @@ class DuplicateContentIdValidator(BaseValidator[ContentTypes], ABC):
     ) -> Optional[Set[str]]:
         """The regions in which both items are active, or None when they never are.
 
-        Returning ``None`` means the pair is legal and must not be reported;
-        an empty set means they collide but the specific regions could not be
-        named (see the no-rules fallback below).
+        `None` means the pair is legal; an empty set means they collide but the
+        regions could not be named.
         """
         features_a = get_content_item_supported_features(content_item)
         features_b = get_content_item_supported_features(duplicate)
 
         if rules is None:
-            # Without the regional rules we cannot map features to regions, so
-            # we fall back to the weaker feature-name test. This is safe in the
-            # sense that it never permits an overlap, but it does permit two
-            # items whose distinct features happen to share a region - that can
-            # only be caught where the config file is available (CI).
+            # Without the rules file we can only compare feature names, which
+            # misses distinct features that share a region. CI catches those.
             if features_a is None or features_b is None:
                 return set()
             return set(features_a & features_b) or None
 
         regions_a = rules.regions_for_features(features_a)
         regions_b = rules.regions_for_features(features_b)
+        if not regions_a or not regions_b:
+            # Neither side maps to a known region (no region blocks declared, or
+            # the features are unknown), so we cannot prove they never overlap.
+            # Report, as the pre-region-aware validator always did.
+            return set()
         return (regions_a & regions_b) or None
 
     def _explain(self, content_item: ContentTypes, duplicate: ContentTypes) -> str:
@@ -193,9 +194,8 @@ class DuplicateContentIdValidator(BaseValidator[ContentTypes], ABC):
             if features is None
         ]
         if unrestricted:
-            # By far the most common failure: an item with no supportedFeatures
-            # is supported everywhere, so it necessarily overlaps every other
-            # variant of the same ID and can never coexist with one.
+            # An item with no supportedFeatures is supported everywhere, so it
+            # overlaps every other variant of the same ID.
             return (
                 f"{' and '.join(unrestricted)} declare(s) no 'supportedFeatures' and is "
                 "therefore supported everywhere, so it overlaps every other item "

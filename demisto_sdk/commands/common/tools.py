@@ -4940,31 +4940,18 @@ def get_parameter_supported_modules(param, item) -> set[str]:
 
 
 def get_content_item_supported_features(item) -> Optional[FrozenSet[str]]:
-    """Resolves a content item's effective `supportedFeatures`.
+    """Resolves a content item's effective `supportedFeatures`: its own value,
+    else its pack's, else `None` meaning "supported everywhere".
 
-    The resolution hierarchy is an override chain, not a merge:
-
-    1. A value declared on the content item wins over everything.
-    2. Otherwise the pack's `pack_metadata.json` value is used.
-    3. Otherwise the item is *supported everywhere* - it carries no feature
-       restriction at all.
+    Use this when you need the effective value. Validators checking what the
+    author actually wrote should read `.supportedFeatures` directly.
 
     Returns:
-        A frozenset of feature names, or ``None`` for "supported everywhere".
-
-        ``None`` is deliberately distinct from an empty frozenset: the former
-        means "no restriction, active in every region", while the latter would
-        mean "restricted to features that no region enables". Callers must
-        branch on ``is None`` rather than on truthiness, since both values are
-        falsy.
-
-    This is the single shared resolver referenced by the supportedFeatures
-    tickets. Consumers - validators and the duplicate-ID check alike - must
-    call it instead of reading `.supportedFeatures` directly, so the hierarchy
-    is expressed in exactly one place.
+        A frozenset of feature names, or `None` for "supported everywhere".
+        Branch on `is None`, not truthiness - an empty frozenset means
+        "restricted to features no region enables", which is not the same.
     """
-    # Import here to avoid circular imports, mirroring the supportedModules
-    # resolver above.
+    # Imported here to avoid a circular import, as in the supportedModules resolver.
     from demisto_sdk.commands.content_graph.objects.pack import Pack
 
     features = getattr(item, "supportedFeatures", None)

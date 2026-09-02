@@ -8,13 +8,12 @@ from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import 
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
     NAME_DYNAMIC_MODEL,
-    BaseStrictModel,
-    SupportedFeaturesList,
+    SupportedFeaturesMixin,
     create_model,
 )
 
 
-class _StrictCorrelationRule(BaseStrictModel):
+class _StrictCorrelationRule(SupportedFeaturesMixin):
     global_rule_id: str
     name: str  # not included in NAME_DYNAMIC_MODEL
     alert_name: str
@@ -38,9 +37,6 @@ class _StrictCorrelationRule(BaseStrictModel):
     investigation_query_link: Optional[str] = None
     mapping_strategy: Optional[str] = None
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
-    supportedFeatures: Optional[SupportedFeaturesList] = Field(
-        None, alias="supportedFeatures"
-    )
 
 
 StrictCorrelationRule = create_model(

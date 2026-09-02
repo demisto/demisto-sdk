@@ -10,21 +10,17 @@ from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import 
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
     NAME_DYNAMIC_MODEL,
-    BaseStrictModel,
-    SupportedFeaturesList,
+    SupportedFeaturesMixin,
     create_model,
 )
 
 
-class _StrictCollection(BaseStrictModel):
+class _StrictCollection(SupportedFeaturesMixin):
     common_fields: CommonFields = Field(..., alias="commonfields")  # type:ignore[valid-type]
     name: str
     description: Optional[str] = None
     marketplaces: Optional[List[MarketplaceVersions]] = None
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
-    supportedFeatures: Optional[SupportedFeaturesList] = Field(
-        None, alias="supportedFeatures"
-    )
 
 
 StrictCollection = create_model(

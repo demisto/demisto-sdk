@@ -8,7 +8,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     NAME_DYNAMIC_MODEL,
     SUFFIXED_ID_DYNAMIC_MODEL,
     BaseStrictModel,
-    SupportedFeaturesList,
+    SupportedFeaturesMixin,
     create_model,
 )
 
@@ -78,10 +78,7 @@ class Wizard(BaseStrictModel):
     next: Optional[List[NextWizard]] = None  # type:ignore[valid-type]
 
 
-class _StrictWizard(BaseStrictModel):
-    supportedFeatures: Optional[SupportedFeaturesList] = Field(
-        None, alias="supportedFeatures"
-    )
+class _StrictWizard(SupportedFeaturesMixin):
     id_: str = Field(alias="id")
     version: Optional[int] = None
     name: str

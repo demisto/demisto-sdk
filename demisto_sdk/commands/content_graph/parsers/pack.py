@@ -396,10 +396,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         """
         try:
             content_item = ContentItemParser.from_path(
-                content_item_path,
-                self.marketplaces,
-                self.supportedModules,
-                pack_supported_features=self.supportedFeatures,
+                content_item_path, self.marketplaces, self.supportedModules
             )
             content_item.add_to_pack(self.object_id)
             self.content_items.append(content_item)

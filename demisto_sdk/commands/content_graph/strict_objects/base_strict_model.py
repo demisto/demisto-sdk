@@ -22,7 +22,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     NAME_DYNAMIC_MODEL,
     REQUIRED_DYNAMIC_MODEL,
     BaseStrictModel,
-    SupportedFeaturesList,
+    SupportedFeaturesMixin,
     create_dynamic_model,
     create_model,
 )
@@ -141,7 +141,7 @@ class StructureError(BaseStrictModel):
         return f"Structure error ({self.error_type}) in field {field_name} of {self.path.name}: {error_message}"
 
 
-class _BaseIntegrationScript(BaseStrictModel):
+class _BaseIntegrationScript(SupportedFeaturesMixin):
     name: str
     deprecated: Optional[bool] = None
     system: Optional[bool] = None
@@ -151,9 +151,6 @@ class _BaseIntegrationScript(BaseStrictModel):
     )
     marketplaces: Optional[Union[MarketplaceVersions, List[MarketplaceVersions]]] = None
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
-    supportedFeatures: Optional[SupportedFeaturesList] = Field(
-        None, alias="supportedFeatures"
-    )
 
 
 BaseIntegrationScript = create_model(
@@ -176,10 +173,7 @@ class ExtractSettings(BaseStrictModel):
     mode: Optional[str] = None
 
 
-class _StrictGenericIncidentType(BaseStrictModel):
-    supportedFeatures: Optional[SupportedFeaturesList] = Field(
-        None, alias="supportedFeatures"
-    )
+class _StrictGenericIncidentType(SupportedFeaturesMixin):
     vc_should_ignore: Optional[bool] = Field(None, alias="vcShouldIgnore")
     sort_values: Optional[Any] = Field(None, alias="sortValues")
     locked: Optional[bool] = None
@@ -248,7 +242,7 @@ class AlertsFilter(BaseStrictModel):
     filter: Optional[Union[Or, And]] = None
 
 
-class AgentixBase(BaseStrictModel):
+class AgentixBase(SupportedFeaturesMixin):
     common_fields: CommonFields = Field(..., alias="commonfields")  # type:ignore[valid-type]
     tags: Optional[list[str]] = None
     category: Optional[str] = None
@@ -260,6 +254,3 @@ class AgentixBase(BaseStrictModel):
     to_version: Optional[str] = Field(None, alias="toversion")
     marketplaces: Optional[Union[MarketplaceVersions, List[MarketplaceVersions]]] = None
     supportedModules: Optional[List[str]] = None
-    supportedFeatures: Optional[SupportedFeaturesList] = Field(
-        None, alias="supportedFeatures"
-    )

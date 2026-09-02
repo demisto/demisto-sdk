@@ -8,8 +8,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.content_graph.strict_objects.common import (
-    BaseStrictModel,
-    SupportedFeaturesList,
+    SupportedFeaturesMixin,
 )
 
 
@@ -20,7 +19,7 @@ class PackSupportOption(StrEnum):
     DEVELOPER_SUPPORT = "developer"
 
 
-class StrictPackMetadata(BaseStrictModel):
+class StrictPackMetadata(SupportedFeaturesMixin):
     @validator("current_version")
     def is_valid_current_version(cls, value: str) -> str:
         """
@@ -103,9 +102,6 @@ class StrictPackMetadata(BaseStrictModel):
     disable_monthly: Optional[bool] = Field(None, alias="disableMonthly")
     content_commit_hash: Optional[str] = Field(None, alias="contentCommitHash")
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
-    supportedFeatures: Optional[SupportedFeaturesList] = Field(
-        None, alias="supportedFeatures"
-    )
     source: Optional[str] = Field("", alias="source")
     managed: Optional[bool] = Field(False, alias="managed")
     internal: Optional[bool] = Field(False, alias="internal")

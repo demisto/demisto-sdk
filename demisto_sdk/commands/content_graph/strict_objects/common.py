@@ -13,10 +13,8 @@ marketplace_suffixes = tuple((marketplace.value for marketplace in MarketplaceVe
 class SupportedFeaturesList(List[str]):
     """A `supportedFeatures` value: a non-empty list of unique, non-blank strings.
 
-    The field itself is optional - omitting it entirely is how a content item
-    declares "no required features". But when it *is* authored it must carry
-    real values, so an empty list, blank/whitespace-only entries and repeated
-    entries are all rejected rather than silently accepted as meaningless data.
+    The field is optional - omit it to declare no required features - but an
+    authored value must be meaningful, so empty/blank/duplicate entries fail.
     """
 
     @classmethod
@@ -45,8 +43,7 @@ class SupportedFeaturesList(List[str]):
                 raise ValueError(
                     "supportedFeatures cannot contain empty or whitespace-only values."
                 )
-            # Track duplicates rather than raising immediately, so the error
-            # can name every repeated value in one pass.
+            # Collected rather than raised immediately, so one error names them all.
             if item in seen and item not in duplicates:
                 duplicates.append(item)
             seen.add(item)
@@ -125,6 +122,18 @@ class BaseStrictModel(BaseModel, ABC):
                 value is not None
             ), f"The field {field.alias or field.name} is not required, but should not be None if it exists"
         return value
+
+
+class SupportedFeaturesMixin(BaseStrictModel):
+    """Adds the optional `supportedFeatures` field.
+
+    Declared once and mixed into every strict model that supports it, so the
+    field's type and validation live in a single place.
+    """
+
+    supportedFeatures: Optional[SupportedFeaturesList] = pydantic.Field(
+        None, alias="supportedFeatures"
+    )
 
 
 def create_model(model_name: str, base_models: tuple, **kwargs) -> BaseModel:

@@ -12,13 +12,12 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
     NAME_DYNAMIC_MODEL,
     SUFFIXED_ID_DYNAMIC_MODEL,
-    BaseStrictModel,
-    SupportedFeaturesList,
+    SupportedFeaturesMixin,
     create_model,
 )
 
 
-class _StrictWidget(BaseStrictModel):
+class _StrictWidget(SupportedFeaturesMixin):
     id_: str = Field(alias="id")
     version: int
     name: str
@@ -42,9 +41,6 @@ class _StrictWidget(BaseStrictModel):
         ],
     )
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
-    supportedFeatures: Optional[SupportedFeaturesList] = Field(
-        None, alias="supportedFeatures"
-    )
 
 
 StrictWidget = create_model(

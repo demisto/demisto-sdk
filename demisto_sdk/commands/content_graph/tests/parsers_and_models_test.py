@@ -2157,15 +2157,23 @@ class TestParsersAndModels:
         assert script2_model.supportedModules is None
 
     @pytest.mark.parametrize(
-        "pack_features, item_features, expected",
+        "pack_features, item_features, expected_own, expected_effective",
         [
-            pytest.param(None, None, None, id="neither authored -> None"),
-            pytest.param(["feat_a"], None, ["feat_a"], id="inherited from pack"),
-            pytest.param(["feat_a"], ["feat_b"], ["feat_b"], id="item overrides pack"),
+            pytest.param(None, None, None, None, id="neither authored"),
+            pytest.param(
+                ["feat_a"], None, None, {"feat_a"}, id="pack only, item inherits"
+            ),
+            pytest.param(
+                ["feat_a"],
+                ["feat_b"],
+                ["feat_b"],
+                {"feat_b"},
+                id="item overrides pack",
+            ),
         ],
     )
     def test_supported_features_resolution(
-        self, repo: Repo, pack_features, item_features, expected
+        self, repo: Repo, pack_features, item_features, expected_own, expected_effective
     ):
         """
         Given:
@@ -2176,8 +2184,9 @@ class TestParsersAndModels:
         - Parsing the pack
 
         Then:
-        - Ensure the item inherits the pack's value when it does not author one
-        - Ensure the item's own value takes precedence when it does
+        - Ensure the parsed field holds only what the item itself authored, so
+          that it means the same thing on every parsing path
+        - Ensure the pack's value is applied by the shared resolver instead
         """
         pack = repo.create_pack("HelloWorld")
         if pack_features is not None:
@@ -2192,8 +2201,13 @@ class TestParsersAndModels:
             integration.yml.write_dict(yml)
 
         model = PackModel.from_orm(PackParser(Path(pack.path)))
+        item = model.content_items.integration[0]
 
-        assert model.content_items.integration[0].supportedFeatures == expected
+        assert item.supportedFeatures == expected_own
+        item.pack = model
+        assert tools.get_content_item_supported_features(item) == (
+            frozenset(expected_effective) if expected_effective else None
+        )
 
     def test_supported_features_absent_from_output_when_unauthored(self, repo: Repo):
         """

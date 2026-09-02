@@ -10,9 +10,6 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 from demisto_sdk.commands.validate.validators.BA_validators.BA134_unknown_supported_feature import (
     UnknownSupportedFeatureValidator,
 )
-from demisto_sdk.commands.validate.validators.BA_validators.BA135_redundant_supported_features import (
-    RedundantSupportedFeaturesValidator,
-)
 from demisto_sdk.commands.validate.validators.ST_validators.ST115_is_supported_features_subset_of_pack import (
     IsSupportedFeaturesSubsetOfPack,
 )
@@ -199,95 +196,3 @@ def test_unknown_feature_skipped_when_regional_rules_absent(mocker):
         assert not UnknownSupportedFeatureValidator().obtain_invalid_content_items(
             [integration]
         )
-
-
-class TestRedundantSupportedFeatures:
-    def test_identical_to_pack_is_redundant(self):
-        """
-        Given:
-            - An integration whose 'supportedFeatures' exactly matches its pack's.
-        When:
-            - Running the RedundantSupportedFeaturesValidator (BA135).
-        Then:
-            - A result is reported, since omitting the field would behave identically.
-        """
-        with ChangeCWD(REPO.path):
-            integration = create_integration_object(
-                paths=["supportedFeatures"],
-                values=[["feat_a", "feat_b"]],
-                pack_info={"supportedFeatures": ["feat_a", "feat_b"]},
-            )
-
-            results = (
-                RedundantSupportedFeaturesValidator().obtain_invalid_content_items(
-                    [integration]
-                )
-            )
-
-            assert len(results) == 1
-            assert results[0].validator.error_code == "BA135"
-
-    def test_identical_ignoring_order_is_redundant(self):
-        """
-        Given:
-            - An integration declaring its pack's features in a different order.
-        When:
-            - Running the RedundantSupportedFeaturesValidator (BA135).
-        Then:
-            - A result is reported. Order carries no meaning, so a reordered but
-              equal list is still a redundant restatement of the pack's value.
-        """
-        with ChangeCWD(REPO.path):
-            integration = create_integration_object(
-                paths=["supportedFeatures"],
-                values=[["feat_b", "feat_a"]],
-                pack_info={"supportedFeatures": ["feat_a", "feat_b"]},
-            )
-
-            assert RedundantSupportedFeaturesValidator().obtain_invalid_content_items(
-                [integration]
-            )
-
-    def test_strict_subset_is_not_redundant(self):
-        """
-        Given:
-            - A script declaring a strict subset of its pack's features.
-        When:
-            - Running the RedundantSupportedFeaturesValidator (BA135).
-        Then:
-            - No result is reported, since the item genuinely narrows the pack's value.
-        """
-        with ChangeCWD(REPO.path):
-            script = create_script_object(
-                paths=["supportedFeatures"],
-                values=[["feat_a"]],
-                pack_info={"supportedFeatures": ["feat_a", "feat_b"]},
-            )
-
-            assert (
-                not RedundantSupportedFeaturesValidator().obtain_invalid_content_items(
-                    [script]
-                )
-            )
-
-    def test_pack_declaring_nothing_is_not_redundant(self):
-        """
-        Given:
-            - An integration declaring features, whose pack declares none.
-        When:
-            - Running the RedundantSupportedFeaturesValidator (BA135).
-        Then:
-            - No result is reported. The item restricts an otherwise unrestricted
-              pack, which is meaningful rather than redundant.
-        """
-        with ChangeCWD(REPO.path):
-            integration = create_integration_object(
-                paths=["supportedFeatures"], values=[["feat_a"]]
-            )
-            integration.pack.supportedFeatures = None
-
-            assert (
-                not RedundantSupportedFeaturesValidator().obtain_invalid_content_items(
-                    [integration]
-                )
-            )

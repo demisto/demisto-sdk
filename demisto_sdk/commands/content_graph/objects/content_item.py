@@ -316,8 +316,8 @@ class ContentItem(BaseContent):
         exclude_fields: Dict[Union[int, str], Any] = {}
         if not self.supportedModules:
             exclude_fields["supportedModules"] = True
-        # An authored `supportedFeatures` is always non-empty (empty lists are
-        # rejected at validation), so only an absent (None) value is excluded.
+        # Authored values are never empty (validation rejects []), so only an
+        # absent value is excluded.
         if self.supportedFeatures is None:
             exclude_fields["supportedFeatures"] = True
 

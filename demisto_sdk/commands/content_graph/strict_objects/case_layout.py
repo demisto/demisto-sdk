@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     BaseStrictModel,
-    SupportedFeaturesList,
+    SupportedFeaturesMixin,
 )
 
 
@@ -54,7 +54,7 @@ class TabsAndSections(BaseStrictModel):
     sections: Optional[List[Section]] = None
 
 
-class StrictCaseLayout(BaseStrictModel):
+class StrictCaseLayout(SupportedFeaturesMixin):
     id_: str = Field(alias="id")
     group: str = Field(..., enum=["case"])
     definition_id: Optional[str] = Field(None, alias="definitionId")
@@ -68,9 +68,6 @@ class StrictCaseLayout(BaseStrictModel):
         List[Literal[MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]]
     ] = None
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
-    supportedFeatures: Optional[SupportedFeaturesList] = Field(
-        None, alias="supportedFeatures"
-    )
     edit: Optional[TabsAndSections] = None
     indicators_details: Optional[TabsAndSections] = Field(
         None, alias="indicatorsDetails"

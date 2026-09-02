@@ -99,9 +99,8 @@ class UnknownSupportedFeatureValidator(BaseValidator[ContentTypes]):
     ) -> List[ValidationResult]:
         rules = RegionalRules.from_path()
         if rules is None:
-            # The regional rules file is unavailable - typically the SDK is
-            # running outside the content repo. There is nothing to validate
-            # against, and failing here would break contributor workflows.
+            # No rules file (e.g. running outside the content repo) means there
+            # is nothing to validate against.
             return []
 
         known_features = rules.all_supported_features()
@@ -127,9 +126,8 @@ class UnknownSupportedFeatureValidator(BaseValidator[ContentTypes]):
     ) -> Set[str]:
         """Returns the item's declared features that no region or global enables.
 
-        Only the item's *own* declared value is checked. A value inherited from
-        the pack is validated once on the pack itself, so checking it here as
-        well would report the same problem on every item in the pack.
+        Only the item's own value is checked - an inherited one is validated on
+        the pack itself, to avoid reporting it on every item in the pack.
         """
         item_features: Optional[List[str]] = getattr(item, "supportedFeatures", None)
         if not item_features:

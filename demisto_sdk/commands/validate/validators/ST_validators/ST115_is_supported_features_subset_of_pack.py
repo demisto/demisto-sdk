@@ -110,11 +110,8 @@ class IsSupportedFeaturesSubsetOfPack(BaseValidator[ContentTypes]):
     def _features_not_allowed_by_pack(self, item: ContentTypes) -> Set[str]:
         """Returns the item's features that its pack does not allow.
 
-        Returns an empty set - meaning valid - in two cases:
-
-        - The item declares nothing, so it simply inherits the pack's value.
-        - The pack declares nothing, so the pack is supported everywhere and
-          places no restriction on what its items may declare.
+        Valid (empty set) when the item declares nothing and so inherits the
+        pack's value, or when the pack declares nothing and so restricts nothing.
         """
         item_features: Optional[List[str]] = getattr(item, "supportedFeatures", None)
         if not item_features:

@@ -8,13 +8,12 @@ from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import 
 )
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
-    BaseStrictModel,
-    SupportedFeaturesList,
+    SupportedFeaturesMixin,
     create_model,
 )
 
 
-class _StrictTrigger(BaseStrictModel):
+class _StrictTrigger(SupportedFeaturesMixin):
     trigger_id: Optional[str] = None
     # NOTE: 'id' should exist in all trigger content items, but is currently not supported
     # on XSIAM/Platform tenants.
@@ -30,9 +29,6 @@ class _StrictTrigger(BaseStrictModel):
     automation_type: Optional[str]
     automation_id: Optional[str]
     supportedModules: Optional[list[str]] = Field(None, alias="supportedModules")
-    supportedFeatures: Optional[SupportedFeaturesList] = Field(
-        None, alias="supportedFeatures"
-    )
     issilent: Optional[bool] = Field(default=False)
     grouping_element: Optional[str] = None
     is_auto_enabled: Optional[bool] = None

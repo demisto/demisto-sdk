@@ -490,8 +490,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         metadata = replace_marketplace_references(metadata, marketplace, str(self.path))
         if "supportedModules" in metadata and not metadata["supportedModules"]:
             del metadata["supportedModules"]
-        # An authored `supportedFeatures` is always non-empty (empty lists are
-        # rejected at validation), so only an absent (None) value is removed.
+        # Authored values are never empty (validation rejects []), so only an
+        # absent value is removed.
         if "supportedFeatures" in metadata and metadata["supportedFeatures"] is None:
             del metadata["supportedFeatures"]
         write_dict(path, data=metadata, indent=4, sort_keys=True)

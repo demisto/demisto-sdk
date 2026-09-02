@@ -7,12 +7,11 @@ from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import 
     AlertsFilter,
 )
 from demisto_sdk.commands.content_graph.strict_objects.common import (
-    BaseStrictModel,
-    SupportedFeaturesList,
+    SupportedFeaturesMixin,
 )
 
 
-class StrictCaseLayoutRule(BaseStrictModel):
+class StrictCaseLayoutRule(SupportedFeaturesMixin):
     rule_id: str
     rule_name: str
     layout_id: str
@@ -21,6 +20,3 @@ class StrictCaseLayoutRule(BaseStrictModel):
     incidents_filter: Optional[AlertsFilter] = None
     marketplaces: Optional[List[MarketplaceVersions]] = None
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
-    supportedFeatures: Optional[SupportedFeaturesList] = Field(
-        None, alias="supportedFeatures"
-    )

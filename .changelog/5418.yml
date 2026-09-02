@@ -1,0 +1,4 @@
+changes:
+- description: Added `PlatformClient` and `PlatformClientConfig`.
+  type: feature
+pr_number: 5418

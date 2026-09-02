@@ -777,6 +777,39 @@ class TestGetMatchingRegex:
         ({"breakingChanges": False, "breakingChangesNotes": "BC"}, True),
         ({"breakingChanges": "true", "breakingChangesNotes": "BC"}, False),
         ({"breakingChanges": True, "breakingChangesNotes": True}, False),
+        # forceUpdate object (ConnectUS / Managed Content) - see CIAC-17085 / CIAC-17086.
+        (
+            {
+                "breakingChanges": True,
+                "forceUpdate": {"breakingChangesNotesLoosely": "Loosely BC note."},
+            },
+            True,
+        ),
+        (
+            {
+                "breakingChanges": True,
+                "forceUpdate": {"breakingChangesNotesTightly": "Tightly BC note."},
+            },
+            True,
+        ),
+        (
+            {
+                "breakingChanges": True,
+                "forceUpdate": {
+                    "breakingChangesNotesLoosely": "Loosely BC note.",
+                    "breakingChangesNotesTightly": "Tightly BC note.",
+                },
+            },
+            True,
+        ),
+        # An unknown field nested in forceUpdate must be rejected (Extra.forbid).
+        (
+            {
+                "breakingChanges": True,
+                "forceUpdate": {"unknownField": "value"},
+            },
+            False,
+        ),
     ]
 
     @pytest.mark.parametrize(

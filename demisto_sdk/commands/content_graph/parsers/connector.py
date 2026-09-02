@@ -477,6 +477,8 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
                         type=act.get("type"),
                         display=act.get("display"),
                         description=act.get("description"),
+                        return_data=act.get("return_data", []) or [],
+                        show_condition=act.get("show_condition"),
                     )
                     for act in hcap.get("actions", [])
                 ]

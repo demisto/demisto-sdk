@@ -146,6 +146,9 @@ from demisto_sdk.commands.validate.validators.CO_validators.CO194_is_sub_capabil
 from demisto_sdk.commands.validate.validators.CO_validators.CO195_is_classifier_field_has_show_action import (
     IsClassifierFieldHasShowActionValidator,
 )
+from demisto_sdk.commands.validate.validators.CO_validators.CO196_is_show_classifier_single_return_data import (
+    IsShowClassifierSingleReturnDataValidator,
+)
 
 VALID_CONNECTION_DESCRIPTION = (
     "Enter the credentials to securely authorize the connection"
@@ -11164,8 +11167,18 @@ class TestCO159IsHandlerHasValidTestConnection:
 
 def _cap_with_actions(cap_id: str, action_types: list, **extras):
     """Build a HandlerCapability dict-shaped block that create_connector_object
-    can consume, with the given cap id and a list of action.type strings.
+    can consume, with the given cap id and a list of actions.
+
+    Each entry in ``action_types`` may be either a plain string (the
+    ``action.type``) or a full action dict (e.g.
+    ``{"type": "show_classifier", "return_data": ["mappingId"]}``) which is
+    passed through verbatim so tests can exercise ``return_data`` /
+    ``show_condition`` payloads.
     """
+    actions = [
+        action if isinstance(action, dict) else {"type": action}
+        for action in action_types
+    ]
     entry = {
         "id": cap_id,
         "auth_options": [
@@ -11178,7 +11191,7 @@ def _cap_with_actions(cap_id: str, action_types: list, **extras):
                 ],
             }
         ],
-        "actions": [{"type": t} for t in action_types],
+        "actions": actions,
     }
     entry.update(extras)
     return entry
@@ -11233,7 +11246,40 @@ class TestCO161IsFetchCapabilitiesContainActions:
         )
         assert len(results) == 0
 
-    def test_fetch_issues_with_correct_action_passes(self):
+    def test_fetch_issues_with_both_actions_passes(self):
+        """
+        Given: fetch-issues capability declaring BOTH required actions
+               (reset_incidents_last_run + fetch_history).
+        When: CO161 runs.
+        Then: No error - the incident-fetch family requires both.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-fetchissues",
+                    "capabilities": [
+                        _cap_with_actions(
+                            "fetch-issues",
+                            ["reset_incidents_last_run", "fetch_history"],
+                        )
+                    ],
+                }
+            ]
+        )
+        results = (
+            IsFetchCapabilitiesContainActionsValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 0
+
+    def test_fetch_issues_missing_fetch_history_fails(self):
+        """
+        Given: fetch-issues capability with only reset_incidents_last_run
+               (missing fetch_history).
+        When: CO161 runs.
+        Then: One error flagging the missing fetch_history action.
+        """
         connector = create_connector_object(
             handlers=[
                 {
@@ -11249,9 +11295,52 @@ class TestCO161IsFetchCapabilitiesContainActions:
                 [connector]
             )
         )
-        assert len(results) == 0
+        assert len(results) == 1
+        msg = results[0].message
+        assert "fetch-issues" in msg
+        # Isolate the "missing" portion (before the "(found ...)" echo).
+        missing_part = msg.split("(found")[0]
+        assert "fetch_history" in missing_part
+        # reset is present, so it must NOT be flagged as missing.
+        assert "reset_incidents_last_run" not in missing_part
 
-    def test_fetch_issues_missing_action_fails(self):
+    def test_fetch_issues_missing_reset_fails(self):
+        """
+        Given: fetch-issues capability with only fetch_history
+               (missing reset_incidents_last_run).
+        When: CO161 runs.
+        Then: One error flagging the missing reset_incidents_last_run action.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-fetchissues",
+                    "capabilities": [
+                        _cap_with_actions("fetch-issues", ["fetch_history"])
+                    ],
+                }
+            ]
+        )
+        results = (
+            IsFetchCapabilitiesContainActionsValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "fetch-issues" in msg
+        # Isolate the "missing" portion (before the "(found ...)" echo).
+        missing_part = msg.split("(found")[0]
+        assert "reset_incidents_last_run" in missing_part
+        # fetch_history is present, so it must NOT be flagged as missing.
+        assert "fetch_history" not in missing_part
+
+    def test_fetch_issues_missing_both_actions_fails(self):
+        """
+        Given: fetch-issues capability declaring neither required action.
+        When: CO161 runs.
+        Then: One error flagging BOTH missing actions.
+        """
         connector = create_connector_object(
             handlers=[
                 {
@@ -11269,11 +11358,12 @@ class TestCO161IsFetchCapabilitiesContainActions:
         msg = results[0].message
         assert "fetch-issues" in msg
         assert "reset_incidents_last_run" in msg
+        assert "fetch_history" in msg
 
     def test_namespaced_capability_id_stripped_to_base(self):
         """
         Given: A namespaced cap id 'fetch-issues_akamai-waf-siem' with
-               the correct action.
+               BOTH required actions.
         When: CO161 runs.
         Then: No error - the base id is stripped before mapping lookup.
         """
@@ -11284,7 +11374,7 @@ class TestCO161IsFetchCapabilitiesContainActions:
                     "capabilities": [
                         _cap_with_actions(
                             "fetch-issues_akamai-waf-siem",
-                            ["reset_incidents_last_run"],
+                            ["reset_incidents_last_run", "fetch_history"],
                         )
                     ],
                 }
@@ -11299,9 +11389,11 @@ class TestCO161IsFetchCapabilitiesContainActions:
 
     def test_wrong_action_type_fails(self):
         """
-        Given: fetch-issues capability with an action but of the wrong type.
+        Given: fetch-issues capability with an action but of the wrong type
+               (reset_events_last_run), so BOTH required actions are missing.
         When: CO161 runs.
-        Then: One error citing the required-vs-found types.
+        Then: One error citing the required-vs-found types, listing both
+              required actions and the wrong action that was found.
         """
         connector = create_connector_object(
             handlers=[
@@ -11321,7 +11413,59 @@ class TestCO161IsFetchCapabilitiesContainActions:
         assert len(results) == 1
         msg = results[0].message
         assert "reset_incidents_last_run" in msg
+        assert "fetch_history" in msg
+        # The wrong action found is echoed back.
         assert "reset_events_last_run" in msg
+
+    def test_log_collection_still_requires_only_single_action(self):
+        """
+        Given: A log-collection capability with only its single reset action
+               (reset_events_last_run) and no fetch_history.
+        When: CO161 runs.
+        Then: No error - non-incident fetch families are unaffected by the
+              fetch_history requirement and still require just their reset.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-logs",
+                    "capabilities": [
+                        _cap_with_actions("log-collection", ["reset_events_last_run"])
+                    ],
+                }
+            ]
+        )
+        results = (
+            IsFetchCapabilitiesContainActionsValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 0
+
+    def test_log_collection_missing_its_action_fails(self):
+        """
+        Given: A log-collection capability with no actions.
+        When: CO161 runs.
+        Then: One error flagging only reset_events_last_run - fetch_history
+              is NOT required for non-incident fetch families.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-logs",
+                    "capabilities": [_cap_with_actions("log-collection", [])],
+                }
+            ]
+        )
+        results = (
+            IsFetchCapabilitiesContainActionsValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "reset_events_last_run" in msg
+        assert "fetch_history" not in msg
 
     def test_all_fetch_families_valid_passes(self):
         """
@@ -11337,7 +11481,10 @@ class TestCO161IsFetchCapabilitiesContainActions:
                 {
                     "id": "xsoar-multi",
                     "capabilities": [
-                        _cap_with_actions("fetch-issues", ["reset_incidents_last_run"]),
+                        _cap_with_actions(
+                            "fetch-issues",
+                            ["reset_incidents_last_run", "fetch_history"],
+                        ),
                         _cap_with_actions("log-collection", ["reset_events_last_run"]),
                         _cap_with_actions(
                             "fetch-assets-and-vulnerabilities",
@@ -11448,6 +11595,9 @@ class TestCO161IsFetchCapabilitiesContainActions:
         assert "fetch-issues" in msg
         assert "log-collection" in msg
         assert "reset_incidents_last_run" in msg
+        # fetch-issues is missing both required actions, so fetch_history
+        # must also be reported.
+        assert "fetch_history" in msg
         assert "reset_events_last_run" in msg
         # automation-and-remediation must NOT be reported since it is not
         # in the required-action mapping.
@@ -11514,6 +11664,37 @@ def _classifier_config(field_id: str = "mappingId") -> dict:
     }
 
 
+def _classifier_metadata_config(field_id: str = "mappingId") -> dict:
+    """Build a configurations.yaml-shaped dict declaring a backend-managed
+    classifier config field detected purely by its metadata (no plain raw id
+    match needed): ``metadata.dynamic_values.params.dynamicField ==
+    'classifier'`` with ``metadata.xsoar.config_type == 'backend'``. This
+    mirrors the strict-connector case where the classifier field is a backend
+    dynamic field whose id is ``mappingId``.
+    """
+    return {
+        "general_configurations": {
+            "configurations": [
+                {
+                    "fields": [
+                        {
+                            "id": field_id,
+                            "title": "Classifier",
+                            "metadata": {
+                                "dynamic_values": {
+                                    "provider": "xsoar",
+                                    "params": {"dynamicField": "classifier"},
+                                },
+                                "xsoar": {"config_type": "backend"},
+                            },
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+
+
 class TestCO195ClassifierFieldHasShowAction:
     """Tests for CO195: every handler that delivers a classifier field
     (resolving to the backend 'mappingId' field, via serializer rename or a
@@ -11525,7 +11706,8 @@ class TestCO195ClassifierFieldHasShowAction:
         """
         Given: A config field id 'mappingId' (no serializer) and a
                fetch-issues capability whose actions include
-               ['reset_incidents_last_run', 'show_classifier'].
+               reset_incidents_last_run + a show_classifier whose return_data
+               references the delivered classifier id ['mappingId'].
         When: CO195 runs.
         Then: No errors.
         """
@@ -11536,7 +11718,13 @@ class TestCO195ClassifierFieldHasShowAction:
                     "capabilities": [
                         _cap_with_actions(
                             "fetch-issues",
-                            ["reset_incidents_last_run", "show_classifier"],
+                            [
+                                "reset_incidents_last_run",
+                                {
+                                    "type": "show_classifier",
+                                    "return_data": ["mappingId"],
+                                },
+                            ],
                         )
                     ],
                 }
@@ -11588,7 +11776,9 @@ class TestCO195ClassifierFieldHasShowAction:
         """
         Given: A serializer field_mappings entry
                [{id: 'xsoar-foo_mappingId', field_name: 'mappingId'}] and a
-               fetch-issues capability whose actions include 'show_classifier'.
+               fetch-issues capability whose show_classifier action's
+               return_data references the prefixed delivered id
+               ['xsoar-foo_mappingId'].
         When: CO195 runs.
         Then: No errors.
         """
@@ -11607,7 +11797,13 @@ class TestCO195ClassifierFieldHasShowAction:
                     "capabilities": [
                         _cap_with_actions(
                             "fetch-issues",
-                            ["reset_incidents_last_run", "show_classifier"],
+                            [
+                                "reset_incidents_last_run",
+                                {
+                                    "type": "show_classifier",
+                                    "return_data": ["xsoar-foo_mappingId"],
+                                },
+                            ],
                         )
                     ],
                 }
@@ -11742,7 +11938,13 @@ class TestCO195ClassifierFieldHasShowAction:
                     },
                     "capabilities": [
                         _cap_with_actions(
-                            "fetch-issues_akamai-waf-siem", ["show_classifier"]
+                            "fetch-issues_akamai-waf-siem",
+                            [
+                                {
+                                    "type": "show_classifier",
+                                    "return_data": ["xsoar-foo_mappingId"],
+                                }
+                            ],
                         )
                     ],
                 }
@@ -11754,6 +11956,94 @@ class TestCO195ClassifierFieldHasShowAction:
             )
         )
         assert len(results) == 0
+
+    def test_strict_metadata_classifier_with_matching_return_data_passes(self):
+        """
+        Given: A backend classifier config field detected purely via metadata
+               (dynamic_values.params.dynamicField == 'classifier' +
+               xsoar.config_type == 'backend', id 'mappingId') and a
+               fetch-issues show_classifier action whose return_data is
+               ['mappingId'].
+        When: CO195 runs.
+        Then: No errors - metadata detection resolves the classifier id and the
+              action references it.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-meta",
+                    "capabilities": [
+                        _cap_with_actions(
+                            "fetch-issues",
+                            [
+                                "reset_incidents_last_run",
+                                {
+                                    "type": "show_classifier",
+                                    "return_data": ["mappingId"],
+                                },
+                            ],
+                        )
+                    ],
+                }
+            ],
+            configurations_data=_classifier_metadata_config(),
+        )
+        results = (
+            IsClassifierFieldHasShowActionValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 0
+
+    def test_prefixed_show_classifier_wrong_return_data_fails(self):
+        """
+        Given: A serializer rename to 'mappingId' (delivered id
+               'xsoar-foo_mappingId') and a fetch-issues capability that DOES
+               declare a show_classifier action, but whose return_data points
+               at the wrong id ['wrong_id'].
+        When: CO195 runs.
+        Then: One result flagging the return_data mismatch - naming the
+              expected delivered id and what return_data actually contains.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-prefixed-mismatch",
+                    "serializer": {
+                        "field_mappings": [
+                            {
+                                "id": "xsoar-foo_mappingId",
+                                "field_name": "mappingId",
+                            }
+                        ]
+                    },
+                    "capabilities": [
+                        _cap_with_actions(
+                            "fetch-issues",
+                            [
+                                "reset_incidents_last_run",
+                                {
+                                    "type": "show_classifier",
+                                    "return_data": ["wrong_id"],
+                                },
+                            ],
+                        )
+                    ],
+                }
+            ],
+        )
+        results = (
+            IsClassifierFieldHasShowActionValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "return_data" in msg
+        # Expected delivered id is named.
+        assert "xsoar-foo_mappingId" in msg
+        # What return_data actually contains is echoed.
+        assert "wrong_id" in msg
 
     def test_non_xsoar_handler_ignored(self):
         """
@@ -11779,6 +12069,169 @@ class TestCO195ClassifierFieldHasShowAction:
 
         results = (
             IsClassifierFieldHasShowActionValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 0
+
+
+# ---------------------------------------------------------------------------
+# CO196 tests
+# ---------------------------------------------------------------------------
+
+
+class TestCO196ShowClassifierSingleReturnData:
+    """Tests for CO196: every 'show_classifier' action must declare EXACTLY
+    ONE return_data entry. Both empty/missing (0) and multiple (2+) are
+    flagged. The rule applies only to 'show_classifier' actions; other action
+    types are ignored. Independent of CO195/CO161.
+    """
+
+    def test_single_return_data_passes(self):
+        """
+        Given: A show_classifier action whose return_data has exactly one
+               entry.
+        When: CO196 runs.
+        Then: No errors.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-single",
+                    "capabilities": [
+                        _cap_with_actions(
+                            "fetch-issues",
+                            [
+                                {
+                                    "type": "show_classifier",
+                                    "return_data": ["mappingId"],
+                                }
+                            ],
+                        )
+                    ],
+                }
+            ],
+        )
+        results = (
+            IsShowClassifierSingleReturnDataValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 0
+
+    def test_two_return_data_fails(self):
+        """
+        Given: A show_classifier action whose return_data has two entries.
+        When: CO196 runs.
+        Then: One result stating that 2 entries were found.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-two",
+                    "capabilities": [
+                        _cap_with_actions(
+                            "fetch-issues",
+                            [
+                                {
+                                    "type": "show_classifier",
+                                    "return_data": ["mappingId", "extra_id"],
+                                }
+                            ],
+                        )
+                    ],
+                }
+            ],
+        )
+        results = (
+            IsShowClassifierSingleReturnDataValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "2 entries" in msg
+        assert "exactly one" in msg.lower()
+        assert results[0].path is not None
+        assert str(results[0].path).endswith("handler.yaml")
+
+    def test_empty_return_data_fails(self):
+        """
+        Given: A show_classifier action whose return_data is empty/absent
+               (0 entries).
+        When: CO196 runs.
+        Then: One result stating that 0 entries were found.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-empty",
+                    "capabilities": [
+                        _cap_with_actions(
+                            "fetch-issues",
+                            [{"type": "show_classifier"}],
+                        )
+                    ],
+                }
+            ],
+        )
+        results = (
+            IsShowClassifierSingleReturnDataValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "0 entries" in msg
+        assert "exactly one" in msg.lower()
+
+    def test_non_show_classifier_action_ignored(self):
+        """
+        Given: A non-show_classifier action (reset_incidents_last_run) with no
+               return_data.
+        When: CO196 runs.
+        Then: No errors - the rule only applies to show_classifier actions.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-reset",
+                    "capabilities": [
+                        _cap_with_actions(
+                            "fetch-issues", ["reset_incidents_last_run"]
+                        )
+                    ],
+                }
+            ],
+        )
+        results = (
+            IsShowClassifierSingleReturnDataValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 0
+
+    def test_capability_without_show_classifier_passes(self):
+        """
+        Given: A capability with actions but no show_classifier action.
+        When: CO196 runs.
+        Then: No errors.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-none",
+                    "capabilities": [
+                        _cap_with_actions(
+                            "fetch-issues",
+                            ["reset_incidents_last_run", "fetch_history"],
+                        )
+                    ],
+                }
+            ],
+        )
+        results = (
+            IsShowClassifierSingleReturnDataValidator().obtain_invalid_content_items(
                 [connector]
             )
         )

@@ -192,12 +192,17 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     def _is_item_tightly_coupled(self, content_item: ContentItem) -> bool:
         """Check if a content item is tightly coupled.
 
-        A deprecated item is never tightly coupled: it must not be carried into a
-        derived pack.
+        An item that explicitly opts out via the item-level
+        ``excludefromtightlycoupled`` flag is never tightly coupled, and neither
+        is a deprecated item: such items must not be carried into a derived pack.
 
         Kept in sync with ``PackParser._is_item_tightly_coupled``
-        (``parsers/pack.py``), which mirrors this rule on the parser side.
+        (``parsers/pack.py``), which mirrors this rule on the parser side (there
+        the opt-out is read from the parser property of the same name, here from
+        the ``exclude_from_tightly_coupled`` model field).
         """
+        if content_item.exclude_from_tightly_coupled:
+            return False
         if is_deprecated_content_item(content_item):
             return False
         return content_item.content_type.is_tightly_coupled

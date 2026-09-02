@@ -47,6 +47,8 @@ mapping:
     allowempty: true
   custom:
     type: bool
+  excludefromtightlycoupled:
+    type: bool
   id:xsoar:
     type: str
   id:marketplacev2:

@@ -21,6 +21,9 @@ class _StrictModelingRule(BaseStrictModel):
     schema_: Optional[str] = Field(None, alias="schema")
     comment: Optional[str] = None
     deprecated: Optional[bool] = None
+    exclude_from_tightly_coupled: Optional[bool] = Field(
+        None, alias="excludefromtightlycoupled"
+    )
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 
 

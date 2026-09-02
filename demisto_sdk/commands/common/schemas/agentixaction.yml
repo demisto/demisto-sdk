@@ -65,6 +65,8 @@ mapping:
     type: seq
     sequence:
     - type: str
+  excludefromtightlycoupled:
+    type: bool
   fewshots:
     type: seq
     sequence:

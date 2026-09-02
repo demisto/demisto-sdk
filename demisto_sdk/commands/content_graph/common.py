@@ -467,6 +467,12 @@ TIGHTLY_COUPLED_TYPES: frozenset[ContentType] = frozenset(
     }
 )
 
+# The raw yml/json key an item author sets to opt a single content item out of
+# tight coupling, even though its ContentType is in ``TIGHTLY_COUPLED_TYPES``.
+# Spelled identically in both YAML and JSON content items, like the other
+# generic item-level flags (``marketplaces``, ``deprecated``, ``issilent``).
+EXCLUDE_FROM_TIGHTLY_COUPLED_KEY: str = "excludefromtightlycoupled"
+
 
 class PackDestination(str, enum.Enum):
     """Describes where a pack's content is destined during the build process."""

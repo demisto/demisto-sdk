@@ -25,6 +25,7 @@ from demisto_sdk.commands.content_graph.common import (
     DERIVED_PACK_ALLOWED_SUPPORT_LEVELS,
     DERIVED_PACK_SUFFIX,
     DERIVED_PACKS_EXCLUDE_ENV,
+    EXCLUDE_FROM_TIGHTLY_COUPLED_KEY,
     TIGHTLY_COUPLED_TYPES,
     ContentType,
     PackDestination,
@@ -235,13 +236,16 @@ class TestIsItemTightlyCoupled:
         deprecated: bool = False,
         name: Optional[str] = None,
         description: str = "",
+        exclude_from_tightly_coupled: bool = False,
     ) -> MagicMock:
         mock = MagicMock()
         mock.object_id = object_id
         mock.content_type = content_type
         # Set explicitly: an unset attribute on a MagicMock auto-creates a truthy
-        # child mock, which the deprecation predicate would read as "deprecated".
+        # child mock, which the deprecation predicate would read as "deprecated"
+        # and the opt-out guard would read as "excluded".
         mock.deprecated = deprecated
+        mock.exclude_from_tightly_coupled = exclude_from_tightly_coupled
         mock.name = name if name is not None else object_id
         mock.description = description
         return mock
@@ -1694,13 +1698,16 @@ class TestIsManagedPaired:
         object_id: str,
         content_type: ContentType,
         deprecated: bool = False,
+        exclude_from_tightly_coupled: bool = False,
     ) -> MagicMock:
         mock = MagicMock()
         mock.object_id = object_id
         mock.content_type = content_type
         # Set explicitly: an unset attribute on a MagicMock auto-creates a truthy
-        # child mock, which the deprecation predicate would read as "deprecated".
+        # child mock, which the deprecation predicate would read as "deprecated"
+        # and the opt-out guard would read as "excluded".
         mock.deprecated = deprecated
+        mock.exclude_from_tightly_coupled = exclude_from_tightly_coupled
         mock.name = object_id
         mock.description = ""
         return mock
@@ -3123,12 +3130,17 @@ def _make_parser_content_item(
     object_id: str,
     content_type: ContentType = ContentType.INTEGRATION,
     deprecated: bool = False,
+    exclude_from_tightly_coupled: bool = False,
 ) -> MagicMock:
     """A content item parser stand-in for the derived-pack creation tests."""
     item = MagicMock()
     item.object_id = object_id
     item.content_type = content_type
+    # Both are set explicitly: an unset attribute on a MagicMock auto-creates a
+    # truthy child mock, which the deprecation predicate would read as
+    # "deprecated" and the opt-out guard as "excluded".
     item.deprecated = deprecated
+    item.exclude_from_tightly_coupled = exclude_from_tightly_coupled
     item.name = object_id
     item.description = ""
     item.relationships = Relationships()
@@ -3389,3 +3401,234 @@ class TestDerivedPackRequiresAnIntegration:
         assert (
             parser._generate_derived_pack() is not None
         ), "a pack holding a live integration must still yield a derived pack"
+
+
+# ---------------------------------------------------------------------------
+# Per item opt-out: `excludefromtightlycoupled`
+# ---------------------------------------------------------------------------
+
+
+class TestExcludeFromTightlyCoupledOptOut:
+    """A pack author may opt a single NON-deprecated item out of being tightly coupled.
+
+    The raw item level key ``excludefromtightlycoupled`` is spelled identically in yml
+    and json content items. Setting it excludes exactly that item from the managed twin,
+    marks it ``managedPaired: false``, and - if nothing tightly coupled is left - suppresses
+    the twin altogether.
+
+    Structured after ``TestDeprecatedItemsAreNotTightlyCoupled``: the opt-out is the second
+    guard in the very same gate, and is deliberately checked BEFORE the deprecation guard so
+    it applies to live items too.
+    """
+
+    def test_flagged_item_is_not_tightly_coupled_on_both_sides_of_the_gate(self):
+        """Case a: the gate is duplicated in the parser and the model, and both must honour
+        the opt-out for an item whose content type IS tightly coupled and that is NOT deprecated."""
+        from demisto_sdk.commands.content_graph.objects.pack import Pack
+        from demisto_sdk.commands.content_graph.parsers.pack import PackParser
+
+        assert ContentType.INTEGRATION in TIGHTLY_COUPLED_TYPES, (
+            "test premise: the type must be tightly coupled, otherwise the opt-out is not "
+            "what makes the gate return False"
+        )
+
+        parser_item = _make_parser_content_item(
+            "MyIntegration", exclude_from_tightly_coupled=True
+        )
+        assert parser_item.deprecated is False, (
+            "test premise: the item must be live, otherwise the deprecation guard - not the "
+            "opt-out - would be what closes the gate"
+        )
+        parser = _make_pack_parser([parser_item])
+        assert PackParser._is_item_tightly_coupled(parser, parser_item) is False, (
+            "an item carrying `excludefromtightlycoupled` opts out of being tightly coupled, "
+            "so the parser side gate must return False even for a live integration"
+        )
+
+        model_pack = MagicMock(spec=Pack)
+        model_pack._is_item_tightly_coupled = Pack._is_item_tightly_coupled.__get__(
+            model_pack, Pack
+        )
+        model_item = MagicMock()
+        model_item.object_id = "MyIntegration"
+        model_item.content_type = ContentType.INTEGRATION
+        model_item.deprecated = False
+        model_item.name = "MyIntegration"
+        model_item.description = ""
+        model_item.exclude_from_tightly_coupled = True
+        assert model_pack._is_item_tightly_coupled(model_item) is False, (
+            "the model side gate reads the same opt-out from the "
+            "`exclude_from_tightly_coupled` field and must agree with the parser side"
+        )
+
+    def test_unflagged_live_item_is_still_tightly_coupled_on_both_sides(self):
+        """Case b, the regression guard: without the flag nothing changes."""
+        from demisto_sdk.commands.content_graph.objects.pack import Pack
+        from demisto_sdk.commands.content_graph.parsers.pack import PackParser
+
+        parser_item = _make_parser_content_item("MyIntegration")
+        parser = _make_pack_parser([parser_item])
+        assert PackParser._is_item_tightly_coupled(parser, parser_item) is True, (
+            "a live integration without the opt-out must remain tightly coupled - the new "
+            "guard must not change the default"
+        )
+
+        model_pack = MagicMock(spec=Pack)
+        model_pack._is_item_tightly_coupled = Pack._is_item_tightly_coupled.__get__(
+            model_pack, Pack
+        )
+        model_item = MagicMock()
+        model_item.object_id = "MyIntegration"
+        model_item.content_type = ContentType.INTEGRATION
+        model_item.deprecated = False
+        model_item.name = "MyIntegration"
+        model_item.description = ""
+        model_item.exclude_from_tightly_coupled = False
+        assert (
+            model_pack._is_item_tightly_coupled(model_item) is True
+        ), "the model side must keep the same default for an unflagged live integration"
+
+    def test_pack_whose_only_integration_is_flagged_yields_none(self):
+        """Case c: nothing tightly coupled is left, so no twin is generated at all."""
+        parser = _make_pack_parser(
+            [
+                _make_parser_content_item(
+                    "OptedOutIntegration", exclude_from_tightly_coupled=True
+                )
+            ]
+        )
+        assert parser._generate_derived_pack() is None, (
+            "the pack's only integration opted out, so there is neither a tightly coupled item "
+            "nor an eligible integration left and no derived pack may be created"
+        )
+
+    def test_only_the_unflagged_integration_is_carried_into_the_twin(self):
+        """Case d: with two integrations and one opted out, the twin is created and holds
+        exactly the other one."""
+        kept = _make_parser_content_item("KeptIntegration")
+        opted_out = _make_parser_content_item(
+            "OptedOutIntegration", exclude_from_tightly_coupled=True
+        )
+        parser = _make_pack_parser([kept, opted_out])
+
+        derived = parser._generate_derived_pack()
+
+        assert (
+            derived is not None
+        ), "one integration still qualifies, so the derived pack must still be created"
+        kept.add_to_pack.assert_called_once_with("TestPackManaged")
+        opted_out.add_to_pack.assert_not_called()
+        added = [item for item in (kept, opted_out) if item.add_to_pack.call_count]
+        assert (
+            added == [kept]
+        ), "exactly the unflagged integration is carried into the twin"
+
+    def test_flagged_item_gets_managed_paired_false(self, mocker):
+        """Case e: the per item verdict threaded into the metadata writer.
+
+        Asserted at the two points the value is actually decided, rather than through a full
+        dump: `_add_item_to_metadata_list` computes the key from `item_is_tightly_coupled`,
+        and `Pack._is_item_tightly_coupled` is what supplies that operand. A dump cannot show
+        this - `prepare_for_upload` strips the key, so the re-parsed item the writer receives
+        no longer carries it (which is exactly why the verdict is computed before the re-parse).
+        """
+        from demisto_sdk.commands.common.constants import MarketplaceVersions
+        from demisto_sdk.commands.content_graph.objects.pack_metadata import (
+            PackMetadata,
+        )
+
+        # The name is bound at import time in each consuming module, so the writer's own
+        # binding is the one that must be patched.
+        mocker.patch(
+            "demisto_sdk.commands.content_graph.objects.pack_metadata.ENABLE_SPLIT_PACKS",
+            True,
+        )
+
+        content_item = MagicMock()
+        content_item.content_type = ContentType.INTEGRATION
+        content_item.name = "MyIntegration"
+        content_item.summary.return_value = {
+            "id": "MyIntegration",
+            "name": "MyIntegration",
+        }
+        content_item.is_incident_to_alert.return_value = False
+
+        metadata = MagicMock(spec=PackMetadata)
+        # Set explicitly: an unset method on a MagicMock returns a truthy child mock, which
+        # the writer would read as "this item is already collected" and take the replace branch.
+        metadata._search_content_item_metadata_object.return_value = None
+
+        collected: dict = {}
+        PackMetadata._add_item_to_metadata_list(
+            metadata,
+            collected_content_items=collected,
+            content_item=content_item,
+            marketplace=MarketplaceVersions.XSOAR,
+            pack_is_managed_paired=True,
+            item_is_tightly_coupled=False,
+        )
+
+        entry = collected[ContentType.INTEGRATION.metadata_name][0]
+        assert entry["managedPaired"] is False, (
+            "the pack still splits, but the flagged item is not tightly coupled, so its entry "
+            f"must be False; got {entry['managedPaired']!r}"
+        )
+
+    def test_pack_whose_only_integration_is_flagged_is_not_managed_paired(self):
+        """Case e, pack level: with the only item opted out the pack advertises no twin."""
+        from demisto_sdk.commands.content_graph.objects.pack import Pack
+
+        pack = MagicMock(spec=Pack)
+        pack.managed = False
+        pack.is_derived = False
+        pack.object_id = "TestPack"
+        pack.name = "TestPack"
+        pack.description = ""
+        pack.support = "xsoar"
+        pack.hidden = False
+        pack.deprecated = False
+        pack.pack_metadata_dict = {}
+
+        item = MagicMock()
+        item.object_id = "OptedOutIntegration"
+        item.content_type = ContentType.INTEGRATION
+        item.deprecated = False
+        item.name = "OptedOutIntegration"
+        item.description = ""
+        item.exclude_from_tightly_coupled = True
+        pack.content_items = [item]
+
+        pack._is_item_tightly_coupled = Pack._is_item_tightly_coupled.__get__(pack, Pack)
+        pack._is_derived_pack_eligible = Pack._is_derived_pack_eligible.__get__(
+            pack, Pack
+        )
+        pack.is_managed_paired = Pack.is_managed_paired.__get__(pack, Pack)
+
+        assert pack.is_managed_paired() is False, (
+            "the pack's only tightly coupled candidate opted out, so no twin is generated and "
+            "the pack is not half of a source/twin pair"
+        )
+
+    def test_the_key_is_stripped_before_upload(self, tmp_path):
+        """Case f: an SDK-only build time flag must never reach the uploaded artifact."""
+        from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+        from demisto_sdk.commands.content_graph.objects.integration import Integration
+
+        path = tmp_path / "MyIntegration.yml"
+        path.write_text(
+            "commonfields:\n"
+            "  id: MyIntegration\n"
+            "name: MyIntegration\n"
+            f"{EXCLUDE_FROM_TIGHTLY_COUPLED_KEY}: true\n"
+        )
+        integration = Integration.construct(path=path)  # type: ignore[call-arg]
+
+        prepared = ContentItem.prepare_for_upload(integration)
+
+        assert EXCLUDE_FROM_TIGHTLY_COUPLED_KEY not in prepared, (
+            f"`{EXCLUDE_FROM_TIGHTLY_COUPLED_KEY}` is an SDK-only build time flag and must be "
+            f"stripped before upload; got keys {sorted(prepared)}"
+        )
+        assert (
+            prepared["name"] == "MyIntegration"
+        ), "stripping the flag must not disturb the rest of the item"

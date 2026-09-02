@@ -228,6 +228,12 @@ class PackMetadata(BaseModel):
                 content_item, marketplace, strip_internal=strip_internal
             ):
                 continue
+            # Must be evaluated on the ORIGINAL object, before the re-parse below:
+            # the per-item opt-out key is stripped by `prepare_for_upload`, so the item
+            # re-parsed from the dumped artifact always looks tightly coupled.
+            item_is_tightly_coupled: bool = ENABLE_SPLIT_PACKS and bool(
+                self._is_item_tightly_coupled(content_item)  # type:ignore[attr-defined]
+            )
             new_content_item = None
             try:
                 new_content_item = BaseContent.from_path(content_item.upload_path)  # type:ignore[assignment]
@@ -242,6 +248,7 @@ class PackMetadata(BaseModel):
                 content_item=content_item,
                 marketplace=marketplace,
                 pack_is_managed_paired=pack_is_managed_paired,
+                item_is_tightly_coupled=item_is_tightly_coupled,
             )
 
             content_displays[content_item.content_type.metadata_name] = (
@@ -561,6 +568,7 @@ class PackMetadata(BaseModel):
         marketplace: MarketplaceVersions,
         incident_to_alert: bool = False,
         pack_is_managed_paired: bool = False,
+        item_is_tightly_coupled: bool = False,
     ):
         """
         Adds the given content item to the metadata content items list.
@@ -576,6 +584,9 @@ class PackMetadata(BaseModel):
             incident_to_alert (bool, optional): Whether should replace incident to alert. Defaults to False.
             pack_is_managed_paired (bool, optional): Whether the owning pack actually splits, i.e. the
                 value of `Pack.is_managed_paired()`, computed once per dump by the caller. Defaults to False.
+            item_is_tightly_coupled (bool, optional): Whether this content item is tightly coupled to the
+                pack, i.e. the value of `Pack._is_item_tightly_coupled()`, computed by the caller on the
+                pre-re-parse object. Defaults to False.
         """
         collected_content_items.setdefault(content_item.content_type.metadata_name, [])
         content_item_summary = content_item.summary(
@@ -588,13 +599,11 @@ class PackMetadata(BaseModel):
         # `false` regardless of its own coupling. Flag-gated: while ENABLE_SPLIT_PACKS is off the
         # key is omitted entirely.
         # Injected here, at the single funnel every per-item summary dict passes through, rather
-        # than inside `summary()`: the caller re-parses each item from disk, so the item's own `pack`
-        # back-reference is unreliable, and only the owning pack can classify its items' coupling.
-        # `self` is always a `Pack` at runtime (`Pack` inherits `PackMetadata`), so the resolver
-        # defined on `Pack` is available here.
+        # than inside `summary()`: only the owning pack can classify its items' coupling. Both
+        # operands are computed by the caller - see `_get_content_items_and_displays_metadata`.
         if ENABLE_SPLIT_PACKS:
             content_item_summary["managedPaired"] = bool(
-                pack_is_managed_paired and self._is_item_tightly_coupled(content_item)  # type:ignore[attr-defined]
+                pack_is_managed_paired and item_is_tightly_coupled
             )
 
         if content_item_metadata := self._search_content_item_metadata_object(
@@ -631,6 +640,7 @@ class PackMetadata(BaseModel):
                 marketplace,
                 incident_to_alert=True,
                 pack_is_managed_paired=pack_is_managed_paired,
+                item_is_tightly_coupled=item_is_tightly_coupled,
             )
 
     def _replace_item_if_has_higher_toversion(

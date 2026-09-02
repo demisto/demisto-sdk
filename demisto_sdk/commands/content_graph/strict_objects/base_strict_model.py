@@ -144,6 +144,9 @@ class _BaseIntegrationScript(BaseStrictModel):
     name: str
     deprecated: Optional[bool] = None
     system: Optional[bool] = None
+    exclude_from_tightly_coupled: Optional[bool] = Field(
+        None, alias="excludefromtightlycoupled"
+    )
     tests: Optional[List[str]] = None
     auto_update_docker_image: Optional[bool] = Field(
         None, alias="autoUpdateDockerImage"
@@ -249,6 +252,9 @@ class AgentixBase(BaseStrictModel):
     description: str
     disabled: bool = False
     internal: Optional[bool] = None
+    exclude_from_tightly_coupled: Optional[bool] = Field(
+        None, alias="excludefromtightlycoupled"
+    )
     from_version: Optional[str] = Field(None, alias="fromversion")
     to_version: Optional[str] = Field(None, alias="toversion")
     marketplaces: Optional[Union[MarketplaceVersions, List[MarketplaceVersions]]] = None

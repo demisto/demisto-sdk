@@ -158,6 +158,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     # Split-pack / derived-pack fields
     is_derived: bool = False
     derived_from: Optional[str] = None
+    # Whether every content item of the *source* pack is tightly coupled.
+    # For a derived pack this value is propagated from its source pack (a derived
+    # pack must never recompute it, see ``Pack.is_exclusively_managed_paired``).
+    exclusively_managed_paired: bool = False
 
     @classmethod
     def from_orm(cls, obj) -> "Pack":
@@ -271,6 +275,47 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         return any(
             self._is_item_tightly_coupled(content_item)
             for content_item in self.content_items
+        )
+
+    def is_exclusively_managed_paired(self) -> bool:
+        """Whether *all* of the pack's content items are tightly coupled.
+
+        This is the ``all`` sibling of ``is_managed_paired`` (which is an ``any``):
+        a pack is exclusively managed-paired only when every one of its content
+        items would be carried into its managed twin.
+
+        The rule:
+            - a derived twin does not recompute the value: its own ``content_items``
+              collection holds only the tightly coupled subset, so recomputing would
+              always yield True. It returns the value propagated from its source pack
+              (the ``exclusively_managed_paired`` field), guaranteeing both halves
+              of the pair report the same value.
+            - a pack that has no twin at all (``is_managed_paired`` is False) is never
+              exclusively paired.
+            - only items that can travel to managed content are considered: test items
+              (``CONTENT_TYPES_EXCLUDED_FROM_UPLOAD``) are ignored. The set is
+              marketplace-independent.
+            - a pack with no considered items is not exclusively paired.
+            - an item opting out via ``excludefromtightlycoupled``, and a deprecated
+              item, are not tightly coupled (see ``_is_item_tightly_coupled``), so a
+              single such item makes the whole pack not exclusively paired.
+
+        Returns:
+            True if every considered content item is tightly coupled, False otherwise.
+        """
+        if self.is_derived:
+            return self.exclusively_managed_paired
+        if not self.is_managed_paired():
+            return False
+        considered = [
+            content_item
+            for content_item in self.content_items
+            if content_item.content_type not in CONTENT_TYPES_EXCLUDED_FROM_UPLOAD
+        ]
+        if not considered:
+            return False
+        return all(
+            self._is_item_tightly_coupled(content_item) for content_item in considered
         )
 
     @property
@@ -587,6 +632,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         # content) pair. Flag-gated: while ENABLE_SPLIT_PACKS is off the key is omitted entirely.
         if ENABLE_SPLIT_PACKS:
             metadata["managedPaired"] = self.is_managed_paired()
+            # Pack-level only (unlike `managedPaired`, which also exists per content item):
+            # True only when *all* of the pack's non-test items are tightly coupled.
+            metadata["exclusivelyManagedPaired"] = self.is_exclusively_managed_paired()
         self._clean_empty_supportedModuels_from_commands(
             metadata.get("contentItems", {})
         )

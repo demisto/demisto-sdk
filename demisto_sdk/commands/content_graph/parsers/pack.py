@@ -57,6 +57,7 @@ from demisto_sdk.commands.content_graph.strict_objects.pack_meta_data import (
 from demisto_sdk.commands.content_graph.strict_objects.release_notes_config import (
     StrictReleaseNotesConfig,
 )
+from demisto_sdk.commands.upload.constants import CONTENT_TYPES_EXCLUDED_FROM_UPLOAD
 
 
 class PackContentItems:
@@ -434,6 +435,50 @@ class PackParser(BaseContentParser, PackMetadataParser):
             for item in item_list
         )
 
+    @cached_property
+    def exclusively_managed_paired(self) -> bool:
+        """Whether *all* of the pack's content items are tightly coupled.
+
+        This is the ``all`` sibling of the ``any`` condition that turns a pack
+        into the source half of a managed pair: the pack is exclusively
+        managed-paired only when every one of its content items would be carried
+        into its managed twin.
+
+        Kept in sync with ``Pack.is_exclusively_managed_paired``
+        (``objects/pack.py``), which mirrors this rule on the object side. The
+        derived twin never recomputes it: it copies this value verbatim (see
+        ``DerivedPackParser.__init__``), because its own ``content_items``
+        collection holds only the tightly coupled subset and would therefore
+        always read True.
+
+        The rule:
+            - a pack that may not yield a twin at all (see
+              ``_is_derived_pack_eligible``) is never exclusively paired;
+            - only items that can travel to managed content are considered: test
+              items (``CONTENT_TYPES_EXCLUDED_FROM_UPLOAD``) are ignored, which
+              keeps the value marketplace-independent;
+            - a pack with no considered items is not exclusively paired;
+            - every considered item must be tightly coupled - a single item that
+              is deprecated or opts out via ``excludefromtightlycoupled`` (see
+              ``_is_item_tightly_coupled``) makes the whole pack not exclusively
+              paired. Requiring *all* of them subsumes the ``any`` condition of
+              the managed-paired rule.
+
+        Returns:
+            True if every considered content item is tightly coupled, False otherwise.
+        """
+        if not self._is_derived_pack_eligible():
+            return False
+        considered = [
+            item
+            for item_list in self.content_items.iter_lists()
+            for item in item_list
+            if item.content_type not in CONTENT_TYPES_EXCLUDED_FROM_UPLOAD
+        ]
+        if not considered:
+            return False
+        return all(self._is_item_tightly_coupled(item) for item in considered)
+
     def _generate_derived_pack(self) -> Optional["DerivedPackParser"]:
         """Generate a derived pack for split-pack candidates.
 
@@ -676,7 +721,8 @@ class DerivedPackParser:
     candidates.  They do not correspond to a physical directory on disk — they
     inherit most properties from the original ``PackParser`` and override only
     the fields that distinguish them (``object_id``, ``managed``, ``source``,
-    ``is_derived``, ``derived_from``).
+    ``is_derived``, ``derived_from``), while inheriting the source pack's
+    ``exclusively_managed_paired`` verbatim.
 
     The ``content_type`` is set to ``ContentType.PACK`` so the graph builder
     treats it like a regular pack node.
@@ -742,6 +788,10 @@ class DerivedPackParser:
         self.internal = original_parser.internal
         self.is_derived = True
         self.derived_from = original_parser.object_id
+        # Inherited as-is from the source pack: the twin only holds the tightly
+        # coupled subset, so recomputing it here would always yield True and the
+        # two halves of the pair would disagree.
+        self.exclusively_managed_paired = original_parser.exclusively_managed_paired
 
         # Derived packs share content items with the original but have
         # their own relationships (the second IN_PACK edges).

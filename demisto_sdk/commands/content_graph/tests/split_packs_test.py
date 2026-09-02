@@ -2646,6 +2646,204 @@ class TestManagedPairedEndToEnd:
             f"covers every entry, not just the first; offending entries: {offenders!r}"
         )
 
+
+# ---------------------------------------------------------------------------
+# Pack level `exclusivelyManagedPaired` key in the dumped metadata.json
+# ---------------------------------------------------------------------------
+
+
+class TestExclusivelyManagedPairedMetadata:
+    """Tests for the top level ``exclusivelyManagedPaired`` key written by ``Pack.dump_metadata``.
+
+    ``managedPaired`` is an ``any`` (the pack owns at least one tightly coupled item, so a twin
+    is generated). ``exclusivelyManagedPaired`` is its ``all`` sibling: EVERY considered item of
+    the pack travels into that twin, i.e. the marketplace half is left with nothing.
+
+    Only items that can reach managed content are considered - test items
+    (``CONTENT_TYPES_EXCLUDED_FROM_UPLOAD``) are ignored - and a pack with no considered items
+    is never exclusively paired.
+
+    Like the neighbouring ``managedPaired`` suites these drive the real ``Pack.dump_metadata``
+    against a real ``Pack`` and read the written JSON back, and they reuse the same shared
+    builders so the suites cannot drift apart.
+    """
+
+    @staticmethod
+    def _make_pack(**kwargs):
+        """Reuses the single shared real-``Pack`` factory used by the ``managedPaired`` suites."""
+        return TestManagedPairedContentItemMetadata._make_pack(**kwargs)
+
+    @staticmethod
+    def _dump(pack, tmp_path: Path) -> dict:
+        """Reuses the existing real-writer dump helper - one file, read back as JSON."""
+        return TestManagedPairedContentItemMetadata._dump(pack, tmp_path)
+
+    @staticmethod
+    def _enable_flag(mocker) -> None:
+        """Turns on the gate that guards the PACK level keys.
+
+        ``ENABLE_SPLIT_PACKS`` is bound at import time in each consuming module, and
+        ``exclusivelyManagedPaired`` is written by ``objects.pack`` - the same binding that
+        gates the top level ``managedPaired`` key.
+        """
+        mocker.patch(
+            "demisto_sdk.commands.content_graph.objects.pack.ENABLE_SPLIT_PACKS", True
+        )
+
+    @classmethod
+    def _make_twin(cls, source):
+        """Builds the derived twin the parser would generate for ``source``.
+
+        ``DerivedPackParser`` copies ``exclusively_managed_paired`` from the original parser
+        verbatim, and the twin never recomputes it (its own ``content_items`` hold only the
+        tightly coupled subset, which would always read True). This mirrors that copy, so the
+        assertions below prove the two halves of the pair report the same value.
+        """
+        twin = cls._make_pack(
+            with_integration=True,
+            managed=True,
+            is_derived=True,
+            derived_from=source.object_id,
+        )
+        twin.exclusively_managed_paired = source.is_exclusively_managed_paired()
+        return twin
+
+    @staticmethod
+    def _add_test_playbook(pack, object_id: str = "MyTestPlaybook") -> None:
+        """Appends a TEST_PLAYBOOK to an existing pack built by the shared factory."""
+        from demisto_sdk.commands.common.constants import MarketplaceVersions
+        from demisto_sdk.commands.content_graph.objects.test_playbook import (
+            TestPlaybook,
+        )
+
+        pack.content_items.test_playbook.append(
+            TestPlaybook(
+                id=object_id,
+                content_type=ContentType.TEST_PLAYBOOK,
+                node_id=f"{ContentType.TEST_PLAYBOOK}:{object_id}",
+                path=Path(f"{object_id}.yml"),
+                fromversion="6.0.0",
+                toversion="99.99.99",
+                display_name=object_id,
+                name=object_id,
+                marketplaces=[MarketplaceVersions.XSOAR],
+                deprecated=False,
+                is_test=True,
+            )
+        )
+
+    def test_pack_whose_every_item_is_tightly_coupled_is_true_on_both_halves(
+        self, mocker, tmp_path
+    ):
+        """A pack holding nothing but an integration is emptied by the split, so BOTH the
+        source's and the twin's metadata must say True."""
+        assert (
+            ContentType.INTEGRATION in TIGHTLY_COUPLED_TYPES
+        ), "test premise: an integration must be tightly coupled, otherwise this case asserts nothing"
+        self._enable_flag(mocker)
+        source = self._make_pack(with_integration=True)
+
+        source_metadata = self._dump(source, tmp_path)
+
+        assert "exclusivelyManagedPaired" in source_metadata, (
+            "with ENABLE_SPLIT_PACKS on, dump_metadata must emit the top level "
+            f"`exclusivelyManagedPaired` key; got top level keys {sorted(source_metadata)}"
+        )
+        assert source_metadata["exclusivelyManagedPaired"] is True, (
+            f"every content item of the pack is tightly coupled, so all of them travel into the "
+            f"twin and the key must be True; got {source_metadata['exclusivelyManagedPaired']!r}"
+        )
+
+        twin_metadata = self._dump(self._make_twin(source), tmp_path)
+
+        assert twin_metadata["exclusivelyManagedPaired"] is True, (
+            f"the twin inherits the source's verdict verbatim, so both halves of the pair must "
+            f"report the same value; got {twin_metadata['exclusivelyManagedPaired']!r}"
+        )
+
+    def test_mixed_pack_is_false_on_both_halves_while_managed_paired_stays_true(
+        self, mocker, tmp_path
+    ):
+        """Integration + playbook: the pack DOES split (``managedPaired`` True), but the playbook
+        stays behind, so ``exclusivelyManagedPaired`` is False - the distinction between the keys."""
+        assert (
+            ContentType.PLAYBOOK not in TIGHTLY_COUPLED_TYPES
+        ), "test premise: a playbook must be loosely coupled, otherwise this case asserts nothing"
+        self._enable_flag(mocker)
+        source = self._make_pack(with_integration=True, with_playbook=True)
+
+        source_metadata = self._dump(source, tmp_path)
+
+        assert source_metadata["managedPaired"] is True, (
+            f"the pack owns a tightly coupled integration, so a twin IS generated and the `any` key "
+            f"must stay True; got {source_metadata['managedPaired']!r}"
+        )
+        assert source_metadata["exclusivelyManagedPaired"] is False, (
+            f"the loosely coupled playbook remains on the marketplace half, so not every item is "
+            f"paired and the `all` key must be False; got "
+            f"{source_metadata['exclusivelyManagedPaired']!r}"
+        )
+
+        twin_metadata = self._dump(self._make_twin(source), tmp_path)
+
+        assert twin_metadata["exclusivelyManagedPaired"] is False, (
+            f"the twin holds only the integration, but it must NOT recompute the value - it reports "
+            f"the source's False; got {twin_metadata['exclusivelyManagedPaired']!r}"
+        )
+
+    def test_test_only_items_are_ignored(self, mocker, tmp_path):
+        """A test playbook cannot travel to managed content, so it must not keep the pack from
+        being exclusively paired."""
+        assert ContentType.TEST_PLAYBOOK not in TIGHTLY_COUPLED_TYPES, (
+            "test premise: a test playbook is not tightly coupled, so it could only pass the `all` "
+            "gate by being excluded from the considered set"
+        )
+        self._enable_flag(mocker)
+        source = self._make_pack(with_integration=True)
+        self._add_test_playbook(source)
+
+        source_metadata = self._dump(source, tmp_path)
+
+        assert source_metadata["exclusivelyManagedPaired"] is True, (
+            f"test items are excluded from the considered set, so the only considered item is the "
+            f"tightly coupled integration; got {source_metadata['exclusivelyManagedPaired']!r}"
+        )
+
+    def test_opted_out_integration_makes_the_pack_not_exclusively_paired(
+        self, mocker, tmp_path
+    ):
+        """A single item carrying ``excludefromtightlycoupled`` is enough to close the `all` gate."""
+        self._enable_flag(mocker)
+        source = self._make_pack(with_integration=True)
+        source.content_items.integration[0].exclude_from_tightly_coupled = True
+
+        source_metadata = self._dump(source, tmp_path)
+
+        assert source_metadata["exclusivelyManagedPaired"] is False, (
+            f"the pack's only integration opted out of being tightly coupled, so it is not carried "
+            f"into a twin and the key must be False; got "
+            f"{source_metadata['exclusivelyManagedPaired']!r}"
+        )
+
+    def test_pack_with_no_content_items_is_false(self, mocker, tmp_path):
+        """An empty considered set is never exclusively paired - ``all([])`` must not leak True."""
+        self._enable_flag(mocker)
+        source = self._make_pack()
+
+        source_metadata = self._dump(source, tmp_path)
+
+        assert "exclusivelyManagedPaired" in source_metadata, (
+            "the key must be emitted even when False - consumers must be able to tell 'not "
+            f"exclusively paired' apart from 'field not supported'; got top level keys "
+            f"{sorted(source_metadata)}"
+        )
+        assert source_metadata["exclusivelyManagedPaired"] is False, (
+            f"a pack with no considered content items has nothing to pair, so the vacuous truth of "
+            f"`all([])` must not surface as True; got "
+            f"{source_metadata['exclusivelyManagedPaired']!r}"
+        )
+
+
 class TestSplitPackDependencySweep:
     """Tests for the final sweep that severs dependencies of managed packs.
 

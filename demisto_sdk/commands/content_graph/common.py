@@ -453,7 +453,6 @@ TIGHTLY_COUPLED_TYPES: frozenset[ContentType] = frozenset(
         ContentType.INTEGRATION,
         ContentType.MODELING_RULE,
         ContentType.PARSING_RULE,
-        ContentType.CORRELATION_RULE,
         ContentType.ASSETS_MODELING_RULE,
         ContentType.MAPPER,
         ContentType.CLASSIFIER,
@@ -462,8 +461,6 @@ TIGHTLY_COUPLED_TYPES: frozenset[ContentType] = frozenset(
         ContentType.INDICATOR_FIELD,
         ContentType.INDICATOR_TYPE,
         ContentType.CASE_FIELD,
-        ContentType.AGENTIX_AGENT,
-        ContentType.AGENTIX_ACTION,
     }
 )
 

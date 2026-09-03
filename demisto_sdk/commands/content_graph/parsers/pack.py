@@ -525,9 +525,13 @@ class PackParser(BaseContentParser, PackMetadataParser):
             derived_id=derived_id,
         )
 
-        # Add second IN_PACK edge for each tightly coupled item
+        # Share the tightly coupled items with the twin and add a second IN_PACK
+        # edge for each. The twin holds the *same* item objects as the source -
+        # it does not own copies - so `Pack.to_nodes` must not emit them again
+        # (see the `is_derived` guard there).
         for item in tightly_coupled_items:
             item.add_to_pack(derived_id)
+            derived.content_items.append(item)
             derived.relationships.update(item.relationships)
 
         return derived

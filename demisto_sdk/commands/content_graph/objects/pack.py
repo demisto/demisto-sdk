@@ -1007,12 +1007,27 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             )
 
     def to_nodes(self) -> Nodes:
+        # A derived (split) pack shares the *same* content item objects as its
+        # source pack. Content item nodes are written with CREATE (not MERGE)
+        # and have no uniqueness constraint, so emitting them from both packs
+        # would create a duplicate node per item. The source pack emits the item
+        # nodes; the twin contributes only its own pack node. Its second IN_PACK
+        # edge travels on the separate relationships rail and is MERGEd, so it
+        # still binds correctly to the single item node.
+        if self.is_derived:
+            return Nodes(self.to_dict())
         return Nodes(
             self.to_dict(),
             *[content_item.to_dict() for content_item in self.content_items],
         )
 
     def save(self):
+        # A derived (split) pack is virtual: it has no pack_metadata.json of its
+        # own, and `self.path` points at the *source* pack's directory. Saving
+        # would therefore silently rewrite the source pack's real metadata file.
+        if self.is_derived:
+            logger.debug(f"Skipping save for derived pack {self.object_id}")
+            return
         file_path = self.path / PACK_METADATA_FILENAME
         data = get_file(file_path)
         # Never inject ``firstCreated`` if it was not already in the original

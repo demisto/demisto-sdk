@@ -3,7 +3,7 @@ import time
 from functools import lru_cache
 from multiprocessing.pool import Pool
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import tqdm
 from pydantic import BaseModel, DirectoryPath
@@ -11,10 +11,16 @@ from pydantic import BaseModel, DirectoryPath
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.cpu_count import cpu_count
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.content_graph.common import (
+    PackDestination,
+)
 from demisto_sdk.commands.content_graph.objects.connector import Connector
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.parsers.repository import RepositoryParser
+
+json = JSON_Handler()
 
 USE_MULTIPROCESSING = False  # toggle this for better debugging
 
@@ -104,11 +110,15 @@ class ContentDTO(BaseModel):
         zip: bool = True,
         packs_to_dump: Optional[list] = None,
         output_stem: str = "content_packs",  # without extension
+        destination: Optional[PackDestination] = None,
         **kwargs,
     ):
         """Dumps all (or selected) packs to ``dir``.
 
         Args:
+            destination: When set, only packs matching this destination are
+                dumped.  ``None`` (default) dumps all packs — preserving
+                backward compatibility.
             **kwargs: Optional flags forwarded to ``Pack.dump``. The only
                 upload-specific flag currently recognized is
                 ``strip_internal`` (set by the ``demisto-sdk upload`` flow
@@ -122,6 +132,12 @@ class ContentDTO(BaseModel):
             if packs_to_dump is not None
             else self.packs
         )
+
+        # Apply destination filter if specified
+        if destination is not None:
+            packs_to_dump = [
+                pack for pack in packs_to_dump if pack.destination == destination
+            ]
 
         if not packs_to_dump:
             logger.debug("didn't got packs to dump, skipping")
@@ -143,7 +159,7 @@ class ContentDTO(BaseModel):
                 pool.starmap(
                     dump_fn,
                     (
-                        (pack, dir / pack.path.name, marketplace)
+                        (pack, self._artifact_path(dir, pack), marketplace)
                         for pack in packs_to_dump
                     ),
                 )
@@ -151,7 +167,7 @@ class ContentDTO(BaseModel):
         else:
             for pack in packs_to_dump:
                 pack.dump(
-                    dir / pack.path.name,
+                    self._artifact_path(dir, pack),
                     marketplace,
                     **kwargs,
                 )
@@ -162,6 +178,125 @@ class ContentDTO(BaseModel):
         if zip:
             shutil.make_archive(str(dir.parent / output_stem), "zip", dir)
             shutil.rmtree(dir)
+
+    @staticmethod
+    def _artifact_path(output_dir: Path, pack: Pack) -> Path:
+        """Compute the artifact output path for a pack.
+
+        For derived packs, the directory name uses the derived pack ID
+        (e.g., ``FireEyeManaged``), materializing a separate directory.
+        For regular packs, the directory name is the pack's source
+        directory name (``pack.path.name``).
+        """
+        if getattr(pack, "is_derived", False):
+            return output_dir / pack.object_id
+        return output_dir / pack.path.name
+
+    def get_pack_destination_mapping(self) -> Dict[str, PackDestination]:
+        """Returns ``{pack_id: destination}`` for all packs."""
+        return {pack.object_id: pack.destination for pack in self.packs}
+
+    def get_derived_pack_mapping(self) -> Dict[str, str]:
+        """Returns ``{derived_pack_id: original_pack_id}`` for derived packs."""
+        return {
+            pack.object_id: pack.derived_from
+            for pack in self.packs
+            if getattr(pack, "is_derived", False) and pack.derived_from
+        }
+
+    def write_pack_destinations(
+        self,
+        output_path: Path,
+        artifacts_dir: Optional[Path] = None,
+        managed_artifacts_dir: Optional[Path] = None,
+    ) -> None:
+        """Write ``pack_destinations.json`` — the SDK→infra routing contract.
+
+        Args:
+            output_path: File path to write the JSON artifact.
+            artifacts_dir: Directory that regular (non-managed) packs are
+                dumped into — i.e. the ``dir`` passed to ``ContentDTO.dump``.
+                Relative paths are made absolute. When ``None`` (legacy
+                two-argument call), ``output_path.parent`` is used for every
+                pack, preserving the historical output.
+            managed_artifacts_dir: Directory that managed packs are dumped
+                into — i.e. the ``dir`` passed to the managed
+                ``ContentDTO.dump`` call. Relative paths are made absolute.
+                When ``artifacts_dir`` is supplied without it, no managed dump
+                happened, so managed packs are still written but with an empty
+                ``artifact_path`` — they are never routed to the regular
+                artifacts directory.
+
+        Each emitted pack entry carries ``current_version`` — the pack's
+        version as recorded on the graph (``pack_metadata.json``'s
+        ``currentVersion``). An empty value is normalized to ``None`` so
+        consumers can decide what to upload without opening the artifact.
+        """
+        entries: List[Dict[str, Any]] = []
+        no_managed_artifacts = (
+            artifacts_dir is not None and managed_artifacts_dir is None
+        )
+        for pack in self.packs:
+            # The pack version is surfaced as-is from the graph, with empty
+            # values normalized to ``None`` so consumers never see an empty
+            # string.
+            graph_current_version = getattr(pack, "current_version", None)
+            current_version: Optional[str] = (
+                graph_current_version
+                if isinstance(graph_current_version, str) and graph_current_version
+                else None
+            )
+            entry: Dict[str, Any] = {
+                "pack_id": pack.object_id,
+                "pack_name": pack.name,
+                "current_version": current_version,
+                "destination": pack.destination.value.upper(),
+                "source_path": str(pack.path),
+                "is_derived": getattr(pack, "is_derived", False),
+                "parent_pack_id": getattr(pack, "derived_from", None),
+                "managed": pack.managed or False,
+                "source": pack.source or "",
+            }
+            # ``dump()`` writes managed packs into ``managed_artifacts_dir``
+            # and regular packs into ``artifacts_dir``. When no dump directory
+            # was supplied (legacy two-argument call), fall back to the
+            # directory holding this JSON artifact.
+            base_dir: Optional[Path]
+            if artifacts_dir is None:
+                base_dir = output_path.parent
+            elif pack.managed:
+                base_dir = (
+                    None
+                    if managed_artifacts_dir is None
+                    else managed_artifacts_dir.absolute()
+                )
+            else:
+                base_dir = artifacts_dir.absolute()
+            # Delegate the last path segment to the same helper ``dump()``
+            # uses, so the recorded path can never drift from the real one.
+            entry["artifact_path"] = (
+                "" if base_dir is None else str(self._artifact_path(base_dir, pack))
+            )
+            if getattr(pack, "is_derived", False):
+                entry["content_items"] = [
+                    f"{ci.content_type.value}-{ci.object_id}"
+                    for ci in pack.content_items
+                    if pack._is_item_tightly_coupled(ci)
+                ]
+            entries.append(entry)
+
+        if no_managed_artifacts:
+            managed_count = sum(1 for pack in self.packs if pack.managed)
+            if managed_count:
+                logger.info(
+                    f"No managed_artifacts_dir supplied: {managed_count} managed packs written with an empty artifact_path"
+                )
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write(json.dumps({"packs": entries}, indent=2))
+        logger.info(
+            f"Wrote pack_destinations.json with {len(entries)} entries to {output_path}"
+        )
 
     class Config:
         orm_mode = True

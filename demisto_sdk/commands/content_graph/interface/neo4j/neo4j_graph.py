@@ -34,6 +34,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints impo
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
     create_pack_dependencies,
     get_all_level_packs_relationships,
+    prune_severed_dependencies,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.import_export import (
     export_graphml,
@@ -43,6 +44,9 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.import_export im
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import (
     create_indexes,
+)
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.isolation import (
+    isolate_managed_packs,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
     _match,
@@ -963,6 +967,32 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         logger.info("Creating pack dependencies...")
         with self.driver.session() as session:
             self._depends_on = session.execute_write(create_pack_dependencies)
+
+    def isolate_managed_packs(self) -> List[Tuple[str, str]]:
+        """Severs every relationship crossing the boundary of a managed pack.
+
+        The cached ``depends_on`` mapping is pruned in place with the severed
+        pairs. It is captured by :meth:`create_pack_dependencies`, which runs
+        *before* this step, and it is what ``export_graph`` serializes into
+        ``depends_on.json`` - so without pruning the artifact would advertise
+        dependencies that no longer exist in the graph. Pruning here rather
+        than at each call site keeps the graph and the artifact consistent for
+        every caller.
+
+        Returns:
+            The ``(source_pack_id, target_pack_id)`` pairs of the pack-level
+            dependencies that were deleted.
+        """
+        logger.info("Isolating managed packs...")
+        with self.driver.session() as session:
+            severed_dependencies: List[Tuple[str, str]] = session.execute_write(
+                isolate_managed_packs
+            )
+        if severed_dependencies and self._depends_on:
+            self._depends_on = prune_severed_dependencies(
+                self._depends_on, set(severed_dependencies)
+            )
+        return severed_dependencies
 
     def is_alive(self):
         return neo4j_service.is_alive()

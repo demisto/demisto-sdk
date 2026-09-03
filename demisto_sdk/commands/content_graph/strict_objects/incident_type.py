@@ -18,6 +18,9 @@ class _StrictIncidentType(BaseStrictModel):
     marketplaces: Optional[List[MarketplaceVersions]] = Field(
         None, alias="marketplaces"
     )
+    exclude_from_tightly_coupled: Optional[bool] = Field(
+        None, alias="excludefromtightlycoupled"
+    )
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 
 

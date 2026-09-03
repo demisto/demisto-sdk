@@ -3759,3 +3759,66 @@ class TestAgentixBaseParser:
             agentix_action_path, list(MarketplaceVersions), pack_supported_modules=[]
         )
         assert parser.toversion == DEFAULT_CONTENT_ITEM_TO_VERSION
+
+    def test_agentix_action_parser_long_running_fields(self, pack: Pack):
+        """
+        Given:
+            - An agentix action with islongrunning and longrunningtimeoutseconds set.
+        When:
+            - Creating the content item's parser.
+        Then:
+            - Verify the long-running fields are parsed from the yml.
+        """
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        # given
+        agentix_action_data = load_yaml("agentix_action.yml")
+        agentix_action_data["islongrunning"] = True
+        agentix_action_data["longrunningtimeoutseconds"] = 120
+        agentix_action = pack.create_agentix_action(
+            "TestAgentixActionLongRunning", agentix_action_data
+        )
+        agentix_action_path = Path(agentix_action.path)
+
+        # when
+        parser = AgentixActionParser(
+            agentix_action_path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+
+        # then
+        assert parser.is_long_running is True
+        assert parser.long_running_timeout_seconds == 120
+
+    def test_agentix_action_parser_long_running_defaults(self, pack: Pack):
+        """
+        Given:
+            - An agentix action without the long-running fields.
+        When:
+            - Creating the content item's parser.
+        Then:
+            - Verify is_long_running defaults to False and
+              long_running_timeout_seconds defaults to None.
+        """
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        # given
+        agentix_action_data = load_yaml("agentix_action.yml")
+        agentix_action_data.pop("islongrunning", None)
+        agentix_action_data.pop("longrunningtimeoutseconds", None)
+        agentix_action = pack.create_agentix_action(
+            "TestAgentixActionNoLongRunning", agentix_action_data
+        )
+        agentix_action_path = Path(agentix_action.path)
+
+        # when
+        parser = AgentixActionParser(
+            agentix_action_path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+
+        # then
+        assert parser.is_long_running is False
+        assert parser.long_running_timeout_seconds is None

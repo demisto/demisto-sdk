@@ -161,7 +161,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     # Whether every content item of the *source* pack is tightly coupled.
     # For a derived pack this value is propagated from its source pack (a derived
     # pack must never recompute it, see ``Pack.is_exclusively_managed_paired``).
-    exclusively_managed_paired: bool = False
+    # Internal, propagation-only: `exclude=True` keeps it out of the model dump that
+    # builds `metadata.json`, where the value is exposed only under its camelCase
+    # key `exclusivelyManagedPaired` (injected explicitly by `dump_metadata`).
+    exclusively_managed_paired: bool = Field(False, exclude=True)
 
     @classmethod
     def from_orm(cls, obj) -> "Pack":

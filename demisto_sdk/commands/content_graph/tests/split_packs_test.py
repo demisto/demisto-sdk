@@ -2843,6 +2843,35 @@ class TestExclusivelyManagedPairedMetadata:
             f"{source_metadata['exclusivelyManagedPaired']!r}"
         )
 
+    def test_internal_snake_case_field_never_reaches_the_metadata(
+        self, mocker, tmp_path
+    ):
+        """Regression: the internal ``exclusively_managed_paired`` model field must not be dumped.
+
+        The value is exposed under exactly one public key - the camelCase
+        ``exclusivelyManagedPaired`` injected by ``dump_metadata``. The Pydantic field that
+        carries it between the source pack and its twin is propagation-only, so a plain
+        (non-excluded) declaration would leak a second, snake_case key into ``metadata.json``.
+        Both halves of the pair are checked, because the twin is the one that actually holds a
+        non-default value for the field.
+        """
+        self._enable_flag(mocker)
+        source = self._make_pack(with_integration=True)
+
+        for half, metadata in (
+            ("source", self._dump(source, tmp_path)),
+            ("twin", self._dump(self._make_twin(source), tmp_path)),
+        ):
+            assert "exclusively_managed_paired" not in metadata, (
+                f"the {half}'s metadata.json must not contain the internal snake_case field - "
+                f"only `exclusivelyManagedPaired` is public; got top level keys "
+                f"{sorted(metadata)}"
+            )
+            assert "exclusivelyManagedPaired" in metadata, (
+                f"excluding the internal field must not remove the public key from the {half}'s "
+                f"metadata.json; got top level keys {sorted(metadata)}"
+            )
+
 
 class TestSplitPackDependencySweep:
     """Tests for the final sweep that severs dependencies of managed packs.

@@ -1663,6 +1663,170 @@ class TestConnectorAwareInitializerCrossMatch:
         assert connector_b.xsoar_handlers[0].related_integration is graph_int_b
 
 
+class TestConnectorAwareInitializerStash:
+    """Tests for the CO192 stash populated by
+    ``ConnectorAwareInitializer._remove_unmatched_integrations`` and read
+    through ``get_integrations_without_connector_handler``.
+
+    Focus:
+
+    * Unmatched integrations are stashed BEFORE eviction (so CO192 sees
+      what the initializer just dropped).
+    * The stash is a frozen set (validators must not mutate the
+      initializer's view).
+    * Every ``gather_objects_to_run_on`` call resets/re-assigns the stash,
+      so a run with everything covered does not inherit a previous run's
+      value.
+    * The gather post-filter drops partner/community-supported integrations
+      (they are out of scope for the connector flow, so they must not
+      appear in the CO192 stash as false positives).
+    """
+
+    @pytest.fixture(autouse=True)
+    def _reset_stash(self):
+        # Isolate every test from a prior test's stash. The stash is a
+        # class attribute, so leakage across cases is easy to miss.
+        ConnectorAwareInitializer._integrations_without_connector_handler = frozenset()
+        yield
+        ConnectorAwareInitializer._integrations_without_connector_handler = frozenset()
+
+    def test_unmatched_integration_populates_stash(self):
+        """
+        Given: An integration in the working set with no connector handler
+               referencing it (Phase 1 fails, Phase 2a graph returns no
+               connectors).
+        When: ``_cross_match_and_expand`` runs to completion.
+        Then: The integration is dropped from the returned set AND is
+              stashed on ``_integrations_without_connector_handler``. CO192
+              reads this stash instead of ``content_items``.
+        """
+        integration = create_integration_object(
+            paths=["commonfields.id", "name"],
+            values=["UnrelatedInt", "UnrelatedInt"],
+        )
+
+        initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
+
+        with patch.object(
+            ConnectorAwareInitializer, "_all_graph_connectors", return_value=[]
+        ):
+            result = initializer._cross_match_and_expand({integration}, set())
+
+        assert integration not in result  # matches existing cleanup behaviour
+        stash = ConnectorAwareInitializer.get_integrations_without_connector_handler()
+        assert isinstance(stash, frozenset)
+        # Compare by object_id -- pydantic models may go through
+        # copy/hash-round-trip when placed into a frozenset in some code
+        # paths, so identity assertions can be flaky across pydantic
+        # versions. object_id captures the behavioural contract ("the same
+        # integration ended up in the stash").
+        assert integration.object_id in {i.object_id for i in stash}
+
+    def test_covered_integration_is_not_stashed(self):
+        """
+        Given: An integration and a connector whose handler references it
+               (Phase 1 pairs them).
+        When: ``_cross_match_and_expand`` runs to completion.
+        Then: The stash is emptied (assigned an empty frozenset) - the
+              integration must not appear in the CO192 report.
+        """
+        connector = create_connector_object()
+        integration = create_integration_object()
+
+        initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
+
+        # Seed the stash with a stale value from a hypothetical previous run
+        # so the assertion below actually proves the cleanup step overwrites
+        # it rather than accidentally leaving the fixture's reset in place.
+        ConnectorAwareInitializer._integrations_without_connector_handler = frozenset(
+            {create_integration_object()}
+        )
+
+        with patch.object(
+            ConnectorAwareInitializer, "_all_graph_connectors", return_value=[]
+        ):
+            initializer._cross_match_and_expand({integration}, {connector})
+
+        assert (
+            ConnectorAwareInitializer.get_integrations_without_connector_handler()
+            == frozenset()
+        )
+
+    def test_stash_is_frozen(self):
+        """
+        Given: The stash's default (empty frozenset).
+        When: A caller tries to mutate it.
+        Then: An AttributeError is raised. This is what stops a buggy
+              validator from corrupting the initializer's view by
+              ``got.add(...)``-ing on the returned set.
+        """
+        stash = ConnectorAwareInitializer.get_integrations_without_connector_handler()
+
+        assert isinstance(stash, frozenset)
+        with pytest.raises(AttributeError):
+            stash.add(create_integration_object())  # type: ignore[attr-defined]
+
+    def test_stash_reset_across_runs(self):
+        """
+        Given: A first run that stashes an uncovered integration.
+        When: A second run that has nothing uncovered goes through
+              ``_remove_unmatched_integrations``.
+        Then: The stash is reset to an empty frozenset - the second run
+              does not inherit the first run's value.
+        """
+        first_uncovered = create_integration_object(
+            paths=["commonfields.id", "name"], values=["Uncov1", "Uncov1"]
+        )
+        initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
+
+        with patch.object(
+            ConnectorAwareInitializer, "_all_graph_connectors", return_value=[]
+        ):
+            initializer._cross_match_and_expand({first_uncovered}, set())
+
+        assert first_uncovered.object_id in {
+            i.object_id
+            for i in ConnectorAwareInitializer.get_integrations_without_connector_handler()
+        }
+
+        # Second run: everything covered.
+        integration = create_integration_object()
+        connector = create_connector_object()
+        with patch.object(
+            ConnectorAwareInitializer, "_all_graph_connectors", return_value=[]
+        ):
+            initializer._cross_match_and_expand({integration}, {connector})
+
+        assert (
+            ConnectorAwareInitializer.get_integrations_without_connector_handler()
+            == frozenset()
+        )
+
+    def test_multiple_unmatched_all_stashed(self):
+        """
+        Given: Several unmatched integrations in one run.
+        When: ``_cross_match_and_expand`` runs to completion.
+        Then: All of them appear in the stash (CO192 emits one result per
+              offender rather than aggregating).
+        """
+        int_a = create_integration_object(
+            paths=["commonfields.id", "name"], values=["OrphA", "OrphA"]
+        )
+        int_b = create_integration_object(
+            paths=["commonfields.id", "name"], values=["OrphB", "OrphB"]
+        )
+        initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
+
+        with patch.object(
+            ConnectorAwareInitializer, "_all_graph_connectors", return_value=[]
+        ):
+            initializer._cross_match_and_expand({int_a, int_b}, set())
+
+        stash = ConnectorAwareInitializer.get_integrations_without_connector_handler()
+        stash_ids = {i.object_id for i in stash}
+        assert {"OrphA", "OrphB"}.issubset(stash_ids)
+
+
 class TestConnectorAwareInitializerGatherObjects:
     """Tests for ConnectorAwareInitializer.gather_objects_to_run_on filtering."""
 

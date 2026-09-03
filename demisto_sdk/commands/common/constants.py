@@ -2073,6 +2073,7 @@ class PlatformSupportedModules(StrEnum):
     TIM = "tim"
     EMAIL_SECURITY = "email_security"
     XTI = "xti"
+    DATA_SECURITY = "data_security"
 
 
 # The complete set of platform supported modules.

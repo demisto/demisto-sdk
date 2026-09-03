@@ -6,12 +6,12 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     DEPRECATED_DYNAMIC_MODEL,
     NAME_DYNAMIC_MODEL,
     SUFFIXED_ID_DYNAMIC_MODEL,
-    BaseStrictModel,
+    SupportedFeaturesMixin,
     create_model,
 )
 
 
-class _StrictModelingRule(BaseStrictModel):
+class _StrictModelingRule(SupportedFeaturesMixin):
     id_: str = Field(alias="id")
     name: str
     from_version: str = Field(alias="fromversion")

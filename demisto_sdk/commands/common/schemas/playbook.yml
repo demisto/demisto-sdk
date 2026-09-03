@@ -447,6 +447,10 @@ mapping:
     type: seq
     sequence:
     - type: str
+  supportedFeatures:
+    type: seq
+    sequence:
+    - type: str
 # playbook->tasks
   name:xsoar:
     type: str

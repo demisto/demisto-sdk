@@ -7,6 +7,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     NAME_DYNAMIC_MODEL,
     SUFFIXED_ID_DYNAMIC_MODEL,
     BaseStrictModel,
+    SupportedFeaturesMixin,
     create_model,
 )
 
@@ -16,7 +17,7 @@ class HumanCron(BaseStrictModel):
     time_period: Optional[int] = Field(None, alias="timePeriod")
 
 
-class _StrictJob(BaseStrictModel):
+class _StrictJob(SupportedFeaturesMixin):
     id_: str = Field(alias="id")
     custom_fields: Optional[Any] = Field(None, alias="CustomFields")
     account: Optional[str] = None

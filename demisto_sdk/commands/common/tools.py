@@ -29,6 +29,7 @@ from typing import (
     Any,
     Callable,
     Dict,
+    FrozenSet,
     Iterable,
     Iterator,
     List,
@@ -4936,3 +4937,31 @@ def get_parameter_supported_modules(param, item) -> set[str]:
         return set(param_modules)
 
     return get_content_item_supported_modules(item)
+
+
+def get_content_item_supported_features(item) -> Optional[FrozenSet[str]]:
+    """Resolves a content item's effective `supportedFeatures`: its own value,
+    else its pack's, else `None` meaning "supported everywhere".
+
+    Use this when you need the effective value. Validators checking what the
+    author actually wrote should read `.supportedFeatures` directly.
+
+    Returns:
+        A frozenset of feature names, or `None` for "supported everywhere".
+        Branch on `is None`, not truthiness - an empty frozenset means
+        "restricted to features no region enables", which is not the same.
+    """
+    # Imported here to avoid a circular import, as in the supportedModules resolver.
+    from demisto_sdk.commands.content_graph.objects.pack import Pack
+
+    features = getattr(item, "supportedFeatures", None)
+
+    if features is None and not isinstance(item, Pack):
+        pack = getattr(item, "pack", None)
+        if pack is not None:
+            features = getattr(pack, "supportedFeatures", None)
+
+    if features is None:
+        return None
+
+    return frozenset(features)

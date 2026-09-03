@@ -12,12 +12,12 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
     NAME_DYNAMIC_MODEL,
     SUFFIXED_ID_DYNAMIC_MODEL,
-    BaseStrictModel,
+    SupportedFeaturesMixin,
     create_model,
 )
 
 
-class _StrictMapper(BaseStrictModel):
+class _StrictMapper(SupportedFeaturesMixin):
     id_: str = Field(alias="id")
     name: str
     type_: str = Field(alias="type")

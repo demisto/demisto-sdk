@@ -202,6 +202,7 @@ class PackMetadataParser:
         self.hybrid: bool = metadata.get("hybrid") or False
         self.pack_metadata_dict: dict = metadata
         self.supportedModules: Optional[List[str]] = metadata.get("supportedModules")
+        self.supportedFeatures: Optional[List[str]] = metadata.get("supportedFeatures")
         self.source: str = metadata.get("source", "")
         self.managed: bool = metadata.get("managed", False)
         self.internal: bool = metadata.get("internal", False)
@@ -464,6 +465,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
             "excluded_dependencies": "excludedDependencies",
             "modules": "modules",
             "supportedModules": "supportedModules",
+            "supportedFeatures": "supportedFeatures",
             "disable_monthly": "disableMonthly",
             "content_commit_hash": "contentCommitHash",
             "default_data_source_id": "defaultDataSource",

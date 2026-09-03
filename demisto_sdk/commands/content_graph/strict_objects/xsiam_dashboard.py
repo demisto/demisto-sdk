@@ -10,6 +10,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     NAME_DYNAMIC_MODEL,
     SUFFIXED_ID_DYNAMIC_MODEL,
     BaseStrictModel,
+    SupportedFeaturesMixin,
     create_model,
 )
 
@@ -78,7 +79,7 @@ class Metadata(BaseStrictModel):
     cache_ttl: Optional[int] = None
 
 
-class _StrictXSIAMDashboard(BaseStrictModel):
+class _StrictXSIAMDashboard(SupportedFeaturesMixin):
     dashboards_data: List[DashboardsData]  # type:ignore[valid-type]
     widgets_data: List[WidgetsData]  # type:ignore[valid-type]
     metadata: Optional[Metadata] = None

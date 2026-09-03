@@ -121,6 +121,10 @@ mapping:
         type: seq
         sequence:
         - include: section_schema
+  supportedFeatures:
+    type: seq
+    sequence:
+    - type: str
 
 schema;tabs_schema:
   type: any

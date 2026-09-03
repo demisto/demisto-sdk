@@ -10,6 +10,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     ID_DYNAMIC_MODEL,
     NAME_DYNAMIC_MODEL,
     BaseStrictModel,
+    SupportedFeaturesMixin,
     create_model,
 )
 
@@ -89,7 +90,7 @@ DecoderItem = create_model(
 )
 
 
-class _StrictReport(BaseStrictModel):
+class _StrictReport(SupportedFeaturesMixin):
     id_: str = Field(alias="id")
     name: str
     description: str

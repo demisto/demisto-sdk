@@ -27,6 +27,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     NAME_DYNAMIC_MODEL,
     QUICK_ACTION_DYNAMIC_MODEL,
     REQUIRED_DYNAMIC_MODEL,
+    SupportedFeaturesMixin,
     create_dynamic_model,
     create_model,
 )
@@ -52,7 +53,7 @@ class SectionOrderValues(StrEnum):
     AGENTIC_ASSISTANT = "Agentic Assistant"
 
 
-class _Configuration(BaseStrictModel):
+class _Configuration(SupportedFeaturesMixin):
     display: Optional[str] = None
     section: Optional[str] = None
     advanced: Optional[str] = None
@@ -91,7 +92,7 @@ class IntegrationOutput(Output):  # type:ignore[misc,valid-type]
     important_description: Optional[str] = Field(None, alias="importantDescription")
 
 
-class _Command(BaseStrictModel):
+class _Command(SupportedFeaturesMixin):
     name: str
     execution: Optional[bool] = None
     description: str
@@ -202,7 +203,7 @@ class Trigger(BaseStrictModel):
     effects: List[TriggerEffect]
 
 
-class _StrictIntegration(BaseStrictModel):
+class _StrictIntegration(SupportedFeaturesMixin):
     common_fields: CommonFieldsIntegration = Field(..., alias="commonfields")  # type:ignore[valid-type]
     display: str
     beta: Optional[bool] = None

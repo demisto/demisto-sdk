@@ -37,6 +37,7 @@ class AgentixAgentParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AGE
         )
         self.roles: list[str] = self.yml_data.get("roles", [])
         self.sharedwithroles: list[str] = self.yml_data.get("sharedwithroles", [])
+        self.mcps: list[dict] = self.yml_data.get("mcps", [])
         self.add_action_dependencies()
         self.add_skill_dependencies()
         self.add_collection_dependencies()

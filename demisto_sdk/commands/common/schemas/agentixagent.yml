@@ -60,6 +60,14 @@ mapping:
     type: seq
     sequence:
     - type: str
+  mcps:
+    type: seq
+    sequence:
+    - type: map
+      mapping:
+        server_url:
+          type: str
+          required: true
   fromversion:
     type: str
   toversion:

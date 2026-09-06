@@ -382,7 +382,6 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
             self.update_conf_json("playbook")
             self.delete_sourceplaybookid()
             self.remove_empty_fields_from_scripts()
-            self.add_source_field_for_managed_pack()
             self.add_adopted_field_for_managed_pack()
 
             # Update silent playbook for new files only

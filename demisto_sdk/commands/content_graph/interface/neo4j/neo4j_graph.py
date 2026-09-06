@@ -64,6 +64,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships im
     get_targets_by_path,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations import (
+    get_agent_budget_dependencies,
     get_agentix_actions_using_content_items,
     get_items_using_deprecated,
     get_supported_modules_mismatch_commands,
@@ -465,6 +466,29 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             )
             self._add_nodes_to_mapping(agentix_action_nodes)
             return [self._id_to_obj[node.element_id] for node in agentix_action_nodes]
+
+    def get_agent_budget_dependencies(self, changed_ids: List[str]) -> List[dict]:
+        """Return ``[{"agent": <AgentixAgent>, "deps": [<node>, ...]}, ...]`` rows
+        for GR116. An empty ``changed_ids`` selects every agent (validate-all-files).
+
+        The agent node is reconstructed into a real ``AgentixAgent`` object (same
+        interface convention as ``get_agentix_actions_using_content_items``), so the
+        validator can score the agent's own fields and attach it to a
+        ValidationResult. Dependency nodes stay raw so the validator can read each
+        one's path/fromversion/content_type and re-parse them itself.
+        """
+        with self.driver.session() as session:
+            rows = session.execute_read(get_agent_budget_dependencies, changed_ids)
+        agent_nodes = [row["agent"] for row in rows if row.get("agent") is not None]
+        self._add_nodes_to_mapping(agent_nodes)
+        return [
+            {
+                "agent": self._id_to_obj[row["agent"].element_id],
+                "deps": row.get("deps") or [],
+            }
+            for row in rows
+            if row.get("agent") is not None
+        ]
 
     def get_duplicate_pack_display_name(
         self, file_paths: List[str]

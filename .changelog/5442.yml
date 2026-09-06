@@ -1,4 +1,0 @@
-changes:
-- description: Renamed the Connector's ``metadata.category`` field to ``metadata.categories`` (a list of strings, at least one required) to match the updated Connector schema.
-  type: breaking
-pr_number: '5442'

@@ -22,6 +22,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.common.cpu_count import cpu_count
+from demisto_sdk.commands.common.docker_helper import get_python_version_or_default
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
@@ -541,6 +542,13 @@ def group_by_language(
         code_file_path = integration_script.path.parent
         if python_version := integration_script.python_version:
             version = Version(python_version)
+            language = f"{version.major}.{version.minor}"
+        elif integration_script.type == "python":
+            version = get_python_version_or_default(
+                integration_script.docker_image,
+                context="pre-commit",
+                identifier=str(integration_script.path),
+            )
             language = f"{version.major}.{version.minor}"
         else:
             language = integration_script.type

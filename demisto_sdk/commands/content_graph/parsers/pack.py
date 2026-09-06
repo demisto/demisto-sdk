@@ -206,6 +206,13 @@ class PackMetadataParser:
         self.managed: bool = metadata.get("managed", False)
         self.internal: bool = metadata.get("internal", False)
 
+        # Marketplace-suffixed managed/source fields (not private-pack specific).
+        # Kept as-is here; they are resolved into the plain managed/source
+        # per-marketplace during dump
+        # (see MarketplaceSuffixPreparer.prepare_managed_and_source).
+        self.managed_platform: Optional[bool] = metadata.get("managed:platform")
+        self.source_platform: Optional[str] = metadata.get("source:platform")
+
     @property
     def url(self) -> str:
         if "url" in self.pack_metadata_dict and self.pack_metadata_dict["url"]:
@@ -237,15 +244,23 @@ class PackMetadataParser:
     def use_cases(self):
         return [capital_case(c) for c in self.pack_metadata_dict.get("useCases", [])]
 
-    @property
-    def marketplaces(self) -> List[MarketplaceVersions]:
-        marketplaces = self._metadata.get("marketplaces") or PACK_DEFAULT_MARKETPLACES
+    @staticmethod
+    def resolve_marketplaces(
+        metadata: Dict[str, Any],
+    ) -> List[MarketplaceVersions]:
+        """Resolve the pack's marketplaces from a metadata dict, applying the
+        default marketplaces and the xsoar value normalization."""
+        marketplaces = metadata.get("marketplaces") or PACK_DEFAULT_MARKETPLACES
         marketplace_set: Set[MarketplaceVersions] = (
             BaseContentParser.update_marketplaces_set_with_xsoar_values(
                 {MarketplaceVersions(mp) for mp in marketplaces}
             )
         )
         return sorted(list(marketplace_set))
+
+    @property
+    def marketplaces(self) -> List[MarketplaceVersions]:
+        return self.resolve_marketplaces(self._metadata)
 
     def get_author_image_filepath(self, path: Path) -> str:
         if (path / "Author_image.png").is_file():

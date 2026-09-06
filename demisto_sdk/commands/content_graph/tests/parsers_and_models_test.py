@@ -778,6 +778,31 @@ class TestParsersAndModels:
         assert model.is_fetch_assets is True
         assert model.internal is False
 
+    def test_from_path_inherits_pack_marketplaces_when_not_declared(self, pack: Pack):
+        """
+        Given:
+            - A pack whose metadata declares marketplaces ['xsoar', 'platform']
+              and an integration whose YAML does NOT declare a marketplaces field.
+        When:
+            - Parsing the integration standalone via ContentItemParser.from_path
+              (i.e. without passing pack_marketplaces explicitly).
+        Then:
+            - The resolved marketplaces are inherited from the pack metadata and
+              do NOT include 'marketplacev2', so it is not falsely treated as a
+              marketplacev2 item (regression test for false BA130 failures).
+        """
+        from demisto_sdk.commands.content_graph.objects.integration import Integration
+
+        pack.set_data(marketplaces=["xsoar", "platform"])
+        integration = pack.create_integration(yml=load_yaml("integration.yml"))
+
+        model = BaseContent.from_path(Path(integration.path))
+
+        assert isinstance(model, Integration)
+        assert MarketplaceVersions.MarketplaceV2 not in model.marketplaces
+        assert MarketplaceVersions.PLATFORM in model.marketplaces
+        assert MarketplaceVersions.XSOAR in model.marketplaces
+
     def test_unified_integration_parser(self, pack: Pack):
         """
         Given:
@@ -1365,6 +1390,78 @@ class TestParsersAndModels:
         )
         model = Script.from_orm(parser)
         assert model.auto_update_docker_image is expected_value
+
+    def test_script_parser_prompt_config_model_tier(self, pack: Pack):
+        """
+        Given:
+            - An LLM script whose promptConfig pins a model tier.
+        When:
+            - Creating the content item's parser and model.
+        Then:
+            - Verify the modelTier is parsed onto the model's promptConfig.
+        """
+        from demisto_sdk.commands.content_graph.objects.script import Script
+        from demisto_sdk.commands.content_graph.parsers.script import ScriptParser
+
+        # given
+        script = pack.create_script()
+        script.create_default_script()
+        script.yml.update(
+            {
+                "promptConfig": {
+                    "temperature": 0.1,
+                    "maxOutputTokens": 12000,
+                    "webSearch": False,
+                    "modelTier": "Thinking",
+                }
+            }
+        )
+
+        # when
+        parser = ScriptParser(
+            Path(script.path), list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        model = Script.from_orm(parser)
+
+        # then
+        assert model.prompt_config is not None
+        assert model.prompt_config.model_tier == "Thinking"
+
+    def test_script_parser_prompt_config_without_model_tier(self, pack: Pack):
+        """
+        Given:
+            - An LLM script whose promptConfig omits the model tier.
+        When:
+            - Creating the content item's parser and model.
+        Then:
+            - Verify the model is parsed and the tier is None, since an absent
+              tier is valid and resolves to the hub-advertised default model.
+        """
+        from demisto_sdk.commands.content_graph.objects.script import Script
+        from demisto_sdk.commands.content_graph.parsers.script import ScriptParser
+
+        # given
+        script = pack.create_script()
+        script.create_default_script()
+        script.yml.update(
+            {
+                "promptConfig": {
+                    "temperature": 0.1,
+                    "maxOutputTokens": 12000,
+                    "webSearch": False,
+                }
+            }
+        )
+
+        # when
+        parser = ScriptParser(
+            Path(script.path), list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        model = Script.from_orm(parser)
+
+        # then
+        assert model.prompt_config is not None
+        assert model.prompt_config.model_tier is None
 
     def test_test_playbook_parser(self, pack: Pack):
         """
@@ -3438,3 +3535,66 @@ class TestAgentixBaseParser:
             agentix_action_path, list(MarketplaceVersions), pack_supported_modules=[]
         )
         assert parser.toversion == DEFAULT_CONTENT_ITEM_TO_VERSION
+
+    def test_agentix_action_parser_long_running_fields(self, pack: Pack):
+        """
+        Given:
+            - An agentix action with islongrunning and longrunningtimeoutseconds set.
+        When:
+            - Creating the content item's parser.
+        Then:
+            - Verify the long-running fields are parsed from the yml.
+        """
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        # given
+        agentix_action_data = load_yaml("agentix_action.yml")
+        agentix_action_data["islongrunning"] = True
+        agentix_action_data["longrunningtimeoutseconds"] = 120
+        agentix_action = pack.create_agentix_action(
+            "TestAgentixActionLongRunning", agentix_action_data
+        )
+        agentix_action_path = Path(agentix_action.path)
+
+        # when
+        parser = AgentixActionParser(
+            agentix_action_path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+
+        # then
+        assert parser.is_long_running is True
+        assert parser.long_running_timeout_seconds == 120
+
+    def test_agentix_action_parser_long_running_defaults(self, pack: Pack):
+        """
+        Given:
+            - An agentix action without the long-running fields.
+        When:
+            - Creating the content item's parser.
+        Then:
+            - Verify is_long_running defaults to False and
+              long_running_timeout_seconds defaults to None.
+        """
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        # given
+        agentix_action_data = load_yaml("agentix_action.yml")
+        agentix_action_data.pop("islongrunning", None)
+        agentix_action_data.pop("longrunningtimeoutseconds", None)
+        agentix_action = pack.create_agentix_action(
+            "TestAgentixActionNoLongRunning", agentix_action_data
+        )
+        agentix_action_path = Path(agentix_action.path)
+
+        # when
+        parser = AgentixActionParser(
+            agentix_action_path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+
+        # then
+        assert parser.is_long_running is False
+        assert parser.long_running_timeout_seconds is None

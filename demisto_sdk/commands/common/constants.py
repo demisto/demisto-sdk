@@ -45,6 +45,24 @@ DOCKER_REGISTRY_URL = os.getenv(
     "DEMISTO_SDK_CONTAINER_REGISTRY",
     os.getenv("DOCKER_IO", DEFAULT_DOCKER_REGISTRY_URL),
 )
+DEMISTO_REPOSITORY = "demisto"
+DEVTEST_DEMISTO_REPOSITORY = "devtestdemisto"
+DEMISTO_EXTENDED_REPOSITORY = "demistoextended"
+DEVTEST_DEMISTO_EXTENDED_REPOSITORY = "devtestdemistoextended"
+DEMISTO_SDK_EXTENDED_REGISTRY_ENV = "DEMISTO_SDK_EXTENDED_REGISTRY"
+DEFAULT_EXTENDED_REGISTRY = "gcr.io/xsoar-registry"
+# TEMPORARY (CIAC-17352): the raw host prefix content currently emits on images.
+# To be removed once content stops prefixing images with the gcr.io host.
+CR_REGISTRY_PREFIX = f"{DEFAULT_EXTENDED_REGISTRY}/"
+
+
+def strip_cr_registry_prefix(image: str) -> str:
+    """Strip the CR host prefix back to the canonical "demistoextended/" form.
+
+    TEMPORARY (CIAC-17352): remove once content stops prefixing images with the
+    gcr.io host.
+    """
+    return image.removeprefix(CR_REGISTRY_PREFIX)
 
 
 # Authentication
@@ -957,6 +975,7 @@ ASSETS_MODELING_RULE_ID_SUFFIX = "AssetsModelingRule"
 # Pack Unique Files
 PACKS_WHITELIST_FILE_NAME = ".secrets-ignore"
 PACKS_PACK_IGNORE_FILE_NAME = ".pack-ignore"
+CONNECTOR_IGNORE_FILE_NAME = ".connector-ignore"
 PACKS_PACK_META_FILE_NAME = "pack_metadata.json"
 PACKS_README_FILE_NAME = INTEGRATIONS_README_FILE_NAME = SCRIPTS_README_FILE_NAME = (
     "README.md"
@@ -2054,6 +2073,7 @@ class PlatformSupportedModules(StrEnum):
     TIM = "tim"
     EMAIL_SECURITY = "email_security"
     XTI = "xti"
+    DATA_SECURITY = "data_security"
 
 
 # The complete set of platform supported modules.
@@ -2067,6 +2087,12 @@ XSIAM_AND_AGENTIX_MODULES: set = {
 
 # The 'xsiam' module only.
 XSIAM_ONLY_MODULES: set = {PlatformSupportedModules.XSIAM.value}
+
+# The 'xsiam' and 'exposure_management' modules.
+XSIAM_AND_EXPOSURE_MANAGEMENT_MODULES: set = {
+    PlatformSupportedModules.XSIAM.value,
+    PlatformSupportedModules.EXPOSURE_MANAGEMENT.value,
+}
 
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {

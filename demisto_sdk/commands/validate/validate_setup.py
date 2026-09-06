@@ -1,3 +1,4 @@
+import contextlib
 import os
 import sys
 from pathlib import Path
@@ -24,6 +25,9 @@ from demisto_sdk.commands.validate.initializer import (
 )
 from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
 from demisto_sdk.commands.validate.private_content_manager import PrivateContentManager
+from demisto_sdk.commands.validate.unified_connector_content_manager import (
+    UnifiedConnectorContentManager,
+)
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.commands.validate.validation_results import ResultWriter
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
@@ -31,7 +35,9 @@ from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 
 def validate_paths(
-    input_paths: Optional[str], private_content_path: Optional[Path]
+    input_paths: Optional[str],
+    private_content_path: Optional[Path],
+    connectors_content_path: Optional[Path] = None,
 ) -> Optional[str]:
     if not input_paths:  # If no input is provided, just return None
         return None
@@ -39,12 +45,18 @@ def validate_paths(
     paths = input_paths.split(",")
     for path in paths:
         path_obj = Path(path)
-        if not path_obj.exists():
-            if not (
-                private_content_path
-                and (Path(private_content_path) / path_obj).exists()
-            ):
-                raise typer.BadParameter(f"The path '{path}' does not exist.")
+        if path_obj.exists():
+            continue
+        # Fall back to checking under any external repo the user provided:
+        # content-private (private_content_path) or UCC (connectors_content_path).
+        if private_content_path and (Path(private_content_path) / path_obj).exists():
+            continue
+        if (
+            connectors_content_path
+            and (Path(connectors_content_path) / path_obj).exists()
+        ):
+            continue
+        raise typer.BadParameter(f"The path '{path}' does not exist.")
 
     return input_paths
 
@@ -166,6 +178,20 @@ def validate(
     private_content_path: Path = typer.Option(
         None, help="Path to the private content repository."
     ),
+    connectors_content_path: Path = typer.Option(
+        None,
+        "-ccp",
+        "--connectors-content-path",
+        help=(
+            "Path to the Unified Connector Content (UCC) repository "
+            "(containing a 'connectors/' directory). Use this to validate an "
+            "external UCC checkout together with a plain content checkout: "
+            "connectors are temporarily synced into the main content repo for "
+            "the duration of the run and cleaned up on exit. Works with both "
+            "-a (validate all synced connectors) and -g (validate only the "
+            "connectors changed in the UCC repo's own git diff)."
+        ),
+    ),
     ignore_support_level: bool = typer.Option(
         False, help="Skip validations based on support level."
     ),
@@ -211,7 +237,7 @@ def validate(
     if file_paths and not input:
         input = file_paths
 
-    validate_paths(input, private_content_path)
+    validate_paths(input, private_content_path, connectors_content_path)
 
     run_with_mp = not no_multiprocessing
     update_command_args_from_config_file("validate", ctx.params)
@@ -252,22 +278,60 @@ def validate(
 
         # Run new validation flow
         if run_new_validate:
-            # When using -a flag (ALL_FILES mode) with private content, wrap with PrivateContentManager
-            # This ensures private content files are copied before ContentDTO.from_path() is called
-            if execution_mode == ExecutionMode.ALL_FILES and ctx.params.get(
-                "private_content_path"
-            ):
-                logger.info(
-                    f"Using PrivateContentManager for ALL_FILES mode with private content path: {ctx.params['private_content_path']}"
-                )
-                with PrivateContentManager(
-                    private_content_path=ctx.params["private_content_path"],
-                    content_path=CONTENT_PATH,
+            # Wrap the run in the matching context manager so external repo files
+            # are copied+staged before ContentDTO.from_path() / the git-diff
+            # collection runs, and cleaned up afterwards (even on Ctrl+C).
+            #
+            # Private content (Packs/) is only copied in -a (ALL_FILES) mode.
+            # In -g (USE_GIT) the private content flow is left untouched: the
+            # initializer git-diffs the private repo directly (see
+            # Initializer.collect_files_to_run), so no copy is needed.
+            #
+            # Unified connector content (connectors/) is copied in both -a and
+            # -g. In -g only the connectors actually changed in the UCC repo's
+            # own git diff are copied+staged (changed_only=True), since the graph
+            # only reparses the changed items. In -a every connector is copied
+            # (changed_only=False), since the whole repo is reparsed.
+            #
+            # When both apply they nest inside a single ExitStack so cleanup
+            # happens in LIFO order.
+            connectors_repo_modes = (
+                ExecutionMode.ALL_FILES,
+                ExecutionMode.USE_GIT,
+            )
+            changed_only = execution_mode == ExecutionMode.USE_GIT
+            with contextlib.ExitStack() as stack:
+                if execution_mode == ExecutionMode.ALL_FILES and ctx.params.get(
+                    "private_content_path"
                 ):
-                    exit_code += run_new_validation(
-                        file_path, execution_mode, **ctx.params
+                    logger.info(
+                        f"Using PrivateContentManager for {execution_mode} mode "
+                        f"with private content path: "
+                        f"{ctx.params['private_content_path']}"
                     )
-            else:
+                    stack.enter_context(
+                        PrivateContentManager(
+                            private_content_path=ctx.params["private_content_path"],
+                            content_path=CONTENT_PATH,
+                        )
+                    )
+                if execution_mode in connectors_repo_modes and ctx.params.get(
+                    "connectors_content_path"
+                ):
+                    logger.info(
+                        f"Using UnifiedConnectorContentManager for "
+                        f"{execution_mode} mode with connectors content path: "
+                        f"{ctx.params['connectors_content_path']}"
+                    )
+                    stack.enter_context(
+                        UnifiedConnectorContentManager(
+                            connectors_content_path=ctx.params[
+                                "connectors_content_path"
+                            ],
+                            content_path=CONTENT_PATH,
+                            changed_only=changed_only,
+                        )
+                    )
                 exit_code += run_new_validation(file_path, execution_mode, **ctx.params)
 
         raise typer.Exit(code=exit_code)
@@ -433,6 +497,7 @@ def run_new_validation(file_path, execution_mode, **kwargs):
                 "handling_private_repositories", False
             ),
             private_content_path=kwargs.get("private_content_path"),
+            connectors_content_path=kwargs.get("connectors_content_path"),
         )
     else:
         initializer = Initializer(

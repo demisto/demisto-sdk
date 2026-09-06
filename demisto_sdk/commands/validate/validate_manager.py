@@ -7,6 +7,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.config_reader import (
     ConfigReader,
     ConfiguredValidations,
@@ -44,6 +45,16 @@ class ValidateManager:
         self.initializer = initializer
         self.objects_to_run: Set[BaseContent] = set()
         self.invalid_items: Set[Path] = set()
+
+        # Set the class variable for BaseValidator to use when initializing the graph
+        BaseValidator.create_graph_from_scratch = create_graph_from_scratch
+
+        # Set private content path on BaseValidator for graph building
+        if self.initializer.private_content_path:
+            BaseValidator.set_private_content_path(
+                self.initializer.private_content_path
+            )
+
         (
             self.objects_to_run,
             self.invalid_items,
@@ -55,14 +66,6 @@ class ValidateManager:
             codes_to_ignore=ignore,
         )
         self.validators = self.filter_validators()
-        # Set the class variable for BaseValidator to use when initializing the graph
-        BaseValidator.create_graph_from_scratch = create_graph_from_scratch
-
-        # Set private content path on BaseValidator for graph building
-        if self.initializer.private_content_path:
-            BaseValidator.set_private_content_path(
-                self.initializer.private_content_path
-            )
 
     def run_validations(self) -> int:
         """
@@ -204,14 +207,100 @@ class ValidateManager:
         self, validation_results: List[ValidationResult]
     ) -> List[ValidationResult]:
         """
-        Filters out validation results for error codes that are in the content object's ignored_errors list.
+        Filters out validation results for error codes that are ignored by the content item.
         This addresses unique cases where a validation must run first, then filter the relevant results afterward based on the results.
+
+        All results passed in belong to the same validation (they are produced
+        by a single validator in ``run_validations``), so the filtering case is
+        decided once for the whole batch:
+        * Connector handler/serializer validations emit one result per handler
+          (path ``<folder_name>/handler.yaml`` / ``<folder_name>/serializer.yaml``)
+          and are filtered per-handler/serializer against the connector's
+          ``.connector-ignore`` - so ignoring one handler does not suppress the
+          others.
+        * All other validations are filtered against the content object's main
+          ``ignored_errors`` list AND the pack's ``pack_level_ignored_errors``
+          list (the general case).
 
         Returns:
         List[ValidationResult]: Filtered validation results excluding ignored error codes
         """
+        if not validation_results:
+            return validation_results
+
+        if self._is_connector_handler_validation(validation_results[0]):
+            # Handler/serializer case: filter each result by its own
+            # <folder_name>/handler.yaml / <folder_name>/serializer.yaml key.
+            return [
+                result
+                for result in validation_results
+                if not self._is_connector_handler_result_ignored(result)
+            ]
+
+        # General case: filter against the content item's main ignored_errors
+        # AND the pack's pack_level_ignored_errors (from `[pack]` in
+        # `.pack-ignore`).
         return [
             result
             for result in validation_results
-            if result.validator.error_code not in result.content_object.ignored_errors
+            if not self._is_result_ignored_by_pack_or_file(result)
         ]
+
+    @staticmethod
+    def _is_result_ignored_by_pack_or_file(result: ValidationResult) -> bool:
+        """Whether a single validation result is ignored by the content item's own
+        ``ignored_errors`` (per-file ``[file:...]`` section) or by the pack's
+        ``pack_level_ignored_errors`` (the ``[pack]`` section of
+        ``.pack-ignore``).
+        """
+        err_code = result.validator.error_code
+        content_object = result.content_object
+
+        if err_code in getattr(content_object, "ignored_errors", []):
+            return True
+
+        pack = (
+            content_object
+            if hasattr(content_object, "pack_level_ignored_errors")
+            else getattr(content_object, "in_pack", None)
+        )
+        if pack is not None and err_code in getattr(
+            pack, "pack_level_ignored_errors", []
+        ):
+            return True
+
+        return False
+
+    @staticmethod
+    def _is_connector_handler_validation(result: ValidationResult) -> bool:
+        """Whether the validation is a connector handler/serializer validation.
+
+        Determined from the shared validator's ``related_file_type`` (all results
+        in a batch come from the same validator). Such validations emit one
+        result per handler and require per-handler/serializer ignore filtering.
+        """
+        related_file_type = getattr(result.validator, "related_file_type", None) or []
+        return (
+            RelatedFileType.CONNECTOR_HANDLER in related_file_type
+            or RelatedFileType.CONNECTOR_SERIALIZER in related_file_type
+        )
+
+    @staticmethod
+    def _is_connector_handler_result_ignored(result: ValidationResult) -> bool:
+        """Whether a single connector handler/serializer result is ignored.
+
+        Delegates to ``Connector.is_handler_error_ignored``, which resolves the
+        result's ``<folder_name>/handler.yaml`` / ``<folder_name>/serializer.yaml``
+        key from ``result.path`` and checks it against the connector's
+        ``.connector-ignore``. Missing ignore files are handled gracefully.
+        """
+        checker = getattr(result.content_object, "is_handler_error_ignored", None)
+        if not callable(checker):
+            return False
+        if checker(result.validator.error_code, result.path):
+            logger.debug(
+                f"Filtering out {result.validator.error_code} for connector "
+                f"handler/serializer '{result.path}' - ignored via .connector-ignore."
+            )
+            return True
+        return False

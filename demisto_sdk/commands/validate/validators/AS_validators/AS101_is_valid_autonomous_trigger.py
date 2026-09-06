@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.content_graph.objects.trigger import Trigger
+from demisto_sdk.commands.validate.tools import is_autonomous_pack
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     FixResult,
@@ -80,18 +81,7 @@ def is_invalid_autonomous_trigger(content_item: ContentTypes) -> bool:
     Returns:
         bool: True if the trigger is invalid (pack is autonomous but trigger doesn't have the right fields), False otherwise.
     """
-    pack_metadata = content_item.in_pack.pack_metadata_dict  # type: ignore[union-attr]
-    if not pack_metadata:
-        # If there's no pack metadata, consider it valid (not autonomous)
-        return False
-
-    # Check if the pack is autonomous (both managed is true and source is "autonomous")
-    is_managed = pack_metadata.get("managed", False)
-    source = pack_metadata.get("source", "")
-
-    is_autonomous_pack = is_managed is True and source == "autonomous"
-
-    if not is_autonomous_pack:
+    if not is_autonomous_pack(content_item.in_pack):
         # If the pack is not autonomous, the trigger is valid (no validation needed)
         return False
 

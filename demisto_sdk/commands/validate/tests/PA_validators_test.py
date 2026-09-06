@@ -118,6 +118,9 @@ from demisto_sdk.commands.validate.validators.PA_validators.PA133_is_base_pack_h
 from demisto_sdk.commands.validate.validators.PA_validators.PA134_supported_modules_coverage import (
     PackSupportedModulesCoverageValidator,
 )
+from demisto_sdk.commands.validate.validators.PA_validators.PA135_pack_level_ignore_added import (
+    PackLevelIgnoreAddedValidator,
+)
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 
@@ -2731,3 +2734,165 @@ def test_PackSupportedModulesCoverageValidator_fix_creates_supported_modules_whe
     # All other default modules should be mentioned as removed
     assert "edr" in fix_result.message
     assert "asm" in fix_result.message
+
+
+# ---------------------------------------------------------------------------
+# PA135 – PackLevelIgnoreAddedValidator
+# ---------------------------------------------------------------------------
+
+
+def _make_pack_with_ignores(mocker, new_codes, old_codes, has_old=True):
+    """Build a pack whose current/old [pack] codes are mocked.
+
+    `pack_level_ignored_errors` (current, a cached_property) and
+    `old_pack_level_ignored_errors` (old, reads git) are patched so the test is
+    deterministic and does not touch the filesystem or git. Both are patched at
+    the class level because `Pack` is a Pydantic model that rejects setting
+    arbitrary instance attributes.
+    """
+    pack = create_pack_object()
+    # current [pack] codes (cached_property stored in __dict__)
+    pack.__dict__["pack_level_ignored_errors"] = list(new_codes)
+    # old [pack] codes (the method ignores its prev_ver arg here)
+    mocker.patch.object(
+        type(pack),
+        "old_pack_level_ignored_errors",
+        return_value=list(old_codes),
+    )
+    if has_old:
+        old_pack = create_pack_object()
+        old_pack.git_sha = "old_sha"
+        pack.old_base_content_object = old_pack
+    else:
+        pack.old_base_content_object = None
+    return pack
+
+
+def test_PA135_pack_section_newly_added_fails(mocker):
+    """
+    Given a pack whose [pack] section is new (old had no codes),
+    When PA135 runs,
+    Then it fails and lists the added codes.
+    """
+    pack = _make_pack_with_ignores(mocker, new_codes=["BA101"], old_codes=[])
+    results = PackLevelIgnoreAddedValidator().obtain_invalid_content_items([pack])
+    assert len(results) == 1
+    assert "BA101" in results[0].message
+
+
+def test_PA135_new_code_added_to_existing_section_fails(mocker):
+    """
+    Given a pack with an existing [pack] section that gained a new code,
+    When PA135 runs,
+    Then it fails listing only the newly added code.
+    """
+    pack = _make_pack_with_ignores(
+        mocker, new_codes=["BA101", "RM104"], old_codes=["BA101"]
+    )
+    results = PackLevelIgnoreAddedValidator().obtain_invalid_content_items([pack])
+    assert len(results) == 1
+    assert "RM104" in results[0].message
+    assert "BA101" not in results[0].message
+
+
+def test_PA135_runs_on_pack_with_no_git_status(mocker):
+    """
+    Given a pack-ignore-only change: the .pack-ignore maps to pack_metadata.json,
+    which is itself unchanged, so the collected Pack has git_status None,
+    When PA135's status gate is evaluated,
+    Then PA135 still runs (it is not restricted by expected_git_statuses).
+
+    Regression: previously PA135 declared
+    expected_git_statuses=[ADDED, MODIFIED, RENAMED], so a None-status pack
+    (the pack-ignore-only case) was skipped and additions went undetected.
+    """
+    from demisto_sdk.commands.validate.validators.base_validator import (
+        should_run_according_to_status,
+    )
+
+    validator = PackLevelIgnoreAddedValidator()
+    assert validator.expected_git_statuses is None
+    assert should_run_according_to_status(None, validator.expected_git_statuses) is True
+
+
+def test_PA135_brand_new_pack_with_pack_section_fails(mocker):
+    """
+    Given a brand-new pack (no old_base_content_object) shipping a [pack] section,
+    When PA135 runs,
+    Then it fails (all current codes count as added).
+    """
+    pack = _make_pack_with_ignores(
+        mocker, new_codes=["BA101"], old_codes=[], has_old=False
+    )
+    results = PackLevelIgnoreAddedValidator().obtain_invalid_content_items([pack])
+    assert len(results) == 1
+
+
+def test_PA135_only_removed_codes_passes(mocker):
+    """
+    Given a pack where codes were only removed from [pack],
+    When PA135 runs,
+    Then it passes (removals are allowed).
+    """
+    pack = _make_pack_with_ignores(
+        mocker, new_codes=["BA101"], old_codes=["BA101", "RM104"]
+    )
+    results = PackLevelIgnoreAddedValidator().obtain_invalid_content_items([pack])
+    assert results == []
+
+
+def test_PA135_no_pack_section_passes(mocker):
+    """
+    Given a pack with no [pack] section now,
+    When PA135 runs,
+    Then it passes.
+    """
+    pack = _make_pack_with_ignores(mocker, new_codes=[], old_codes=[])
+    results = PackLevelIgnoreAddedValidator().obtain_invalid_content_items([pack])
+    assert results == []
+
+
+def test_PA135_unchanged_pack_section_passes(mocker):
+    """
+    Given a pack whose [pack] section is unchanged,
+    When PA135 runs,
+    Then it passes.
+    """
+    pack = _make_pack_with_ignores(mocker, new_codes=["BA101"], old_codes=["BA101"])
+    results = PackLevelIgnoreAddedValidator().obtain_invalid_content_items([pack])
+    assert results == []
+
+
+def test_PA135_uses_old_object_git_sha_as_prev_ver(mocker):
+    """
+    Given a modified pack whose old_base_content_object carries the run's prev_ver,
+    When PA135 computes the added codes,
+    Then it reads the old [pack] codes at that exact ref.
+    """
+    pack = _make_pack_with_ignores(
+        mocker, new_codes=["BA101", "RM104"], old_codes=["BA101"]
+    )
+    pack.old_base_content_object.git_sha = "origin/master"
+    PackLevelIgnoreAddedValidator().obtain_invalid_content_items([pack])
+    pack.old_pack_level_ignored_errors.assert_called_once_with("origin/master")
+
+
+def test_PA135_pack_ignore_only_change_uses_old_object_prev_ver(mocker):
+    """
+    Given a pack-ignore-only change: the pack is collected via its unchanged
+    pack_metadata.json, but the initializer still builds old_base_content_object
+    from prev_ver and sets its git_sha accordingly,
+    When PA135 computes the added codes,
+    Then it diffs against that prev_ver (origin/master) and flags the added code.
+
+    This is the fork/pack-ignore-only regression that previously produced a
+    false negative.
+    """
+    pack = _make_pack_with_ignores(
+        mocker, new_codes=["BA101", "RM104"], old_codes=["BA101"]
+    )
+    pack.old_base_content_object.git_sha = "origin/master"
+    results = PackLevelIgnoreAddedValidator().obtain_invalid_content_items([pack])
+    pack.old_pack_level_ignored_errors.assert_called_once_with("origin/master")
+    assert len(results) == 1
+    assert "RM104" in results[0].message

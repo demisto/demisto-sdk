@@ -1,0 +1,4 @@
+changes:
+- description: Added the is_long_running and long_running_timeout_seconds fields to the AgentixAction schema.
+  type: feature
+pr_number: 5511

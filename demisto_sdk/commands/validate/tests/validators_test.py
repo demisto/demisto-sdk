@@ -1,6 +1,7 @@
 import os
 import tempfile
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Dict, List, Optional
 from unittest.mock import patch
 
@@ -23,6 +24,7 @@ from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
+from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.content_graph.tests.test_tools import load_yaml
 from demisto_sdk.commands.validate.config_reader import (
     ConfigReader,
@@ -52,6 +54,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     FixResult,
     ValidationResult,
     get_all_validators,
+    is_error_ignored,
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backwards_subtype import (
     BreakingBackwardsSubtypeValidator,
@@ -605,6 +608,110 @@ def test_should_run_api_module():
     )
 
 
+class _FakeRelatedFile:
+    def __init__(self, file_path: str):
+        self.file_path = file_path
+
+
+class _FakeContentItem:
+    """Minimal stand-in for a ContentItem for is_error_ignored tests.
+
+    Emulates the two lookup paths used by is_error_ignored:
+    - per-file ignore on the item itself via ``ignored_errors``
+    - per-related-file ignore via ``ignored_errors_related_files``
+    The related-file attribute (e.g. ``skill_content``) is only present when
+    ``has_related_file`` is True, mirroring an AgentixSkill; an AgentixAction
+    has no such attribute so the getattr raises AttributeError.
+    """
+
+    def __init__(
+        self,
+        own_ignored,
+        related_ignored=None,
+        has_related_file=False,
+    ):
+        self.ignored_errors = list(own_ignored)
+        self._related_ignored = list(related_ignored or [])
+        if has_related_file:
+            self.skill_content = _FakeRelatedFile("skill_body.md")
+
+    def ignored_errors_related_files(self, _file_path):
+        return self._related_ignored
+
+
+def test_is_error_ignored_falls_through_to_main_when_related_file_missing():
+    """
+    Given:
+    - A validator error code that declares a related_file_type (SKILL_CONTENT).
+    - A content item that has NO related file (like an AgentixAction) but does
+      list the code under its own per-file `[file:...]` ignore section.
+    When:
+    - Calling is_error_ignored with the related_file_type.
+    Then:
+    - The main content per-file ignore is honored (returns True), because the
+      lookup falls through when no related file matches.
+    """
+    item = _FakeContentItem(
+        own_ignored=["AG112"], related_ignored=[], has_related_file=False
+    )
+    assert (
+        is_error_ignored(
+            "AG112",
+            ["AG112"],
+            item,
+            related_file_type=[RelatedFileType.SKILL_CONTENT],
+        )
+        is True
+    )
+
+
+def test_is_error_ignored_related_file_still_matches():
+    """
+    Given:
+    - A content item that has a related file which lists the code to ignore
+      (like an AgentixSkill using the SKILL_CONTENT section).
+    When:
+    - Calling is_error_ignored with the related_file_type.
+    Then:
+    - The related-file ignore is honored (returns True), preserving prior
+      behavior.
+    """
+    item = _FakeContentItem(
+        own_ignored=[], related_ignored=["AG112"], has_related_file=True
+    )
+    assert (
+        is_error_ignored(
+            "AG112",
+            ["AG112"],
+            item,
+            related_file_type=[RelatedFileType.SKILL_CONTENT],
+        )
+        is True
+    )
+
+
+def test_is_error_ignored_not_ignored_anywhere():
+    """
+    Given:
+    - A content item that lists the code in neither its own per-file section nor
+      any related file section.
+    When:
+    - Calling is_error_ignored with the related_file_type.
+    Then:
+    - The code is not ignored (returns False).
+    """
+    item = _FakeContentItem(own_ignored=[], related_ignored=[], has_related_file=False)
+    assert (
+        is_error_ignored(
+            "AG112",
+            ["AG112"],
+            item,
+            related_file_type=[RelatedFileType.SKILL_CONTENT],
+        )
+        is False
+    )
+
+
 def test_object_collection_with_readme_path(repo):
     """
     Given:
@@ -651,6 +758,31 @@ def test_object_collection_with_pack_path(repo):
     assert obj_types == {ContentType.INTEGRATION, ContentType.PACK}
 
 
+def test_all_files_gather_includes_connectors(mocker):
+    """
+    Given:
+    - ALL_FILES (-a) execution mode where ContentDTO.from_path parses both a
+      pack and a connector from the repository.
+    When:
+    - Calling the base Initializer.gather_objects_to_run_on.
+    Then:
+    - Make sure the parsed Connector object is included in the returned set and
+      is not discarded (so connector-only validators such as CO100 run under -a
+      exactly as they do under -g).
+    """
+    from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
+
+    pack = create_pack_object()
+    connector = create_connector_object()
+    fake_dto = ContentDTO.construct(packs=[pack], connectors=[connector])
+    mocker.patch.object(ContentDTO, "from_path", return_value=fake_dto)
+
+    initializer = Initializer(execution_mode=ExecutionMode.ALL_FILES)
+    obj_set, _ = initializer.gather_objects_to_run_on()
+
+    assert connector in obj_set
+
+
 def test_load_files_with_pack_path(repo):
     """
     Given:
@@ -694,6 +826,68 @@ def test_load_files_with_integration_dir(repo):
     )
 
 
+def test_load_files_with_private_pack_path(repo, tmp_path):
+    """
+    Given:
+    - A relative PACK-level path (e.g. ``Packs/MyPack``) that only exists under
+      an external ``--private-content-path`` repository (not in the main
+      checkout).
+    When:
+    - Calling load_files with ``private_content_path`` set.
+    Then:
+    - The files are resolved from the private repo and tracked in
+      ``private_content_files`` (regression for pack-level private input that
+      was previously short-circuited).
+    """
+    private_root = tmp_path / "content-private"
+    pack_dir = private_root / "Packs" / "MyPack" / "Scripts" / "MyScript"
+    pack_dir.mkdir(parents=True)
+    script_yml = pack_dir / "MyScript.yml"
+    script_yml.write_text("commonfields:\n  id: MyScript\n")
+
+    initializer = Initializer(private_content_path=private_root)
+    loaded = initializer.load_files(["Packs/MyPack"])
+
+    assert script_yml in loaded
+    assert script_yml in initializer.private_content_files
+
+
+def test_load_files_with_relative_connectors_path(tmp_path):
+    """
+    Given:
+    - A relative connectors path (e.g. ``connectors/foo`` or
+      ``connectors/foo/connector.yaml``) that only exists under an external
+      ``--connectors-content-path`` (UCC) repository.
+    When:
+    - Calling load_files with ``connectors_content_path`` set.
+    Then:
+    - The connector files are resolved from the UCC repo and tracked in
+      ``connectors_content_files`` (regression for the -ccp relative-path case).
+    """
+    ucc_root = tmp_path / "unified-connectors-content"
+    connector_dir = ucc_root / "connectors" / "foo"
+    connector_dir.mkdir(parents=True)
+    connector_yaml = connector_dir / "connector.yaml"
+    connector_yaml.write_text("name: foo\n")
+    handler = connector_dir / "components" / "handlers" / "xsoar"
+    handler.mkdir(parents=True)
+    handler_yaml = handler / "handler.yaml"
+    handler_yaml.write_text("handler: foo\n")
+
+    # Relative directory input.
+    initializer = Initializer(connectors_content_path=ucc_root)
+    loaded = initializer.load_files(["connectors/foo"])
+    assert connector_yaml in loaded
+    assert handler_yaml in loaded
+    assert connector_yaml in initializer.connectors_content_files
+
+    # Relative single-file input.
+    initializer_file = Initializer(connectors_content_path=ucc_root)
+    loaded_file = initializer_file.load_files(["connectors/foo/connector.yaml"])
+    assert loaded_file == {connector_yaml}
+    assert connector_yaml in initializer_file.connectors_content_files
+
+
 def test_collect_related_files_main_items(repo):
     """
     Given:
@@ -722,6 +916,51 @@ def test_collect_related_files_main_items(repo):
         Path(modeling_rule.yml.path),
         Path(pack.pack_metadata.path),
     }
+
+
+@pytest.mark.parametrize(
+    "pack_name",
+    (
+        "AgentixAction_CortexGetUserDefinedParsingRules",
+        "AgentixAction_CortexGetUserDefinedModelingRules",
+    ),
+)
+@pytest.mark.parametrize(
+    "file_attributes",
+    (
+        ["readme"],
+        ["pack_ignore"],
+        ["secrets"],
+        ["author_image"],
+        ["readme", "pack_ignore", "secrets", "author_image"],
+    ),
+)
+def test_collect_related_files_main_items_pack_name_contains_rules_dir_substring(
+    repo, pack_name, file_attributes
+):
+    """
+    Given:
+    - A pack whose name contains "ParsingRules" or "ModelingRules" as a substring
+      (e.g. an AgentixAction pack such as
+      "AgentixAction_CortexGetUserDefinedParsingRules"), along with one or more of
+      its pack-level auxiliary files (README, .pack-ignore, .secrets-ignore,
+      Author_image.png).
+    When:
+    - Calling collect_related_files_main_items.
+    Then:
+    - The auxiliary files must resolve to the pack_metadata.json (via is_pack_item),
+      and must NOT be short-circuited into the ModelingRules/ParsingRules branch
+      just because the pack name contains the substring "ParsingRules" or
+      "ModelingRules".
+      Regression test for BA102 spam on packs whose names contain "ParsingRules"
+      or "ModelingRules".
+    """
+    pack = repo.create_pack(pack_name)
+    initializer = Initializer()
+    results = initializer.collect_related_files_main_items(
+        {Path(getattr(pack, attribute).path) for attribute in file_attributes}
+    )
+    assert results == {Path(pack.pack_metadata.path)}
 
 
 def test_get_items_status(repo):
@@ -833,6 +1072,84 @@ def test_get_unfiltered_changed_files_from_git_case_untracked_files_identify(moc
     finally:
         if Path.exists(temp_file):
             Path.unlink(temp_file)
+
+
+def test_collect_files_to_run_merges_connectors_content_repo_diff(mocker):
+    """
+    Given:
+        An Initializer with ``connectors_content_path`` set (the -ccp flag used
+        together with -g), where the main content repo has one changed file and
+        the UCC repo has its own changed connector files.
+    When:
+        Calling collect_files_to_run.
+    Then:
+        Ensure the UCC repo is git-diffed directly (via
+        get_unfiltered_changed_files_from_git on the UCC path) and its changed
+        connector files are merged into the returned modified/added/renamed sets
+        and tracked in ``connectors_content_files`` - so only the connectors
+        actually changed in the UCC repo are collected, mirroring the
+        content-private behavior.
+    """
+    ucc_path = Path("/tmp/ucc")
+    content_modified = {Path("Packs/MyPack/Integrations/MyInt/MyInt.yml")}
+    ucc_modified = {Path("connectors/datadog/connector.yaml")}
+    ucc_added = {Path("connectors/okta/connector.yaml")}
+
+    initializer = Initializer(connectors_content_path=ucc_path)
+    initializer.validate_git_installed()
+
+    # First call: main content repo diff. Second call: UCC repo diff.
+    mocker.patch.object(
+        initializer,
+        "get_unfiltered_changed_files_from_git",
+        side_effect=[
+            (content_modified, set(), set()),
+            (ucc_modified, ucc_added, set()),
+        ],
+    )
+    mocker.patch.object(GitUtil, "deleted_files", return_value=set())
+    # The UCC deleted-files branch constructs a fresh GitUtil on the UCC path.
+    mocker.patch(
+        "demisto_sdk.commands.validate.initializer.GitUtil",
+        return_value=mocker.MagicMock(deleted_files=lambda **_: set()),
+    )
+
+    modified_files, added_files, renamed_files, deleted_files = (
+        initializer.collect_files_to_run(file_path="")
+    )
+
+    # UCC changes merged into the combined result.
+    assert ucc_modified.issubset(modified_files)
+    assert content_modified.issubset(modified_files)
+    assert ucc_added.issubset(added_files)
+    # UCC changes tracked separately so path redirection can target the UCC repo.
+    assert initializer.connectors_content_files == ucc_modified | ucc_added
+
+
+def test_collect_files_to_run_skips_connectors_diff_when_no_ccp(mocker):
+    """
+    Given:
+        An Initializer WITHOUT ``connectors_content_path`` set.
+    When:
+        Calling collect_files_to_run.
+    Then:
+        Ensure the UCC repo is never git-diffed (the content repo is diffed
+        exactly once) and ``connectors_content_files`` stays empty - a
+        regression guard that -ccp has no effect unless provided.
+    """
+    initializer = Initializer()
+    initializer.validate_git_installed()
+    diff_mock = mocker.patch.object(
+        initializer,
+        "get_unfiltered_changed_files_from_git",
+        return_value=(set(), set(), set()),
+    )
+    mocker.patch.object(GitUtil, "deleted_files", return_value=set())
+
+    initializer.collect_files_to_run(file_path="")
+
+    diff_mock.assert_called_once_with()
+    assert initializer.connectors_content_files == set()
 
 
 def test_ignored_with_run_all(mocker):
@@ -1033,7 +1350,7 @@ class TestConnectorAwareInitializerCrossMatch:
                 ConnectorAwareInitializer, "_graph_search_integration"
             ) as mock_graph,
             patch.object(
-                ConnectorAwareInitializer, "_graph_search_connectors", return_value=[]
+                ConnectorAwareInitializer, "_all_graph_connectors", return_value=[]
             ),
         ):
             initializer._cross_match_and_expand({integration}, {connector})
@@ -1057,7 +1374,7 @@ class TestConnectorAwareInitializerCrossMatch:
         initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
 
         with patch.object(
-            ConnectorAwareInitializer, "_graph_search_connectors", return_value=[]
+            ConnectorAwareInitializer, "_all_graph_connectors", return_value=[]
         ):
             result = initializer._cross_match_and_expand({integration}, set())
 
@@ -1078,7 +1395,7 @@ class TestConnectorAwareInitializerCrossMatch:
 
         with patch.object(
             ConnectorAwareInitializer,
-            "_graph_search_connectors",
+            "_all_graph_connectors",
             return_value=[discovered_connector],
         ):
             result = initializer._cross_match_and_expand({integration}, set())
@@ -1102,7 +1419,7 @@ class TestConnectorAwareInitializerCrossMatch:
         with (
             patch.object(
                 ConnectorAwareInitializer,
-                "_graph_search_connectors",
+                "_all_graph_connectors",
                 return_value=[],
             ),
             patch.object(
@@ -1117,6 +1434,77 @@ class TestConnectorAwareInitializerCrossMatch:
         handler = connector.xsoar_handlers[0]
         assert handler.related_integration is graph_integration
         assert graph_integration in result
+
+    def test_graph_found_deprecated_integration_is_linked_but_not_validated(self):
+        """
+        Given: A connector handler whose referenced integration is found in the
+               graph but is DEPRECATED.
+        When: _cross_match_and_expand runs the graph-expand phase.
+        Then: The handler's related_integration is populated (so CO164 sees it
+              as existing), but the deprecated integration is NOT added to the
+              returned validation set (integration validators must not run on
+              it).
+        """
+        connector = create_connector_object()
+        deprecated_integration = create_integration_object()
+        deprecated_integration.deprecated = True
+
+        initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
+
+        with (
+            patch.object(
+                ConnectorAwareInitializer,
+                "_all_graph_connectors",
+                return_value=[],
+            ),
+            patch.object(
+                ConnectorAwareInitializer,
+                "_graph_search_integration",
+                return_value=[deprecated_integration],
+            ),
+        ):
+            result = initializer._cross_match_and_expand(set(), {connector})
+
+        handler = connector.xsoar_handlers[0]
+        # Linked so CO164 can distinguish "exists" from "missing".
+        assert handler.related_integration is deprecated_integration
+        # But NOT a validation target.
+        assert deprecated_integration not in result
+
+    def test_graph_found_non_platform_integration_is_neither_linked_nor_added(self):
+        """
+        Given: A connector handler whose referenced integration is found in the
+               graph but is NOT in the PLATFORM marketplace.
+        When: _cross_match_and_expand runs the graph-expand phase.
+        Then: The integration is treated as out of scope: it is neither linked
+              to the handler nor added to the validation set.
+        """
+        from demisto_sdk.commands.common.constants import MarketplaceVersions
+
+        connector = create_connector_object()
+        non_platform_integration = create_integration_object()
+        non_platform_integration.deprecated = False
+        non_platform_integration.marketplaces = [MarketplaceVersions.XSOAR]
+
+        initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
+
+        with (
+            patch.object(
+                ConnectorAwareInitializer,
+                "_all_graph_connectors",
+                return_value=[],
+            ),
+            patch.object(
+                ConnectorAwareInitializer,
+                "_graph_search_integration",
+                return_value=[non_platform_integration],
+            ),
+        ):
+            result = initializer._cross_match_and_expand(set(), {connector})
+
+        handler = connector.xsoar_handlers[0]
+        assert handler.related_integration is None
+        assert non_platform_integration not in result
 
     def test_multiple_handlers_each_matched_independently(self):
         """
@@ -1165,7 +1553,7 @@ class TestConnectorAwareInitializerCrossMatch:
                 ConnectorAwareInitializer, "_graph_search_integration"
             ) as mock_graph,
             patch.object(
-                ConnectorAwareInitializer, "_graph_search_connectors", return_value=[]
+                ConnectorAwareInitializer, "_all_graph_connectors", return_value=[]
             ),
         ):
             initializer._cross_match_and_expand(
@@ -1180,6 +1568,99 @@ class TestConnectorAwareInitializerCrossMatch:
         )
         assert sf_handler.related_integration is integration1
         assert iam_handler.related_integration is integration2
+
+    def test_connector_table_is_fetched_once_across_unmatched_integrations(self):
+        """
+        Given: Several connectors whose handlers reference integrations that are
+               NOT in the working set (so both graph-expand phases run), and an
+               unmatched integration with no connector in the set.
+        When: _cross_match_and_expand is called.
+        Then: The connector table - which has no usable index for the
+              handler->integration reference and therefore requires a full scan -
+              is fetched exactly once regardless of how many unmatched
+              integrations there are. Integrations keep using indexed per-id
+              lookups, so they are queried once per unmatched handler.
+        """
+        connector_a = create_connector_object(
+            connector_id="conn-a",
+            handlers=[
+                {
+                    "id": "xsoar-a",
+                    "triggering": {
+                        "labels": {
+                            "xsoar-integration-id": "IntA",
+                            "xsoar-pack-id": "IntA",
+                            "xsoar-content-id": "conn-a",
+                        },
+                    },
+                },
+            ],
+        )
+        connector_b = create_connector_object(
+            connector_id="conn-b",
+            handlers=[
+                {
+                    "id": "xsoar-b",
+                    "triggering": {
+                        "labels": {
+                            "xsoar-integration-id": "IntB",
+                            "xsoar-pack-id": "IntB",
+                            "xsoar-content-id": "conn-b",
+                        },
+                    },
+                },
+            ],
+        )
+        graph_int_a = create_integration_object(
+            paths=["commonfields.id", "name"], values=["IntA", "IntA"]
+        )
+        graph_int_b = create_integration_object(
+            paths=["commonfields.id", "name"], values=["IntB", "IntB"]
+        )
+        # Integrations in the set with no matching connector handler present.
+        # There must be more than one: the per-integration scan this test guards
+        # against would only be observable with multiple unmatched integrations.
+        unmatched_integration_1 = create_integration_object(
+            paths=["commonfields.id", "name"], values=["Orphan1", "Orphan1"]
+        )
+        unmatched_integration_2 = create_integration_object(
+            paths=["commonfields.id", "name"], values=["Orphan2", "Orphan2"]
+        )
+
+        initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
+
+        integrations_by_id = {"IntA": graph_int_a, "IntB": graph_int_b}
+
+        with (
+            patch.object(
+                ConnectorAwareInitializer,
+                "_all_graph_connectors",
+                return_value=[],
+            ) as mock_connectors,
+            patch.object(
+                ConnectorAwareInitializer,
+                "_graph_search_integration",
+                side_effect=lambda int_id: [integrations_by_id[int_id]]
+                if int_id in integrations_by_id
+                else [],
+            ) as mock_integrations,
+        ):
+            initializer._cross_match_and_expand(
+                {unmatched_integration_1, unmatched_integration_2},
+                {connector_a, connector_b},
+            )
+
+        # The full connector scan happens once, not once per unmatched
+        # integration (there are two of them here).
+        assert mock_connectors.call_count == 1
+        # Integrations resolve via indexed point lookups - one per handler.
+        assert sorted(c.args[0] for c in mock_integrations.call_args_list) == [
+            "IntA",
+            "IntB",
+        ]
+
+        assert connector_a.xsoar_handlers[0].related_integration is graph_int_a
+        assert connector_b.xsoar_handlers[0].related_integration is graph_int_b
 
 
 class TestConnectorAwareInitializerGatherObjects:
@@ -1326,6 +1807,394 @@ class TestConnectorRelatedFileDeduplication:
         assert result == {Path("connectors/salesforce/connector.yaml")}
         assert len(result) == 1
 
+    def test_get_items_status_maps_connector_files_to_connector_yaml(self):
+        """
+        Given: Connector-related files collected by the git flow -- a renamed
+            connector image (png) and a modified handler.yaml.
+        When: get_items_status (the ``-g`` reducer) is called.
+        Then: Both resolve to the single connectors/<name>/connector.yaml path,
+            the raw png is NOT collected (so it is never handed to the parser),
+            and no pack_metadata.json is added for connector paths.
+        """
+        initializer = Initializer()
+
+        png_path = Path(
+            "connectors/aws-automation-and-collection/"
+            "aws-automation-and-collection.png"
+        )
+        handler_path = Path(
+            "connectors/aws-automation-and-collection/"
+            "components/handlers/xsoar/handler.yaml"
+        )
+        connector_yaml = Path("connectors/aws-automation-and-collection/connector.yaml")
+
+        with (
+            patch(
+                "demisto_sdk.commands.validate.initializer._is_connector_path",
+                return_value=True,
+            ),
+            patch(
+                "demisto_sdk.commands.validate.initializer._get_connector_dir",
+                return_value=Path("connectors/aws-automation-and-collection"),
+            ),
+            patch.object(initializer, "is_unrelated_path", return_value=False),
+            patch.object(initializer, "is_pack_item", return_value=False),
+        ):
+            results = initializer.get_items_status(
+                {
+                    png_path: GitStatuses.RENAMED,
+                    handler_path: GitStatuses.MODIFIED,
+                }
+            )
+
+        # Only the connector.yaml is collected.
+        assert set(results.keys()) == {connector_yaml}
+        # The raw png must never reach the parser.
+        assert png_path not in results
+        # No bogus pack_metadata.json is produced for connector paths.
+        assert not any("pack_metadata.json" in str(p) for p in results)
+
+
+class TestConnectorStatusMergePrecedence:
+    """Tests that a connector changed under multiple git statuses is reported once."""
+
+    @pytest.mark.parametrize(
+        "existing, incoming, expected",
+        [
+            (GitStatuses.MODIFIED, GitStatuses.ADDED, GitStatuses.MODIFIED),
+            (GitStatuses.ADDED, GitStatuses.MODIFIED, GitStatuses.MODIFIED),
+            (GitStatuses.ADDED, GitStatuses.RENAMED, GitStatuses.RENAMED),
+            (GitStatuses.ADDED, None, GitStatuses.ADDED),
+            (None, GitStatuses.ADDED, GitStatuses.ADDED),
+            (None, None, None),
+            (GitStatuses.MODIFIED, GitStatuses.RENAMED, GitStatuses.MODIFIED),
+        ],
+    )
+    def test_merge_git_statuses_precedence(self, existing, incoming, expected):
+        """
+        Given: Two git statuses that collapse onto the same content item.
+        When: _merge_git_statuses resolves them.
+        Then: The higher-precedence status is returned (MODIFIED always wins).
+        """
+        from demisto_sdk.commands.validate.initializer import _merge_git_statuses
+
+        assert _merge_git_statuses(existing, incoming) == expected
+
+    @pytest.mark.parametrize(
+        "file_statuses",
+        [
+            # MODIFIED handler first, then ADDED .connector-ignore
+            [
+                (
+                    Path("connectors/zoom/components/handlers/xsoar/handler.yaml"),
+                    GitStatuses.MODIFIED,
+                ),
+                (Path("connectors/zoom/.connector-ignore"), GitStatuses.ADDED),
+            ],
+            # Reversed order: ADDED .connector-ignore first, then MODIFIED handler
+            [
+                (Path("connectors/zoom/.connector-ignore"), GitStatuses.ADDED),
+                (
+                    Path("connectors/zoom/components/handlers/xsoar/handler.yaml"),
+                    GitStatuses.MODIFIED,
+                ),
+            ],
+        ],
+    )
+    def test_added_and_modified_connector_collapses_to_modified(self, file_statuses):
+        """
+        Given: A connector with a MODIFIED handler.yaml and a newly ADDED
+            .connector-ignore file (the exact scenario reported for zoom).
+        When: get_items_status reduces the changed files -- in either iteration
+            order.
+        Then: A single connector.yaml entry is produced, and its status is
+            MODIFIED (never ADDED), because the connector already exists.
+        """
+        initializer = Initializer()
+        connector_yaml = Path("connectors/zoom/connector.yaml")
+
+        with (
+            patch(
+                "demisto_sdk.commands.validate.initializer._is_connector_path",
+                return_value=True,
+            ),
+            patch(
+                "demisto_sdk.commands.validate.initializer._get_connector_dir",
+                return_value=Path("connectors/zoom"),
+            ),
+            patch.object(initializer, "is_unrelated_path", return_value=False),
+            patch.object(initializer, "is_pack_item", return_value=False),
+        ):
+            results = initializer.get_items_status(dict(file_statuses))
+
+        assert set(results.keys()) == {connector_yaml}
+        assert results[connector_yaml] == GitStatuses.MODIFIED
+
+
+class TestHydrateIntegrationParams:
+    """Tests for ``ConnectorAwareInitializer._hydrate_integration_params``.
+
+    ``Integration.params`` is declared ``Field([], exclude=True)`` — it is
+    never persisted to Neo4j, so an Integration returned by
+    ``_graph_search_integration`` comes back with ``params == []``. Any
+    connector-aware validator that reaches into
+    ``handler.related_integration.params`` (CO116, CO121, CO190, …)
+    silently false-positives on every param lookup unless the helper
+    re-parses the on-disk YML and copies the fresh list back.
+
+    Coverage targets:
+
+    * The four early-return branches (``integration is None``, ``params``
+      already populated, ``path`` missing, ``from_path`` raises).
+    * The success path — ``from_path`` is called with the integration's
+      ``path`` and ``integration.params`` is mutated **in place**, not
+      reassigned to a new object. Downstream callers already hold a
+      reference (``handler.related_integration``, ``matched_ids``, the
+      ``integrations`` set) and would silently see stale data if the
+      helper swapped the object.
+    * The 'fresh integration also has empty params' branch — the helper
+      is a no-op then, not an erroneous ``params = []`` reassignment.
+    """
+
+    @staticmethod
+    def _fake_integration(**attrs):
+        """Stand-in for a graph-hydrated Integration.
+
+        The helper only reads ``integration.params``, ``integration.path``
+        and (for the log message) ``integration.object_id``, and only
+        writes ``integration.params``. A ``SimpleNamespace`` is enough
+        and avoids the cost of constructing a full Pydantic model.
+        """
+        return SimpleNamespace(**attrs)
+
+    def test_none_integration_is_noop(self, mocker):
+        """
+        Given: ``integration is None``.
+        When: ``_hydrate_integration_params`` runs.
+        Then: It returns without calling ``IntegrationModel.from_path``.
+              Guarding here prevents an ``AttributeError`` on the
+              subsequent ``getattr(integration, "params", …)`` when the
+              caller passes a missing match.
+        """
+        from_path_spy = mocker.patch(
+            "demisto_sdk.commands.content_graph.objects.integration."
+            "Integration.from_path"
+        )
+
+        ConnectorAwareInitializer._hydrate_integration_params(None)
+
+        from_path_spy.assert_not_called()
+
+    def test_already_populated_params_are_not_touched(self, mocker):
+        """
+        Given: An integration whose ``params`` list is already populated
+               (loaded from disk, not from the graph).
+        When: The helper runs.
+        Then: It short-circuits — ``from_path`` is NOT called and the
+              existing list is left exactly as-is (same object identity).
+              Any re-parse here would be wasted I/O and would also risk
+              overwriting caller-attached state.
+        """
+        existing_params = [SimpleNamespace(name="url"), SimpleNamespace(name="api_key")]
+        integration = self._fake_integration(
+            params=existing_params,
+            path=Path("/repo/Packs/Foo/Integrations/Foo/Foo.yml"),
+            object_id="Foo",
+        )
+        from_path_spy = mocker.patch(
+            "demisto_sdk.commands.content_graph.objects.integration."
+            "Integration.from_path"
+        )
+
+        ConnectorAwareInitializer._hydrate_integration_params(integration)
+
+        from_path_spy.assert_not_called()
+        assert integration.params is existing_params
+
+    def test_missing_path_is_noop(self, mocker):
+        """
+        Given: A graph-hydrated integration with empty ``params`` and no
+               ``path`` (some graph shapes don't attach one).
+        When: The helper runs.
+        Then: It returns without calling ``from_path``. Attempting to
+              re-parse ``Path(None)`` would raise ``TypeError`` and mask
+              the real (upstream) shape defect.
+        """
+        integration = self._fake_integration(params=[], path=None, object_id="Foo")
+        from_path_spy = mocker.patch(
+            "demisto_sdk.commands.content_graph.objects.integration."
+            "Integration.from_path"
+        )
+
+        ConnectorAwareInitializer._hydrate_integration_params(integration)
+
+        from_path_spy.assert_not_called()
+        assert integration.params == []
+
+    def test_success_path_mutates_in_place_and_calls_from_path_with_path(self, mocker):
+        """
+        Given: A graph-hydrated integration with ``params == []`` and a
+               valid on-disk ``path``; ``IntegrationModel.from_path``
+               returns a fresh integration whose ``params`` list is
+               populated.
+        When: The helper runs.
+        Then:
+          * ``from_path`` is called with ``Path(integration.path)`` (the
+            helper wraps the value defensively — a plain string caller
+            must still work).
+          * The fresh params are copied onto the EXISTING object in
+            place — same ``integration`` reference — because downstream
+            code (``handler.related_integration``, ``matched_ids``, the
+            ``integrations`` set) already holds that reference. A
+            reassignment to a new object would leave those references
+            pointing at the stale, empty-params instance.
+          * The stored list is a fresh copy (``list(...)``), not the
+            same object as ``fresh.params`` — otherwise mutations on
+            the graph object would leak into the fresh Pydantic model.
+        """
+        int_path = Path("/repo/Packs/Foo/Integrations/Foo/Foo.yml")
+        integration = self._fake_integration(params=[], path=int_path, object_id="Foo")
+        original_ref = integration
+
+        fresh_params = [SimpleNamespace(name="url"), SimpleNamespace(name="api_key")]
+        fresh = SimpleNamespace(params=fresh_params)
+        from_path_spy = mocker.patch(
+            "demisto_sdk.commands.content_graph.objects.integration."
+            "Integration.from_path",
+            return_value=fresh,
+        )
+
+        ConnectorAwareInitializer._hydrate_integration_params(integration)
+
+        from_path_spy.assert_called_once_with(int_path)
+        # Same object identity — mutated in place.
+        assert integration is original_ref
+        # Params content copied over.
+        assert integration.params == fresh_params
+        # But NOT the same list — a defensive copy protects the fresh
+        # Pydantic model from downstream mutation.
+        assert integration.params is not fresh_params
+
+    def test_from_path_exception_is_swallowed_and_params_untouched(self, mocker):
+        """
+        Given: A graph-hydrated integration with empty ``params`` and a
+               ``path`` where ``from_path`` raises (malformed YML, deleted
+               file, permission error…).
+        When: The helper runs.
+        Then: The exception is swallowed (validators must keep running
+              across other integrations) and ``params`` remains ``[]``.
+              A CO116/CO121/CO190 false-positive downstream is preferable
+              to crashing every connector validator for one bad file, and
+              the caller's ``logger.debug`` records the failure.
+        """
+        integration = self._fake_integration(
+            params=[],
+            path=Path("/repo/Packs/Foo/Integrations/Foo/Foo.yml"),
+            object_id="Foo",
+        )
+        mocker.patch(
+            "demisto_sdk.commands.content_graph.objects.integration."
+            "Integration.from_path",
+            side_effect=RuntimeError("simulated parser failure"),
+        )
+
+        # Must not raise.
+        ConnectorAwareInitializer._hydrate_integration_params(integration)
+
+        assert integration.params == []
+
+    def test_fresh_integration_with_empty_params_is_still_a_noop(self, mocker):
+        """
+        Given: A graph-hydrated integration with empty ``params``, whose
+               on-disk YML re-parse ALSO yields an integration with
+               empty ``params`` (a legitimate zero-param integration).
+        When: The helper runs.
+        Then: ``integration.params`` is not reassigned — the guard
+              ``if fresh_params:`` protects against an otherwise
+              indistinguishable overwrite that would still preserve the
+              symptom (``params == []``) but obscure whether hydration
+              actually ran, and would defeat any later "already
+              populated" short-circuit if the caller re-runs the helper.
+        """
+        integration = self._fake_integration(
+            params=[],
+            path=Path("/repo/Packs/Foo/Integrations/Foo/Foo.yml"),
+            object_id="Foo",
+        )
+        original_list = integration.params
+
+        fresh = SimpleNamespace(params=[])
+        mocker.patch(
+            "demisto_sdk.commands.content_graph.objects.integration."
+            "Integration.from_path",
+            return_value=fresh,
+        )
+
+        ConnectorAwareInitializer._hydrate_integration_params(integration)
+
+        assert integration.params is original_list  # untouched
+
+
+class TestDedupByObjectId:
+    """Tests for ConnectorAwareInitializer._dedup_by_object_id."""
+
+    class _FakeObj:
+        """Minimal stand-in for BaseContent with object identity fields.
+
+        Real BaseContent objects that differ only by ``git_status`` are unequal
+        under Pydantic field-based equality, so both survive a ``set``. This fake
+        reproduces that behavior deterministically for the dedup test.
+        """
+
+        def __init__(self, content_type, object_id, git_status):
+            self.content_type = content_type
+            self.object_id = object_id
+            self.git_status = git_status
+
+    def test_dedup_prefers_modified_over_added(self):
+        """
+        Given: Two objects with the same content_type and object_id, one ADDED
+            and one MODIFIED (as produced when a connector's files carry
+            different git statuses).
+        When: _dedup_by_object_id collapses them.
+        Then: Exactly one object remains, with status MODIFIED.
+        """
+        added = self._FakeObj("connector", "zoom", GitStatuses.ADDED)
+        modified = self._FakeObj("connector", "zoom", GitStatuses.MODIFIED)
+
+        result = ConnectorAwareInitializer._dedup_by_object_id({added, modified})
+
+        assert len(result) == 1
+        assert next(iter(result)).git_status == GitStatuses.MODIFIED
+
+    def test_dedup_keeps_distinct_object_ids(self):
+        """
+        Given: Objects with different object_ids.
+        When: _dedup_by_object_id runs.
+        Then: All objects are preserved (nothing is collapsed).
+        """
+        a = self._FakeObj("connector", "zoom", GitStatuses.MODIFIED)
+        b = self._FakeObj("connector", "okta", GitStatuses.ADDED)
+
+        result = ConnectorAwareInitializer._dedup_by_object_id({a, b})
+
+        assert len(result) == 2
+        assert {o.object_id for o in result} == {"zoom", "okta"}
+
+    def test_dedup_distinguishes_by_content_type(self):
+        """
+        Given: Two objects sharing an object_id but with different content types
+            (e.g. an Integration and a Connector both named "zoom").
+        When: _dedup_by_object_id runs.
+        Then: Both are kept because they are different content items.
+        """
+        integration = self._FakeObj("integration", "zoom", GitStatuses.MODIFIED)
+        connector = self._FakeObj("connector", "zoom", GitStatuses.ADDED)
+
+        result = ConnectorAwareInitializer._dedup_by_object_id({integration, connector})
+
+        assert len(result) == 2
+
 
 # ============================================================
 # ConnectorAwareInitializer - filter / gather behavior
@@ -1381,3 +2250,607 @@ class TestConnectorAwareInitializerFilter:
         kept = self._run_filter({connector})
 
         assert kept == set()
+
+
+class TestConnectorHandlerIgnoreFiltering:
+    """Tests for filtering ignored connector handler/serializer results.
+
+    Covers:
+    * ``ConnectorsValidator.resolve_ignore_key_from_path`` path -> key mapping.
+    * ``ConnectorsValidator.is_error_ignored`` honoring ALWAYS_RUN_ON_ERROR_CODE.
+    * ``ValidateManager.filter_validation_results`` per-handler / per-serializer
+      filtering, including keeping non-ignored handlers and honoring the
+      content object's main ``ignored_errors`` list.
+    """
+
+    @staticmethod
+    def _make_result(
+        error_code: str,
+        path: Optional[Path],
+        ignored_map: Dict[str, List[str]],
+        main_ignored: Optional[List[str]] = None,
+        related_file_type: Optional[list] = None,
+    ):
+        """Build a lightweight stand-in for a ValidationResult.
+
+        ``filter_validation_results`` only reads
+        ``result.validator.error_code``, ``result.validator.related_file_type``,
+        ``result.path``, ``result.content_object.ignored_errors`` and
+        ``result.content_object.is_handler_error_ignored(error_code, path)``, so
+        a SimpleNamespace fake avoids the cost of constructing a full connector
+        fixture. The fake reuses the real ``Connector.resolve_handler_ignore_key``
+        logic to map paths to ``.connector-ignore`` keys.
+        """
+        from types import SimpleNamespace
+
+        from demisto_sdk.commands.content_graph.objects.connector import Connector
+
+        def is_handler_error_ignored(code: str, file_path: Optional[Path]) -> bool:
+            key = Connector.resolve_handler_ignore_key(file_path)
+            if key is None:
+                return False
+            return code in ignored_map.get(key, [])
+
+        return SimpleNamespace(
+            validator=SimpleNamespace(
+                error_code=error_code,
+                related_file_type=related_file_type,
+            ),
+            path=path,
+            content_object=SimpleNamespace(
+                ignored_errors=main_ignored or [],
+                is_handler_error_ignored=is_handler_error_ignored,
+            ),
+        )
+
+    @pytest.mark.parametrize(
+        "path, expected_key",
+        [
+            (
+                Path(
+                    "/repo/connectors/foo/components/handlers/my_handler/handler.yaml"
+                ),
+                "my_handler/handler.yaml",
+            ),
+            (
+                Path(
+                    "/repo/connectors/foo/components/handlers/my_handler/serializer.yaml"
+                ),
+                "my_handler/serializer.yaml",
+            ),
+            (Path("/repo/connectors/foo/connector.yaml"), None),
+            (Path("/repo/connectors/foo/components/handlers/my_handler"), None),
+            (None, None),
+        ],
+    )
+    def test_resolve_handler_ignore_key(self, path, expected_key):
+        """
+        Given: A ValidationResult path.
+        When: Connector.resolve_handler_ignore_key maps it to a .connector-ignore key.
+        Then: Handler/serializer paths yield '<folder>/handler.yaml' /
+              '<folder>/serializer.yaml'; anything else yields None.
+        """
+        from demisto_sdk.commands.content_graph.objects.connector import Connector
+
+        assert Connector.resolve_handler_ignore_key(path) == expected_key
+
+    def test_is_error_ignored_respects_always_run_on_error_code(self, mocker):
+        """
+        Given: An error code that is in ALWAYS_RUN_ON_ERROR_CODE and is also
+               listed in the connector's ignore file for a handler.
+        When: ConnectorsValidator.is_error_ignored is called.
+        Then: It returns False - the error must always run.
+        """
+        from demisto_sdk.commands.common.constants import ALWAYS_RUN_ON_ERROR_CODE
+        from demisto_sdk.commands.content_graph.parsers.related_files import (
+            RelatedFileType,
+        )
+        from demisto_sdk.commands.validate.validators.CO_validators.CO155_is_handler_module_xsoar import (
+            IsHandlerModuleXsoarValidator,
+        )
+
+        validator = IsHandlerModuleXsoarValidator()
+        always_run_code = ALWAYS_RUN_ON_ERROR_CODE[0]
+
+        content_item = mocker.Mock()
+        content_item.get_ignored_errors.return_value = [always_run_code]
+
+        assert (
+            validator.is_error_ignored(
+                always_run_code,
+                [always_run_code],
+                content_item,
+                [RelatedFileType.CONNECTOR_HANDLER],
+            )
+            is False
+        )
+
+    def test_should_run_preflight_not_suppressed_when_only_some_handlers_ignore(
+        self, mocker
+    ):
+        """
+        Given: A connector with three handlers (a, b, c). Only handler ``c``'s
+               ``.connector-ignore`` ignores CO130 (via
+               ``[file:c/serializer.yaml]``); handlers ``a`` and ``b`` do NOT.
+        When: ``ConnectorsValidator.is_error_ignored`` runs as part of the
+              ``should_run`` preflight for a per-handler validator with
+              ``related_file_type = [CONNECTOR_HANDLER, CONNECTOR_SERIALIZER]``.
+        Then: It returns ``False`` — the validator MUST still run so that
+              ``ValidateManager.filter_validation_results`` can drop only the
+              individual result for ``c`` while keeping ``a`` and ``b``.
+
+        Regression: the prior "any-match wins" behaviour returned ``True`` as
+        soon as any single handler ignored the code, which short-circuited
+        ``should_run`` for the whole connector and silenced legitimate CO130
+        defects on ``a`` and ``b``. Fix #1 requires universal suppression
+        (every handler dir must ignore) before the preflight blocks the run;
+        per-handler suppression is the job of ``filter_validation_results``,
+        which is exercised separately below.
+
+        This test drives ``is_error_ignored`` directly (the preflight seam)
+        rather than the per-result filter — the two chains are independent
+        and both must be covered.
+        """
+        from types import SimpleNamespace
+
+        from demisto_sdk.commands.content_graph.parsers.related_files import (
+            RelatedFileType,
+        )
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
+        )
+
+        validator = IsValidFetchValidator()
+
+        # Stand-in handler_files: each carries a ``_handler_dir_name`` so
+        # ``_resolve_ignore_file_keys`` expands the handler/serializer types
+        # into one key per dir — the shape ``obtain_invalid_content_items``
+        # would see for a real 3-handler connector.
+        handler_files = [
+            SimpleNamespace(_handler_dir_name="a"),
+            SimpleNamespace(_handler_dir_name="b"),
+            SimpleNamespace(_handler_dir_name="c"),
+        ]
+        ignored_per_key = {
+            "c/serializer.yaml": ["CO130"],
+        }
+        content_item = SimpleNamespace(
+            handler_files=handler_files,
+            get_ignored_errors=lambda key: ignored_per_key.get(key, []),
+        )
+
+        assert (
+            validator.is_error_ignored(
+                "CO130",
+                ["CO130"],
+                content_item,
+                [
+                    RelatedFileType.CONNECTOR_HANDLER,
+                    RelatedFileType.CONNECTOR_SERIALIZER,
+                ],
+            )
+            is False
+        )
+
+    def test_should_run_preflight_suppressed_when_every_handler_ignores(self, mocker):
+        """
+        Given: A connector with three handlers (a, b, c), and EVERY handler's
+               ``.connector-ignore`` ignores CO130 via its
+               ``<h>/serializer.yaml`` key.
+        When: ``ConnectorsValidator.is_error_ignored`` runs as part of the
+              ``should_run`` preflight.
+        Then: It returns ``True`` — universal suppression IS a legitimate
+              reason to short-circuit the validator, because no per-result
+              output would survive ``filter_validation_results`` anyway.
+        """
+        from types import SimpleNamespace
+
+        from demisto_sdk.commands.content_graph.parsers.related_files import (
+            RelatedFileType,
+        )
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
+        )
+
+        validator = IsValidFetchValidator()
+
+        handler_files = [
+            SimpleNamespace(_handler_dir_name="a"),
+            SimpleNamespace(_handler_dir_name="b"),
+            SimpleNamespace(_handler_dir_name="c"),
+        ]
+        ignored_per_key = {
+            "a/serializer.yaml": ["CO130"],
+            "b/serializer.yaml": ["CO130"],
+            "c/serializer.yaml": ["CO130"],
+            # handler.yaml keys not needed — CONNECTOR_SERIALIZER alone
+            # already delivers a fully-covered expansion; the loop returns
+            # True on the first type whose expansion is fully covered.
+        }
+        content_item = SimpleNamespace(
+            handler_files=handler_files,
+            get_ignored_errors=lambda key: ignored_per_key.get(key, []),
+        )
+
+        assert (
+            validator.is_error_ignored(
+                "CO130",
+                ["CO130"],
+                content_item,
+                [RelatedFileType.CONNECTOR_SERIALIZER],
+            )
+            is True
+        )
+
+    def test_should_run_preflight_single_file_type_unchanged(self, mocker):
+        """
+        Given: A per-configurations-file validator (``related_file_type``
+               contains ``CONNECTOR_CONFIGURATIONS``) whose code is ignored
+               under ``[file:configurations.yaml]``.
+        When: ``is_error_ignored`` runs.
+        Then: It returns ``True`` — single-file types (which resolve to
+              exactly one key) keep the pre-existing single-match semantics.
+              This proves the per-handler AND-semantics fix did not
+              regress single-file types.
+        """
+        from types import SimpleNamespace
+
+        from demisto_sdk.commands.content_graph.parsers.related_files import (
+            RelatedFileType,
+        )
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
+        )
+
+        validator = IsValidFetchValidator()
+
+        ignored_per_key = {"configurations.yaml": ["CO130"]}
+        content_item = SimpleNamespace(
+            handler_files=[],
+            get_ignored_errors=lambda key: ignored_per_key.get(key, []),
+        )
+
+        assert (
+            validator.is_error_ignored(
+                "CO130",
+                ["CO130"],
+                content_item,
+                [RelatedFileType.CONNECTOR_CONFIGURATIONS],
+            )
+            is True
+        )
+
+    def test_filter_keeps_non_ignored_handler_and_drops_ignored_one(self, mocker):
+        """
+        Given: Two per-handler results (handler_a and handler_b) for the same
+               error code, where only handler_a is ignored in .connector-ignore.
+        When: filter_validation_results runs.
+        Then: handler_a's result is dropped and handler_b's result is kept.
+        """
+        manager = get_validate_manager(mocker)
+
+        ignored_map = {"handler_a/handler.yaml": ["CO155"]}
+        result_a = self._make_result(
+            "CO155",
+            Path("/repo/connectors/foo/components/handlers/handler_a/handler.yaml"),
+            ignored_map,
+            related_file_type=[RelatedFileType.CONNECTOR_HANDLER],
+        )
+        result_b = self._make_result(
+            "CO155",
+            Path("/repo/connectors/foo/components/handlers/handler_b/handler.yaml"),
+            ignored_map,
+            related_file_type=[RelatedFileType.CONNECTOR_HANDLER],
+        )
+
+        filtered = manager.filter_validation_results([result_a, result_b])
+
+        assert result_a not in filtered
+        assert result_b in filtered
+
+    def test_filter_drops_ignored_serializer(self, mocker):
+        """
+        Given: A per-serializer result whose error code is ignored via the
+               '<folder>/serializer.yaml' key.
+        When: filter_validation_results runs.
+        Then: The serializer result is dropped.
+        """
+        manager = get_validate_manager(mocker)
+
+        ignored_map = {"handler_a/serializer.yaml": ["CO155"]}
+        result = self._make_result(
+            "CO155",
+            Path("/repo/connectors/foo/components/handlers/handler_a/serializer.yaml"),
+            ignored_map,
+            related_file_type=[RelatedFileType.CONNECTOR_SERIALIZER],
+        )
+
+        filtered = manager.filter_validation_results([result])
+
+        assert filtered == []
+
+    def test_filter_drops_result_ignored_via_main_ignored_errors(self, mocker):
+        """
+        Given: A result whose error code is in the content object's main
+               ``ignored_errors`` list (the pre-existing filter behavior).
+        When: filter_validation_results runs.
+        Then: The result is dropped.
+        """
+        manager = get_validate_manager(mocker)
+
+        result = self._make_result(
+            "GR107",
+            Path("/repo/connectors/foo/connector.yaml"),
+            {},
+            main_ignored=["GR107"],
+        )
+
+        filtered = manager.filter_validation_results([result])
+
+        assert filtered == []
+
+    def test_filter_keeps_result_when_no_ignore_file(self, mocker):
+        """
+        Given: A per-handler result but the connector has no matching ignore
+               entry (empty ignore map, mimicking a missing .connector-ignore).
+        When: filter_validation_results runs.
+        Then: The result is kept.
+        """
+        manager = get_validate_manager(mocker)
+
+        result = self._make_result(
+            "CO155",
+            Path("/repo/connectors/foo/components/handlers/handler_a/handler.yaml"),
+            {},
+            related_file_type=[RelatedFileType.CONNECTOR_HANDLER],
+        )
+
+        filtered = manager.filter_validation_results([result])
+
+        assert result in filtered
+
+    def test_filter_keeps_non_handler_result_not_in_main_ignored(self, mocker):
+        """
+        Given: A result whose path is not a handler/serializer file and whose
+               error code is not in the main ``ignored_errors`` list.
+        When: filter_validation_results runs.
+        Then: The result is left untouched (kept) - the handler/serializer key
+              lookup does not apply to non-handler paths.
+        """
+        manager = get_validate_manager(mocker)
+
+        result = self._make_result(
+            "CO155",
+            Path("/repo/connectors/foo/connector.yaml"),
+            {"connector.yaml": ["CO155"]},
+        )
+
+        filtered = manager.filter_validation_results([result])
+
+        assert result in filtered
+
+    def test_filter_drops_result_ignored_via_pack_level_ignore(self, mocker):
+        """
+        Given: A ContentItem result whose error code (e.g. GR109) is listed
+               under the pack's ``[pack]`` section of ``.pack-ignore`` (exposed
+               as ``in_pack.pack_level_ignored_errors``), and NOT in the item's
+               own per-file ``ignored_errors``.
+        When: filter_validation_results runs (the post-hoc path taken for
+              ``ALWAYS_RUN_ON_ERROR_CODE`` codes such as GR107/GR109).
+        Then: The result is dropped - the pack-level ignore is honored.
+        """
+        from types import SimpleNamespace
+
+        manager = get_validate_manager(mocker)
+
+        pack = SimpleNamespace(pack_level_ignored_errors=["GR109"])
+        result = SimpleNamespace(
+            validator=SimpleNamespace(error_code="GR109", related_file_type=None),
+            path=Path("/repo/Packs/Foo/Integrations/Foo/Foo.yml"),
+            content_object=SimpleNamespace(ignored_errors=[], in_pack=pack),
+        )
+
+        filtered = manager.filter_validation_results([result])
+
+        assert filtered == []
+
+    def test_filter_drops_result_when_content_object_is_pack_with_pack_level_ignore(
+        self, mocker
+    ):
+        """
+        Given: A result whose content_object IS the ``Pack`` itself (as with
+               PA-validators), and the code is listed in the pack's
+               ``pack_level_ignored_errors``.
+        When: filter_validation_results runs.
+        Then: The result is dropped - the duck-typed pack lookup uses
+              ``pack_level_ignored_errors`` directly on the content_object.
+        """
+        from types import SimpleNamespace
+
+        manager = get_validate_manager(mocker)
+
+        pack = SimpleNamespace(
+            ignored_errors=[],
+            pack_level_ignored_errors=["GR107"],
+        )
+        result = SimpleNamespace(
+            validator=SimpleNamespace(error_code="GR107", related_file_type=None),
+            path=Path("/repo/Packs/Foo/pack_metadata.json"),
+            content_object=pack,
+        )
+
+        filtered = manager.filter_validation_results([result])
+
+        assert filtered == []
+
+    def test_filter_keeps_result_when_neither_file_nor_pack_ignore_match(self, mocker):
+        """
+        Given: A result whose error code is neither in the content item's
+               per-file ``ignored_errors`` nor in the pack's
+               ``pack_level_ignored_errors``.
+        When: filter_validation_results runs.
+        Then: The result is kept.
+        """
+        from types import SimpleNamespace
+
+        manager = get_validate_manager(mocker)
+
+        pack = SimpleNamespace(pack_level_ignored_errors=["PB100"])
+        result = SimpleNamespace(
+            validator=SimpleNamespace(error_code="GR109", related_file_type=None),
+            path=Path("/repo/Packs/Foo/Integrations/Foo/Foo.yml"),
+            content_object=SimpleNamespace(ignored_errors=["BA101"], in_pack=pack),
+        )
+
+        filtered = manager.filter_validation_results([result])
+
+        assert result in filtered
+
+
+class TestImplicitGraphInitialization:
+    """Tests for the connectors-flow graph initialization.
+
+    The connectors flow resolves handler<->integration links through the
+    content graph *during object collection*, before any validator runs, so it
+    cannot rely on the lazy ``BaseValidator.graph`` property. These tests pin:
+
+    * ``ConnectorAwareInitializer`` building the graph before cross-matching.
+    * Graph initialization staying scoped to the connectors flow - the plain
+      ``Initializer`` must not trigger it.
+    * ``BaseValidator.ensure_graph_initialized`` being idempotent - it never
+      rebuilds when the graph interface is already wired (the connect-only
+      ``--graph`` CI path).
+    """
+
+    def teardown_method(self):
+        # Never leak a wired graph interface between tests.
+        BaseValidator.graph_interface = None
+
+    def test_connectors_initializer_builds_graph_before_cross_matching(self, mocker):
+        """The graph must be initialized *before* _cross_match_and_expand runs,
+        since the expand phases query it to resolve handler links."""
+        call_order = []
+
+        ensure_spy = mocker.patch.object(
+            BaseValidator,
+            "ensure_graph_initialized",
+            side_effect=lambda: call_order.append("ensure_graph"),
+        )
+        cross_match_spy = mocker.patch.object(
+            ConnectorAwareInitializer,
+            "_cross_match_and_expand",
+            side_effect=lambda *a, **kw: call_order.append("cross_match") or set(),
+        )
+        mocker.patch.object(
+            Initializer, "gather_objects_to_run_on", return_value=(set(), set())
+        )
+
+        initializer = ConnectorAwareInitializer(execution_mode=ExecutionMode.ALL_FILES)
+        initializer.gather_objects_to_run_on()
+
+        ensure_spy.assert_called_once()
+        cross_match_spy.assert_called_once()
+        assert call_order == ["ensure_graph", "cross_match"]
+
+    def test_graph_is_closed_when_cross_matching_fails(self, mocker):
+        """ValidateManager closes the graph in run_validations(), which never
+        runs if collection raises. The connectors initializer must close it
+        itself so a mid-collection failure does not leak the Neo4j driver."""
+        fake_graph = mocker.Mock()
+        mocker.patch.object(
+            BaseValidator,
+            "ensure_graph_initialized",
+            side_effect=lambda: setattr(BaseValidator, "graph_interface", fake_graph),
+        )
+        mocker.patch.object(
+            ConnectorAwareInitializer,
+            "_cross_match_and_expand",
+            side_effect=RuntimeError("boom"),
+        )
+        mocker.patch.object(
+            Initializer, "gather_objects_to_run_on", return_value=(set(), set())
+        )
+
+        initializer = ConnectorAwareInitializer(execution_mode=ExecutionMode.ALL_FILES)
+
+        with pytest.raises(RuntimeError, match="boom"):
+            initializer.gather_objects_to_run_on()
+
+        fake_graph.close.assert_called_once()
+        assert BaseValidator.graph_interface is None
+
+    def test_caller_owned_graph_is_not_closed_when_cross_matching_fails(self, mocker):
+        """When the graph interface was already wired by the caller (e.g.
+        connect-only via --graph in CI), the initializer must not close it on
+        failure - ValidateManager owns it and closes it in run_validations()."""
+        caller_graph = mocker.Mock()
+        BaseValidator.graph_interface = caller_graph
+        mocker.patch.object(
+            ConnectorAwareInitializer,
+            "_cross_match_and_expand",
+            side_effect=RuntimeError("boom"),
+        )
+        mocker.patch.object(
+            Initializer, "gather_objects_to_run_on", return_value=(set(), set())
+        )
+
+        initializer = ConnectorAwareInitializer(execution_mode=ExecutionMode.ALL_FILES)
+
+        with pytest.raises(RuntimeError, match="boom"):
+            initializer.gather_objects_to_run_on()
+
+        caller_graph.close.assert_not_called()
+        assert BaseValidator.graph_interface is caller_graph
+
+    def test_plain_initializer_does_not_build_graph(self, mocker):
+        """Graph initialization is scoped to the connectors flow. The regular
+        validate flow keeps building the graph lazily, on first validator
+        access - collecting objects must not trigger a build."""
+        ensure_spy = mocker.patch.object(BaseValidator, "ensure_graph_initialized")
+        mocker.patch.object(
+            Initializer, "get_files_using_git", return_value=(set(), set(), set())
+        )
+
+        Initializer(execution_mode=ExecutionMode.USE_GIT).gather_objects_to_run_on()
+
+        ensure_spy.assert_not_called()
+
+    def test_ensure_graph_initialized_is_idempotent(self, mocker):
+        """When the graph interface is already wired (e.g. connect-only via
+        --graph), ensure_graph_initialized must NOT rebuild the graph."""
+        sentinel = object()
+        BaseValidator.graph_interface = sentinel  # type: ignore[assignment]
+
+        update_spy = mocker.patch(
+            "demisto_sdk.commands.validate.validators.base_validator.update_content_graph"
+        )
+        interface_spy = mocker.patch(
+            "demisto_sdk.commands.validate.validators.base_validator.ContentGraphInterface"
+        )
+
+        result = BaseValidator.ensure_graph_initialized()
+
+        assert result is sentinel
+        update_spy.assert_not_called()
+        interface_spy.assert_not_called()
+
+    def test_ensure_graph_initialized_builds_when_missing(self, mocker):
+        """When no graph interface is wired, ensure_graph_initialized builds and
+        updates it via the shared update_content_graph path (the same one used
+        for regular and private content)."""
+        BaseValidator.graph_interface = None
+
+        fake_interface = object()
+        interface_spy = mocker.patch(
+            "demisto_sdk.commands.validate.validators.base_validator.ContentGraphInterface",
+            return_value=fake_interface,
+        )
+        update_spy = mocker.patch(
+            "demisto_sdk.commands.validate.validators.base_validator.update_content_graph"
+        )
+
+        result = BaseValidator.ensure_graph_initialized()
+
+        assert result is fake_interface
+        interface_spy.assert_called_once()
+        update_spy.assert_called_once()

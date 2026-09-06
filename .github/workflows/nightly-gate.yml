@@ -1,0 +1,126 @@
+name: SDK Nightly Gate
+
+# ---------------------------------------------------------------------------
+# Enforces the SDK Nightly policy defined in `.github/nightly-gate-paths.yml`.
+#
+# For every pull request, this workflow:
+#
+#   1. Diffs the PR head against its base branch to get the list of
+#      changed files.
+#   2. Runs `check_nightly_gate.py` to classify those files into
+#      `must` / `recommended` / `skip_only` / `none` tiers.
+#   3. Checks the PR's labels for `nightly-run-passed` or
+#      `nightly-run-skipped`.
+#   4. Posts / updates a single sticky comment describing the outcome,
+#      and fails the job only when a Must-tier file was changed
+#      without one of the two labels applied.
+#
+# The workflow re-runs on `labeled` / `unlabeled` events so a red check
+# turns green as soon as the author applies the correct label - no
+# push required.
+# ---------------------------------------------------------------------------
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - labeled
+      - unlabeled
+
+# Cancel superseded runs on the same PR to save CI minutes.
+#
+# NOTE: The concurrency group intentionally includes `github.event.action`.
+# Without it, a rapid `labeled` + `unlabeled` pair (e.g. swapping
+# `nightly-run-skipped` for `nightly-run-passed`) collides in the same
+# group, and `cancel-in-progress: true` kills the first run before it
+# can upsert the sticky comment - leaving a stale comment on the PR.
+# Keying on the action lets each label event finish its own comment
+# refresh while still cancelling superseded pushes (`synchronize` vs
+# `synchronize`, etc.).
+concurrency:
+  group: nightly-gate-${{ github.head_ref || github.ref }}-${{ github.event.action }}
+  cancel-in-progress: true
+
+# Least-privilege token: we need to read PR metadata, write comments,
+# and read repository content for the diff.
+#
+# NOTE: The `nightly-run-passed` and `nightly-run-skipped` labels this
+# gate depends on are provisioned once at the repository level (they are
+# not created by this workflow, since that would run on every PR event).
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  nightly_gate:
+    name: Check SDK Nightly gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR head
+        # Shallow clone is enough: file-diff computation is handled by
+        # `tj-actions/changed-files` below; we only need the working tree
+        # to run the classifier script.
+        uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Setup Python environment
+        uses: ./.github/actions/setup_environment
+        with:
+          python-version: "3.12"
+
+      - name: Compute changed files
+        id: diff
+        # Pin to a commit SHA (v47.0.6) to defend against tag-hijack
+        # supply-chain attacks; matches the pattern used elsewhere in
+        # this repo (see `on-push.yml`).
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
+        with:
+          # Newline-separated output so the classifier can read it as a
+          # newline-delimited file without additional parsing.
+          separator: "\n"
+
+      - name: Classify changes and decide
+        id: classify
+        env:
+          # Newline-delimited list of paths changed in this PR, straight
+          # from `tj-actions/changed-files` - no local `git diff` needed.
+          CHANGED_FILES: ${{ steps.diff.outputs.all_changed_files }}
+          # Raw JSON array of label names; parsed inside the classifier
+          # (see `_parse_labels` in check_nightly_gate.py) so the shell
+          # never has to munge comma/whitespace-containing labels.
+          PR_LABELS_JSON: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+        run: |
+          set -euo pipefail
+          changed_path="${RUNNER_TEMP}/nightly-gate-changed.txt"
+          mkdir -p "$(dirname "${changed_path}")"
+          printf '%s\n' "${CHANGED_FILES}" > "${changed_path}"
+          echo "Changed files ($(wc -l < "${changed_path}") total):"
+          cat "${changed_path}"
+
+          echo "PR labels (raw JSON): ${PR_LABELS_JSON}"
+          poetry run python -m Utils.github_workflow_scripts.nightly_gate.check_nightly_gate \
+            --config .github/nightly-gate-paths.yml \
+            --changed-files "${changed_path}" \
+            --labels-json "${PR_LABELS_JSON}"
+
+      - name: Upsert sticky PR comment
+        # Runs whether the classify step passed or failed, so a failing
+        # gate still leaves the author with actionable feedback. All the
+        # find/create/update/delete/dedupe logic lives in Python (see
+        # `upsert_gate_comment.py`) so it's fully unit-tested and does
+        # not depend on `gh` + `jq` being installed on the runner.
+        if: always() && github.event.pull_request.number != null
+        env:
+          # Env-var transport (not CLI args) so multi-line Markdown
+          # bodies survive without any shell-quoting risk.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          COMMENT_BODY: ${{ steps.classify.outputs.comment_body }}
+          DELETE_COMMENT: ${{ steps.classify.outputs.delete_comment }}
+        run: |
+          set -euo pipefail
+          poetry run python -m Utils.github_workflow_scripts.nightly_gate.upsert_gate_comment

@@ -156,6 +156,9 @@ mapping:
         type: int
       webSearch:
         type: bool
+      modelTier:
+        type: str
+        enum: ['Flash', 'Thinking', 'Pro']
 
   compliantpolicies:
     type: seq

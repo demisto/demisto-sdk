@@ -92,14 +92,36 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         self.git_sha: Optional[str] = git_sha
 
     @staticmethod
+    def _resolve_pack_defaults(
+        path: Path,
+    ) -> List[MarketplaceVersions]:
+        """Resolve the pack's marketplaces from the item's `pack_metadata.json`,
+        falling back to all marketplaces when unavailable.
+        """
+        from demisto_sdk.commands.common.tools import get_pack_metadata
+        from demisto_sdk.commands.content_graph.parsers.pack import (
+            PackMetadataParser,
+        )
+
+        metadata = get_pack_metadata(str(path))
+        if not metadata or not metadata.get("marketplaces"):
+            return list(MarketplaceVersions)
+
+        return PackMetadataParser.resolve_marketplaces(metadata)
+
+    @staticmethod
     def from_path(
         path: Path,
-        pack_marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions),
+        pack_marketplaces: Optional[List[MarketplaceVersions]] = None,
         pack_supported_modules: Optional[List[str]] = None,
         git_sha: Optional[str] = None,
     ) -> "ContentItemParser":
         """Tries to parse a content item by its path.
         If during the attempt we detected the file is not a content item, `None` is returned.
+
+        When `pack_marketplaces` is not provided (standalone parsing), the
+        marketplaces are resolved from the `pack_metadata.json` of the pack
+        containing the item.
 
         Returns:
             Optional[ContentItemParser]: The parsed content item.
@@ -108,6 +130,9 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         from demisto_sdk.commands.content_graph.common import ContentType
 
         logger.debug(f"Parsing content item {path}")
+
+        if pack_marketplaces is None:
+            pack_marketplaces = ContentItemParser._resolve_pack_defaults(path)
 
         # Skip test files under AgentixAgents - they are not content items
         if AGENTIX_AGENTS_DIR in path.parts and ContentType._is_agentix_agent_test_path(

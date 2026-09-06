@@ -10,7 +10,10 @@ from google.auth.transport.requests import Request
 from packaging.version import InvalidVersion, Version
 from requests.exceptions import ConnectionError, RequestException, Timeout
 
-from demisto_sdk.commands.common.constants import DEFAULT_DOCKER_REGISTRY_URL
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_DOCKER_REGISTRY_URL,
+    DEFAULT_EXTENDED_REGISTRY,
+)
 from demisto_sdk.commands.common.handlers.xsoar_handler import JSONDecodeError
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.StrEnum import StrEnum
@@ -64,18 +67,13 @@ class DockerHubClient:
         self._session = requests.Session()
         self._docker_hub_auth_tokens: Dict[str, Any] = {}
         self.verify_ssl = verify_ssl
-        # A truly custom registry is one explicitly provided by the user (e.g., JFrog),
-        # NOT one resolved from the DOCKER_IO env var (e.g., in CI).
-        # In CI the registry URL is the GAR proxy (resolved from DOCKER_IO) and
-        # requires a gcloud bearer token, so it must NEVER be treated as a custom
-        # registry. We therefore explicitly exclude the CI environment here,
-        # mirroring the canonical is_custom_registry() logic in docker_helper.py.
-        # Note: callers (DockerImage, DO104) always pass registry=DOCKER_REGISTRY_URL,
-        # which equals the GAR path in CI, so bool(registry) alone is insufficient.
+        # A user-provided registry (e.g., JFrog): not CI, not Docker Hub, not the
+        # extended target. Uses Basic Auth; the CI GAR proxy is handled via IS_CONTENT_GITLAB_CI.
         self._is_custom_registry = (
             bool(registry)
             and not IS_CONTENT_GITLAB_CI
             and self.DEFAULT_REGISTRY not in self.registry_api_url
+            and DEFAULT_EXTENDED_REGISTRY not in self.registry_api_url
         )
 
     def __enter__(self):
@@ -95,15 +93,16 @@ class DockerHubClient:
             repo: the repository to retrieve the token for.
             scope: the scope needed for the repository
         """
-        if IS_CONTENT_GITLAB_CI:
-            # If running in a CI environment, try using the Google Cloud access token
-            logger.debug(
-                "Attempting to use Google Cloud access token for Docker Hub proxy authentication"
-            )
+        if IS_CONTENT_GITLAB_CI or DEFAULT_EXTENDED_REGISTRY in self.registry_api_url:
+            # The extended registry (and the CI proxy, via IS_CONTENT_GITLAB_CI)
+            # authenticates with a gcloud access token rather than a Docker Hub token.
             try:
                 if gcloud_access_token := get_gcloud_access_token():
-                    logger.debug("returning gcloud_access_token")
                     return gcloud_access_token
+                logger.warning(
+                    f"get_token | gcloud access token empty for {repo=}, "
+                    "falling back to Docker Hub token endpoint"
+                )
             except Exception as e:
                 logger.error(f"Failed to get gcloud access token: {e}")
 
@@ -297,19 +296,23 @@ class DockerHubClient:
             _headers = {key: value for key, value in headers}
         else:
             _headers = {
+                # Accept both Docker v2 and OCI manifest media types. GAR stores
+                # demistoextended images as OCI manifests and returns 404 if only
+                # the Docker v2 types are requested.
                 "Accept": "application/vnd.docker.distribution.manifest.v2+json,"
-                "application/vnd.docker.distribution.manifest.list.v2+json",
+                "application/vnd.docker.distribution.manifest.list.v2+json,"
+                "application/vnd.oci.image.manifest.v1+json,"
+                "application/vnd.oci.image.index.v1+json",
             }
             if self._is_custom_registry:
                 # For user-provided custom registries (e.g., JFrog), don't send bearer token.
                 # Let get_request() use Basic Auth (self.auth) if credentials are available.
                 logger.debug(
-                    "Using Basic Auth (skipping bearer token) for custom registry"
+                    "do_registry_get_request | Using Basic Auth (skipping bearer token) for custom registry"
                 )
             else:
                 # For Docker Hub default registry and GAR proxy registries,
                 # use bearer token from get_token() (Docker Hub token or GCloud access token).
-                logger.debug("Using bearer token authentication")
                 _headers["Authorization"] = (
                     f"Bearer {self.get_token(docker_image, scope=scope)}"
                 )
@@ -696,7 +699,6 @@ def get_gcloud_access_token() -> Optional[str]:
         logger.debug("Trying to retrieve a Google Cloud access token.")
         # Automatically obtain credentials from the environment
         credentials, project_id = google.auth.default()
-
         # Refresh the token if needed (ensures the token is valid)
         credentials.refresh(Request())
         # Extract the access token
@@ -706,9 +708,10 @@ def get_gcloud_access_token() -> Optional[str]:
                 f"Successfully obtained Google Cloud access token, {project_id=}."
             )
             return access_token
-        else:
-            logger.debug("Failed to obtain Google Cloud access token.")
-            return None
+        logger.warning(
+            "get_gcloud_access_token | credentials refreshed but token is empty"
+        )
+        return None
     except Exception as e:
         logger.debug(f"Failed to get access token: {str(e)}")
         return None

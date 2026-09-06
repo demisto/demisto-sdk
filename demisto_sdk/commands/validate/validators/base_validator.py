@@ -1,18 +1,21 @@
 from __future__ import annotations
 
 from abc import ABC
+from enum import Enum
 from pathlib import Path
 from typing import (
+    Callable,
     ClassVar,
     Generic,
     Iterable,
     List,
     Optional,
     TypeVar,
+    cast,
     get_args,
 )
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.common.constants import (
     ALWAYS_RUN_ON_ERROR_CODE,
@@ -180,18 +183,38 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     ) -> FixResult:
         raise NotImplementedError
 
+    @classmethod
+    def ensure_graph_initialized(cls) -> ContentGraphInterface:
+        """Build/update the content graph once and wire it onto ``BaseValidator``.
+
+        This is the shared graph-initialization path used by the lazy ``graph``
+        property and by the connectors flow, which needs the graph *during*
+        object collection - before any validator runs. It runs the same
+        ``update_content_graph`` machinery as the standalone ``graph update``
+        command, so it: imports the existing graph, updates only what changed
+        (unless ``create_graph_from_scratch`` forces a rebuild), includes
+        private content via ``private_content_path``, and skips work entirely
+        when the graph is already up-to-date.
+
+        Idempotent: if the graph interface is already wired (e.g. connect-only
+        via ``--graph`` in CI, or a previous call), it is returned as-is without
+        rebuilding.
+        """
+        if BaseValidator.graph_interface:
+            return BaseValidator.graph_interface
+        logger.info("Graph validations were selected, will init graph")
+        BaseValidator.graph_interface = ContentGraphInterface()
+        update_content_graph(
+            BaseValidator.graph_interface,
+            use_git=True,
+            private_content_path=BaseValidator.private_content_path,
+            create_graph_from_scratch=BaseValidator.create_graph_from_scratch,
+        )
+        return BaseValidator.graph_interface
+
     @property
     def graph(self) -> ContentGraphInterface:
-        if not self.graph_interface:
-            logger.info("Graph validations were selected, will init graph")
-            BaseValidator.graph_interface = ContentGraphInterface()
-            update_content_graph(
-                BaseValidator.graph_interface,
-                use_git=True,
-                private_content_path=BaseValidator.private_content_path,
-                create_graph_from_scratch=BaseValidator.create_graph_from_scratch,
-            )
-        return self.graph_interface
+        return self.ensure_graph_initialized()
 
     @classmethod
     def set_private_content_path(cls, private_content_path: Optional[Path]) -> None:
@@ -221,6 +244,198 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     @property
     def error_category(self) -> str:
         return self.error_code[:2]
+
+
+class ConnectorType(str, Enum):
+    """The supported connector types to validate against.
+
+    Maps to the boolean `grouped` field on the connector's settings:
+    True -> GROUPED, False -> STANDARD.
+    """
+
+    STANDARD = "standard"
+    GROUPED = "grouped"
+
+
+class ConnectorsValidator(BaseValidator[ContentTypes], ABC):
+    """Base validator for connector content items.
+
+    In addition to the generic `should_run` checks, it validates the connector
+    against `connectors_type_to_validate` based on the connector's `grouped`
+    setting.
+    """
+
+    connectors_type_to_validate: List[ConnectorType] = Field(
+        default_factory=lambda: list(ConnectorType)
+    )
+
+    def should_run(
+        self,
+        content_item: ContentTypes,
+        ignorable_errors: list,
+        support_level_dict: dict,
+        running_execution_mode: Optional[ExecutionMode],
+    ) -> bool:
+        """Check whether to run the validation on the given connector content item.
+
+        Runs the generic `should_run` checks and, additionally, validates that
+        the connector's type (derived from its `grouped` setting) is included in
+        `connectors_type_to_validate`.
+        """
+        return (
+            super().should_run(
+                content_item,
+                ignorable_errors,
+                support_level_dict,
+                running_execution_mode,
+            )
+            and should_run_on_connector_type(
+                content_item, self.connectors_type_to_validate
+            )
+            and not self.is_error_ignored(
+                self.error_code,
+                ignorable_errors,
+                content_item,
+                self.related_file_type,
+            )
+        )
+
+    def is_error_ignored(
+        self,
+        err_code: str,
+        ignorable_errors: List[str],
+        content_item: ContentTypes,
+        related_file_type: Optional[List[RelatedFileType]] = None,
+    ) -> bool:
+        """Check whether the given error code is ignored for the connector content item.
+
+        This is the ``should_run`` preflight — it decides whether to run the
+        validator on the connector at all. It is intentionally a **coarse,
+        universal** check; per-handler suppression of individual results is the
+        job of ``ValidateManager.filter_validation_results``, which drops one
+        result at a time keyed by ``result.path``.
+
+        The ignore rules are read from the connector's ``.connector-ignore``
+        file (parsed lazily by ``Connector.ignored_errors_dict``). Each section
+        header maps to a connector sub-file:
+
+        * Single sub-files (connection.yaml, capabilities.yaml,
+          configurations.yaml, triggers.yaml, summary.yaml) are keyed by their
+          bare filename. They resolve to exactly one key, so a match on that
+          key is decisive.
+        * Handler files are keyed by ``<handler_dir>/handler.yaml`` and
+          serializer files by ``<handler_dir>/serializer.yaml``. A connector
+          may have multiple handlers, so these types expand to **one key per
+          handler dir**. The validator is short-circuited here only when
+          **every** expanded key ignores the code — i.e. suppression is
+          universal across all handlers. When only some handlers ignore, the
+          validator still runs and ``filter_validation_results`` drops the
+          individual per-handler results whose ``path`` matches an ignored
+          handler; the others are kept and reported.
+
+          (The prior "any-match wins" behaviour silenced the whole validator
+          across every handler as soon as one handler ignored the code, which
+          hid legitimate defects on the others.)
+
+        When ``related_file_type`` is not provided the check falls back to the
+        connector's main file (``connector.yaml``).
+
+        Note: if the error code is not in ``ignorable_errors`` or is in
+        ``ALWAYS_RUN_ON_ERROR_CODE``, the error can never be ignored.
+
+        Args:
+            err_code: The validation's error code.
+            ignorable_errors: The list of errors that are allowed to be ignored.
+            content_item: The connector content item.
+            related_file_type: The related file types the validation runs on.
+
+        Returns:
+            bool: True if the error should and is allowed to be ignored.
+        """
+        # Error codes in ALWAYS_RUN_ON_ERROR_CODE must always run and can never
+        # be ignored, regardless of what the .connector-ignore file declares.
+        if (err_code not in ignorable_errors) or (err_code in ALWAYS_RUN_ON_ERROR_CODE):
+            return False
+
+        raw_getter = getattr(content_item, "get_ignored_errors", None)
+        if not callable(raw_getter):
+            return False
+        get_ignored_errors = cast(Callable[[str], List[str]], raw_getter)
+
+        if not related_file_type:
+            # No related file - check the connector's main file.
+            return err_code in get_ignored_errors("connector.yaml")
+
+        # Handler/serializer types expand to one key per handler dir. Short-
+        # circuiting the whole validator when ANY single handler ignores the
+        # code would silence real defects on the other handlers; per-handler
+        # suppression is the job of ``filter_validation_results`` (per-result),
+        # not of this preflight. So for handler/serializer types we require
+        # that EVERY expanded key ignores the code. For single-file types the
+        # behaviour is unchanged (they expand to exactly one key, so all == any
+        # over one element).
+        per_handler_types = {
+            RelatedFileType.CONNECTOR_HANDLER,
+            RelatedFileType.CONNECTOR_SERIALIZER,
+        }
+        for related_file in related_file_type:
+            file_keys = self._resolve_ignore_file_keys(related_file, content_item)
+            if not file_keys:
+                # No expanded keys for this type (e.g. a connector with no
+                # handlers for a handler/serializer type). Nothing to match —
+                # this type cannot contribute an ignore; move on.
+                continue
+            if related_file in per_handler_types:
+                # Universal suppression only: every handler dir must ignore.
+                if all(
+                    err_code in get_ignored_errors(file_key) for file_key in file_keys
+                ):
+                    return True
+            else:
+                # Single-file types (one key): a match is decisive.
+                for file_key in file_keys:
+                    if err_code in get_ignored_errors(file_key):
+                        return True
+        return False
+
+    @staticmethod
+    def _resolve_ignore_file_keys(
+        related_file: RelatedFileType,
+        content_item: ContentTypes,
+    ) -> List[str]:
+        """Map a ``RelatedFileType`` to the ``.connector-ignore`` section keys.
+
+        Returns a list of file keys (without the ``file:`` prefix) to look up
+        in the connector's ignore file. Handlers and serializers expand into one
+        key per handler directory the connector defines.
+        """
+        single_file_map = {
+            RelatedFileType.CONNECTOR_CONNECTION: "connection.yaml",
+            RelatedFileType.CONNECTOR_CAPABILITIES: "capabilities.yaml",
+            RelatedFileType.CONNECTOR_CONFIGURATIONS: "configurations.yaml",
+            RelatedFileType.CONNECTOR_TRIGGERS: "triggers.yaml",
+            RelatedFileType.CONNECTOR_SUMMARY: "summary.yaml",
+        }
+        if related_file in single_file_map:
+            return [single_file_map[related_file]]
+
+        if related_file in (
+            RelatedFileType.CONNECTOR_HANDLER,
+            RelatedFileType.CONNECTOR_SERIALIZER,
+        ):
+            filename = (
+                "handler.yaml"
+                if related_file == RelatedFileType.CONNECTOR_HANDLER
+                else "serializer.yaml"
+            )
+            keys: List[str] = []
+            for handler_file in getattr(content_item, "handler_files", []) or []:
+                handler_dir = getattr(handler_file, "_handler_dir_name", None)
+                if handler_dir:
+                    keys.append(f"{handler_dir}/{filename}")
+            return keys
+
+        return []
 
 
 def get_all_validators() -> List[BaseValidator]:
@@ -288,20 +503,49 @@ def is_error_ignored(
     content_item: ContentTypes,
     related_file_type: Optional[List[RelatedFileType]] = None,
 ) -> bool:
-    """
-    Check if the given validation error code is ignored by the current item ignored error list.
-    Note: If the validation's error code is in ALWAYS_RUN_ON_ERROR_CODE, the function will always return False.
+    """Check whether the given validation error code is ignored for the
+    given content item.
+
+    Resolution order (first match wins):
+        1. If ``err_code`` is in ``ALWAYS_RUN_ON_ERROR_CODE`` -> never ignore.
+        2. If ``err_code`` is not in ``ignorable_errors`` -> never ignore.
+        3. If ``err_code`` is listed under the new ``[pack]`` section of the
+           pack's ``.pack-ignore`` file -> ignore for every item in the pack
+           (and for related files of those items).
+        4. If a ``related_file_type`` is provided -> ignore when the code is
+           listed under any of the related files' per-file sections. If none
+           of the related files match (e.g. the related file does not exist
+           for this content type), fall through to rule 5.
+        5. Ignore when the code is listed under the content item's own
+           per-file section.
 
     Args:
-        err_code (str): The validation's error code.
-        ignored_errors (list): The list of the content item ignored errors.
-        ignorable_errors (list): The list of the ignorable errors.
+        err_code: The validation's error code.
+        ignorable_errors: Codes that may legally be ignored at all
+            (the project-level allow-list).
+        content_item: The item being validated. May be a ``ContentItem``
+            *or* a ``Pack`` (for PA-validators that run on packs).
+        related_file_type: Optional related-file scope (e.g. README, image).
 
     Returns:
-        bool: True if the given error code should and allow to be ignored by the given item. Otherwise, return False.
+        True when the error should be ignored for this item; False otherwise.
     """
     if (err_code not in ignorable_errors) or (err_code in ALWAYS_RUN_ON_ERROR_CODE):
         return False
+
+    # ------ Pack-level ignore ------
+    # Duck-typed to keep this module free of a direct import of `Pack`,
+    # which would create a circular import with the content_graph package.
+    # `Pack` itself exposes `pack_level_ignored_errors`; every `ContentItem`
+    # reaches its pack via `in_pack`.
+    pack = (
+        content_item
+        if hasattr(content_item, "pack_level_ignored_errors")
+        else getattr(content_item, "in_pack", None)
+    )
+    if pack is not None and err_code in getattr(pack, "pack_level_ignored_errors", []):
+        return True
+
     if related_file_type:
         # If the validation should run on a file related to the main content, will check if the validation's error code is ignored by any of the related file paths.
         for related_file in related_file_type:
@@ -313,10 +557,13 @@ def is_error_ignored(
                     return True
             except Exception:
                 continue
-        return False
-    else:
-        # If the validation should run on the main content, will check if the validation's error code is ignored by the file.
-        return err_code in content_item.ignored_errors
+        # None of the related files carried the ignore (e.g. the related file
+        # does not exist for this content type, such as an AgentixAction which
+        # has no SKILL_CONTENT). Fall through to the main content's per-file
+        # ignore so a `[file:...]` section on the item itself is still honored.
+
+    # If the validation should run on the main content, will check if the validation's error code is ignored by the file.
+    return err_code in content_item.ignored_errors
 
 
 class ValidationResult(BaseResult, BaseModel):
@@ -399,6 +646,31 @@ def should_run_on_deprecated(run_on_deprecated, content_item):
     if content_item.deprecated and not run_on_deprecated:
         return False
     return True
+
+
+def should_run_on_connector_type(
+    content_item: ContentTypes,
+    connectors_type_to_validate: List[ConnectorType],
+) -> bool:
+    """
+    Check if the given connector's type is in the given connectors types to validate.
+
+    The connector's type is derived from its `grouped` setting:
+    True -> ConnectorType.GROUPED, False -> ConnectorType.STANDARD.
+
+    Args:
+        content_item (ContentTypes): The connector content item to check.
+        connectors_type_to_validate (List[ConnectorType]): The connector types the validation should run on.
+
+    Returns:
+        bool: True if the connector's type is in connectors_type_to_validate. Otherwise, return False.
+    """
+    connector_type = (
+        ConnectorType.GROUPED
+        if getattr(getattr(content_item, "settings", None), "grouped", False)
+        else ConnectorType.STANDARD
+    )
+    return connector_type in connectors_type_to_validate
 
 
 def should_run_on_execution_mode(

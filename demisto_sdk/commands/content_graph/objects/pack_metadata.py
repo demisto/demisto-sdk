@@ -36,6 +36,10 @@ class PackMetadata(BaseModel):
     description: Optional[str]
     source: Optional[str] = Field("")
     managed: Optional[bool] = Field(False)
+    # Marketplace-suffixed managed/source fields (e.g. ``managed:platform``).
+    # Resolved into the plain managed/source per-marketplace during dump.
+    managed_platform: Optional[bool] = Field(None, alias="managed:platform")
+    source_platform: Optional[str] = Field(None, alias="source:platform")
     internal: Optional[bool] = Field(False)
     created: Optional[str] = Field(alias="firstCreated")
     updated: Optional[str] = Field("")

@@ -5,6 +5,7 @@ from collections import defaultdict
 from typing import Dict, Iterable, List, Set, Tuple, Union
 
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
+from demisto_sdk.commands.validate.tools import is_autonomous_pack
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -93,13 +94,7 @@ def _get_invalid_display_label_keys(
     content_item: ContentTypes,
 ) -> List[Tuple[str, str]]:
     """Return (task_id, context_key) pairs for displayLabel keys not used elsewhere."""
-    pack_metadata = content_item.in_pack.pack_metadata_dict  # type: ignore[union-attr]
-    if not pack_metadata:
-        return []
-    if not (
-        pack_metadata.get("managed") is True
-        and pack_metadata.get("source") == "autonomous"
-    ):
+    if not is_autonomous_pack(content_item.in_pack):
         return []
 
     # Build inverted index: root name → set of task IDs that reference it

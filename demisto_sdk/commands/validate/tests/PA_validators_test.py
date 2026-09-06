@@ -989,6 +989,36 @@ def test_IsValidDefaultDataSourceNameValidator_fix():
     assert content_item.default_data_source_id == "defaultDataSourceValue"
 
 
+def test_IsValidDefaultDataSourceNameValidator_skips_derived_pack():
+    """
+    Given
+        - A pack whose 'defaultDataSource' does not match any data source integration
+          among its content items (the real Box / BoxManaged case).
+
+    When
+        - Calling the IsValidDefaultDataSourceNameValidator obtain_invalid_content_items
+          function, once with is_derived=False and once with is_derived=True.
+
+    Then
+        - The non-derived pack is reported.
+        - The derived pack is not reported: it has no pack_metadata.json of its own,
+          and its metadata is validated through the original pack.
+    """
+    pack = create_pack_object(["defaultDataSource"], ["InvalidDefaultDataSourceValue"])
+    pack.content_items.integration.append(
+        create_integration_object(
+            ["script.isfetch", "commonfields.id"], ["true", "TestIntegration1"]
+        )
+    )
+    validator = IsValidDefaultDataSourceNameValidator()
+
+    assert pack.is_derived is False
+    assert len(validator.obtain_invalid_content_items([pack])) == 1
+
+    pack.is_derived = True
+    assert validator.obtain_invalid_content_items([pack]) == []
+
+
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures",
     [
@@ -2734,6 +2764,39 @@ def test_PackSupportedModulesCoverageValidator_fix_creates_supported_modules_whe
     # All other default modules should be mentioned as removed
     assert "edr" in fix_result.message
     assert "asm" in fix_result.message
+
+
+def test_PackSupportedModulesCoverageValidator_skips_derived_pack():
+    """
+    Given
+        - A platform pack declaring supportedModules ["edr", "xsiam"] with a content
+          item covering only "edr", so "xsiam" is uncovered.
+
+    When
+        - Calling the PackSupportedModulesCoverageValidator obtain_invalid_content_items
+          function, once with is_derived=False and once with is_derived=True.
+
+    Then
+        - The non-derived pack is reported.
+        - The derived pack is not reported: it has no pack_metadata.json of its own,
+          and its supportedModules are validated through the original pack.
+    """
+    pack = create_pack_object(
+        paths=["marketplaces", "supportedModules"],
+        values=[["platform"], ["edr", "xsiam"]],
+    )
+    integration = create_integration_object()
+    integration.marketplaces = [MarketplaceVersions.PLATFORM]
+    integration.supportedModules = ["edr"]
+    pack.content_items.integration.append(integration)
+
+    validator = PackSupportedModulesCoverageValidator()
+
+    assert pack.is_derived is False
+    assert len(validator.obtain_invalid_content_items([pack])) == 1
+
+    pack.is_derived = True
+    assert validator.obtain_invalid_content_items([pack]) == []
 
 
 # ---------------------------------------------------------------------------

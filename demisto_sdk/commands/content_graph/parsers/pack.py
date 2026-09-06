@@ -802,7 +802,12 @@ class DerivedPackParser:
         self.content_items = PackContentItems()
         self.relationships = Relationships()
         self.structure_errors: List[StructureError] = []
-        self.ignored_errors_dict: dict = {}
+        # The derived pack has no directory of its own: it shares the original
+        # pack's on-disk directory (see ``self.path`` above), and therefore its
+        # ``.pack-ignore``. There is nowhere separate ignores could be declared,
+        # so the original's are inherited verbatim. A shallow copy keeps the two
+        # parsers from aliasing (and mutating) the same dict.
+        self.ignored_errors_dict: dict = dict(original_parser.ignored_errors_dict)
         self.contributors: List[str] = (
             original_parser.contributors
             if hasattr(original_parser, "contributors")

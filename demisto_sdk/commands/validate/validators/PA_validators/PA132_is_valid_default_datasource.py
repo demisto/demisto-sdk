@@ -42,7 +42,12 @@ class IsValidDefaultDataSourceNameValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (
+            # A derived pack has no pack_metadata.json of its own - it copies the original
+            # pack's metadata while holding only a subset of its content items, so the
+            # defaultDataSource integration may legitimately be missing here. The metadata
+            # itself is already validated through the original pack.
+            if not content_item.is_derived
+            and (
                 content_item.default_data_source_id
                 and content_item.default_data_source_id
                 not in content_item.get_valid_data_source_integrations(

@@ -358,6 +358,7 @@ class TestDerivedPackParser:
         mock.private_pack_path = None
         mock.contributors = []
         mock.latest_rn_version = "1.0.0"
+        mock.ignored_errors_dict = {}
         mock.relationships = Relationships()
         mock.marketplaces = ["xsoar"]
         mock.url = ""
@@ -3438,6 +3439,7 @@ def _make_pack_parser(
     parser.private_pack_path = None
     parser.contributors = []
     parser.latest_rn_version = "1.0.0"
+    parser.ignored_errors_dict = {}
     parser.relationships = Relationships()
 
     items = MagicMock()
@@ -3863,3 +3865,74 @@ class TestExcludeFromTightlyCoupledOptOut:
         assert (
             prepared["name"] == "MyIntegration"
         ), "stripping the flag must not disturb the rest of the item"
+
+
+# ---------------------------------------------------------------------------
+# `.pack-ignore` inheritance by the derived pack
+# ---------------------------------------------------------------------------
+
+
+def test_derived_pack_inherits_the_pack_ignore_of_the_original(mocker, repo):
+    """The twin shares the source pack's directory, hence its `.pack-ignore`.
+
+    ``DerivedPackParser`` does not inherit from ``PackParser``, so
+    ``parse_ignored_errors`` never runs for it. Initializing
+    ``ignored_errors_dict`` to an empty dict silently dropped every ignore the
+    pack author declared, and ``validate -a`` then reported, for the twin, the
+    very errors that were already ignored for the source.
+
+    Driven end to end against a real repo rather than a ``MagicMock``: the
+    payoff of the copy is only observable once a content item resolves its
+    ignores through ``in_pack``, which a mocked parser cannot exercise.
+    """
+    from demisto_sdk.commands.common import tools
+    from demisto_sdk.commands.content_graph.objects.pack import Pack
+    from demisto_sdk.commands.content_graph.parsers.pack import PackParser
+
+    mocker.patch.object(tools, "get_content_path", return_value=Path(repo.path))
+    # Bound at import time in the parser module, so that binding is the one the
+    # twin generation reads.
+    mocker.patch(
+        "demisto_sdk.commands.content_graph.parsers.pack.ENABLE_SPLIT_PACKS", True
+    )
+
+    pack = repo.create_pack("TestPack")
+    integration = pack.create_integration("MyIntegration")
+    integration_file_name = Path(integration.yml.path).name
+    Path(pack.path, ".pack-ignore").write_text(
+        f"[file:{integration_file_name}]\n"
+        "ignore=IN126\n"
+        "\n"
+        "[file:pack_metadata.json]\n"
+        "ignore=PA125\n"
+    )
+
+    parser = PackParser(Path(pack.path))
+    derived_parser = parser.derived_pack
+    assert derived_parser is not None, (
+        "test premise: an xsoar-supported pack holding a live integration must yield a twin, "
+        "otherwise there is nothing to assert about"
+    )
+
+    assert derived_parser.ignored_errors_dict == parser.ignored_errors_dict, (
+        "the twin has no directory of its own, so it must carry the source pack's "
+        f"`.pack-ignore` verbatim; got {derived_parser.ignored_errors_dict!r}"
+    )
+    assert (
+        derived_parser.ignored_errors_dict is not parser.ignored_errors_dict
+    ), "the copy must not alias the source's dict, or one parser could mutate the other's ignores"
+
+    derived_model = Pack.from_orm(derived_parser)
+    derived_integration = next(
+        item
+        for item in derived_model.content_items
+        if item.path.name == integration_file_name
+    )
+    assert "IN126" in derived_integration.ignored_errors, (
+        "an item reached through the twin resolves its ignores via `in_pack`, so the item level "
+        f"entry must survive; got {derived_integration.ignored_errors!r}"
+    )
+    assert "PA125" in derived_model.ignored_errors, (
+        "the pack level `pack_metadata.json` entry must resolve for the twin too; "
+        f"got {derived_model.ignored_errors!r}"
+    )

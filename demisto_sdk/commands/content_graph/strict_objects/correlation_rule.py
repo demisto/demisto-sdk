@@ -36,9 +36,6 @@ class _StrictCorrelationRule(BaseStrictModel):
     xql_query: str
     investigation_query_link: Optional[str] = None
     mapping_strategy: Optional[str] = None
-    exclude_from_tightly_coupled: Optional[bool] = Field(
-        None, alias="excludefromtightlycoupled"
-    )
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 
 

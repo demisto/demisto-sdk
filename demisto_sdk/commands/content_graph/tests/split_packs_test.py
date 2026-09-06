@@ -56,29 +56,29 @@ class TestContentTypeCoupling:
     def test_parsing_rule_is_tightly_coupled(self):
         assert ContentType.PARSING_RULE.is_tightly_coupled is True
 
-    def test_correlation_rule_is_tightly_coupled(self):
-        assert ContentType.CORRELATION_RULE.is_tightly_coupled is True
-
-    def test_trigger_is_tightly_coupled(self):
-        assert ContentType.TRIGGER.is_tightly_coupled is True
-
-    def test_xdrc_template_is_tightly_coupled(self):
-        assert ContentType.XDRC_TEMPLATE.is_tightly_coupled is True
-
     def test_assets_modeling_rule_is_tightly_coupled(self):
         assert ContentType.ASSETS_MODELING_RULE.is_tightly_coupled is True
 
     def test_mapper_is_tightly_coupled(self):
         assert ContentType.MAPPER.is_tightly_coupled is True
 
+    def test_incident_field_is_tightly_coupled(self):
+        assert ContentType.INCIDENT_FIELD.is_tightly_coupled is True
+
+    def test_correlation_rule_is_loosely_coupled(self):
+        assert ContentType.CORRELATION_RULE.is_tightly_coupled is False
+
+    def test_trigger_is_loosely_coupled(self):
+        assert ContentType.TRIGGER.is_tightly_coupled is False
+
+    def test_xdrc_template_is_loosely_coupled(self):
+        assert ContentType.XDRC_TEMPLATE.is_tightly_coupled is False
+
     def test_script_is_loosely_coupled(self):
         assert ContentType.SCRIPT.is_tightly_coupled is False
 
     def test_playbook_is_loosely_coupled(self):
         assert ContentType.PLAYBOOK.is_tightly_coupled is False
-
-    def test_incident_field_is_loosely_coupled(self):
-        assert ContentType.INCIDENT_FIELD.is_tightly_coupled is False
 
     def test_dashboard_is_loosely_coupled(self):
         assert ContentType.DASHBOARD.is_tightly_coupled is False

@@ -13,13 +13,13 @@ Covers:
 
 from __future__ import annotations
 
-import json as stdlib_json
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from unittest.mock import MagicMock, patch
 
 import pytest
 
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.content_graph.common import (
     DEFAULT_DERIVED_PACK_SOURCE,
     DERIVED_PACK_ALLOWED_SUPPORT_LEVELS,
@@ -36,6 +36,8 @@ from demisto_sdk.commands.content_graph.common import (
     is_deprecated_pack,
     resolve_derived_pack_source,
 )
+
+json = JSON_Handler()
 
 # ---------------------------------------------------------------------------
 # ContentType coupling classification tests
@@ -740,7 +742,7 @@ class TestPackDestinationsJson:
         dto.write_pack_destinations(output_file)
 
         assert output_file.exists()
-        data = stdlib_json.loads(output_file.read_text())
+        data = json.loads(output_file.read_text())
         assert "packs" in data
         assert len(data["packs"]) == 2
 
@@ -818,7 +820,7 @@ def _write_and_read(
     output_file = tmp_path / "pack_destinations.json"
     dto.write_pack_destinations(output_file)
 
-    return stdlib_json.loads(output_file.read_text())
+    return json.loads(output_file.read_text())
 
 
 # ---------------------------------------------------------------------------
@@ -951,7 +953,7 @@ def _dump_and_write_destinations(
     output_file = output_dir / "pack_destinations.json"
     dto.write_pack_destinations(output_file)
 
-    return stdlib_json.loads(output_file.read_text()), dumped_paths
+    return json.loads(output_file.read_text()), dumped_paths
 
 
 class TestPackDestinationsArtifactPath:
@@ -1052,7 +1054,7 @@ def _write_destinations_with_dump_dirs(
     else:
         dto.write_pack_destinations(output_path, artifacts_dir, managed_artifacts_dir)
 
-    return stdlib_json.loads(output_path.read_text())
+    return json.loads(output_path.read_text())
 
 
 class TestPackDestinationsDumpDirectories:
@@ -1896,7 +1898,7 @@ class TestManagedPairedTopLevelMetadata:
 
         destination = tmp_path / "metadata.json"
         pack.dump_metadata(destination, MarketplaceVersions.XSOAR)
-        return stdlib_json.loads(destination.read_text())
+        return json.loads(destination.read_text())
 
     def test_managed_paired_true_is_written_when_flag_on(self, mocker, tmp_path):
         """A derived twin is managed-paired, so the key must be written as True."""
@@ -2091,7 +2093,7 @@ class TestManagedPairedContentItemMetadata:
 
         destination = tmp_path / "metadata.json"
         pack.dump_metadata(destination, MarketplaceVersions.XSOAR)
-        return stdlib_json.loads(destination.read_text())
+        return json.loads(destination.read_text())
 
     @staticmethod
     def _enable_both_flags(mocker) -> None:
@@ -3746,9 +3748,9 @@ class TestExcludeFromTightlyCoupledOptOut:
         kept.add_to_pack.assert_called_once_with("TestPackManaged")
         opted_out.add_to_pack.assert_not_called()
         added = [item for item in (kept, opted_out) if item.add_to_pack.call_count]
-        assert (
-            added == [kept]
-        ), "exactly the unflagged integration is carried into the twin"
+        assert added == [
+            kept
+        ], "exactly the unflagged integration is carried into the twin"
 
     def test_flagged_item_gets_managed_paired_false(self, mocker):
         """Case e: the per item verdict threaded into the metadata writer.
@@ -3825,7 +3827,9 @@ class TestExcludeFromTightlyCoupledOptOut:
         item.exclude_from_tightly_coupled = True
         pack.content_items = [item]
 
-        pack._is_item_tightly_coupled = Pack._is_item_tightly_coupled.__get__(pack, Pack)
+        pack._is_item_tightly_coupled = Pack._is_item_tightly_coupled.__get__(
+            pack, Pack
+        )
         pack._is_derived_pack_eligible = Pack._is_derived_pack_eligible.__get__(
             pack, Pack
         )

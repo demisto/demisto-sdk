@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import Iterable, List
+from typing import Iterable, List, cast
 
 from demisto_sdk.commands.content_graph.common import PackDestination
 from demisto_sdk.commands.content_graph.objects.pack import Pack
@@ -35,14 +35,16 @@ class CrossDestinationDependencyValidator(BaseValidator[ContentTypes], ABC):
     def obtain_invalid_content_items_using_graph(
         self, content_items: Iterable[ContentTypes], validate_all_files: bool
     ) -> List[ValidationResult]:
-        content_id_to_objects = {item.object_id: item for item in content_items}
-
         results: List[ValidationResult] = []
         for pack in content_items:
             if pack.destination != PackDestination.MARKETPLACE:
                 continue
             for dep in pack.depends_on:
-                dep_pack = dep.content_item_to
+                # `RelationshipData.content_item_to` is statically typed as the
+                # generic `BaseNode`, but a DEPENDS_ON target of a pack is always
+                # a `Pack` at runtime. The `hasattr` guard below is kept as-is so
+                # runtime behavior is unchanged.
+                dep_pack = cast(Pack, dep.content_item_to)
                 if (
                     hasattr(dep_pack, "destination")
                     and dep_pack.destination == PackDestination.MANAGED_CONTENT

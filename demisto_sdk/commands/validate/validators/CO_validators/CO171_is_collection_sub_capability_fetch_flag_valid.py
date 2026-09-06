@@ -120,7 +120,23 @@ class IsCollectionSubCapabilityFetchFlagValidValidator(
     )
     related_field = "serializer.computed_fields"
     is_auto_fixable = False
-    related_file_type = [RelatedFileType.CONNECTOR_HANDLER]
+    # NOTE: CONNECTOR_SERIALIZER is required so that both ignore chains
+    # honor per-serializer ``.connector-ignore`` entries whose key is
+    # ``<handler_folder>/serializer.yaml``:
+    #   * ``ConnectorsValidator.should_run`` iterates ``related_file_type``
+    #     and calls ``_resolve_ignore_file_keys``; CONNECTOR_HANDLER alone
+    #     only yields ``<folder>/handler.yaml``, so a serializer-scoped
+    #     ignore is silently skipped and the validator still runs.
+    #   * ``ValidateManager.filter_validation_results``'s per-handler branch
+    #     also triggers on CONNECTOR_HANDLER or CONNECTOR_SERIALIZER; adding
+    #     it here keeps the two chains in sync.
+    # CONNECTOR_HANDLER stays because the handler-shape defect is still on
+    # the handler side (a handler subscribes to a capability without the
+    # matching serializer wiring). Sibling CO130 uses the same rationale.
+    related_file_type = [
+        RelatedFileType.CONNECTOR_HANDLER,
+        RelatedFileType.CONNECTOR_SERIALIZER,
+    ]
 
     def obtain_invalid_content_items(
         self,

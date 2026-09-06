@@ -6361,10 +6361,22 @@ class TestCO130IsValidFetch:
         assert "must be 'mapper-incoming'" in results[0].message
 
     # ------------------------------------------------------------
-    # Aggregation
+    # Result-splitting: per-handler serializer vs per-capability
+    # configurations. Enables handler-scoped ``.connector-ignore``
+    # entries (``[file:<handler-folder>/serializer.yaml]``) for
+    # Part-1 defects while keeping Part-2 defects filterable by
+    # ``[file:configurations.yaml]``.
     # ------------------------------------------------------------
-    def test_multiple_problems_aggregate_into_single_result(self):
-        """Missing serializer AND missing field -> one aggregated result."""
+    def test_multiple_problems_emit_separate_results_per_owning_file(self):
+        """Missing serializer AND missing field -> two results, each
+        keyed by the file that owns the fix.
+
+        Historical shape aggregated everything into one result with
+        path=configurations.yaml, which defeats per-handler
+        ``.connector-ignore`` filtering (the ignore key
+        ``<folder>/serializer.yaml`` was never resolved for a
+        configurations-file result).
+        """
         from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
             IsValidFetchValidator,
         )
@@ -6374,13 +6386,42 @@ class TestCO130IsValidFetch:
         connector.handlers[0].serializer = None
         _write_configurations_with_fetch_issues(connector, include_mappingId=False)
         results = IsValidFetchValidator().obtain_invalid_content_items([connector])
-        assert len(results) == 1
-        msg = results[0].message
-        assert "does not emit" in msg
-        assert "missing required field 'mappingId'" in msg
+        assert len(results) == 2
 
-    def test_error_path_points_to_configurations_yaml(self):
-        """Result.path should point at configurations.yaml."""
+        serializer_results = [
+            r for r in results if str(r.path).endswith("serializer.yaml")
+        ]
+        configurations_results = [
+            r for r in results if str(r.path).endswith("configurations.yaml")
+        ]
+        assert len(serializer_results) == 1
+        assert len(configurations_results) == 1
+        assert "does not emit" in serializer_results[0].message
+        assert "missing required field 'mappingId'" in configurations_results[0].message
+
+    def test_serializer_defect_path_points_to_handler_serializer_yaml(self):
+        """A Part-1 (missing ``isFetch``) result's path must be
+        ``<handler-folder>/serializer.yaml`` so per-handler
+        ``.connector-ignore`` entries actually filter it (mirrors
+        CO171/CO172)."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_fetch_issues(connector)
+        connector.handlers[0].serializer = None
+        # Configurations wired correctly so ONLY the Part-1 defect fires.
+        _write_configurations_with_fetch_issues(connector)
+        results = IsValidFetchValidator().obtain_invalid_content_items([connector])
+        assert len(results) == 1
+        assert str(results[0].path).endswith("serializer.yaml")
+
+    def test_configurations_defect_path_points_to_configurations_yaml(self):
+        """A Part-2 (missing required field) result's path stays at
+        ``configurations.yaml`` — the configurations entry is a
+        connector-scoped concern shared across every handler
+        subscribing to that capability id."""
         from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
             IsValidFetchValidator,
         )
@@ -11127,7 +11168,11 @@ def _cap_with_actions(cap_id: str, action_types: list, **extras):
         "auth_options": [
             {
                 "id": "plain.test",
-                "workloads": ["xsoar-pod", "xsoar-automationhub-runner"],
+                "workloads": [
+                    "xsoar-pod",
+                    "xsoar-automationhub-runner",
+                    "pb-runner-v2",
+                ],
             }
         ],
         "actions": [{"type": t} for t in action_types],
@@ -11476,7 +11521,7 @@ def _cap_with_workloads(
 
 class TestCO162IsValidWorkloads:
     """Tests for CO162: every auth_options[].workloads must equal the
-    canonical set {xsoar-automationhub-runner, xsoar-pod} (order-insensitive),
+    canonical set {xsoar-automationhub-runner, xsoar-pod, pb-runner-v2} (order-insensitive),
     and no capability may declare the anonymous capability-level workloads
     shape.
     """
@@ -11489,7 +11534,13 @@ class TestCO162IsValidWorkloads:
                     "capabilities": [
                         _cap_with_workloads(
                             "fetch-issues",
-                            [["xsoar-pod", "xsoar-automationhub-runner"]],
+                            [
+                                [
+                                    "xsoar-pod",
+                                    "xsoar-automationhub-runner",
+                                    "pb-runner-v2",
+                                ]
+                            ],
                         )
                     ],
                 }
@@ -11507,7 +11558,13 @@ class TestCO162IsValidWorkloads:
                     "capabilities": [
                         _cap_with_workloads(
                             "fetch-issues",
-                            [["xsoar-automationhub-runner", "xsoar-pod"]],
+                            [
+                                [
+                                    "xsoar-automationhub-runner",
+                                    "xsoar-pod",
+                                    "pb-runner-v2",
+                                ]
+                            ],
                         )
                     ],
                 }
@@ -11533,6 +11590,7 @@ class TestCO162IsValidWorkloads:
         assert "fetch-issues" in msg
         assert "plain.0" in msg
         assert "xsoar-automationhub-runner" in msg
+        assert "pb-runner-v2" in msg
 
     def test_extra_workload_fails(self):
         connector = create_connector_object(
@@ -11546,6 +11604,7 @@ class TestCO162IsValidWorkloads:
                                 [
                                     "xsoar-pod",
                                     "xsoar-automationhub-runner",
+                                    "pb-runner-v2",
                                     "xsoar-extra",
                                 ]
                             ],
@@ -11874,6 +11933,37 @@ class TestCO171IsCollectionSubCapabilityFetchFlagValid:
     must have a matching fetch-flag emission in the handler's
     serializer.yaml, gated on the right capability+value.
     """
+
+    def test_related_file_type_includes_serializer(self):
+        """
+        Given: The CO171 validator class as declared.
+        When: We inspect its ``related_file_type``.
+        Then: It contains BOTH ``CONNECTOR_HANDLER`` and
+              ``CONNECTOR_SERIALIZER``.
+
+        Why this is a real gate, not paperwork:
+
+        * ``ConnectorsValidator.should_run`` calls
+          ``is_error_ignored(err, ignorable, item, self.related_file_type)``
+          which iterates ``related_file_type`` and calls
+          ``_resolve_ignore_file_keys``. ``CONNECTOR_HANDLER`` alone yields
+          only ``<folder>/handler.yaml``, so a per-serializer
+          ``.connector-ignore`` entry keyed by
+          ``<folder>/serializer.yaml`` is never consulted and the
+          validator runs unignored.
+        * CO171 emits ``path = <handler_dir>/serializer.yaml``. The
+          author-facing convention (and what CO130 does — see its
+          ``related_file_type`` and the NOTE above it) is a serializer-scoped
+          ignore. Dropping ``CONNECTOR_SERIALIZER`` silently reintroduces
+          the CI regression where those ignores had no effect.
+        """
+        from demisto_sdk.commands.content_graph.parsers.related_files import (
+            RelatedFileType,
+        )
+
+        validator = IsCollectionSubCapabilityFetchFlagValidValidator()
+        assert RelatedFileType.CONNECTOR_HANDLER in validator.related_file_type
+        assert RelatedFileType.CONNECTOR_SERIALIZER in validator.related_file_type
 
     def test_no_collection_cap_short_circuits(self):
         """

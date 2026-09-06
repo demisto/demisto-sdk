@@ -79,7 +79,10 @@ ignorable_errors = [
   "AS103",
   "AG112",
   "AG117",
-  "CO104"
+  "CO104",
+  "CO116",
+  "CO130",
+  "CO171"
 ]
 
 [Custom_Categories]

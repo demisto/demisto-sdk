@@ -1493,6 +1493,51 @@ class ConnectorAwareInitializer(Initializer):
         return filtered, invalid_items
 
     @staticmethod
+    def _hydrate_integration_params(integration: Any) -> None:
+        """Ensure ``integration.params`` is populated for connector-aware validators.
+
+        ``Integration.params`` is declared ``Field([], exclude=True)`` and is
+        therefore never persisted to Neo4j. An Integration hydrated from the
+        content graph (Phase 2a / 2b, ``_graph_search_integration``) comes back
+        with ``params == []``, and any connector-aware validator that reaches
+        into ``handler.related_integration.params`` -- e.g. CO116 (fetch-flag
+        matches), CO121 (interpolation_mapping RIGHT-side), CO190 (reserved
+        param names) -- false-positives on every param lookup.
+
+        Re-parse the on-disk YML and copy the fresh list onto the existing
+        object *in place*, so downstream code that already holds a reference
+        (``integration.related_content``, ``matched_ids``, the ``integrations``
+        set) keeps working. No-op when ``params`` is already populated, when
+        the integration has no known ``path``, or when the re-parse fails.
+        """
+        if integration is None:
+            return
+        existing = getattr(integration, "params", None) or []
+        if existing:
+            return
+        int_path = getattr(integration, "path", None)
+        if int_path is None:
+            return
+        # Lazy import to avoid tightening the module-load order.
+        from demisto_sdk.commands.content_graph.objects.integration import (
+            Integration as IntegrationModel,
+        )
+
+        try:
+            fresh = IntegrationModel.from_path(Path(int_path))
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.debug(
+                f"Failed to re-parse integration '{getattr(integration, 'object_id', '?')}' "
+                f"from '{int_path}' for params hydration: {exc}"
+            )
+            return
+        fresh_params = (
+            list(getattr(fresh, "params", None) or []) if fresh is not None else []
+        )
+        if fresh_params:
+            integration.params = fresh_params
+
+    @staticmethod
     def _dedup_by_object_id(objects: Set[BaseContent]) -> Set[BaseContent]:
         """Collapse objects sharing the same content type and object_id.
 
@@ -1655,6 +1700,10 @@ class ConnectorAwareInitializer(Initializer):
                     continue
                 match = integration_by_id.get(int_id)
                 if match:
+                    # Ensure `.params` is populated regardless of whether the
+                    # integration was loaded from disk or hydrated from the
+                    # graph (Field([], exclude=True) skips graph persistence).
+                    self._hydrate_integration_params(match)
                     handler.related_integration = match
                     match.related_content = handler
                     matched_integration_ids.add(match.object_id)
@@ -1725,6 +1774,7 @@ class ConnectorAwareInitializer(Initializer):
                     continue
                 for handler in found_connector.xsoar_handlers:
                     if handler.xsoar_integration_id == integration.object_id:
+                        self._hydrate_integration_params(integration)
                         handler.related_integration = integration
                         integration.related_content = handler
                         matched_ids.add(integration.object_id)
@@ -1805,6 +1855,7 @@ class ConnectorAwareInitializer(Initializer):
                 # is populated, even for deprecated integrations. This lets
                 # connector validators (e.g. CO164) distinguish "exists" from
                 # "missing".
+                self._hydrate_integration_params(integration)
                 handler.related_integration = integration
                 if hasattr(integration, "related_content"):
                     integration.related_content = handler

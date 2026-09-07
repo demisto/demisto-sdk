@@ -1,4 +1,4 @@
 changes:
-- description: Updated the hardcoded Python 3.8-era docker images in the HelloWorld and HelloWorldSlim init templates and in the postman codegen fallback to demisto/python3:3.12.13.10116658.
+- description: Updated the hardcoded docker images in all init templates (BaseIntegration, BaseScript, FeedHelloWorld, HelloIAMWorld, HelloWorld, HelloWorldEventCollector, HelloWorldScript, HelloWorldSlim) and in the postman codegen fallback to demisto/python3:3.12.13.10116658, so scaffolded content no longer targets Python versions below 3.10.
   type: internal
 pr_number: 'xxxx'

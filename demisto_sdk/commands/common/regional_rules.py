@@ -154,8 +154,13 @@ class RegionalRules:
 
         ANY semantics: ``["a", "b"]`` with ``a`` in ``us`` and ``b`` in ``eu``
         is active in both. ``None`` means unrestricted, so every region.
+
+        An explicitly empty ``supportedFeatures`` declares no restriction, which
+        is the same statement as omitting the key, so it also resolves to every
+        region. Reading it as "no regions" would invert the author's intent and
+        describe an unrestricted item as active nowhere.
         """
-        if features is None:
+        if not features:
             return set(self._regions)
         regions: Set[str] = set()
         for feature in features:

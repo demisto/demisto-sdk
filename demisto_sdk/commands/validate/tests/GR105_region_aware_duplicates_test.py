@@ -97,6 +97,39 @@ def test_region_collision(features_a, features_b, expected):
     assert _collide(FakeItem(features_a), FakeItem(features_b)) == expected
 
 
+@pytest.mark.parametrize(
+    "features_a, features_b, expected",
+    [
+        pytest.param([], [], {"us", "eu"}, id="empty list vs empty list"),
+        pytest.param([], None, {"us", "eu"}, id="empty list vs absent key"),
+        pytest.param([], ["feat_a"], {"us"}, id="empty list vs known feature"),
+        pytest.param(
+            [], ["feat_unknown"], set(), id="empty list vs unresolvable feature"
+        ),
+    ],
+)
+def test_empty_supported_features_is_treated_as_all_regions(
+    features_a, features_b, expected
+):
+    """
+    Given:
+    - A pair in which one side declares `supportedFeatures: []`, paired with
+      every kind of counterpart: another empty list, an absent key, a feature
+      that resolves, and a feature that does not.
+
+    When:
+    - Determining the regions in which both are active.
+
+    Then:
+    - Ensure `[]` behaves exactly like an absent key, i.e. active in every
+      region. The content owner's semantics are that an empty list expresses
+      no restriction; resolving it to "no regions" would make an unrestricted
+      item look region-limited and would push every such pair into the
+      "regions could not be determined" branch with a backwards explanation.
+    """
+    assert _collide(FakeItem(features_a), FakeItem(features_b)) == expected
+
+
 def test_features_inherited_from_the_pack_are_used():
     """
     Given:
@@ -216,6 +249,73 @@ class TestErrorMessage:
         assert "feat_b" in explanation
         assert "same region" in explanation
 
+    def test_identical_feature_names_omit_the_differing_names_note(self):
+        """
+        Given:
+        - A colliding pair whose two items declare the very same feature.
+
+        When:
+        - Building the explanation.
+
+        Then:
+        - Ensure the "different feature names still collide" note is omitted.
+          The note explains a subtlety that does not apply here - the names are
+          identical - and printing it invites the author to look for a name
+          mismatch that does not exist.
+        """
+        explanation = DuplicateContentIdValidatorAllFiles()._explain(
+            FakeItem(["feat_a"]), FakeItem(["feat_a"]), {"us"}
+        )
+
+        assert "feat_a" in explanation
+        assert "different feature names" not in explanation
+
+    def test_only_the_unresolvable_feature_is_named(self):
+        """
+        Given:
+        - A pair reported because its regions could not be resolved, where one
+          item's feature resolves to a region and the other's does not.
+
+        When:
+        - Building the explanation.
+
+        Then:
+        - Ensure only the feature that actually failed to resolve is named.
+          Listing the resolvable one too overstates the problem and sends the
+          author hunting for a second, non-existent typo.
+        """
+        explanation = DuplicateContentIdValidatorAllFiles()._explain(
+            FakeItem(["feat_unknown"], path="Packs/A/a.yml"),
+            FakeItem(["feat_a"], path="Packs/B/b.yml"),
+            set(),
+            RULES,
+        )
+
+        assert "feat_unknown" in explanation
+        assert "feat_a" not in explanation
+
+    def test_the_rules_file_is_named_by_its_repo_relative_path(self):
+        """
+        Given:
+        - A pair reported because its features could not be resolved.
+
+        When:
+        - Building the explanation, which points the author at the rules file.
+
+        Then:
+        - Ensure the rules file is named by its repo-relative path, with no
+          parent directory prefixed. The absolute path is a CI checkout
+          location (e.g. /builds/xdr/cortex-content/content/Config/...) that
+          does not exist on the author's machine.
+        """
+        explanation = DuplicateContentIdValidatorAllFiles()._explain(
+            FakeItem(["feat_unknown"]), FakeItem(["feat_unknown"]), set()
+        )
+
+        assert "Config/regional_rules.json" in explanation
+        # Any directory prefix means a checkout-specific absolute path leaked.
+        assert "/Config/regional_rules.json" not in explanation
+
     def test_colliding_regions_are_listed(self):
         """
         Given:
@@ -272,7 +372,7 @@ class TestErrorMessage:
         assert "overlapping regions" not in explanation
         assert "could not be resolved" in explanation
 
-    def test_explicit_empty_feature_list_is_distinguished_from_an_absent_key(self):
+    def test_explicit_empty_feature_list_reads_as_supported_everywhere(self):
         """
         Given:
         - One item declaring `supportedFeatures: []` and another declaring no
@@ -282,14 +382,16 @@ class TestErrorMessage:
         - Formatting each value for the error message.
 
         Then:
-        - Ensure the two render differently. They mean opposite things - an
-          empty list restricts the item to no region, while an absent key means
-          supported everywhere - so rendering both as "none" misleads the author.
+        - Ensure both render as supported everywhere. The two state the same
+          thing - no restriction - so describing the empty list as "active in
+          no region" would tell the author the opposite of what they wrote and
+          contradict the region set it actually resolves to.
         """
         formatted_empty = DuplicateContentIdValidatorAllFiles()._fmt(frozenset())
         formatted_absent = DuplicateContentIdValidatorAllFiles()._fmt(None)
 
-        assert formatted_empty != formatted_absent
+        assert formatted_empty == formatted_absent
+        assert "supported everywhere" in formatted_empty
 
 
 class TestUnresolvableRegions:

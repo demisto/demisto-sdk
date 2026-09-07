@@ -252,6 +252,27 @@ class TestRegionActivation:
         """
         assert RegionalRules(SAMPLE).regions_for_features(None) == {"us", "eu"}
 
+    def test_empty_feature_list_maps_to_all_regions(self):
+        """
+        Given:
+        - An item declaring `supportedFeatures: []`
+
+        When:
+        - Computing its region activation
+
+        Then:
+        - Ensure it is active in every declared region, identically to an item
+          with no `supportedFeatures` key. An empty list means "no restriction",
+          not "no regions" - resolving it to the empty set would invert the
+          author's intent and describe an unrestricted item as active nowhere.
+        """
+        rules = RegionalRules(SAMPLE)
+
+        assert rules.regions_for_features(frozenset()) == {"us", "eu"}
+        assert rules.regions_for_features(frozenset()) == rules.regions_for_features(
+            None
+        )
+
     def test_multiple_features_union_their_regions(self):
         """
         Given:

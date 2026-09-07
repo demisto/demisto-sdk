@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import FrozenSet, Iterable, List, Optional, Set, Union
+from typing import FrozenSet, Iterable, List, Optional, Set, Tuple, Union
 
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.regional_rules import (
     REGIONAL_RULES_PATH,
+    REGIONAL_RULES_RELATIVE_PATH,
     RegionalRules,
 )
 from demisto_sdk.commands.common.tools import (
@@ -149,7 +150,9 @@ class DuplicateContentIdValidator(BaseValidator[ContentTypes], ABC):
                             content_item.object_id,
                             get_relative_path_from_packs_dir(str(duplicate.path)),
                             self._region_clause(colliding_regions),
-                            self._explain(content_item, duplicate, colliding_regions),
+                            self._explain(
+                                content_item, duplicate, colliding_regions, rules
+                            ),
                         ),
                         content_object=content_item,  # type: ignore[arg-type]
                     )
@@ -208,33 +211,46 @@ class DuplicateContentIdValidator(BaseValidator[ContentTypes], ABC):
         content_item: ContentTypes,
         duplicate: ContentTypes,
         colliding_regions: Set[str],
+        rules: Optional[RegionalRules] = None,
     ) -> str:
         """Explains why the pair collides, in the author's terms."""
         features_a = get_content_item_supported_features(content_item)
         features_b = get_content_item_supported_features(duplicate)
+        path_a = get_relative_path_from_packs_dir(str(content_item.path))
+        path_b = get_relative_path_from_packs_dir(str(duplicate.path))
 
         if not colliding_regions:
             # Reported because non-overlap could not be proven. Claiming an
             # overlap here would send the author looking for a conflict that
             # was never established.
-            path_a = get_relative_path_from_packs_dir(str(content_item.path))
-            path_b = get_relative_path_from_packs_dir(str(duplicate.path))
+            unresolvable = self._unresolvable_features(
+                ((path_a, features_a), (path_b, features_b)), rules
+            )
+            # Name only the features that actually failed. A pair is reported as
+            # soon as *one* side is unresolvable, so listing the side that
+            # resolved fine sends the author hunting for a second typo that is
+            # not there.
+            offenders = (
+                "; ".join(
+                    f"{path}: {', '.join(sorted(names))}"
+                    for path, names in unresolvable
+                )
+                or f"{path_a}: {self._fmt(features_a)}; {path_b}: {self._fmt(features_b)}"
+            )
             return (
                 "Their 'supportedFeatures' could not be resolved to any region "
-                f"({path_a}: {self._fmt(features_a)}; {path_b}: "
-                f"{self._fmt(features_b)}), so it cannot be proven that the two are "
+                f"({offenders}), so it cannot be proven that the two are "
                 "never active together. Check that every feature name appears under "
-                f"'supported_features' in {REGIONAL_RULES_PATH}, or change one of "
-                "the IDs."
+                f"'supported_features' in {REGIONAL_RULES_RELATIVE_PATH.as_posix()}, "
+                "or change one of the IDs."
             )
 
         unrestricted = [
             path
-            for path, features in (
-                (get_relative_path_from_packs_dir(str(content_item.path)), features_a),
-                (get_relative_path_from_packs_dir(str(duplicate.path)), features_b),
-            )
-            if features is None
+            for path, features in ((path_a, features_a), (path_b, features_b))
+            # An empty list means the same as an absent key - no restriction -
+            # so both are reported as supported everywhere.
+            if not features
         ]
         if unrestricted:
             # An item with no supportedFeatures is supported everywhere, so it
@@ -245,22 +261,49 @@ class DuplicateContentIdValidator(BaseValidator[ContentTypes], ABC):
                 "sharing this ID. Give each variant a 'supportedFeatures' value "
                 "whose regions do not overlap, or change one of the IDs."
             )
-        return (
+        explanation = (
             f"Their 'supportedFeatures' ({self._fmt(features_a)} and "
-            f"{self._fmt(features_b)}) resolve to overlapping regions. Note that "
-            "different feature names still collide when they are enabled in the "
-            "same region."
+            f"{self._fmt(features_b)}) resolve to overlapping regions."
         )
+        if features_a != features_b:
+            # Only worth saying when the names actually differ; with identical
+            # names there is no name mismatch for the author to look for.
+            explanation += (
+                " Note that different feature names still collide when they are "
+                "enabled in the same region."
+            )
+        return explanation
+
+    @staticmethod
+    def _unresolvable_features(
+        sides: Tuple[Tuple[str, Optional[FrozenSet[str]]], ...],
+        rules: Optional[RegionalRules],
+    ) -> List[Tuple[str, Set[str]]]:
+        """The features per file that no region enables, skipping resolved ones.
+
+        Without the rules file nothing can be resolved, so nothing can be
+        singled out as the offender either.
+        """
+        if rules is None:
+            return []
+        offenders = []
+        for path, features in sides:
+            unknown = {
+                feature
+                for feature in features or ()
+                if not rules.regions_enabling(feature)
+            }
+            if unknown:
+                offenders.append((path, unknown))
+        return offenders
 
     @staticmethod
     def _fmt(features: Optional[FrozenSet[str]]) -> str:
         """Renders a resolved `supportedFeatures` value.
 
-        An absent key and an explicit empty list are opposites - supported
-        everywhere versus restricted to no region - so they must not read alike.
+        An absent key and an explicit empty list mean the same thing - no
+        restriction, so supported everywhere - and therefore read alike.
         """
-        if features is None:
-            return "not declared, so supported everywhere"
         if not features:
-            return "declared empty, so active in no region"
+            return "not declared, so supported everywhere"
         return ", ".join(sorted(features))

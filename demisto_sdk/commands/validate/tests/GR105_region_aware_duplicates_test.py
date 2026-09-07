@@ -139,52 +139,38 @@ def test_item_value_overrides_the_pack_value():
 class TestWithoutRegionalRules:
     """Behaviour when Config/regional_rules.json is unavailable.
 
-    The features cannot be mapped to regions, so the check degrades to the
-    weaker feature-name test. It never permits a genuine overlap, but it does
-    permit two items whose distinct features share a region - that case can
-    only be caught where the config file is present.
+    The file lives in the content-private repo, so it is absent on GitHub-level
+    runs such as the SDK's own build. Without it no feature can be mapped to a
+    region, so the region-aware part is switched off entirely and GR105 behaves
+    exactly as it did before it became region-aware: every duplicate ID is
+    reported.
     """
 
-    def test_shared_feature_name_still_collides(self):
+    @pytest.mark.parametrize(
+        "features_a, features_b",
+        [
+            pytest.param(["feat_a"], ["feat_a"], id="shared feature name"),
+            pytest.param(None, ["feat_a"], id="one item supported everywhere"),
+            pytest.param(["feat_a"], ["feat_e"], id="features of different regions"),
+            pytest.param(["feat_a"], ["feat_b"], id="distinct feature names"),
+        ],
+    )
+    def test_every_duplicate_is_reported(self, features_a, features_b):
         """
         Given:
-        - No regional rules, and two items sharing a feature name.
+        - No regional rules, and two items sharing an ID with any combination
+          of supported features.
 
         When:
         - Determining whether they collide.
 
         Then:
-        - Ensure the collision is still reported.
+        - Ensure the collision is reported regardless of the features, since
+          non-overlap cannot be proven without the rules file.
         """
-        assert _collide(FakeItem(["feat_a"]), FakeItem(["feat_a"]), rules=None)
-
-    def test_supported_everywhere_still_collides(self):
-        """
-        Given:
-        - No regional rules, and an item with no feature restriction.
-
-        When:
-        - Determining whether it collides with a restricted item.
-
-        Then:
-        - Ensure the collision is still reported, since an unrestricted item
-          overlaps everything regardless of the region mapping.
-        """
-        assert _collide(FakeItem(None), FakeItem(["feat_a"]), rules=None) is not None
-
-    def test_distinct_feature_names_are_permitted(self):
-        """
-        Given:
-        - No regional rules, and two items with distinct feature names.
-
-        When:
-        - Determining whether they collide.
-
-        Then:
-        - Ensure no collision is reported. This is the documented limitation:
-          without the config we cannot know the two features share a region.
-        """
-        assert _collide(FakeItem(["feat_a"]), FakeItem(["feat_b"]), rules=None) is None
+        assert (
+            _collide(FakeItem(features_a), FakeItem(features_b), rules=None) is not None
+        )
 
 
 class TestErrorMessage:

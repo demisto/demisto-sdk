@@ -1,7 +1,7 @@
 changes:
 - description: Added a new optional **supportedFeatures** field (list of strings) to all content item types and to pack_metadata.json. A content item that does not declare the field inherits it from its pack. When neither declares it, the key is omitted entirely from the output and marketplace artifacts. When the field is declared it must hold real feature names - an empty list, or a list containing empty or whitespace-only values, is rejected.
   type: feature
-- description: The **GR105** duplicate-ID validation is now region-aware - content items may share an ID when they are provably never active in the same region, according to **Config/regional_rules.json**. Duplicates whose regions cannot be resolved are still reported.
+- description: The **GR105** duplicate-ID validation is now region-aware - content items may share an ID when they are provably never active in the same region, according to **Config/regional_rules.json**. Duplicates whose regions cannot be resolved are still reported. When the **Config/regional_rules.json** file is not available, region-awareness is skipped and every duplicate ID is reported, as before.
   type: feature
 - description: Added the **ST115** validation, ensuring a content item's **supportedFeatures** are a subset of its pack's.
   type: feature

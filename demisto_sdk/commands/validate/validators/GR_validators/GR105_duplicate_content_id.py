@@ -3,7 +3,11 @@ from __future__ import annotations
 from abc import ABC
 from typing import FrozenSet, Iterable, List, Optional, Set, Union
 
-from demisto_sdk.commands.common.regional_rules import RegionalRules
+from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.regional_rules import (
+    REGIONAL_RULES_PATH,
+    RegionalRules,
+)
 from demisto_sdk.commands.common.tools import (
     get_content_item_supported_features,
     get_relative_path_from_packs_dir,
@@ -125,6 +129,11 @@ class DuplicateContentIdValidator(BaseValidator[ContentTypes], ABC):
         # is no longer sufficient grounds to fail: a repeated ID is legal as
         # long as the variants are never active in the same region.
         rules = RegionalRules.from_path()
+        if rules is None:
+            logger.info(
+                f"[GR105] {REGIONAL_RULES_PATH} not found - region-aware duplicate "
+                "handling is disabled, every duplicate ID will be reported."
+            )
 
         results = []
         for content_item, duplicates in self.graph.validate_duplicate_ids(
@@ -161,15 +170,14 @@ class DuplicateContentIdValidator(BaseValidator[ContentTypes], ABC):
         `None` means the pair is legal; an empty set means they collide but the
         regions could not be named.
         """
+        if rules is None:
+            # Without the rules file, features cannot be mapped to regions, so
+            # non-overlap can never be proven. Fall back to the original,
+            # region-unaware behaviour of reporting every duplicate.
+            return set()
+
         features_a = get_content_item_supported_features(content_item)
         features_b = get_content_item_supported_features(duplicate)
-
-        if rules is None:
-            # Without the rules file we can only compare feature names, which
-            # misses distinct features that share a region. CI catches those.
-            if features_a is None or features_b is None:
-                return set()
-            return set(features_a & features_b) or None
 
         regions_a = rules.regions_for_features(features_a)
         regions_b = rules.regions_for_features(features_b)

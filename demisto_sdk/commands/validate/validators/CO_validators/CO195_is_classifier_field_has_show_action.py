@@ -111,12 +111,8 @@ class IsClassifierFieldHasShowActionValidator(ConnectorsValidator[ContentTypes])
             # config field carrying that raw id directly), plus config field
             # ids whose metadata marks them as the backend classifier field.
             config_field_ids = self._connector_config_field_ids(connector)
-            has_raw_mapping_id_config = (
-                CLASSIFIER_DELIVERED_FIELD in config_field_ids
-            )
-            metadata_classifier_ids = self._metadata_classifier_field_ids(
-                connector
-            )
+            has_raw_mapping_id_config = CLASSIFIER_DELIVERED_FIELD in config_field_ids
+            metadata_classifier_ids = self._metadata_classifier_field_ids(connector)
 
             for handler in connector.xsoar_handlers:
                 classifier_field_ids = self._classifier_field_ids(
@@ -130,9 +126,7 @@ class IsClassifierFieldHasShowActionValidator(ConnectorsValidator[ContentTypes])
                     continue
 
                 fetch_cap = self._fetch_issues_capability(handler)
-                reason = self._action_problem_reason(
-                    fetch_cap, classifier_field_ids
-                )
+                reason = self._action_problem_reason(fetch_cap, classifier_field_ids)
                 if reason is None:
                     continue
 
@@ -182,25 +176,17 @@ class IsClassifierFieldHasShowActionValidator(ConnectorsValidator[ContentTypes])
 
         dynamic_values = metadata.get("dynamic_values")
         params = (
-            dynamic_values.get("params")
-            if isinstance(dynamic_values, dict)
-            else None
+            dynamic_values.get("params") if isinstance(dynamic_values, dict) else None
         )
-        dynamic_field = (
-            params.get("dynamicField") if isinstance(params, dict) else None
-        )
+        dynamic_field = params.get("dynamicField") if isinstance(params, dict) else None
         if dynamic_field != CLASSIFIER_DYNAMIC_FIELD:
             return False
 
         xsoar = metadata.get("xsoar")
-        config_type = (
-            xsoar.get("config_type") if isinstance(xsoar, dict) else None
-        )
+        config_type = xsoar.get("config_type") if isinstance(xsoar, dict) else None
         return config_type == BACKEND_CONFIG_TYPE
 
-    def _metadata_classifier_field_ids(
-        self, connector: ContentTypes
-    ) -> Set[str]:
+    def _metadata_classifier_field_ids(self, connector: ContentTypes) -> Set[str]:
         """Collect config field ids whose metadata marks them as the
         backend-managed classifier field (across all unified capability
         configurations). For strict connectors this id is ``mappingId``.
@@ -300,9 +286,7 @@ class IsClassifierFieldHasShowActionValidator(ConnectorsValidator[ContentTypes])
         if fetch_cap is None:
             return "no fetch-issues capability is present on the handler"
 
-        show_actions = [
-            a for a in fetch_cap.actions if a and a.type == REQUIRED_ACTION
-        ]
+        show_actions = [a for a in fetch_cap.actions if a and a.type == REQUIRED_ACTION]
         if not show_actions:
             action_types = {a.type for a in fetch_cap.actions if a and a.type}
             return (
@@ -322,11 +306,7 @@ class IsClassifierFieldHasShowActionValidator(ConnectorsValidator[ContentTypes])
 
         # No show_classifier action references the delivered classifier id(s).
         observed = sorted(
-            {
-                rd
-                for action in show_actions
-                for rd in (action.return_data or [])
-            }
+            {rd for action in show_actions for rd in (action.return_data or [])}
         )
         return (
             f"the '{REQUIRED_ACTION}' action's return_data does not reference "

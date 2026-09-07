@@ -11657,9 +11657,7 @@ def _classifier_config(field_id: str = "mappingId") -> dict:
     """
     return {
         "general_configurations": {
-            "configurations": [
-                {"fields": [{"id": field_id, "title": "Classifier"}]}
-            ]
+            "configurations": [{"fields": [{"id": field_id, "title": "Classifier"}]}]
         }
     }
 
@@ -11751,9 +11749,7 @@ class TestCO195ClassifierFieldHasShowAction:
                 {
                     "id": "xsoar-classifier",
                     "capabilities": [
-                        _cap_with_actions(
-                            "fetch-issues", ["reset_incidents_last_run"]
-                        )
+                        _cap_with_actions("fetch-issues", ["reset_incidents_last_run"])
                     ],
                 }
             ],
@@ -11837,9 +11833,7 @@ class TestCO195ClassifierFieldHasShowAction:
                         ]
                     },
                     "capabilities": [
-                        _cap_with_actions(
-                            "fetch-issues", ["reset_incidents_last_run"]
-                        )
+                        _cap_with_actions("fetch-issues", ["reset_incidents_last_run"])
                     ],
                 }
             ],
@@ -11866,9 +11860,7 @@ class TestCO195ClassifierFieldHasShowAction:
                 {
                     "id": "xsoar-plain",
                     "capabilities": [
-                        _cap_with_actions(
-                            "fetch-issues", ["reset_incidents_last_run"]
-                        )
+                        _cap_with_actions("fetch-issues", ["reset_incidents_last_run"])
                     ],
                 }
             ],
@@ -12057,9 +12049,7 @@ class TestCO195ClassifierFieldHasShowAction:
                 {
                     "id": "xsoar-nx",
                     "capabilities": [
-                        _cap_with_actions(
-                            "fetch-issues", ["reset_incidents_last_run"]
-                        )
+                        _cap_with_actions("fetch-issues", ["reset_incidents_last_run"])
                     ],
                 }
             ],
@@ -12197,9 +12187,7 @@ class TestCO196ShowClassifierSingleReturnData:
                 {
                     "id": "xsoar-reset",
                     "capabilities": [
-                        _cap_with_actions(
-                            "fetch-issues", ["reset_incidents_last_run"]
-                        )
+                        _cap_with_actions("fetch-issues", ["reset_incidents_last_run"])
                     ],
                 }
             ],

@@ -1,0 +1,4 @@
+changes:
+- description: Updated the hardcoded Python 3.8-era docker images in the HelloWorld and HelloWorldSlim init templates and in the postman codegen fallback to demisto/python3:3.12.13.10116658.
+  type: internal
+pr_number: 'xxxx'

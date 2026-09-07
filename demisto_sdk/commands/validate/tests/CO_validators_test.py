@@ -146,9 +146,6 @@ from demisto_sdk.commands.validate.validators.CO_validators.CO194_is_sub_capabil
 from demisto_sdk.commands.validate.validators.CO_validators.CO195_is_classifier_field_has_show_action import (
     IsClassifierFieldHasShowActionValidator,
 )
-from demisto_sdk.commands.validate.validators.CO_validators.CO196_is_show_classifier_single_return_data import (
-    IsShowClassifierSingleReturnDataValidator,
-)
 
 VALID_CONNECTION_DESCRIPTION = (
     "Enter the credentials to securely authorize the connection"
@@ -11696,8 +11693,10 @@ def _classifier_metadata_config(field_id: str = "mappingId") -> dict:
 class TestCO195ClassifierFieldHasShowAction:
     """Tests for CO195: every handler that delivers a classifier field
     (resolving to the backend 'mappingId' field, via serializer rename or a
-    raw config id) must declare a 'show_classifier' action on its fetch-issues
-    capability. Handlers with no classifier field are skipped.
+    raw config id) must declare a properly-formatted 'show_classifier' action
+    on its fetch-issues capability - the action must exist, its return_data
+    must reference the delivered classifier id, and its return_data must
+    contain exactly one entry. Handlers with no classifier field are skipped.
     """
 
     def test_strict_valid_config_mappingid_with_show_action_passes(self):
@@ -12064,56 +12063,14 @@ class TestCO195ClassifierFieldHasShowAction:
         )
         assert len(results) == 0
 
-
-# ---------------------------------------------------------------------------
-# CO196 tests
-# ---------------------------------------------------------------------------
-
-
-class TestCO196ShowClassifierSingleReturnData:
-    """Tests for CO196: every 'show_classifier' action must declare EXACTLY
-    ONE return_data entry. Both empty/missing (0) and multiple (2+) are
-    flagged. The rule applies only to 'show_classifier' actions; other action
-    types are ignored. Independent of CO195/CO161.
-    """
-
-    def test_single_return_data_passes(self):
+    def test_show_classifier_two_return_data_entries_fails(self):
         """
-        Given: A show_classifier action whose return_data has exactly one
-               entry.
-        When: CO196 runs.
-        Then: No errors.
-        """
-        connector = create_connector_object(
-            handlers=[
-                {
-                    "id": "xsoar-single",
-                    "capabilities": [
-                        _cap_with_actions(
-                            "fetch-issues",
-                            [
-                                {
-                                    "type": "show_classifier",
-                                    "return_data": ["mappingId"],
-                                }
-                            ],
-                        )
-                    ],
-                }
-            ],
-        )
-        results = (
-            IsShowClassifierSingleReturnDataValidator().obtain_invalid_content_items(
-                [connector]
-            )
-        )
-        assert len(results) == 0
-
-    def test_two_return_data_fails(self):
-        """
-        Given: A show_classifier action whose return_data has two entries.
-        When: CO196 runs.
-        Then: One result stating that 2 entries were found.
+        Given: A classifier config field id 'mappingId' and a fetch-issues
+               show_classifier action whose return_data has two entries
+               (references the delivered id but is not formatted properly).
+        When: CO195 runs.
+        Then: One result flagging the return_data cardinality - the action
+              must contain exactly one classifier field entry.
         """
         connector = create_connector_object(
             handlers=[
@@ -12132,25 +12089,27 @@ class TestCO196ShowClassifierSingleReturnData:
                     ],
                 }
             ],
+            configurations_data=_classifier_config(),
         )
         results = (
-            IsShowClassifierSingleReturnDataValidator().obtain_invalid_content_items(
+            IsClassifierFieldHasShowActionValidator().obtain_invalid_content_items(
                 [connector]
             )
         )
         assert len(results) == 1
         msg = results[0].message
-        assert "2 entries" in msg
         assert "exactly one" in msg.lower()
         assert results[0].path is not None
         assert str(results[0].path).endswith("handler.yaml")
 
-    def test_empty_return_data_fails(self):
+    def test_show_classifier_empty_return_data_fails(self):
         """
-        Given: A show_classifier action whose return_data is empty/absent
+        Given: A classifier config field id 'mappingId' and a fetch-issues
+               show_classifier action whose return_data is empty/absent
                (0 entries).
-        When: CO196 runs.
-        Then: One result stating that 0 entries were found.
+        When: CO195 runs.
+        Then: One result - the action does not reference the delivered
+              classifier id.
         """
         connector = create_connector_object(
             handlers=[
@@ -12164,66 +12123,16 @@ class TestCO196ShowClassifierSingleReturnData:
                     ],
                 }
             ],
+            configurations_data=_classifier_config(),
         )
         results = (
-            IsShowClassifierSingleReturnDataValidator().obtain_invalid_content_items(
+            IsClassifierFieldHasShowActionValidator().obtain_invalid_content_items(
                 [connector]
             )
         )
         assert len(results) == 1
         msg = results[0].message
-        assert "0 entries" in msg
-        assert "exactly one" in msg.lower()
-
-    def test_non_show_classifier_action_ignored(self):
-        """
-        Given: A non-show_classifier action (reset_incidents_last_run) with no
-               return_data.
-        When: CO196 runs.
-        Then: No errors - the rule only applies to show_classifier actions.
-        """
-        connector = create_connector_object(
-            handlers=[
-                {
-                    "id": "xsoar-reset",
-                    "capabilities": [
-                        _cap_with_actions("fetch-issues", ["reset_incidents_last_run"])
-                    ],
-                }
-            ],
-        )
-        results = (
-            IsShowClassifierSingleReturnDataValidator().obtain_invalid_content_items(
-                [connector]
-            )
-        )
-        assert len(results) == 0
-
-    def test_capability_without_show_classifier_passes(self):
-        """
-        Given: A capability with actions but no show_classifier action.
-        When: CO196 runs.
-        Then: No errors.
-        """
-        connector = create_connector_object(
-            handlers=[
-                {
-                    "id": "xsoar-none",
-                    "capabilities": [
-                        _cap_with_actions(
-                            "fetch-issues",
-                            ["reset_incidents_last_run", "fetch_history"],
-                        )
-                    ],
-                }
-            ],
-        )
-        results = (
-            IsShowClassifierSingleReturnDataValidator().obtain_invalid_content_items(
-                [connector]
-            )
-        )
-        assert len(results) == 0
+        assert "return_data" in msg
 
 
 # ---------------------------------------------------------------------------

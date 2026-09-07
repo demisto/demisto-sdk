@@ -106,10 +106,7 @@ class DuplicateContentIdValidator(BaseValidator[ContentTypes], ABC):
         "provided no region receives more than one of them. Two variants active "
         "in the same region cannot be told apart."
     )
-    error_message = (
-        "Duplicate ID '{0}' also found in {1}. Both items are active in the "
-        "following region(s): {2}. {3}"
-    )
+    error_message = "Duplicate ID '{0}' also found in {1}. {2} {3}"
     related_field = "id"
     is_auto_fixable = False
 
@@ -151,8 +148,8 @@ class DuplicateContentIdValidator(BaseValidator[ContentTypes], ABC):
                         message=self.error_message.format(
                             content_item.object_id,
                             get_relative_path_from_packs_dir(str(duplicate.path)),
-                            ", ".join(sorted(colliding_regions)) or "all regions",
-                            self._explain(content_item, duplicate),
+                            self._region_clause(colliding_regions),
+                            self._explain(content_item, duplicate, colliding_regions),
                         ),
                         content_object=content_item,  # type: ignore[arg-type]
                     )
@@ -188,10 +185,48 @@ class DuplicateContentIdValidator(BaseValidator[ContentTypes], ABC):
             return set()
         return (regions_a & regions_b) or None
 
-    def _explain(self, content_item: ContentTypes, duplicate: ContentTypes) -> str:
+    @staticmethod
+    def _region_clause(colliding_regions: Set[str]) -> str:
+        """States where the pair collides, or that this could not be determined.
+
+        An empty set means the pair is reported because non-overlap could not be
+        proven, not because they were found to share every region, so it must
+        not be phrased as a known collision.
+        """
+        if not colliding_regions:
+            return (
+                "The region(s) in which both items are active could not be "
+                "determined."
+            )
+        return (
+            "Both items are active in the following region(s): "
+            f"{', '.join(sorted(colliding_regions))}."
+        )
+
+    def _explain(
+        self,
+        content_item: ContentTypes,
+        duplicate: ContentTypes,
+        colliding_regions: Set[str],
+    ) -> str:
         """Explains why the pair collides, in the author's terms."""
         features_a = get_content_item_supported_features(content_item)
         features_b = get_content_item_supported_features(duplicate)
+
+        if not colliding_regions:
+            # Reported because non-overlap could not be proven. Claiming an
+            # overlap here would send the author looking for a conflict that
+            # was never established.
+            path_a = get_relative_path_from_packs_dir(str(content_item.path))
+            path_b = get_relative_path_from_packs_dir(str(duplicate.path))
+            return (
+                "Their 'supportedFeatures' could not be resolved to any region "
+                f"({path_a}: {self._fmt(features_a)}; {path_b}: "
+                f"{self._fmt(features_b)}), so it cannot be proven that the two are "
+                "never active together. Check that every feature name appears under "
+                f"'supported_features' in {REGIONAL_RULES_PATH}, or change one of "
+                "the IDs."
+            )
 
         unrestricted = [
             path
@@ -219,4 +254,13 @@ class DuplicateContentIdValidator(BaseValidator[ContentTypes], ABC):
 
     @staticmethod
     def _fmt(features: Optional[FrozenSet[str]]) -> str:
-        return ", ".join(sorted(features)) if features else "none"
+        """Renders a resolved `supportedFeatures` value.
+
+        An absent key and an explicit empty list are opposites - supported
+        everywhere versus restricted to no region - so they must not read alike.
+        """
+        if features is None:
+            return "not declared, so supported everywhere"
+        if not features:
+            return "declared empty, so active in no region"
+        return ", ".join(sorted(features))

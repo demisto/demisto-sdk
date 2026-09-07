@@ -190,6 +190,7 @@ class TestErrorMessage:
         explanation = DuplicateContentIdValidatorAllFiles()._explain(
             FakeItem(None, path="Packs/A/a.yml"),
             FakeItem(["feat_a"], path="Packs/B/b.yml"),
+            {"us"},
         )
 
         assert "a.yml" in explanation
@@ -208,12 +209,87 @@ class TestErrorMessage:
           different feature names can still collide within one region.
         """
         explanation = DuplicateContentIdValidatorAllFiles()._explain(
-            FakeItem(["feat_a"]), FakeItem(["feat_b"])
+            FakeItem(["feat_a"]), FakeItem(["feat_b"]), {"us"}
         )
 
         assert "feat_a" in explanation
         assert "feat_b" in explanation
         assert "same region" in explanation
+
+    def test_colliding_regions_are_listed(self):
+        """
+        Given:
+        - A pair proven to collide in two named regions.
+
+        When:
+        - Building the region clause of the error message.
+
+        Then:
+        - Ensure the regions are named, so the author knows where the conflict
+          actually is.
+        """
+        clause = DuplicateContentIdValidatorAllFiles()._region_clause({"us", "eu"})
+
+        assert "eu, us" in clause
+
+    def test_unresolved_regions_are_not_described_as_all_regions(self):
+        """
+        Given:
+        - A reported pair whose colliding regions could not be resolved, which
+          the decision function signals with an empty set.
+
+        When:
+        - Building the region clause of the error message.
+
+        Then:
+        - Ensure it does not claim the items collide in "all regions". An empty
+          set means the regions are unknown, which is the opposite of knowing
+          they collide everywhere.
+        """
+        clause = DuplicateContentIdValidatorAllFiles()._region_clause(set())
+
+        assert "all regions" not in clause
+        assert "could not be determined" in clause
+
+    def test_unresolved_regions_do_not_assert_an_overlap(self):
+        """
+        Given:
+        - A pair reported only because its regions could not be resolved, both
+          items declaring features that no region enables.
+
+        When:
+        - Building the explanation.
+
+        Then:
+        - Ensure it does not state that the features resolve to overlapping
+          regions. No overlap was proven, and claiming one sends the author
+          looking for a conflict that does not exist.
+        """
+        explanation = DuplicateContentIdValidatorAllFiles()._explain(
+            FakeItem(["feat_unknown"]), FakeItem(["feat_unknown"]), set()
+        )
+
+        assert "overlapping regions" not in explanation
+        assert "could not be resolved" in explanation
+
+    def test_explicit_empty_feature_list_is_distinguished_from_an_absent_key(self):
+        """
+        Given:
+        - One item declaring `supportedFeatures: []` and another declaring no
+          `supportedFeatures` key at all.
+
+        When:
+        - Formatting each value for the error message.
+
+        Then:
+        - Ensure the two render differently. They mean opposite things - an
+          empty list restricts the item to no region, while an absent key means
+          supported everywhere - so rendering both as "none" misleads the author.
+        """
+        formatted_empty = DuplicateContentIdValidatorAllFiles()._fmt(frozenset())
+        formatted_absent = DuplicateContentIdValidatorAllFiles()._fmt(None)
+
+        assert formatted_empty != formatted_absent
 
 
 class TestUnresolvableRegions:

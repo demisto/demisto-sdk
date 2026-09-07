@@ -11,4 +11,6 @@ changes:
   type: feature
 - description: Added a shared resolver for a content item's effective **supportedFeatures**, and a reader for **Config/regional_rules.json**.
   type: internal
+- description: Improved the **GR105** duplicate-ID error message. A duplicate reported because its regions could not be resolved no longer claims the items are active in "all regions" or that their features overlap, and an explicitly empty **supportedFeatures** list is now distinguished from an absent one. Which duplicates are reported is unchanged.
+  type: fix
 pr_number: 5508

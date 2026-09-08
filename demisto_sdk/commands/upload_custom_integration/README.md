@@ -28,5 +28,5 @@ EXAMPLES:
 
 - **--input-path**: Path to the integration YAML file or its parent directory. The file's 'commonfields.id' and 'name' must end with '_copy'. NOTE: It is also strongly recommended to append '_copy' to the integration's display name ('display' field) to avoid confusion with existing marketplace integrations in the UI.
 
-- **--force-id**: Bypass the '_copy' marker validation. WARNING: Uploading without '_copy' risks conflicting with official marketplace IDs and may cause pack installation failures. Before using this flag, verify ALL of the following: (1) Your chosen ID is completely unique and does NOT match the original integration ID. (2) Your chosen ID does NOT match any other integration ID already present in the repository. (3) Your chosen ID does NOT match any integration ID published on the Marketplace.
+- **--force-id**: Bypass the '_copy' marker validation. WARNING: Uploading without '_copy' risks conflicting with official marketplace IDs and may cause pack installation failures. Before using this flag, verify ALL of the following: (1) Your chosen ID is completely unique and does NOT match the original integration ID. (2) Your chosen ID does NOT match any integration ID published on the Marketplace.
   - Default: `False`

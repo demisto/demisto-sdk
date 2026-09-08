@@ -45,8 +45,7 @@ _COPY_MARKER_RISK_EXPLANATION: str = (
 _FORCE_ID_ACTIONABLE_GUIDANCE: str = (
     "ACTION REQUIRED — before continuing, verify ALL of the following:\n"
     "  1. Your chosen ID is completely unique and does NOT match the original integration ID.\n"
-    "  2. Your chosen ID does NOT match any other integration ID already present in the repository.\n"
-    "  3. Your chosen ID does NOT match any integration ID published on the Marketplace."
+    "  2. Your chosen ID does NOT match any integration ID published on the Marketplace."
 )
 
 # YAML key path for the canonical integration ID.

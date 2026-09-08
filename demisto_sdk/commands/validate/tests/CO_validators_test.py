@@ -15161,6 +15161,23 @@ class TestCO154IsHandlerIdXsoarPrefixed:
         assert results[0].path == h.file_path
         assert str(results[0].path).endswith("handler.yaml")
 
+    def test_expected_git_statuses_is_added_only(self):
+        """
+        Given: The CO154 validator class.
+        When: Its ``expected_git_statuses`` attribute is inspected.
+        Then: It is restricted to ``GitStatuses.ADDED`` so the SDK's
+              ``should_run_according_to_status`` gate skips CO154 for any
+              existing (MODIFIED/RENAMED) connector. Handler ids are
+              breaking-change identity keys frozen by CO176 once shipped, so
+              the naming convention can only be enforced when the id is
+              authored for the first time.
+        """
+        from demisto_sdk.commands.common.constants import GitStatuses
+
+        assert IsHandlerIdXsoarPrefixedValidator.expected_git_statuses == [
+            GitStatuses.ADDED
+        ]
+
 
 class TestCO155IsHandlerModuleXsoar:
     """Tests for CO155: every XSOAR-classified handler (via HandlerData.is_xsoar

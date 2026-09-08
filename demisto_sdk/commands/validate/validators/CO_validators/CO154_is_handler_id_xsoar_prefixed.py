@@ -25,6 +25,13 @@ Scope
 Runs on every XSOAR-classified handler (``HandlerData.is_xsoar``).
 Non-XSOAR handlers are skipped.
 
+Git-status gate: only runs on ``ADDED`` connectors. A handler id is a
+breaking-change identity key frozen by CO176 once shipped, so the
+naming convention can only be enforced when the id is authored for the
+first time (i.e. on a newly added connector). Enforcing it on existing
+connectors would demand an id rename that CO176 correctly forbids,
+producing findings that are impossible to remediate.
+
 Two defects:
 
 - ``unresolved-integration``: handler is XSOAR-classified but
@@ -44,6 +51,7 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
+from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.connector import Connector
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -94,6 +102,10 @@ class IsHandlerIdXsoarPrefixedValidator(ConnectorsValidator[ContentTypes]):
     related_field = "id"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.CONNECTOR_HANDLER]
+    # Handler ids are breaking-change identity keys frozen by CO176 once
+    # shipped. Enforce the naming convention only when the connector (and
+    # thus its handler ids) is authored for the first time.
+    expected_git_statuses = [GitStatuses.ADDED]
 
     def obtain_invalid_content_items(
         self,

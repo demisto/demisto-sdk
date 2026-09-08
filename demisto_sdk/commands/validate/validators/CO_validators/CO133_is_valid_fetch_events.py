@@ -1,7 +1,6 @@
 """CO133 - IsValidFetchEventsValidator.
 
-Per §3.9.1 of the standard connector guide, every handler that
-subscribes to the ``log-collection`` capability MUST:
+Every handler that subscribes to the ``log-collection`` capability MUST:
 
 1. Emit the legacy ``isFetchEvents: true`` backend flag via its
    ``serializer.yaml`` ``computed_fields`` block, gated by a
@@ -11,20 +10,18 @@ subscribes to the ``log-collection`` capability MUST:
    the "must not emit as user checkbox" side); the backend flag
    is delivered exclusively via serializer computed_fields.
 
-2. Have an ``eventFetchInterval`` field declared in
-   ``configurations.yaml`` under the capability entry (bare id or
-   grouped-namespaced variant, e.g. ``log-collection_akamai-waf-siem``).
-   Without this field the user has no way to control how frequently
-   events are fetched.
+2. Have an ``eventFetchInterval`` field that is visible to the
+   handler at runtime from a ``configurations.yaml`` surface (the
+   per-cap entry or ``general_configurations``). Without this field
+   the user has no way to control how frequently events are
+   fetched. Runtime-name matched (via serializer field_mappings)
+   so grouped connectors that authored the field under a namespaced
+   id (e.g. ``xsoar-akamai-waf-siem_eventFetchInterval``) and
+   renamed it back are correctly recognised.
 
-Sibling of CO132 (fetch-assets). The two validators share the same
-shape and both reuse ``_find_cap_entry`` + ``_entry_has_field``
-helpers from CO132 to walk configurations.yaml consistently.
 
 Result granularity: one ``ValidationResult`` per (handler, defect)
-finding. See CO132's module docstring for the design details
-(raw-YAML walkers, per-handler serializer routing, CO171 overlap
-rationale).
+finding.
 """
 
 from __future__ import annotations
@@ -36,20 +33,14 @@ from demisto_sdk.commands.content_graph.objects.connector import (
     Connector,
     HandlerData,
 )
+from demisto_sdk.commands.content_graph.objects.connector_handler_view import (
+    FieldOrigin,
+)
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
     ConnectorsValidator,
     ValidationResult,
 )
-from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
-    computed_field_emits_flag,
-    iter_handler_capability_ids,
-)
-from demisto_sdk.commands.validate.validators.CO_validators.CO132_is_valid_fetch_assets import (
-    _entry_has_field,
-    _find_cap_entry,
-)
-
 ContentTypes = Connector
 
 # ============================================================
@@ -59,16 +50,24 @@ FETCH_EVENTS_CAPABILITY = "log-collection"
 FETCH_EVENTS_FLAG = "isFetchEvents"
 FETCH_EVENTS_INTERVAL_FIELD = "eventFetchInterval"
 
+# The interval field is a per-connector user knob, so only
+# configurations.yaml surfaces count as satisfying it.
+_CONFIGURATIONS_YAML_ORIGINS = frozenset(
+    {
+        FieldOrigin.CONFIGURATIONS_GENERAL,
+        FieldOrigin.CONFIGURATIONS_CAPABILITY,
+    }
+)
+
 
 class IsValidFetchEventsValidator(ConnectorsValidator[ContentTypes]):
     error_code = "CO133"
     description = (
         "Validates that every XSOAR handler subscribing to the "
         "`log-collection` capability emits `isFetchEvents: true` via "
-        "its serializer.yaml `computed_fields`, and that the "
-        "capability's `configurations.yaml` entry declares the "
-        "`eventFetchInterval` field so the user can control fetch "
-        "frequency."
+        "its serializer.yaml `computed_fields`, and that "
+        "`eventFetchInterval` is a user-visible field in "
+        "configurations.yaml so the user can control fetch frequency."
     )
     rationale = (
         "The XSOAR BE needs the legacy `isFetchEvents: true` flag "
@@ -99,11 +98,11 @@ class IsValidFetchEventsValidator(ConnectorsValidator[ContentTypes]):
         results: List[ValidationResult] = []
         for connector in content_items:
             results.extend(self._collect_serializer_results(connector))
-            results.extend(self._collect_configurations_results(connector))
+            results.extend(self._collect_interval_field_results(connector))
         return results
 
     # ------------------------------------------------------------------
-    # Serializer half
+    # Serializer half - ``isFetchEvents: true`` computed_field rule.
     # ------------------------------------------------------------------
 
     def _collect_serializer_results(
@@ -112,8 +111,10 @@ class IsValidFetchEventsValidator(ConnectorsValidator[ContentTypes]):
         results: List[ValidationResult] = []
         for handler in connector.xsoar_handlers:
             per_handler_issues: List[str] = []
-            for cap_id in iter_handler_capability_ids(handler, FETCH_EVENTS_CAPABILITY):
-                if not computed_field_emits_flag(handler, FETCH_EVENTS_FLAG, cap_id):
+            for cap_id in handler.capability_ids_matching(FETCH_EVENTS_CAPABILITY):
+                if not handler.serializer_emits_capability_flag(
+                    FETCH_EVENTS_FLAG, cap_id
+                ):
                     per_handler_issues.append(
                         f"handler '{handler.id}' subscribes to "
                         f"capability '{cap_id}' but its serializer.yaml "
@@ -132,77 +133,91 @@ class IsValidFetchEventsValidator(ConnectorsValidator[ContentTypes]):
                         issues="; ".join(per_handler_issues),
                     ),
                     content_object=connector,
-                    path=self._serializer_path(handler),
+                    path=handler.serializer_path,
                 )
             )
         return results
 
     # ------------------------------------------------------------------
-    # Configurations half
+    # Interval-field half - ``eventFetchInterval`` must be visible to
+    # the handler at runtime from a configurations.yaml surface (either
+    # the per-cap entry or general_configurations). The walker resolves
+    # per-handler serializer renames and grouped sub-cap visibility so
+    # a namespaced authored id (e.g.
+    # ``xsoar-akamai-waf-siem_eventFetchInterval``) that the handler's
+    # serializer renames back to ``eventFetchInterval`` is correctly
+    # recognised.
+    #
+    # Collapsed message shape (matches CO132's Phase 2 migration):
+    # "no visible '<field>' field in configurations.yaml" — the old
+    # split between "no cap entry" and "cap entry missing field" no
+    # longer maps onto the walker output (walker unifies both under
+    # "not present in the handler's visible surface").
     # ------------------------------------------------------------------
 
-    def _collect_configurations_results(
+    def _collect_interval_field_results(
         self, connector: Connector
     ) -> List[ValidationResult]:
         results: List[ValidationResult] = []
 
-        subscribed_cap_ids: Set[str] = set()
+        cfg_file = connector.configurations_file
+        cfg_path: Optional[Path] = getattr(cfg_file, "file_path", None)
+
+        # One error per (subscribed cap id) across the connector,
+        # deduplicated across handlers that subscribe to the same cap.
+        cap_ids_missing_interval: Set[str] = set()
+
         for handler in connector.xsoar_handlers:
-            for cap_id in iter_handler_capability_ids(handler, FETCH_EVENTS_CAPABILITY):
-                subscribed_cap_ids.add(cap_id)
-
-        if not subscribed_cap_ids:
-            return results
-
-        raw = connector.configurations_file.file_content
-        cfg_path = connector.configurations_file.file_path
-        for cap_id in sorted(subscribed_cap_ids):
-            entry = _find_cap_entry(raw, cap_id)
-            if entry is None:
-                results.append(
-                    ValidationResult(
-                        validator=self,
-                        message=self.error_message.format(
-                            connector_id=connector.object_id,
-                            capability=FETCH_EVENTS_CAPABILITY,
-                            issues=(
-                                f"capability '{cap_id}' has no "
-                                f"`configurations[]` entry in "
-                                f"configurations.yaml - the entry is "
-                                f"required to declare the "
-                                f"'{FETCH_EVENTS_INTERVAL_FIELD}' field"
-                            ),
-                        ),
-                        content_object=connector,
-                        path=cfg_path,
-                    )
-                )
+            subscribed_cap_ids = list(
+                handler.capability_ids_matching(FETCH_EVENTS_CAPABILITY)
+            )
+            if not subscribed_cap_ids:
                 continue
-            if not _entry_has_field(entry, FETCH_EVENTS_INTERVAL_FIELD):
-                results.append(
-                    ValidationResult(
-                        validator=self,
-                        message=self.error_message.format(
-                            connector_id=connector.object_id,
-                            capability=FETCH_EVENTS_CAPABILITY,
-                            issues=(
-                                f"capability '{cap_id}' entry in "
-                                f"configurations.yaml is missing the "
-                                f"required '{FETCH_EVENTS_INTERVAL_FIELD}' "
-                                f"field (users need it to control "
-                                f"events-fetch cadence)"
-                            ),
+
+            if self._handler_sees_interval_in_configurations(connector, handler):
+                continue
+
+            for cap_id in subscribed_cap_ids:
+                cap_ids_missing_interval.add(cap_id)
+
+        for cap_id in sorted(cap_ids_missing_interval):
+            results.append(
+                ValidationResult(
+                    validator=self,
+                    message=self.error_message.format(
+                        connector_id=connector.object_id,
+                        capability=FETCH_EVENTS_CAPABILITY,
+                        issues=(
+                            f"capability '{cap_id}' has no visible "
+                            f"'{FETCH_EVENTS_INTERVAL_FIELD}' field in "
+                            f"configurations.yaml (users need it to "
+                            f"control events-fetch cadence); declare it "
+                            f"under the `configurations[]` entry for "
+                            f"'{cap_id}' or under `general_configurations`"
                         ),
-                        content_object=connector,
-                        path=cfg_path,
-                    )
+                    ),
+                    content_object=connector,
+                    path=cfg_path,
                 )
+            )
 
         return results
 
     @staticmethod
-    def _serializer_path(handler: HandlerData) -> Optional[Path]:
-        handler_yaml = handler.file_path
-        if handler_yaml is None:
-            return None
-        return handler_yaml.parent / "serializer.yaml"
+    def _handler_sees_interval_in_configurations(
+        connector: Connector, handler: HandlerData
+    ) -> bool:
+        """True iff ``eventFetchInterval`` is a user-visible field on
+        the handler from ANY ``configurations.yaml`` surface (the
+        per-cap entry or ``general_configurations``).
+
+        Matches on ``runtime_name`` (post-serializer), so grouped
+        connectors that authored the field under a namespaced id and
+        renamed it back via ``serializer.yaml`` are recognised.
+        """
+        for vf in connector.visible_fields_for_handler(handler):
+            if vf.origin not in _CONFIGURATIONS_YAML_ORIGINS:
+                continue
+            if vf.runtime_name == FETCH_EVENTS_INTERVAL_FIELD:
+                return True
+        return False

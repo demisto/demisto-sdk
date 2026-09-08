@@ -1,6 +1,6 @@
 """CO151 - IsFeedExpirationIntervalGatedValidator.
 
-Per the connector guide, the ``feedExpirationInterval`` field (a
+The ``feedExpirationInterval`` field (a
 duration-typed input on feed integrations) is meaningful only when
 the sibling ``feedExpirationPolicy`` field selects the
 interval-based option. If a handler emits
@@ -17,11 +17,17 @@ Bare canonical pair: ``feedExpirationInterval`` /
 
 Discovery:
 
-1. Walk the connector's ``connection.yaml`` /
-   ``capabilities.yaml`` / ``configurations.yaml`` raw YAML and
-   collect every field whose **runtime name** (post-serializer
-   rename) is ``feedExpirationInterval``. Record the **raw id**
-   (pre-rename).
+1. Walk each XSOAR handler's visible surface via
+   :meth:`Connector.visible_fields_for_handler` — that consolidates
+   ``connection.yaml`` (general + handler-bound profiles) /
+   ``capabilities.yaml`` general / ``configurations.yaml`` general +
+   per-capability entries (including grouped sub-cap ids the
+   parser drops from ``self.capabilities``), applies the
+   ``serializer.yaml`` ``field_mappings`` rename per field, and
+   scopes ``general_configurations`` groups through the
+   ``view_group`` / ``required_for_capabilities`` predicate. Collect
+   every field whose ``runtime_name`` is
+   ``feedExpirationInterval``; record its ``raw_id`` (pre-rename).
 2. Derive the sibling raw id via suffix substitution:
    ``<X>feedExpirationInterval`` →
    ``<X>feedExpirationPolicy``. Confirm the policy field exists in
@@ -70,11 +76,10 @@ walked (mirrors CO141 / CO145 policy).
 
 from __future__ import annotations
 
-from typing import Any, Dict, Iterable, Iterator, List, Optional, Set, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 from demisto_sdk.commands.content_graph.objects.connector import (
     Connector,
-    HandlerData,
 )
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -148,9 +153,10 @@ class IsFeedExpirationIntervalGatedValidator(ConnectorsValidator[ContentTypes]):
     # ------------------------------------------------------------------
 
     def _check_connector(self, connector: Connector) -> List[ValidationResult]:
-        """Walk every XSOAR handler, collect raw ids for
-        ``feedExpirationInterval`` fields, then verify the sibling
-        policy field and gating trigger for each."""
+        """Walk every XSOAR handler via the unified visible-fields
+        walker, collect raw ids for ``feedExpirationInterval`` fields,
+        then verify the sibling policy field and gating trigger for
+        each."""
         # (raw_interval_id, raw_policy_id) pairs discovered across all
         # XSOAR handlers. Deduplicated because the same field id can
         # be walked via multiple handlers/files.
@@ -161,14 +167,10 @@ class IsFeedExpirationIntervalGatedValidator(ConnectorsValidator[ContentTypes]):
         all_raw_ids: Set[str] = set()
 
         for handler in connector.xsoar_handlers:
-            rename_map = self._serializer_rename_map(handler)
-            for field, _source_file, _hint in self._iter_all_fields(connector, handler):
-                raw_id = field.get("id")
-                if not isinstance(raw_id, str):
-                    continue
+            for vf in connector.visible_fields_for_handler(handler):
+                raw_id = vf.raw_id
                 all_raw_ids.add(raw_id)
-                runtime_name = rename_map.get(raw_id, raw_id)
-                if runtime_name != CANONICAL_INTERVAL_RUNTIME_NAME:
+                if vf.runtime_name != CANONICAL_INTERVAL_RUNTIME_NAME:
                     continue
                 # Derive sibling policy raw id from the interval raw id
                 # by suffix substitution. Real examples:
@@ -402,114 +404,3 @@ class IsFeedExpirationIntervalGatedValidator(ConnectorsValidator[ContentTypes]):
                     out.append(entry)
         return out
 
-    # ------------------------------------------------------------------
-    # Field discovery (walkers structurally identical to CO141 - kept
-    # duplicated per codebase policy, see CO141 lines 122-126.)
-    # ------------------------------------------------------------------
-
-    @staticmethod
-    def _serializer_rename_map(handler: HandlerData) -> Dict[str, str]:
-        mapping: Dict[str, str] = {}
-        ser = handler.serializer
-        if ser is None:
-            return mapping
-        for fm in ser.field_mappings or []:
-            if fm.field_name:
-                mapping[fm.id] = fm.field_name
-        return mapping
-
-    @staticmethod
-    def _iter_field_dicts_from_field_groups(
-        groups: Any,
-    ) -> Iterator[Dict[str, Any]]:
-        if not isinstance(groups, list):
-            return
-        for group in groups:
-            if not isinstance(group, dict):
-                continue
-            fields = group.get("fields")
-            if not isinstance(fields, list):
-                continue
-            for field in fields:
-                if isinstance(field, dict):
-                    yield field
-
-    def _iter_connection_yaml_fields(
-        self, connector: Connector, handler: HandlerData
-    ) -> Iterator[Tuple[Dict[str, Any], str]]:
-        raw = connector.connection_file.file_content
-        if not isinstance(raw, dict):
-            return
-        general = raw.get("general_configurations")
-        if isinstance(general, dict):
-            for field in self._iter_field_dicts_from_field_groups(
-                general.get("configurations")
-            ):
-                yield field, "general_configurations"
-        auth_ids: Set[str] = {
-            ao.id for hc in handler.capabilities for ao in hc.auth_options
-        }
-        profiles = raw.get("profiles")
-        if not isinstance(profiles, list):
-            return
-        for profile in profiles:
-            if not isinstance(profile, dict):
-                continue
-            profile_id = profile.get("id")
-            if profile_id not in auth_ids:
-                continue
-            for field in self._iter_field_dicts_from_field_groups(
-                profile.get("configurations")
-            ):
-                yield field, f"profile '{profile_id}'"
-
-    def _iter_capabilities_yaml_fields(
-        self, connector: Connector
-    ) -> Iterator[Tuple[Dict[str, Any], str]]:
-        raw = connector.capabilities_file.file_content
-        if not isinstance(raw, dict):
-            return
-        general = raw.get("general_configurations")
-        if not isinstance(general, dict):
-            return
-        for field in self._iter_field_dicts_from_field_groups(
-            general.get("configurations")
-        ):
-            yield field, "general_configurations"
-
-    def _iter_configurations_yaml_fields(
-        self, connector: Connector, handler: HandlerData
-    ) -> Iterator[Tuple[Dict[str, Any], str]]:
-        raw = connector.configurations_file.file_content
-        if not isinstance(raw, dict):
-            return
-        general = raw.get("general_configurations")
-        if isinstance(general, dict):
-            for field in self._iter_field_dicts_from_field_groups(
-                general.get("configurations")
-            ):
-                yield field, "general_configurations"
-        handler_cap_ids: Set[str] = {hc.id for hc in handler.capabilities}
-        entries = raw.get("configurations")
-        if not isinstance(entries, list):
-            return
-        for entry in entries:
-            if not isinstance(entry, dict):
-                continue
-            entry_id = entry.get("id")
-            if entry_id not in handler_cap_ids:
-                continue
-            for field in self._iter_field_dicts_from_field_groups(
-                entry.get("configurations")
-            ):
-                yield field, f"capability '{entry_id}'"
-
-    def _iter_all_fields(
-        self, connector: Connector, handler: HandlerData
-    ) -> Iterator[Tuple[Dict[str, Any], str, str]]:
-        for field, hint in self._iter_connection_yaml_fields(connector, handler):
-            yield field, "connection.yaml", hint
-        for field, hint in self._iter_capabilities_yaml_fields(connector):
-            yield field, "capabilities.yaml", hint
-        for field, hint in self._iter_configurations_yaml_fields(connector, handler):
-            yield field, "configurations.yaml", hint

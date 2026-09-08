@@ -2734,24 +2734,91 @@ def _make_integration_with_params(*names: str):
     return SimpleNamespace(params=[SimpleNamespace(name=n) for n in names])
 
 
-def _override_resolved(handler, mapping):
-    """Replace ``handler.resolved_params`` with a list built from a
-    ``{connector_param_name: content_param_name}`` dict.
+def _invalidate_walker_cache(connector) -> None:
+    """Drop any cached walker output on the connector so the next
+    ``visible_fields_for_handler`` call recomputes from the mutated raw
+    YAML / serializer state. The walker uses ``@cached_property``, so
+    tests that mutate fixture data post-construction must invalidate
+    the cache explicitly.
+    """
+    for attr in ("_visible_fields_cache", "capability_by_id"):
+        try:
+            delattr(connector, attr)
+        except AttributeError:
+            pass
 
-    CO120 only reads ``rp.content_param_name`` so the other fields on
-    ResolvedParamMapping can be defaulted.
+
+def _inject_general_config_field(connector, raw_field_id: str) -> None:
+    """Add a bare field with ``raw_field_id`` under
+    ``connection.file_content["general_configurations"]["configurations"][0]["fields"]``.
+
+    The walker reads its field surface from the raw YAML file_content
+    (``_walk_connection_general``), so injecting here makes the field
+    visible to :meth:`Connector.visible_fields_for_handler` without
+    needing to touch the parsed pydantic sub-models. Post-Phase-5
+    replacement for the ``handler.resolved_params = [...]`` pattern the
+    old test helpers used.
+    """
+    file_content = connector.connection_file.file_content
+    if not isinstance(file_content, dict):
+        return
+    general = file_content.setdefault(
+        "general_configurations", {"configurations": [{"fields": []}]}
+    )
+    groups = general.setdefault("configurations", [])
+    if not groups:
+        groups.append({"fields": []})
+    group = groups[0]
+    fields = group.setdefault("fields", [])
+    if not any(isinstance(f, dict) and f.get("id") == raw_field_id for f in fields):
+        fields.append({"id": raw_field_id})
+
+
+def _install_serializer_rename(handler, raw_id: str, runtime_name: str) -> None:
+    """Attach or extend the handler's ``serializer.field_mappings`` with
+    a rename entry ``raw_id -> runtime_name``. Idempotent — repeated
+    calls with the same ``raw_id`` overwrite the mapping.
     """
     from demisto_sdk.commands.content_graph.objects.connector import (
-        ResolvedParamMapping,
+        FieldMapping,
+        SerializerData,
     )
 
-    handler.resolved_params = [
-        ResolvedParamMapping(
-            connector_param_name=cn,
-            content_param_name=rn,
-        )
-        for cn, rn in mapping.items()
+    if handler.serializer is None:
+        handler.serializer = SerializerData(field_mappings=[], computed_fields=[])
+    existing = [
+        fm for fm in handler.serializer.field_mappings if fm.id != raw_id
     ]
+    existing.append(FieldMapping(id=raw_id, field_name=runtime_name))
+    handler.serializer.field_mappings = existing
+
+
+def _override_resolved(connector, mapping, handler_index: int = 0):
+    """Walker-driven replacement for the pre-Phase-5
+    ``handler.resolved_params = [...]`` helper: makes each
+    ``(connector_param_name, content_param_name)`` pair visible to
+    :meth:`Connector.visible_fields_for_handler` by injecting the raw
+    id into ``connection.yaml`` general_configurations AND, when the
+    runtime name differs, installing a serializer rename on the target
+    handler.
+
+    Args:
+        connector: the owning :class:`Connector`. The walker reads its
+            field surface from the connector's raw YAML file_content, so
+            we mutate there rather than the parsed pydantic sub-model.
+        mapping: ``{raw_connector_id: runtime_name}`` — same shape the
+            legacy helper accepted.
+        handler_index: which handler to install serializer renames on
+            (default 0 — matches every existing call site). The
+            general_configurations injection is shared across handlers
+            since it lives on the connector, not the handler.
+    """
+    handler = connector.handlers[handler_index]
+    for raw_id, runtime_name in mapping.items():
+        _inject_general_config_field(connector, raw_id)
+        if runtime_name != raw_id:
+            _install_serializer_rename(handler, raw_id, runtime_name)
+    _invalidate_walker_cache(connector)
 
 
 class TestCO120IsProxyAndInsecureExists:
@@ -2805,7 +2872,7 @@ class TestCO120IsProxyAndInsecureExists:
         connector.handlers[0].related_integration = _make_integration_with_params(
             "client_id", "client_secret"
         )
-        _override_resolved(connector.handlers[0], {})
+        _override_resolved(connector, {})
 
         validator = IsProxyAndInsecureExistsValidator()
         results = validator.obtain_invalid_content_items([connector])
@@ -2845,7 +2912,7 @@ class TestCO120IsProxyAndInsecureExists:
             "proxy", "insecure"
         )
         _override_resolved(
-            connector.handlers[0],
+            connector,
             {"proxy": "proxy", "insecure": "insecure"},
         )
 
@@ -2868,7 +2935,7 @@ class TestCO120IsProxyAndInsecureExists:
             "proxy", "insecure"
         )
         _override_resolved(
-            connector.handlers[0],
+            connector,
             {
                 "plain_jira_v3_proxy": "proxy",
                 "plain_jira_v3_insecure": "insecure",
@@ -2892,7 +2959,7 @@ class TestCO120IsProxyAndInsecureExists:
             "proxy", "insecure"
         )
         _override_resolved(
-            connector.handlers[0],
+            connector,
             {"insecure": "insecure"},
         )
 
@@ -2918,7 +2985,7 @@ class TestCO120IsProxyAndInsecureExists:
             "proxy", "insecure"
         )
         _override_resolved(
-            connector.handlers[0],
+            connector,
             {"proxy": "proxy"},
         )
 
@@ -2940,7 +3007,7 @@ class TestCO120IsProxyAndInsecureExists:
         connector.handlers[0].related_integration = _make_integration_with_params(
             "proxy", "insecure"
         )
-        _override_resolved(connector.handlers[0], {})
+        _override_resolved(connector, {})
 
         validator = IsProxyAndInsecureExistsValidator()
         results = validator.obtain_invalid_content_items([connector])
@@ -2963,7 +3030,7 @@ class TestCO120IsProxyAndInsecureExists:
             "unsecure"
         )
         _override_resolved(
-            connector.handlers[0],
+            connector,
             {"trust_any_cert": "verify"},
         )
 
@@ -2984,7 +3051,7 @@ class TestCO120IsProxyAndInsecureExists:
             "useproxy"
         )
         _override_resolved(
-            connector.handlers[0],
+            connector,
             {"foo": "use_proxy"},
         )
 
@@ -4256,7 +4323,7 @@ class TestCO123IsProfileFieldsCovered:
         )
         # Serializer rewrite: namespaced raw id -> canonical engine_mode.
         _override_resolved(
-            connector.handlers[0],
+            connector,
             {"plain_myint_engine_mode": "engine_mode"},
         )
 
@@ -5145,7 +5212,7 @@ class TestCO125IsAuthProfileHasEngine:
         # canonical integration param names (what parser produces from
         # serializer.yaml).
         _override_resolved(
-            connector.handlers[0],
+            connector,
             {
                 "plain_myint_engine_mode": "engine_mode",
                 "plain_myint_engine": "engine",
@@ -5646,7 +5713,7 @@ class TestCO126IsValidEngineParams:
         ]
         # Wire the serializer mapping + resolved integration.
         _override_resolved(
-            connector.handlers[0],
+            connector,
             {
                 "plain_myint_engine_mode": "engine_mode",
                 "plain_myint_engine": "engine",
@@ -6466,6 +6533,108 @@ class TestCO130IsValidFetch:
         assert len(results) == 1
         assert str(results[0].path).endswith("configurations.yaml")
 
+    def test_grouped_namespaced_fetch_issues_with_serializer_rename_passes(self):
+        """Grouped-connector regression: authors the four required
+        fetch-issues fields under the sub-cap entry with namespaced ids
+        (``xsoar-myvendor_incidentType`` etc.) and the handler's
+        ``serializer.yaml`` renames each back to the canonical runtime
+        name (``incidentType`` etc.).
+
+        The pre-walker literal-id compare missed grouped sub-cap
+        entries entirely (parser drops them from ``self.capabilities``);
+        the walker's raw-YAML sub-cap sweep + serializer-rename
+        resolution now recognises them. Mirrors CO132/CO133's tenable
+        regression tests added in Phases 2-3.
+        """
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            ComputedCondition,
+            ComputedConditionGroup,
+            ComputedFieldRule,
+            ComputedOutput,
+            FieldMapping,
+            HandlerCapability,
+            SerializerData,
+        )
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
+        )
+
+        connector = create_connector_object()
+        sub_cap = "fetch-issues_myvendor"
+        # Authored namespaced ids (grouped-connector shape).
+        namespaced_fields = {
+            "xsoar-myvendor_incidentType": "incidentType",
+            "xsoar-myvendor_incidentFetchInterval": "incidentFetchInterval",
+            "xsoar-myvendor_incomingMapperId": "incomingMapperId",
+            "xsoar-myvendor_mappingId": "mappingId",
+        }
+
+        # Handler subscribes to the sub-cap verbatim; serializer emits
+        # the isFetch flag AND renames each namespaced authored id
+        # back to the canonical runtime name.
+        handler = connector.handlers[0]
+        handler.metadata.module = "xsoar"
+        handler.capabilities = [
+            HandlerCapability(
+                id=sub_cap, auth_options=[], workloads=[], actions=[]
+            )
+        ]
+        handler.serializer = SerializerData(
+            field_mappings=[
+                FieldMapping(id=raw, field_name=runtime)
+                for raw, runtime in namespaced_fields.items()
+            ],
+            computed_fields=[
+                ComputedFieldRule(
+                    output=[ComputedOutput(id="isFetch", value=True)],
+                    any_of=[
+                        ComputedConditionGroup(
+                            conditions=[
+                                ComputedCondition(
+                                    type="capability",
+                                    options={
+                                        "capability_id": sub_cap,
+                                        "value": "on",
+                                    },
+                                )
+                            ]
+                        )
+                    ],
+                )
+            ],
+        )
+
+        # configurations.yaml declares the four required fields with
+        # the NAMESPACED ids under the sub-cap entry. Field shapes
+        # match _fetch_issues_capability_entry defaults.
+        namespaced_entry = _fetch_issues_capability_entry(capability_id=sub_cap)
+        # Rewrite each field id to its namespaced form.
+        rev_map = {v: k for k, v in namespaced_fields.items()}
+        for group in namespaced_entry["configurations"]:
+            for field in group["fields"]:
+                if field["id"] in rev_map:
+                    field["id"] = rev_map[field["id"]]
+
+        _write_connector_yaml_file(
+            connector,
+            "configurations.yaml",
+            {
+                "metadata": {
+                    "title": "Configuration",
+                    "description": (
+                        "Adjust and refine your configuration settings"
+                    ),
+                },
+                "view_groups": [],
+                "configurations": [namespaced_entry],
+            },
+        )
+
+        results = IsValidFetchValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
 
 # ============================================================
 # CO131 - IsValidFeedValidator (scoped-down v1)
@@ -7062,8 +7231,9 @@ class TestCO132IsValidFetchAssets:
         assert str(results[0].path).endswith("configurations.yaml")
 
     def test_missing_configurations_entry_fails(self):
-        """Serializer OK, configurations.yaml has NO entry for the
-        cap → one finding (missing entry)."""
+        """Serializer OK, configurations.yaml has NO entry for the cap
+        (and no general_configurations declaration either) → one
+        finding (missing visible ``assetsFetchInterval``)."""
         from demisto_sdk.commands.validate.validators.CO_validators.CO132_is_valid_fetch_assets import (
             IsValidFetchAssetsValidator,
         )
@@ -7090,7 +7260,130 @@ class TestCO132IsValidFetchAssets:
         )
 
         assert len(results) == 1
-        assert "no `configurations[]` entry" in results[0].message
+        msg = results[0].message
+        assert "'assetsFetchInterval'" in msg
+        assert "fetch-assets-and-vulnerabilities" in msg
+
+    def test_interval_in_general_configurations_passes(self):
+        """``assetsFetchInterval`` declared under
+        ``configurations.general_configurations`` (in an unscoped
+        group so it's visible to every handler) satisfies the
+        requirement even without a per-cap entry."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO132_is_valid_fetch_assets import (
+            IsValidFetchAssetsValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_capability(
+            connector,
+            capability_id="fetch-assets-and-vulnerabilities",
+            serializer=_make_flag_serializer(
+                "isFetchAssets", "fetch-assets-and-vulnerabilities"
+            ),
+        )
+        _write_connector_yaml_file(
+            connector,
+            "configurations.yaml",
+            {
+                "metadata": {"title": "Configuration"},
+                "general_configurations": {
+                    "configurations": [
+                        {
+                            "fields": [
+                                {
+                                    "id": "assetsFetchInterval",
+                                    "field_type": "duration",
+                                    "title": "Assets Fetch Interval",
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "configurations": [],
+            },
+        )
+        _co145_bust_related_file_cache(connector, "configurations_file")
+
+        results = IsValidFetchAssetsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert results == []
+
+    def test_grouped_namespaced_interval_with_serializer_rename_passes(self):
+        """The tenable regression case: grouped connector authors the
+        interval field under the sub-cap entry with a namespaced id
+        (``xsoar-tenable-sc_assetsFetchInterval``) and its
+        ``serializer.yaml`` renames it back to
+        ``assetsFetchInterval``. The pre-walker literal-id compare
+        missed this; the walker-based lookup on ``runtime_name`` now
+        recognises it."""
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            FieldMapping,
+            HandlerCapability,
+            SerializerData,
+        )
+        from demisto_sdk.commands.validate.validators.CO_validators.CO132_is_valid_fetch_assets import (
+            IsValidFetchAssetsValidator,
+        )
+
+        connector = create_connector_object()
+        sub_cap = "fetch-assets-and-vulnerabilities_tenable-sc"
+        namespaced_field_id = "xsoar-tenable-sc_assetsFetchInterval"
+
+        # Handler subscribes to the sub-cap verbatim; serializer both
+        # emits the isFetchAssets flag AND renames the namespaced
+        # field back to the runtime name the integration expects.
+        handler = connector.handlers[0]
+        handler.metadata.module = "xsoar"
+        handler.capabilities = [
+            HandlerCapability(
+                id=sub_cap,
+                auth_options=[],
+                workloads=[],
+                actions=[],
+            )
+        ]
+        flag_serializer = _make_flag_serializer("isFetchAssets", sub_cap)
+        handler.serializer = SerializerData(
+            field_mappings=[
+                FieldMapping(id=namespaced_field_id, field_name="assetsFetchInterval")
+            ],
+            computed_fields=flag_serializer.computed_fields,
+        )
+
+        # configurations.yaml declares the field with the NAMESPACED id
+        # under the sub-cap entry (grouped connectors' authored shape).
+        _write_connector_yaml_file(
+            connector,
+            "configurations.yaml",
+            {
+                "metadata": {"title": "Configuration"},
+                "configurations": [
+                    {
+                        "id": sub_cap,
+                        "configurations": [
+                            {
+                                "fields": [
+                                    {
+                                        "id": namespaced_field_id,
+                                        "field_type": "duration",
+                                        "title": "Assets Fetch Interval",
+                                    }
+                                ]
+                            }
+                        ],
+                    }
+                ],
+            },
+        )
+        _co145_bust_related_file_cache(connector, "configurations_file")
+
+        results = IsValidFetchAssetsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert results == []
 
     def test_grouped_namespaced_cap_id_passes(self):
         """Grouped connector: cap id
@@ -7769,18 +8062,19 @@ def _co143_select_field(
     searchable: object = "__unset__",
     field_type: str = "select",
     dynamic: bool = False,
-    legacy_dynamic: bool = False,
 ) -> dict:
     """Build a minimal select/multi_select field dict.
 
     - ``values``: dict, list, or None. Written under ``options.values``
-      unless ``dynamic``/``legacy_dynamic`` sets a dynamicField instead.
+      unless ``dynamic`` sets a dynamicField instead.
     - ``clearable`` / ``searchable``: ``True``/``False`` writes the flag;
       ``"__unset__"`` omits the key. ``clearable`` defaults to ``True``
       so tests focused on the searchable rule don't accidentally fail
       the clearable rule too.
-    - ``dynamic``: sets ``options.dynamic_values.dynamicField``.
-    - ``legacy_dynamic``: sets the legacy ``options.dynamicField``.
+    - ``dynamic``: sets the schema-canonical
+      ``metadata.dynamic_values.params.dynamicField`` binding (the same
+      shape production content — e.g. Tanium's
+      ``incidentType`` / ``incomingMapperId`` / ``mappingId`` — uses).
     """
     options: dict = {}
     if values is not None:
@@ -7789,16 +8083,23 @@ def _co143_select_field(
         options["clearable"] = clearable
     if searchable != "__unset__":
         options["searchable"] = searchable
-    if dynamic:
-        options.setdefault("dynamic_values", {})["dynamicField"] = "some-picker"
-    if legacy_dynamic:
-        options["dynamicField"] = "some-picker"
-    return {
+    field: dict = {
         "id": field_id,
         "field_type": field_type,
         "title": field_id,
         "options": options,
     }
+    if dynamic:
+        field["metadata"] = {
+            "dynamic_values": {
+                "provider": "xsoar",
+                "params": {
+                    "integrationID": "SomeIntegration",
+                    "dynamicField": "some-picker",
+                },
+            }
+        }
+    return field
 
 
 class TestCO143IsSelectSearchableClearable:
@@ -8108,33 +8409,6 @@ class TestCO143IsSelectSearchableClearable:
         msg = results[0].message
         assert "searchable" in msg
         assert "values_count=dynamic" in msg
-
-    def test_legacy_dynamic_field_no_searchable_fails(self):
-        """Legacy `options.dynamicField` shape triggers the same dynamic rule."""
-        connector = create_connector_object()
-        _co145_wire_handler(connector, capability_ids=["fetch-issues"])
-        _co145_write_configurations(
-            connector,
-            entries=[
-                {
-                    "id": "fetch-issues",
-                    "configurations": [
-                        {
-                            "fields": [
-                                _co143_select_field(
-                                    "sel", legacy_dynamic=True, clearable=True
-                                )
-                            ]
-                        }
-                    ],
-                }
-            ],
-        )
-        results = IsSelectSearchableClearableValidator().obtain_invalid_content_items(
-            [connector]
-        )
-        assert len(results) == 1
-        assert "searchable" in results[0].message
 
     def test_values_as_list_length_counted_correctly(self):
         """When `values` is a list, its length is the count."""
@@ -9354,14 +9628,20 @@ class TestCO136IsValidAutomationCapability:
             [connector]
         )
         assert len(results) == 1
-        assert "missing the required `defaultIgnore` field" in results[0].message
+        assert (
+            "no visible `defaultIgnore` field was found in configurations.yaml"
+            in results[0].message
+        )
 
     # ------------------------------------------------------------
     # Failure paths - missing entry / missing field
     # ------------------------------------------------------------
     def test_configurations_file_missing_fails(self):
         """XSOAR handler subscribes to automation but no
-        configurations.yaml on disk."""
+        configurations.yaml on disk. Post-walker: collapses under the
+        unified "no visible defaultIgnore field" message shape - the
+        walker can't yield a field that doesn't exist, regardless of
+        whether the whole file is missing or just the entry."""
         from demisto_sdk.commands.validate.validators.CO_validators.CO136_is_valid_automation_capability import (
             IsValidAutomationCapabilityValidator,
         )
@@ -9374,12 +9654,16 @@ class TestCO136IsValidAutomationCapability:
         )
         assert len(results) == 1
         assert (
-            "no `configurations[]` entry with id 'automation-and-remediation'"
+            "no visible `defaultIgnore` field was found in configurations.yaml"
             in results[0].message
         )
 
     def test_capability_entry_missing_fails(self):
-        """configurations.yaml exists but has no entry for automation."""
+        """configurations.yaml exists but has no entry for automation
+        AND no general_configurations `defaultIgnore`. Post-walker:
+        same "no visible defaultIgnore field" message as the
+        configurations-file-missing case - the walker unifies both
+        under "not present in the handler's visible surface"."""
         from demisto_sdk.commands.validate.validators.CO_validators.CO136_is_valid_automation_capability import (
             IsValidAutomationCapabilityValidator,
         )
@@ -9403,13 +9687,49 @@ class TestCO136IsValidAutomationCapability:
         )
         assert len(results) == 1
         assert (
-            "no `configurations[]` entry with id 'automation-and-remediation'"
+            "no visible `defaultIgnore` field was found in configurations.yaml"
             in results[0].message
         )
 
+    def test_default_ignore_in_general_configurations_passes(self):
+        """Walker-migration behavior: `defaultIgnore` declared under
+        `configurations.yaml.general_configurations` (rather than under
+        the per-capability entry) satisfies the requirement. The unified
+        walker treats both surfaces as user-visible."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO136_is_valid_automation_capability import (
+            IsValidAutomationCapabilityValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_automation(connector)
+        _write_connector_yaml_file(
+            connector,
+            "configurations.yaml",
+            {
+                "metadata": {
+                    "title": "Configuration",
+                    "description": "Adjust and refine your configuration settings",
+                },
+                "view_groups": [],
+                "general_configurations": {
+                    "configurations": [
+                        {"fields": [_default_ignore_field()]}
+                    ]
+                },
+                "configurations": [
+                    {"id": "automation-and-remediation", "configurations": []}
+                ],
+            },
+        )
+        results = IsValidAutomationCapabilityValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
     def test_default_ignore_field_missing_fails(self):
         """The automation entry exists but has no `defaultIgnore`
-        field."""
+        field (and no general_configurations entry either). Walker-
+        migration message shape: 'no visible defaultIgnore field'."""
         from demisto_sdk.commands.validate.validators.CO_validators.CO136_is_valid_automation_capability import (
             IsValidAutomationCapabilityValidator,
         )
@@ -9421,7 +9741,10 @@ class TestCO136IsValidAutomationCapability:
             [connector]
         )
         assert len(results) == 1
-        assert "missing the required `defaultIgnore` field" in results[0].message
+        assert (
+            "no visible `defaultIgnore` field was found in configurations.yaml"
+            in results[0].message
+        )
 
     # ------------------------------------------------------------
     # Failure paths - wrong field shape
@@ -9616,7 +9939,9 @@ def _write_configurations_with_duration_in_capability(
     connector, field: dict, capability_id: str = "log-collection"
 ) -> None:
     """Write a configurations.yaml with a duration field inside a
-    per-capability configurations entry."""
+    per-capability configurations entry, and wire the first handler
+    to subscribe to that capability so the walker (which is
+    per-handler-scoped) can see the field."""
     payload = {
         "metadata": {
             "title": "Configuration",
@@ -9631,6 +9956,7 @@ def _write_configurations_with_duration_in_capability(
         ],
     }
     _write_connector_yaml_file(connector, "configurations.yaml", payload)
+    _wire_handler_for_capability(connector, capability_id)
 
 
 class TestCO137IsValidDurationTypeParam:
@@ -10056,13 +10382,64 @@ def _wire_xsoar_handler_with_caps(
     handler.serializer = serializer
 
 
+def _grouped_connection_with_view_group(profile_id: str, view_group: str) -> dict:
+    """Build a ``connection_data`` override that gives the connector's
+    default profile a specific ``view_group`` id. Required for the
+    walker's grouped view_group predicate — it resolves ownership via
+    ``connection.yaml.profiles[].view_group``, not via
+    ``handler.related_integration``.
+    """
+    return {
+        "profiles": [
+            {
+                "id": profile_id,
+                "type": "plain",
+                "view_group": view_group,
+                "configurations": [{"fields": [{"id": "api_url"}]}],
+            }
+        ]
+    }
+
+
+def _wire_xsoar_handler_grouped_with_profile(
+    connector, capability_id, profile_id, serializer=None, handler_index: int = 0
+):
+    """Wire a handler for a grouped connector: subscribe to a
+    capability id via an auth_option that binds to the given profile
+    id. The walker follows this chain to resolve the handler's
+    owned view_group.
+    """
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        HandlerAuthOption,
+        HandlerCapability,
+    )
+
+    handler = connector.handlers[handler_index]
+    handler.metadata.module = "xsoar"
+    handler.capabilities = [
+        HandlerCapability(
+            id=capability_id,
+            auth_options=[HandlerAuthOption(id=profile_id)],
+            workloads=[],
+            actions=[],
+        )
+    ]
+    handler.serializer = serializer
+
+
 class TestCO139IsHandlerContainLoglevel:
-    """Tests for CO139: every XSOAR handler must be reachable by an
-    `integrationLogLevel` (select, config_type=backend) field under
-    `configurations.yaml` `general_configurations`. Standard connectors
-    aggregate `required_for_capabilities` across matching entries;
-    grouped connectors index entries by `view_group` and require
-    `advanced: true`.
+    """Tests for CO139 (post-walker migration): every XSOAR handler
+    must see exactly one visible ``integrationLogLevel`` (select,
+    config_type=backend) field from
+    ``configurations.yaml.general_configurations``.
+
+    - Standard connectors: one field-group carries the field, its
+      ``required_for_capabilities`` (if set) must be a **superset** of
+      every capability id the handler subscribes to. Duplicates are a
+      bug.
+    - Grouped connectors: one field-group per view_group with
+      ``advanced: true``. Walker resolves view_group ownership via
+      ``connection.yaml.profiles[].view_group``.
     """
 
     # ------------------------------------------------------------
@@ -10126,7 +10503,10 @@ class TestCO139IsHandlerContainLoglevel:
         )
         assert len(results) == 1
         msg = results[0].message
-        assert "no `integrationLogLevel` field is declared" in msg
+        assert (
+            "no visible `integrationLogLevel` field in configurations.yaml "
+            "`general_configurations`" in msg
+        )
 
     # ------------------------------------------------------------
     # Standard happy path + failures
@@ -10159,8 +10539,13 @@ class TestCO139IsHandlerContainLoglevel:
         assert results == []
 
     def test_standard_missing_capability_in_rfc_fails(self):
-        """Standard connector: required_for_capabilities doesn't cover
-        one of the handler's capabilities -> fails."""
+        """Standard connector (post-walker migration): the group's
+        ``required_for_capabilities`` is missing one of the handler's
+        capabilities. Because the walker's visibility predicate treats
+        "any intersection" as visible, the field DOES surface for the
+        handler in the walker's eyes — but CO139's superset check flags
+        the missing cap because the user could disable the covered cap
+        while the uncovered one stays on, hiding the log-level UI."""
         from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
             IsHandlerContainLoglevelValidator,
         )
@@ -10184,10 +10569,13 @@ class TestCO139IsHandlerContainLoglevel:
         assert "does not cover" in msg
         assert "fetch-issues" in msg
 
-    def test_standard_union_across_multiple_entries_passes(self):
-        """Standard connector: two general_configurations entries each
-        with the log-level field, whose combined
-        `required_for_capabilities` covers everything -> passes."""
+    def test_standard_two_general_config_groups_carrying_log_level_fails(self):
+        """Walker migration behavior (§3.7 uniqueness): TWO field-
+        groups in ``general_configurations`` that both carry the
+        ``integrationLogLevel`` field is a bug — the field must be
+        declared exactly once at file scope for standard connectors.
+        Replaces the old "union across entries" test whose fixture is
+        now considered a duplicate."""
         from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
             IsHandlerContainLoglevelValidator,
         )
@@ -10201,11 +10589,17 @@ class TestCO139IsHandlerContainLoglevel:
             connector,
             general_config_entries=[
                 {
-                    "required_for_capabilities": ["automation-and-remediation"],
+                    "required_for_capabilities": [
+                        "automation-and-remediation",
+                        "fetch-issues",
+                    ],
                     "fields": [_valid_log_level_field()],
                 },
                 {
-                    "required_for_capabilities": ["fetch-issues"],
+                    "required_for_capabilities": [
+                        "automation-and-remediation",
+                        "fetch-issues",
+                    ],
                     "fields": [_valid_log_level_field()],
                 },
             ],
@@ -10213,7 +10607,12 @@ class TestCO139IsHandlerContainLoglevel:
         results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
             [connector]
         )
-        assert results == []
+        assert len(results) == 1
+        msg = results[0].message
+        assert (
+            "has 2 field-groups carrying `integrationLogLevel`" in msg
+            or "must be exactly one" in msg
+        )
 
     # ------------------------------------------------------------
     # Standard: field-shape sub-rule failures
@@ -10360,21 +10759,32 @@ class TestCO139IsHandlerContainLoglevel:
 
     # ------------------------------------------------------------
     # Grouped happy path + failures
+    #
+    # Post-walker migration: grouped view_group ownership is resolved
+    # via ``connection.yaml.profiles[].view_group`` (the walker's
+    # invariant), NOT via ``handler.related_integration.object_id``
+    # normalization. The tests set up matching profile+auth_option
+    # chains to exercise the walker's per-handler visibility.
     # ------------------------------------------------------------
     def test_grouped_valid_per_view_group_passes(self):
-        """Grouped connector: each XSOAR handler's view_group has its
-        own general_configurations entry with `advanced: true` and the
-        canonical log-level field -> passes."""
+        """Grouped connector: the handler is auth-bound to a profile
+        that owns view_group ``qualysfim``. A matching
+        ``general_configurations`` entry with ``view_group: qualysfim``
+        and ``advanced: true`` exists → passes."""
         from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
             IsHandlerContainLoglevelValidator,
         )
 
         connector = create_connector_object(
             connector_overrides={"settings": {"grouped": True}},
+            connection_data=_grouped_connection_with_view_group(
+                profile_id="qualys.default", view_group="qualysfim"
+            ),
         )
-        _wire_xsoar_handler_with_caps(connector, ["automation-and-remediation"])
-        connector.handlers[0].related_integration = _stub_related_integration(
-            "qualysfim", "Qualys FIM"
+        _wire_xsoar_handler_grouped_with_profile(
+            connector,
+            capability_id="automation-and-remediation",
+            profile_id="qualys.default",
         )
         _write_configurations_with_log_level(
             connector,
@@ -10387,99 +10797,26 @@ class TestCO139IsHandlerContainLoglevel:
         )
         assert results == []
 
-    def test_grouped_view_group_id_verbatim_match_passes(self):
-        """Grouped connector: view_group.id equals integration.object_id
-        verbatim (baseline case)."""
-        from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
-            IsHandlerContainLoglevelValidator,
-        )
-
-        connector = create_connector_object(
-            connector_overrides={"settings": {"grouped": True}},
-        )
-        _wire_xsoar_handler_with_caps(connector, ["automation-and-remediation"])
-        connector.handlers[0].related_integration = _stub_related_integration(
-            "my-integration", "My Integration"
-        )
-        _write_configurations_with_log_level(
-            connector,
-            general_config_entries=[
-                _grouped_log_level_configurations(view_group_id="my-integration")
-            ],
-        )
-        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
-            [connector]
-        )
-        assert results == []
-
-    def test_grouped_slugified_view_group_id_passes_via_normalization(self):
-        """Grouped connector: view_group.id is the slugified form of
-        the integration id (e.g. 'syslog-sender' for integration
-        'Syslog Sender') - CO139 uses the same alphanumeric-only
-        normalization as CO122, so both collapse to 'syslogsender' and
-        the lookup succeeds."""
-        from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
-            IsHandlerContainLoglevelValidator,
-        )
-
-        connector = create_connector_object(
-            connector_overrides={"settings": {"grouped": True}},
-        )
-        _wire_xsoar_handler_with_caps(connector, ["automation-and-remediation"])
-        connector.handlers[0].related_integration = _stub_related_integration(
-            "Syslog Sender", "Syslog Sender"
-        )
-        _write_configurations_with_log_level(
-            connector,
-            general_config_entries=[
-                _grouped_log_level_configurations(view_group_id="syslog-sender")
-            ],
-        )
-        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
-            [connector]
-        )
-        assert results == []
-
-    def test_grouped_view_group_id_normalization_strips_punctuation(self):
-        """Grouped connector: integration id contains punctuation
-        (e.g. 'Mail Sender (New)') and view_group.id has all
-        non-alphanumeric characters stripped ('mailsendernew') - both
-        collapse to the same canonical form."""
-        from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
-            IsHandlerContainLoglevelValidator,
-        )
-
-        connector = create_connector_object(
-            connector_overrides={"settings": {"grouped": True}},
-        )
-        _wire_xsoar_handler_with_caps(connector, ["automation-and-remediation"])
-        connector.handlers[0].related_integration = _stub_related_integration(
-            "Mail Sender (New)", "Mail Sender (New)"
-        )
-        _write_configurations_with_log_level(
-            connector,
-            general_config_entries=[
-                _grouped_log_level_configurations(view_group_id="mailsendernew")
-            ],
-        )
-        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
-            [connector]
-        )
-        assert results == []
-
     def test_grouped_missing_view_group_entry_fails(self):
-        """Grouped connector: handler's view_group has no matching
-        general_configurations entry -> fails."""
+        """Grouped connector: handler's profile owns view_group
+        ``qualysfim`` but the only ``general_configurations`` entry
+        carrying ``integrationLogLevel`` is scoped to a different
+        view_group → walker returns no visible field for this handler
+        → 'no visible integrationLogLevel'."""
         from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
             IsHandlerContainLoglevelValidator,
         )
 
         connector = create_connector_object(
             connector_overrides={"settings": {"grouped": True}},
+            connection_data=_grouped_connection_with_view_group(
+                profile_id="qualys.default", view_group="qualysfim"
+            ),
         )
-        _wire_xsoar_handler_with_caps(connector, ["automation-and-remediation"])
-        connector.handlers[0].related_integration = _stub_related_integration(
-            "qualysfim", "Qualys FIM"
+        _wire_xsoar_handler_grouped_with_profile(
+            connector,
+            capability_id="automation-and-remediation",
+            profile_id="qualys.default",
         )
         _write_configurations_with_log_level(
             connector,
@@ -10493,21 +10830,28 @@ class TestCO139IsHandlerContainLoglevel:
         )
         assert len(results) == 1
         msg = results[0].message
-        assert "no" in msg and "normalizes to 'qualysfim'" in msg
+        assert (
+            "no visible `integrationLogLevel` field in configurations.yaml "
+            "`general_configurations`" in msg
+        )
 
     def test_grouped_missing_advanced_true_fails(self):
         """Grouped connector: view_group entry present but missing
-        `advanced: true` -> fails."""
+        ``advanced: true`` → fails."""
         from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
             IsHandlerContainLoglevelValidator,
         )
 
         connector = create_connector_object(
             connector_overrides={"settings": {"grouped": True}},
+            connection_data=_grouped_connection_with_view_group(
+                profile_id="qualys.default", view_group="qualysfim"
+            ),
         )
-        _wire_xsoar_handler_with_caps(connector, ["automation-and-remediation"])
-        connector.handlers[0].related_integration = _stub_related_integration(
-            "qualysfim", "Qualys FIM"
+        _wire_xsoar_handler_grouped_with_profile(
+            connector,
+            capability_id="automation-and-remediation",
+            profile_id="qualys.default",
         )
         _write_configurations_with_log_level(
             connector,
@@ -10523,53 +10867,69 @@ class TestCO139IsHandlerContainLoglevel:
         assert len(results) == 1
         assert "`advanced: true`" in results[0].message
 
-    def test_grouped_unresolved_integration_fails(self):
-        """Grouped connector: XSOAR handler has no related_integration
-        -> fails (cannot determine view_group)."""
+    def test_grouped_two_entries_for_same_view_group_fails(self):
+        """Walker migration behavior (§3.7 uniqueness): grouped
+        connector with TWO ``general_configurations`` entries scoped
+        to the same view_group and both carrying
+        ``integrationLogLevel`` is a bug — exactly one per view_group."""
         from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
             IsHandlerContainLoglevelValidator,
         )
 
         connector = create_connector_object(
             connector_overrides={"settings": {"grouped": True}},
+            connection_data=_grouped_connection_with_view_group(
+                profile_id="qualys.default", view_group="qualysfim"
+            ),
         )
-        _wire_xsoar_handler_with_caps(connector, ["automation-and-remediation"])
-        connector.handlers[0].related_integration = None
+        _wire_xsoar_handler_grouped_with_profile(
+            connector,
+            capability_id="automation-and-remediation",
+            profile_id="qualys.default",
+        )
         _write_configurations_with_log_level(
             connector,
             general_config_entries=[
-                _grouped_log_level_configurations(view_group_id="qualysfim")
+                _grouped_log_level_configurations(view_group_id="qualysfim"),
+                _grouped_log_level_configurations(view_group_id="qualysfim"),
             ],
         )
         results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
             [connector]
         )
         assert len(results) == 1
-        assert "no resolved integration" in results[0].message
+        msg = results[0].message
+        assert (
+            "view_group 'qualysfim' has 2 `integrationLogLevel` field-groups"
+            in msg
+            or "must be exactly one per view_group" in msg
+        )
 
     def test_grouped_namespaced_field_id_resolved_via_serializer_passes(self):
-        """Grouped connector where configurations.yaml uses a
-        namespaced raw id (`xsoar-qualys_fim_integrationLogLevel`)
-        that the serializer renames back to `integrationLogLevel`.
-        Post-resolution the check should pass."""
+        """Grouped connector where the ``general_configurations`` entry
+        uses a namespaced raw id (``xsoar-qualys_fim_integrationLogLevel``)
+        that the handler's serializer renames back to
+        ``integrationLogLevel``. Post-resolution the walker recognises
+        the field for this handler → passes."""
         from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
             IsHandlerContainLoglevelValidator,
         )
 
         connector = create_connector_object(
             connector_overrides={"settings": {"grouped": True}},
+            connection_data=_grouped_connection_with_view_group(
+                profile_id="qualys.default", view_group="qualysfim"
+            ),
         )
         serializer = _make_serializer_with_field_mapping(
             raw_id="xsoar-qualys_fim_integrationLogLevel",
             runtime_name="integrationLogLevel",
         )
-        _wire_xsoar_handler_with_caps(
+        _wire_xsoar_handler_grouped_with_profile(
             connector,
-            ["automation-and-remediation_qualys_fim"],
+            capability_id="automation-and-remediation_qualys_fim",
+            profile_id="qualys.default",
             serializer=serializer,
-        )
-        connector.handlers[0].related_integration = _stub_related_integration(
-            "qualysfim", "Qualys FIM"
         )
         _write_configurations_with_log_level(
             connector,
@@ -10588,23 +10948,24 @@ class TestCO139IsHandlerContainLoglevel:
         assert results == []
 
     def test_grouped_namespaced_field_without_serializer_fails(self):
-        """Same grouped connector but WITHOUT the serializer rename -
-        the raw namespaced id doesn't resolve to `integrationLogLevel`
-        so the check fails with the 'no field declared' message."""
+        """Same grouped connector but WITHOUT the serializer rename —
+        the raw namespaced id doesn't resolve to ``integrationLogLevel``
+        so the walker returns no visible field for this handler → fail."""
         from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
             IsHandlerContainLoglevelValidator,
         )
 
         connector = create_connector_object(
             connector_overrides={"settings": {"grouped": True}},
+            connection_data=_grouped_connection_with_view_group(
+                profile_id="qualys.default", view_group="qualysfim"
+            ),
         )
-        _wire_xsoar_handler_with_caps(
+        _wire_xsoar_handler_grouped_with_profile(
             connector,
-            ["automation-and-remediation_qualys_fim"],
+            capability_id="automation-and-remediation_qualys_fim",
+            profile_id="qualys.default",
             serializer=None,
-        )
-        connector.handlers[0].related_integration = _stub_related_integration(
-            "qualysfim", "Qualys FIM"
         )
         _write_configurations_with_log_level(
             connector,
@@ -10621,7 +10982,10 @@ class TestCO139IsHandlerContainLoglevel:
             [connector]
         )
         assert len(results) == 1
-        assert "no `integrationLogLevel` field is declared" in results[0].message
+        assert (
+            "no visible `integrationLogLevel` field in configurations.yaml "
+            "`general_configurations`" in results[0].message
+        )
 
     # ------------------------------------------------------------
     # Aggregation + result path
@@ -11179,7 +11543,28 @@ def _co145_write_capabilities(connector, general=None, capabilities=()):
 
 def _co145_write_connection(connector, general=None, profiles=()):
     """Write ``connection.yaml`` with the given ``general_configurations``
-    and ``profiles[]``. Both are optional."""
+    and ``profiles[]``. Both are optional.
+
+    Also refreshes ``connector.connection`` (the parsed pydantic model)
+    from the same payload. The unified handler-visible-fields walker's
+    ``CONNECTION_GENERAL`` and ``CONNECTION_PROFILE`` branches read from
+    the parsed model, not from ``connection_file.file_content`` (unlike
+    the ``capabilities.yaml`` / ``configurations.yaml`` branches which
+    walk raw YAML). Without this refresh, tests that write raw YAML via
+    this helper would silently be invisible to any walker-consuming
+    validator (CO138, CO141, ...).
+
+    If the raw payload doesn't validate against ``ConnectorConnectionData``
+    (e.g. tests deliberately using malformed field shapes to exercise
+    non-walker code paths), the parsed model is left as-is so those
+    tests keep behaving as before.
+    """
+    from pydantic import ValidationError
+
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        ConnectorConnectionData,
+    )
+
     payload: dict = {"metadata": {"title": "Connection"}}
     if general is not None:
         payload["general_configurations"] = general
@@ -11187,6 +11572,19 @@ def _co145_write_connection(connector, general=None, profiles=()):
         payload["profiles"] = list(profiles)
     _write_connector_yaml_file(connector, "connection.yaml", payload)
     _co145_bust_related_file_cache(connector, "connection_file")
+
+    # Rebuild the parsed connection model so the walker sees the same
+    # data as ``connection_file.file_content``. Best-effort — see
+    # docstring above for the malformed-payload fallback.
+    parsed_payload: dict = {}
+    if general is not None:
+        parsed_payload["general_configurations"] = general
+    if profiles:
+        parsed_payload["profiles"] = list(profiles)
+    try:
+        connector.connection = ConnectorConnectionData.parse_obj(parsed_payload)
+    except ValidationError:
+        pass
 
 
 def _co145_forbidden_field(field_id: str) -> dict:
@@ -12184,23 +12582,24 @@ def _stamp_proxy_resolved_param(
     raw_id: str = "proxy",
     runtime_name: str = "proxy",
 ) -> None:
-    """Give the connector's first XSOAR handler a resolved_params entry
-    that CO148 recognizes as 'connector exposes a proxy field with raw
-    id raw_id'. Mirrors CO120 test setup so the two validators stay
-    consistent.
-    """
-    from demisto_sdk.commands.content_graph.objects.connector import (
-        ResolvedParamMapping,
-    )
+    """Make CO148 see a proxy-alias field on the connector's first
+    XSOAR handler with raw id ``raw_id`` and runtime name
+    ``runtime_name`` (post-serializer).
 
-    existing = list(connector.handlers[0].resolved_params or [])
-    existing.append(
-        ResolvedParamMapping(
-            connector_param_name=raw_id,
-            content_param_name=runtime_name,
+    Post-Phase-5 replacement for the old
+    ``handler.resolved_params.append(...)`` pattern — injects the
+    field into ``connection.yaml`` general_configurations so
+    :meth:`Connector.visible_fields_for_handler` picks it up. When
+    ``runtime_name`` differs from ``raw_id`` a serializer rename is
+    installed so the walker's ``runtime_name`` matches. Mirrors CO120
+    test setup so the two validators stay consistent.
+    """
+    _inject_general_config_field(connector, raw_id)
+    if runtime_name != raw_id:
+        _install_serializer_rename(
+            connector.handlers[0], raw_id, runtime_name
         )
-    )
-    connector.handlers[0].resolved_params = existing
+    _invalidate_walker_cache(connector)
 
 
 def _connector_with_standard_engine_fields(with_proxy: bool = True):
@@ -12228,34 +12627,33 @@ def _stamp_engine_resolved_params(
     prefix: str,
     handler_index: int = 0,
 ) -> None:
-    """Give ``connector.handlers[handler_index]`` resolved_params
-    entries for the engine triplet under ``prefix`` — ``<prefix>engine_mode``,
-    ``<prefix>engine``, ``<prefix>engineGroup`` — so CO148's
-    ``_prefix_proxy_map`` discovers the picker.
+    """Make CO148 see the engine triplet under ``prefix`` —
+    ``<prefix>engine_mode``, ``<prefix>engine``,
+    ``<prefix>engineGroup`` — on
+    ``connector.handlers[handler_index]``, so ``_prefix_proxy_map``
+    discovers the picker.
 
-    The connector parser only auto-populates resolved_params from
-    profile fields when the profile id appears in the handler's
-    auth_options. Tests that put the triplet inside a profile
-    (grouped style) without matching auth_options never surface
-    those field ids, so we stamp them here to mirror what the
-    parser would produce.
+    Post-Phase-5 replacement for the old
+    ``handler.resolved_params.append(...)`` pattern — injects the
+    three field ids into ``connection.yaml`` general_configurations
+    so :meth:`Connector.visible_fields_for_handler` picks them up.
+    Identity mapping (no serializer rename) matches the pre-walker
+    behaviour where these ids were treated as canonical.
+
+    NOTE: ``handler_index`` is retained for API compat but has no
+    effect — walker visibility on ``general_configurations`` is
+    scoped by ``view_group`` / ``required_for_capabilities``, not by
+    which handler consumes it, so injecting into the shared
+    general_configurations makes the field visible to every handler
+    that qualifies via those predicates (including
+    ``handlers[handler_index]``). Tests that need per-handler
+    isolation should use ``view_group``-scoped general_configurations
+    groups instead.
     """
-    from demisto_sdk.commands.content_graph.objects.connector import (
-        ResolvedParamMapping,
-    )
-
-    existing = list(connector.handlers[handler_index].resolved_params or [])
+    del handler_index  # kept for backward-compat with existing callers
     for suffix in ("engine_mode", "engine", "engineGroup"):
-        field_id = f"{prefix}{suffix}"
-        if any(rp.connector_param_name == field_id for rp in existing):
-            continue
-        existing.append(
-            ResolvedParamMapping(
-                connector_param_name=field_id,
-                content_param_name=field_id,
-            )
-        )
-    connector.handlers[handler_index].resolved_params = existing
+        _inject_general_config_field(connector, f"{prefix}{suffix}")
+    _invalidate_walker_cache(connector)
 
 
 def _connector_with_prefixed_engine_fields(
@@ -12894,9 +13292,6 @@ class TestCO148IsValidEngineTriggers:
         box-automation-and-collection, threatconnect,
         m365-automation-and-collection, and salesforce.
         """
-        from demisto_sdk.commands.content_graph.objects.connector import (
-            ResolvedParamMapping,
-        )
         from demisto_sdk.commands.validate.validators.CO_validators.CO148_is_valid_engine_triggers import (
             IsValidEngineTriggersValidator,
         )
@@ -12905,6 +13300,13 @@ class TestCO148IsValidEngineTriggers:
         # prefix. Profile A carries the engine triplet; profile B carries a
         # single proxy field. They share the empty prefix -- the same shape
         # as cisco-security's plain.amp + plain.ampv2.
+        #
+        # Post-Phase-5 wiring: each handler's ``auth_options`` binds to a
+        # distinct profile id, so the walker's per-handler profile
+        # scoping (``_walk_connection_profiles``) naturally reproduces
+        # the pre-walker per-handler resolved_params behaviour — handler
+        # A only sees profile_a's engine fields, handler B only sees
+        # profile_b's proxy field, no cross-profile leakage.
         connector = create_connector_object(
             connector_overrides={"settings": {"grouped": True}},
             connection_data={
@@ -12949,35 +13351,26 @@ class TestCO148IsValidEngineTriggers:
                 ],
             },
             handlers=[
-                {"id": "xsoar-a"},
-                {"id": "xsoar-b"},
+                {
+                    "id": "xsoar-a",
+                    "capabilities": [
+                        {
+                            "id": "test-capability",
+                            "auth_options": [{"id": "profile_a"}],
+                        }
+                    ],
+                },
+                {
+                    "id": "xsoar-b",
+                    "capabilities": [
+                        {
+                            "id": "test-capability",
+                            "auth_options": [{"id": "profile_b"}],
+                        }
+                    ],
+                },
             ],
         )
-
-        # Handler A is bound to profile_a and only exposes the engine fields.
-        connector.handlers[0].resolved_params = [
-            ResolvedParamMapping(
-                connector_param_name="engine_mode",
-                content_param_name="engine_mode",
-            ),
-            ResolvedParamMapping(
-                connector_param_name="engine",
-                content_param_name="engine",
-            ),
-            ResolvedParamMapping(
-                connector_param_name="engineGroup",
-                content_param_name="engineGroup",
-            ),
-        ]
-        # Handler B is bound to profile_b and only exposes the proxy field --
-        # crucially, NOT engine_mode, so the bare-prefix engine_mode must not
-        # be paired with any proxy field on this handler either.
-        connector.handlers[1].resolved_params = [
-            ResolvedParamMapping(
-                connector_param_name="proxy",
-                content_param_name="proxy",
-            ),
-        ]
 
         # Only the two hide triggers for the bare prefix are shipped. No
         # unlock-proxy trigger for the empty prefix -- and CO148 must NOT
@@ -17690,23 +18083,33 @@ class TestCO172IsFetchFlagGatedOnOwnSubCapability:
 # ---------------------------------------------------------------------------
 
 
-def _resolved_param(name: str, source_file: str = "connection.yaml"):
-    """Build a ResolvedParamMapping mimicking parser output."""
-    from demisto_sdk.commands.content_graph.objects.connector import (
-        ResolvedParamMapping,
-    )
+def _set_resolved_params(connector, names):
+    """Make each name in ``names`` visible to every handler of
+    ``connector`` via the walker
+    (:meth:`Connector.visible_fields_for_handler`).
 
-    return ResolvedParamMapping(
-        connector_param_name=name,
-        content_param_name=name,
-        is_serialized=False,
-        source_file=source_file,
-    )
+    Walker-driven replacement for ``handler.resolved_params = [...]`` —
+    injects each raw id into ``connection.yaml`` general_configurations
+    so the walker picks it up. Identity mapping (no serializer rename),
+    matching the pre-walker helper's shape.
 
+    Also resets the general_configurations block first so tests can
+    call this on both old- and new-version fixtures to build disjoint
+    field sets — this is what CO175's diff logic needs.
 
-def _set_resolved_params(handler, names):
-    """Overwrite handler.resolved_params with the given connector-side names."""
-    handler.resolved_params = [_resolved_param(n) for n in names]
+    Args:
+        connector: the target :class:`Connector` (mutated in place).
+        names: iterable of raw ids to expose.
+    """
+    # Reset the general_configurations block so callers can rebuild
+    # from scratch. The walker reads directly from file_content, so
+    # blanking the list gives us a clean slate.
+    file_content = connector.connection_file.file_content
+    if isinstance(file_content, dict):
+        file_content["general_configurations"] = {"configurations": [{"fields": []}]}
+    for name in names:
+        _inject_general_config_field(connector, name)
+    _invalidate_walker_cache(connector)
 
 
 class TestCO175NoRemovedConnectorParams:
@@ -17724,8 +18127,8 @@ class TestCO175NoRemovedConnectorParams:
         connector = create_connector_object()
         old_connector = create_connector_object()
 
-        _set_resolved_params(connector.handlers[0], ["proxy", "insecure", "url"])
-        _set_resolved_params(old_connector.handlers[0], ["proxy", "insecure", "url"])
+        _set_resolved_params(connector, ["proxy", "insecure", "url"])
+        _set_resolved_params(old_connector, ["proxy", "insecure", "url"])
         connector.old_base_content_object = old_connector
 
         results = NoRemovedConnectorParamsValidator().obtain_invalid_content_items(
@@ -17742,8 +18145,8 @@ class TestCO175NoRemovedConnectorParams:
         connector = create_connector_object()
         old_connector = create_connector_object()
 
-        _set_resolved_params(old_connector.handlers[0], ["proxy", "insecure"])
-        _set_resolved_params(connector.handlers[0], ["proxy", "insecure", "new_param"])
+        _set_resolved_params(old_connector, ["proxy", "insecure"])
+        _set_resolved_params(connector, ["proxy", "insecure", "new_param"])
         connector.old_base_content_object = old_connector
 
         results = NoRemovedConnectorParamsValidator().obtain_invalid_content_items(
@@ -17760,8 +18163,8 @@ class TestCO175NoRemovedConnectorParams:
         connector = create_connector_object()
         old_connector = create_connector_object()
 
-        _set_resolved_params(old_connector.handlers[0], ["proxy", "insecure", "url"])
-        _set_resolved_params(connector.handlers[0], ["proxy", "insecure"])
+        _set_resolved_params(old_connector, ["proxy", "insecure", "url"])
+        _set_resolved_params(connector, ["proxy", "insecure"])
         connector.old_base_content_object = old_connector
 
         results = NoRemovedConnectorParamsValidator().obtain_invalid_content_items(
@@ -17781,9 +18184,9 @@ class TestCO175NoRemovedConnectorParams:
         old_connector = create_connector_object()
 
         _set_resolved_params(
-            old_connector.handlers[0], ["proxy", "insecure", "url", "port"]
+            old_connector, ["proxy", "insecure", "url", "port"]
         )
-        _set_resolved_params(connector.handlers[0], ["proxy", "insecure"])
+        _set_resolved_params(connector, ["proxy", "insecure"])
         connector.old_base_content_object = old_connector
 
         results = NoRemovedConnectorParamsValidator().obtain_invalid_content_items(
@@ -17800,7 +18203,7 @@ class TestCO175NoRemovedConnectorParams:
         Then: No error - nothing to compare against.
         """
         connector = create_connector_object()
-        _set_resolved_params(connector.handlers[0], ["proxy", "insecure"])
+        _set_resolved_params(connector, ["proxy", "insecure"])
         assert connector.old_base_content_object is None
 
         results = NoRemovedConnectorParamsValidator().obtain_invalid_content_items(
@@ -17820,8 +18223,8 @@ class TestCO175NoRemovedConnectorParams:
         _clear_xsoar_signals(connector.handlers[0])
         _clear_xsoar_signals(old_connector.handlers[0])
 
-        _set_resolved_params(old_connector.handlers[0], ["proxy", "insecure"])
-        _set_resolved_params(connector.handlers[0], [])
+        _set_resolved_params(old_connector, ["proxy", "insecure"])
+        _set_resolved_params(connector, [])
         connector.old_base_content_object = old_connector
 
         results = NoRemovedConnectorParamsValidator().obtain_invalid_content_items(
@@ -17829,25 +18232,61 @@ class TestCO175NoRemovedConnectorParams:
         )
         assert len(results) == 0
 
+    def _build_multi_handler_connector_with_profile_scoped_fields(
+        self, per_handler_fields: dict
+    ):
+        """Build a grouped connector where each handler auth-binds to
+        its OWN profile, and each profile carries a distinct set of
+        raw field ids. This uses the walker's per-handler profile
+        scoping (``_walk_connection_profiles``) to give each handler a
+        disjoint visible-field set — the post-Phase-5 replacement for
+        the pre-walker per-handler ``resolved_params`` stamping
+        pattern.
+
+        Args:
+            per_handler_fields: ``{handler_id: [raw_field_id, ...]}``.
+        """
+        profiles = [
+            {
+                "id": f"profile-{h_id}",
+                "type": "plain",
+                "configurations": [
+                    {"fields": [{"id": fid} for fid in fields]}
+                ],
+            }
+            for h_id, fields in per_handler_fields.items()
+        ]
+        handlers = [
+            {
+                "id": h_id,
+                "capabilities": [
+                    {
+                        "id": "test-capability",
+                        "auth_options": [{"id": f"profile-{h_id}"}],
+                    }
+                ],
+            }
+            for h_id in per_handler_fields
+        ]
+        return create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+            connection_data={"profiles": profiles},
+            handlers=handlers,
+        )
+
     def test_newly_added_handler_skipped(self):
         """
         Given: The new version has an additional handler that wasn't in the
-               prior version (so has no prior resolved_params to compare).
+               prior version (so has no prior visible fields to compare).
         When: CO175 runs.
         Then: No error for the newly-added handler.
         """
-        connector = create_connector_object(
-            handlers=[{"id": "xsoar-old"}, {"id": "xsoar-new"}]
+        connector = self._build_multi_handler_connector_with_profile_scoped_fields(
+            {"xsoar-old": ["shared"], "xsoar-new": ["only_new"]}
         )
-        old_connector = create_connector_object(handlers=[{"id": "xsoar-old"}])
-
-        # Match the shared handler's params exactly so it doesn't flag.
-        old_by_id = {h.id: h for h in old_connector.handlers}
-        new_by_id = {h.id: h for h in connector.handlers}
-        _set_resolved_params(old_by_id["xsoar-old"], ["shared"])
-        _set_resolved_params(new_by_id["xsoar-old"], ["shared"])
-        _set_resolved_params(new_by_id["xsoar-new"], ["only_new"])
-
+        old_connector = self._build_multi_handler_connector_with_profile_scoped_fields(
+            {"xsoar-old": ["shared"]}
+        )
         connector.old_base_content_object = old_connector
 
         results = NoRemovedConnectorParamsValidator().obtain_invalid_content_items(
@@ -17862,20 +18301,12 @@ class TestCO175NoRemovedConnectorParams:
         Then: One result per offending handler, each carrying its own
               handler.id and its own removed param.
         """
-        connector = create_connector_object(
-            handlers=[{"id": "xsoar-a"}, {"id": "xsoar-b"}]
+        old_connector = self._build_multi_handler_connector_with_profile_scoped_fields(
+            {"xsoar-a": ["url", "proxy"], "xsoar-b": ["port", "insecure"]}
         )
-        old_connector = create_connector_object(
-            handlers=[{"id": "xsoar-a"}, {"id": "xsoar-b"}]
+        connector = self._build_multi_handler_connector_with_profile_scoped_fields(
+            {"xsoar-a": ["proxy"], "xsoar-b": ["insecure"]}
         )
-
-        old_by_id = {h.id: h for h in old_connector.handlers}
-        new_by_id = {h.id: h for h in connector.handlers}
-        _set_resolved_params(old_by_id["xsoar-a"], ["url", "proxy"])
-        _set_resolved_params(new_by_id["xsoar-a"], ["proxy"])
-        _set_resolved_params(old_by_id["xsoar-b"], ["port", "insecure"])
-        _set_resolved_params(new_by_id["xsoar-b"], ["insecure"])
-
         connector.old_base_content_object = old_connector
 
         results = NoRemovedConnectorParamsValidator().obtain_invalid_content_items(
@@ -17890,8 +18321,8 @@ class TestCO175NoRemovedConnectorParams:
         connector = create_connector_object()
         old_connector = create_connector_object()
 
-        _set_resolved_params(old_connector.handlers[0], ["url"])
-        _set_resolved_params(connector.handlers[0], [])
+        _set_resolved_params(old_connector, ["url"])
+        _set_resolved_params(connector, [])
         connector.old_base_content_object = old_connector
 
         results = NoRemovedConnectorParamsValidator().obtain_invalid_content_items(
@@ -18286,29 +18717,38 @@ def _field(
     )
 
 
-def _connection_with_general_fields(fields):
-    """Build a ConnectorConnectionData whose general_configurations
-    exposes the given ConnectorField list under a single FieldGroup.
-    """
-    from demisto_sdk.commands.content_graph.objects.connector import (
-        ConnectorConnectionData,
-        FieldGroup,
-        GeneralConfigurations,
-    )
-
-    return ConnectorConnectionData(
-        general_configurations=GeneralConfigurations(
-            configurations=[FieldGroup(fields=list(fields))]
-        ),
-        profiles=[],
-    )
-
-
 def _set_connection_general_fields(connector, fields):
-    """Attach a connection.general_configurations block with the given
-    ConnectorField list to the connector.
+    """Seed ``connector.connection_file.file_content`` with a
+    ``general_configurations`` block whose single field group carries
+    the given :class:`ConnectorField` list.
+
+    The walker (:meth:`Connector.visible_fields_for_handler`) reads the
+    raw YAML from ``connection_file.file_content`` — NOT the parsed
+    :attr:`Connector.connection` pydantic sub-model — so tests that
+    exercise the walker (Family B / CO178 / CO179) must seed the raw
+    YAML side. Each ``ConnectorField`` is converted to its raw dict via
+    ``field.dict(exclude_none=True, by_alias=False)`` so the walker's
+    :meth:`ConnectorParser._parse_field` round-trip reproduces the
+    original field 1:1 (including nested modifier blocks and
+    ``default_value`` when present).
+
+    Also invalidates any cached walker output so a subsequent
+    ``visible_fields_for_handler`` call re-reads the mutated raw YAML.
     """
-    connector.connection = _connection_with_general_fields(fields)
+    file_content = connector.connection_file.file_content
+    if not isinstance(file_content, dict):
+        file_content = {}
+        connector.connection_file.file_content = file_content
+    file_content["general_configurations"] = {
+        "configurations": [
+            {
+                "fields": [
+                    f.dict(exclude_none=True, by_alias=False) for f in fields
+                ]
+            }
+        ]
+    }
+    _invalidate_walker_cache(connector)
 
 
 class TestCO179NoParamRequiredTightened:

@@ -13,7 +13,7 @@ from configparser import ConfigParser
 from enum import Enum
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, FrozenSet, List, Optional, Union
+from typing import Any, Dict, FrozenSet, Iterator, List, Optional, Set, Union
 
 from pydantic import BaseModel, Field, root_validator, validator
 
@@ -584,26 +584,6 @@ class SerializerData(BaseModel):
 
 
 # ============================================================
-# Resolved parameter mapping
-# (defined before HandlerData to avoid forward references)
-# ============================================================
-
-
-class ResolvedParamMapping(BaseModel):
-    """Resolved parameter mapping for a handler.
-
-    Maps connector field IDs to integration parameter names.
-    If a field appears in the serializer, the names differ.
-    If not, both names equal the field ID.
-    """
-
-    connector_param_name: str  # field ID in connector YAML (e.g. "domain")
-    content_param_name: str  # param name in integration YAML (e.g. "InstanceURL")
-    is_serialized: bool = False  # True if mapping came from serializer.yaml
-    source_file: str = ""  # which connector file defines this field
-
-
-# ============================================================
 # Handler data - parsed from components/handlers/<name>/handler.yaml
 # ============================================================
 
@@ -690,7 +670,6 @@ class HandlerData(BaseModel):
     service_ids: List[str] = []
     is_general: bool = False
     handler_dir_name: str  # directory name for path resolution
-    resolved_params: List[ResolvedParamMapping] = []  # built by parser
 
     # Cross-link to matched Integration (set by ConnectorAwareInitializer)
     related_integration: Optional[Any] = None
@@ -718,6 +697,39 @@ class HandlerData(BaseModel):
             / self.handler_dir_name
             / "handler.yaml"
         )
+
+    @property
+    def serializer_path(self) -> Optional[Path]:
+        """Absolute path to this handler's ``serializer.yaml`` sibling.
+
+        Returns ``None`` when :attr:`file_path` is unresolvable. Used by
+        every serializer-touching validator (CO130 / CO131 / CO132 / CO133
+        / CO134 / CO141 / CO171 / CO172) to route ``ValidationResult.path``
+        so per-handler ``.connector-ignore`` keys resolve correctly.
+        """
+        handler_yaml = self.file_path
+        if handler_yaml is None:
+            return None
+        return handler_yaml.parent / "serializer.yaml"
+
+    def serializer_computed_output_ids(self) -> FrozenSet[str]:
+        """Set of every ``computed_fields[].output[].id`` this handler's
+        serializer emits.
+
+        Empty when the handler has no serializer or no ``computed_fields``
+        rules. Consumers use this to detect that a runtime param is
+        smuggled into the integration via a serializer rule (CO141's
+        mirroring defense-in-depth) or to short-circuit "does the
+        serializer emit X?" checks without walking the rule structure.
+        """
+        if self.serializer is None:
+            return frozenset()
+        ids: set = set()
+        for rule in self.serializer.computed_fields or []:
+            for out in rule.output or []:
+                if isinstance(out.id, str) and out.id:
+                    ids.add(out.id)
+        return frozenset(ids)
 
     @property
     def module(self) -> Optional[str]:
@@ -764,6 +776,79 @@ class HandlerData(BaseModel):
         ``general_configurations``).
         """
         return frozenset(hc.id for hc in self.capabilities)
+
+    def capability_ids_matching(self, base_id: str) -> Iterator[str]:
+        """Yield every ``capabilities[].id`` on this handler that matches
+        ``base_id`` — either the bare id (e.g. ``fetch-issues``) or its
+        namespaced form used by grouped connectors
+        (``<base_id>_<suffix>``, e.g. ``fetch-issues_qualys_fim``).
+
+        Grouped connectors namespace capability subscriptions per
+        view-group / integration so multiple integrations bundled into
+        a single connector can each opt into the same "family" of
+        capabilities independently. Every collection-family validator
+        (CO130 fetch-issues, CO131 feed, CO132 fetch-assets,
+        CO133 fetch-events, CO134 fetch-credentials, CO136 automation)
+        needs this exact "bare-or-prefixed" match to enumerate the
+        cap ids to police for a given handler.
+        """
+        prefix = f"{base_id}_"
+        for cap in self.capabilities:
+            cap_id = cap.id
+            if cap_id == base_id or cap_id.startswith(prefix):
+                yield cap_id
+
+    def serializer_emits_capability_flag(
+        self, flag_id: str, capability_id: str
+    ) -> bool:
+        """True iff this handler's ``serializer.yaml`` has a
+        ``computed_fields`` rule whose ``output`` emits
+        ``{id: flag_id, value: true}`` under an ``any_of`` group
+        containing a ``type: capability`` condition with
+        ``capability_id == capability_id`` and ``value == 'on'``.
+
+        Per §3.9.1 of the standard connector guide the canonical rule
+        shape is::
+
+            computed_fields:
+              - output:
+                  - id: <flag_id>
+                  value: true
+                any_of:
+                  - conditions:
+                      - type: capability
+                        options:
+                          capability_id: <capability_id>
+                          value: 'on'
+
+        Every collection-family validator that used to check its own
+        legacy flag (``isFetch`` / ``feed`` / ``isFetchAssets`` /
+        ``isFetchEvents`` / ``isFetchCredentials``) uses this same
+        predicate — centralising it here removes the "each validator
+        copies CO130's helper" duplication.
+        """
+        if self.serializer is None:
+            return False
+        for rule in self.serializer.computed_fields or []:
+            outputs = rule.output or []
+            has_flag = any(
+                out.id == flag_id and out.value is True for out in outputs
+            )
+            if not has_flag:
+                continue
+            for group in rule.any_of or []:
+                for cond in group.conditions or []:
+                    if cond.type != "capability":
+                        continue
+                    opts = cond.options or {}
+                    if not isinstance(opts, dict):
+                        continue
+                    if (
+                        opts.get("capability_id") == capability_id
+                        and str(opts.get("value")).lower() == "on"
+                    ):
+                        return True
+        return False
 
 
 # ============================================================
@@ -1088,6 +1173,96 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
                     owned.add(vg)
         return frozenset(owned)
 
+    # === Handler-visible-fields walker ===
+    # These methods delegate to the pure aggregator defined in
+    # ``connector_handler_view.walk_visible_fields``. Together they form
+    # the unified per-handler visible-field API — the sole source of truth
+    # for "which fields does this handler expose", consumed by every CO
+    # validator that used to duplicate its own raw-YAML walker (Family A,
+    # B, and C). See ``plans/handler-visible-fields-walker.md`` for the
+    # design spec.
+
+    def visible_fields_for_handler(
+        self, handler: HandlerData
+    ) -> List["HandlerVisibleField"]:  # noqa: F821 (forward ref, imported lazily inside body to avoid circular import)
+        """All connector fields visible to ``handler``, in deterministic
+        walker order.
+
+        Delegates to :func:`walk_visible_fields`. No dedup — a field id
+        that appears in multiple physical locations produces multiple
+        entries.
+        """
+        from demisto_sdk.commands.content_graph.objects.connector_handler_view import (
+            walk_visible_fields,
+        )
+
+        return walk_visible_fields(self, handler)
+
+    def visible_field_for_handler_by_runtime_name(
+        self, handler: HandlerData, name: str
+    ) -> Optional["HandlerVisibleField"]:  # noqa: F821 (forward ref)
+        """First-match lookup by post-serializer integration runtime name.
+
+        Returns ``None`` when no visible field has that runtime name for
+        the given handler. Preferred over scanning
+        :meth:`visible_fields_for_handler` in a loop.
+        """
+        for f in self.visible_fields_for_handler(handler):
+            if f.runtime_name == name:
+                return f
+        return None
+
+    def visible_fields_for_handler_by_origin(
+        self, handler: HandlerData, origin: "FieldOrigin"  # noqa: F821 (forward ref)
+    ) -> List["HandlerVisibleField"]:  # noqa: F821 (forward ref)
+        """Fields filtered by :class:`FieldOrigin`.
+        Allows filtering fields by their physical origin (``configurations.yaml``, ``connection.yaml``, ``capabilities.yaml``) after the walker has
+        flattened them into a single list. This is useful for validators that need to check only fields from a specific source.
+
+        Convenience wrapper — equivalent to a list-comprehension over
+        :meth:`visible_fields_for_handler`.
+        """
+        return [
+            f for f in self.visible_fields_for_handler(handler) if f.origin == origin
+        ]
+
+    def raw_configurations_entry(
+        self, capability_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Return the raw ``configurations.yaml`` ``configurations[]``
+        entry whose ``id`` equals ``capability_id``, or ``None`` when the
+        file is missing / malformed / has no entry for that cap id.
+
+        Reads from :attr:`configurations_file.file_content` (raw dict)
+        because per-capability configurations aren't hoisted onto
+        :attr:`capabilities` (that field holds the ``capabilities.yaml``
+        shape, not the ``configurations.yaml`` per-capability field
+        lists). Used by validators that need to reason about the entry's
+        top-level metadata (title / description / labels), inspect a
+        raw-YAML shape the walker doesn't expose (e.g. nested
+        ``checkbox_group`` items in CO143), or emit an "entry is absent"
+        error keyed to a bare capability id.
+
+        For per-handler-visible field enumeration prefer
+        :meth:`visible_fields_for_handler_by_origin` with
+        :class:`FieldOrigin.CONFIGURATIONS_CAPABILITY` — it handles
+        grouped sub-cap resolution + per-handler serializer renames
+        that this raw accessor deliberately does not.
+        """
+        configurations_file = self.configurations_file
+        if not configurations_file.exist:
+            return None
+        raw = configurations_file.file_content or {}
+        if not isinstance(raw, dict):
+            return None
+        entries = raw.get("configurations")
+        if not isinstance(entries, list):
+            return None
+        for entry in entries:
+            if isinstance(entry, dict) and entry.get("id") == capability_id:
+                return entry
+        return None
+
     # === Path resolution ===
 
     @validator("path", always=True)
@@ -1132,8 +1307,9 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
 
         Runs after field validation so ``path`` is already resolved by
         ``validate_path``. This lets any handler-level validator use
-        ``handler.file_path`` to locate its ``handler.yaml`` without knowing
-        the connector directory layout.
+        ``handler.file_path`` / ``handler.serializer_path`` to locate
+        its ``handler.yaml`` without knowing the connector directory
+        layout.
         """
         connector_path = values.get("path")
         if connector_path is not None:

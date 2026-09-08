@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from typing import Dict, Iterable, List, Optional, Set, cast
+from typing import Dict, Iterable, List, Optional, cast
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.connector import (
     Connector,
-    ConnectorField,
     HandlerData,
 )
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -30,14 +29,14 @@ class NoParamTypeChangedValidator(ConnectorsValidator[ContentTypes]):
     description = (
         "Breaking-change check: no XSOAR-visible connector field may "
         "change its `field_type` between versions. The XSOAR-visible "
-        "field surface per handler is built from: connection.yaml "
-        "general_configurations, the connection.yaml profiles this "
-        "handler authenticates against, capabilities.yaml "
-        "general_configurations, and the configurations.yaml entries "
-        "unified into the handler's declared capabilities — same walk "
-        "as CO179. Only field ids present in BOTH versions are diffed; "
-        "additions and removals are the concern of CO175 / other "
-        "validators."
+        "field surface per handler is produced by "
+        "`Connector.visible_fields_for_handler(handler)` — a unified "
+        "walker over ``connection.yaml`` (general_configurations + the "
+        "profiles the handler auth-binds to), ``capabilities.yaml`` "
+        "(general_configurations), and ``configurations.yaml`` (both "
+        "parent-capability and grouped sub-capability entries). Only "
+        "field ids present in BOTH versions are diffed; additions and "
+        "removals are the concern of CO175 / other validators."
     )
     rationale = (
         "`field_type` drives both the FE rendering and the shape of "
@@ -109,86 +108,38 @@ class NoParamTypeChangedValidator(ConnectorsValidator[ContentTypes]):
         return results
 
     # ------------------------------------------------------------------
-    # Field-walk helpers (mirror CO179's field-surface walker)
+    # Field-walk helpers (walker-based)
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _field_type(field: ConnectorField) -> FieldTypeState:
-        """Return the `field_type` string, or ``None`` when the field
-        declares no explicit type. Preserves the None/concrete
-        distinction so any transition is detected — see the module-level
-        note on ``FieldTypeState``.
-        """
-        return getattr(field, "field_type", None)
-
-    @classmethod
     def _type_map(
-        cls,
         connector: ContentTypes,
         handler: HandlerData,
     ) -> Dict[str, FieldTypeState]:
-        """Build ``{field_id: field_type}`` for the XSOAR-visible field
+        """Build ``{raw_field_id: field_type}`` for the XSOAR-visible field
         surface of a single handler.
 
-        Sources (mirrors CO179's ``_required_map`` and, upstream,
-        ``ConnectorParser._collect_handler_fields``):
-          1. connection.yaml general_configurations
-          2. connection.yaml profiles used by handler.capabilities[].auth_options[].id
-          3. capabilities.yaml general_configurations
-          4. per-capability configurations unified onto CapabilityData.configurations
-             for capabilities this handler declares
+        Delegates the field-walk to
+        :meth:`Connector.visible_fields_for_handler` — the unified walker
+        that aggregates ``connection.yaml`` (general_configurations +
+        profiles), ``capabilities.yaml`` (general_configurations), and
+        ``configurations.yaml`` (parent-capability and grouped sub-cap
+        entries). Uses ``vf.raw_id`` (the field id as authored in the
+        YAML, pre-serializer) because the diff invariant is on the
+        author-owned identifier that survives across versions; the
+        serializer's runtime rename is a separate concern.
 
-        Duplicate field ids across sources are collapsed by later-wins,
-        matching CO179's semantics. The invariant this validator asserts
+        Duplicate raw ids across origins are collapsed by later-wins
+        (dict assignment order). The invariant this validator asserts
         (type equality across versions) is symmetric across sources, so
-        later-wins is safe: whichever source the effective type comes
-        from at runtime is the same source both snapshots resolve
+        later-wins is safe: whichever origin the effective type comes
+        from at runtime is the same origin both snapshots resolve
         through.
         """
         out: Dict[str, FieldTypeState] = {}
-
-        # 1. connection.yaml general_configurations
-        conn = connector.connection
-        if conn is not None and conn.general_configurations is not None:
-            for group in conn.general_configurations.configurations:
-                for f in group.fields:
-                    if f and f.id:
-                        out[f.id] = cls._field_type(f)
-
-        # 2. connection.yaml profiles used by this handler
-        auth_profile_ids: Set[str] = {
-            ao.id
-            for hc in handler.capabilities
-            for ao in hc.auth_options
-            if ao and ao.id
-        }
-        if conn is not None:
-            for profile in conn.profiles:
-                if profile.id in auth_profile_ids:
-                    for group in profile.configurations:
-                        for f in group.fields:
-                            if f and f.id:
-                                out[f.id] = cls._field_type(f)
-
-        # 3. capabilities.yaml general_configurations
-        cap_meta = connector.capabilities_metadata
-        if cap_meta is not None and cap_meta.general_configurations is not None:
-            for group in cap_meta.general_configurations.configurations:
-                for f in group.fields:
-                    if f and f.id:
-                        out[f.id] = cls._field_type(f)
-
-        # 4. per-capability configurations (already unified by the parser)
-        handler_cap_ids: Set[str] = {
-            hc.id for hc in handler.capabilities if hc and hc.id
-        }
-        for cap in connector.capabilities:
-            if cap.id in handler_cap_ids:
-                for group in cap.configurations:
-                    for f in group.fields:
-                        if f and f.id:
-                            out[f.id] = cls._field_type(f)
-
+        for vf in connector.visible_fields_for_handler(handler):
+            if vf.raw_id:
+                out[vf.raw_id] = vf.field.field_type
         return out
 
     # ------------------------------------------------------------------

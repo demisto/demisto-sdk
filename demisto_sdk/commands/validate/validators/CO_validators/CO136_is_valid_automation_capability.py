@@ -1,51 +1,66 @@
 """CO136 - `automation-and-remediation` capability must include the
 `defaultIgnore` backend-managed checkbox.
 
-Per guide §3.7 rule 4 + Appendix J:
-> "`defaultIgnore` lives under the `automation-and-remediation`
-> capability's `configurations[]` (a `checkbox`, `config_type: backend`)
-> — with no `view_group`. It controls 'Do not use in CLI by default'
-> for commands. Omit `defaultIgnore` when there is no automation
-> capability."
+> "`defaultIgnore` (a `checkbox`, `config_type: backend`) controls
+> 'Do not use in CLI by default' for commands. It MUST be declared
+> for every handler subscribing to the `automation-and-remediation`
+> capability (or a sub-capability whose parent is
+> `automation-and-remediation`), and MAY live either under
+> `configurations.yaml.general_configurations` or under the
+> per-capability `configurations.yaml.configurations[<cap>]` entry —
+> both surfaces are user-visible and either satisfies the requirement.
+> It is NEVER emitted via ``serializer.yaml`` ``computed_fields``."
 
 The validator fires ONLY when at least one XSOAR handler subscribes
-to `automation-and-remediation` (bare capability id OR grouped-
-namespaced variant like `automation-and-remediation_qualysv2`). For
-each such capability id it enforces:
+to `automation-and-remediation` (bare capability id OR
+grouped-namespaced variant like `automation-and-remediation_qualysv2`,
+which is caught by
+:meth:`HandlerData.capability_ids_matching`'s prefix-match rule). For
+each such subscribing handler it enforces:
 
-1. **Presence**: `configurations.yaml` MUST have a `configurations[]`
-   entry whose `id` matches the capability id, containing a field
-   whose runtime (post-serializer) id is `defaultIgnore`.
-2. **Field shape** of that `defaultIgnore` field:
-   - `field_type: checkbox`
-   - `metadata.xsoar.config_type: backend`
+1. **Presence**: a field with runtime (post-serializer) id
+   ``defaultIgnore`` MUST be visible to the handler from EITHER
+   ``configurations.yaml.general_configurations`` OR the per-capability
+   ``configurations.yaml.configurations[<cap>]`` entry. Sub-capability
+   entries (which for grouped connectors live under the namespaced id)
+   are handled by the walker's raw-YAML sweep.
+2. **Field shape** of that ``defaultIgnore`` field:
+   - ``field_type: checkbox``
+   - ``metadata.xsoar.config_type: backend``
 
 Grouped connectors namespace field ids per profile (e.g. qualys uses
-`xsoar-qualys_fim_defaultIgnore`). We resolve the runtime id via the
-subscribing handler's ``serializer.yaml`` ``field_mappings`` — the
-same source CO120 uses — so a namespaced id renamed back to
-``defaultIgnore`` passes cleanly.
+``xsoar-qualys_fim_defaultIgnore``). The unified walker
+(:mod:`connector_handler_view`) resolves the runtime id via each
+handler's ``serializer.yaml`` ``field_mappings``, so a namespaced id
+renamed back to ``defaultIgnore`` passes cleanly without any
+per-validator serializer bookkeeping.
+
+Per-cap-id deduplication: multiple handlers may subscribe to the
+same automation cap id via alternative auth options; the required
+field is shared, so we check each unique cap id at most once per
+connector. The first subscribing handler drives the visibility
+check (per-handler walker output — sufficient because the required
+field is a connector-scoped backend knob that behaves identically
+for every subscribing handler).
 """
 
 from __future__ import annotations
 
-from typing import Any, Dict, Iterable, List, Optional, Set
+from typing import Iterable, List, Optional, Set
 
 from demisto_sdk.commands.content_graph.objects.connector import (
     Connector,
     HandlerData,
+)
+from demisto_sdk.commands.content_graph.objects.connector_handler_view import (
+    FieldOrigin,
+    HandlerVisibleField,
 )
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
     ConnectorsValidator,
     ValidationResult,
 )
-from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
-    field_dicts_in_capability_entry,
-    find_capability_config_entry,
-    iter_handler_capability_ids,
-)
-
 ContentTypes = Connector
 
 # ============================================================
@@ -56,66 +71,17 @@ DEFAULT_IGNORE_ID = "defaultIgnore"
 EXPECTED_FIELD_TYPE = "checkbox"
 EXPECTED_CONFIG_TYPE = "backend"
 
-
-# ============================================================
-# Helpers
-# ============================================================
-def _serializer_rename_map(handler: HandlerData) -> Dict[str, str]:
-    """Return the ``connector_id -> runtime_name`` map built from
-    ``handler.serializer.field_mappings``. Empty when no serializer or
-    no ``field_mappings`` entries.
-
-    A grouped connector may declare its ``defaultIgnore`` field as
-    ``xsoar-qualys_fim_defaultIgnore`` and rename it back to
-    ``defaultIgnore`` via a serializer entry:
-
-        field_mappings:
-          - id: xsoar-qualys_fim_defaultIgnore
-            field_name: defaultIgnore
-    """
-    mapping: Dict[str, str] = {}
-    ser = handler.serializer
-    if ser is None:
-        return mapping
-    for fm in ser.field_mappings or []:
-        if fm.field_name:
-            mapping[fm.id] = fm.field_name
-    return mapping
-
-
-def _runtime_id(raw_id: str, rename_map: Dict[str, str]) -> str:
-    """Resolve a raw field id via the serializer rename map. Returns
-    the original id when no rename is defined (i.e. the raw id IS the
-    runtime name)."""
-    return rename_map.get(raw_id, raw_id)
-
-
-def _field_config_type(field: Dict[str, Any]) -> Optional[str]:
-    """Return ``metadata.xsoar.config_type`` from a raw field dict, or
-    None if the path is missing / malformed."""
-    metadata = field.get("metadata")
-    if not isinstance(metadata, dict):
-        return None
-    xsoar = metadata.get("xsoar")
-    if not isinstance(xsoar, dict):
-        return None
-    val = xsoar.get("config_type")
-    return val if isinstance(val, str) else None
-
-
-def _find_default_ignore_field(
-    entry: Dict[str, Any], rename_map: Dict[str, str]
-) -> Optional[Dict[str, Any]]:
-    """Return the raw field dict whose runtime id (post-serializer
-    rename) equals ``defaultIgnore`` inside the automation capability
-    entry, or None if no such field exists."""
-    for field in field_dicts_in_capability_entry(entry):
-        raw_id = field.get("id")
-        if not isinstance(raw_id, str):
-            continue
-        if _runtime_id(raw_id, rename_map) == DEFAULT_IGNORE_ID:
-            return field
-    return None
+# ``defaultIgnore`` lives in configurations.yaml only — either under
+# ``general_configurations`` or under the per-capability
+# ``configurations[<cap>]`` entry. Both surfaces satisfy the
+# requirement; connection.yaml and capabilities.yaml surfaces are
+# out of scope by design.
+_CONFIGURATIONS_YAML_ORIGINS = frozenset(
+    {
+        FieldOrigin.CONFIGURATIONS_GENERAL,
+        FieldOrigin.CONFIGURATIONS_CAPABILITY,
+    }
+)
 
 
 # ============================================================
@@ -125,10 +91,11 @@ class IsValidAutomationCapabilityValidator(ConnectorsValidator[ContentTypes]):
     error_code = "CO136"
     description = (
         "Validates that every XSOAR handler subscribing to the "
-        "`automation-and-remediation` capability has a corresponding "
-        "`defaultIgnore` (checkbox, config_type=backend) field under "
-        "the capability's configurations entry in configurations.yaml. "
-        "Grouped-connector namespaced ids are canonicalized via the "
+        "`automation-and-remediation` capability has a visible "
+        "`defaultIgnore` (checkbox, config_type=backend) field in "
+        "configurations.yaml - either under `general_configurations` "
+        "or under the per-capability configurations entry. Grouped-"
+        "connector namespaced ids are canonicalized via the "
         "handler's serializer.yaml field_mappings before matching."
     )
     rationale = (
@@ -177,53 +144,52 @@ class IsValidAutomationCapabilityValidator(ConnectorsValidator[ContentTypes]):
         """Return a list of issue strings for the automation capability
         wiring on ``connector``. Empty means all good.
 
-        For each (handler, cap_id) pair we check that the automation
-        capability's configurations entry exists AND contains a
-        `defaultIgnore` field (post-serializer resolution) with the
-        correct field_type + config_type. Each unique cap_id is checked
-        at most once even if multiple handlers share it via alternative
-        auth options.
+        For each (handler, cap_id) pair we check that a ``defaultIgnore``
+        field (post-serializer resolution) is visible to the handler
+        from either configurations.yaml surface, and that its shape
+        matches. Each unique cap_id is checked at most once even if
+        multiple handlers share it via alternative auth options.
         """
         issues: List[str] = []
         checked_cap_ids: Set[str] = set()
 
         for handler in connector.xsoar_handlers:
-            rename_map = _serializer_rename_map(handler)
-            for cap_id in iter_handler_capability_ids(handler, AUTOMATION_CAPABILITY):
+            for cap_id in handler.capability_ids_matching(AUTOMATION_CAPABILITY):
                 if cap_id in checked_cap_ids:
                     continue
                 checked_cap_ids.add(cap_id)
                 issues.extend(
-                    self._check_capability_entry(connector, cap_id, rename_map)
+                    self._check_capability_wiring(connector, handler, cap_id)
                 )
         return issues
 
-    def _check_capability_entry(
+    def _check_capability_wiring(
         self,
         connector: Connector,
+        handler: HandlerData,
         capability_id: str,
-        rename_map: Dict[str, str],
     ) -> List[str]:
-        entry = find_capability_config_entry(connector, capability_id)
-        if entry is None:
-            return [
-                f"configurations.yaml has no `configurations[]` entry "
-                f"with id '{capability_id}' - the automation capability "
-                f"must have its own configurations entry containing "
-                f"`defaultIgnore`"
-            ]
+        """Return issue strings for a single (handler, cap_id) pair —
+        empty when the ``defaultIgnore`` field is visible to the handler
+        with the correct shape.
 
-        field = _find_default_ignore_field(entry, rename_map)
+        The walker unifies "cap entry" + "general_configurations"
+        placement, so a single lookup covers both valid surfaces.
+        """
+        field = self._find_default_ignore_visible_field(connector, handler)
         if field is None:
             return [
-                f"capability '{capability_id}' is missing the required "
-                f"`defaultIgnore` field (checked runtime ids after "
-                f"serializer field_mappings resolution)"
+                f"handler '{handler.id}' subscribes to capability "
+                f"'{capability_id}' but no visible `defaultIgnore` "
+                f"field was found in configurations.yaml (checked "
+                f"both `general_configurations` and per-capability "
+                f"entries, resolving runtime ids via serializer "
+                f"field_mappings)"
             ]
 
         issues: List[str] = []
 
-        actual_type = field.get("field_type")
+        actual_type = field.field.field_type
         if actual_type != EXPECTED_FIELD_TYPE:
             issues.append(
                 f"capability '{capability_id}' field `defaultIgnore` "
@@ -231,7 +197,7 @@ class IsValidAutomationCapabilityValidator(ConnectorsValidator[ContentTypes]):
                 f"'{EXPECTED_FIELD_TYPE}'"
             )
 
-        actual_ct = _field_config_type(field)
+        actual_ct = field.xsoar_config_type
         if actual_ct != EXPECTED_CONFIG_TYPE:
             issues.append(
                 f"capability '{capability_id}' field `defaultIgnore` "
@@ -240,3 +206,23 @@ class IsValidAutomationCapabilityValidator(ConnectorsValidator[ContentTypes]):
             )
 
         return issues
+
+    @staticmethod
+    def _find_default_ignore_visible_field(
+        connector: Connector,
+        handler: HandlerData,
+    ) -> Optional[HandlerVisibleField]:
+        """Return the first HandlerVisibleField visible to ``handler``
+        whose runtime name is ``defaultIgnore`` AND that originates from
+        a ``configurations.yaml`` surface (general_configurations OR a
+        per-capability entry) — or None if no such field exists.
+
+        Uses the unified walker so serializer renames + grouped sub-cap
+        entries are handled centrally.
+        """
+        for vf in connector.visible_fields_for_handler(handler):
+            if vf.origin not in _CONFIGURATIONS_YAML_ORIGINS:
+                continue
+            if vf.runtime_name == DEFAULT_IGNORE_ID:
+                return vf
+        return None

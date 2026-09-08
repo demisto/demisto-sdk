@@ -44,17 +44,19 @@ three triggers below (§3.7 engine triggers):
        the proxy field exists for that prefix, and it validates the
        trigger targets a raw id from the CO120 alias set.
 
-**Discovery is per-handler (profile-scoped):** the parser attaches to
-every XSOAR handler a ``resolved_params`` list — the raw connector
-field ids that specific handler actually consumes for its bound
-profile / integration. Each ``ResolvedParamMapping`` carries both the
-raw ``connector_param_name`` (as written in ``connection.yaml`` /
-``capabilities.yaml`` / ``configurations.yaml``) and the runtime
-``content_param_name`` (post-serializer). Because handlers are bound
-to profiles via ``auth_options[].id``, each handler's
-``resolved_params`` is already scoped to a single integration/profile,
-so proxy fields consumed by handler A cannot leak into the engine
-picker owned by handler B.
+**Discovery is per-handler (profile-scoped):** the walker
+(:meth:`Connector.visible_fields_for_handler`) yields, for a given
+handler, the exact set of raw connector field ids that handler is
+authorised to see across ``connection.yaml`` /
+``capabilities.yaml`` / ``configurations.yaml`` — with per-handler
+``view_group`` / ``required_for_capabilities`` scoping and
+per-handler serializer renames already applied. Each
+:class:`HandlerVisibleField` carries both the raw ``raw_id`` (as
+authored) and the runtime ``runtime_name`` (post-serializer).
+Because handlers are bound to profiles via ``auth_options[].id``,
+each handler's visible-field set is already scoped to a single
+integration/profile, so proxy fields consumed by handler A cannot
+leak into the engine picker owned by handler B.
 
 For every XSOAR handler H:
 
@@ -113,7 +115,10 @@ from __future__ import annotations
 
 from typing import Any, Dict, Iterable, List, Optional, Set
 
-from demisto_sdk.commands.content_graph.objects.connector import Connector
+from demisto_sdk.commands.content_graph.objects.connector import (
+    Connector,
+    HandlerData,
+)
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
     ConnectorsValidator,
@@ -161,28 +166,37 @@ def _prefix_of_engine_mode_id(fid: str) -> Optional[str]:
     return None
 
 
-def _handler_field_ids(handler: Any) -> Set[str]:
+def _handler_field_ids(connector: Connector, handler: HandlerData) -> Set[str]:
     """Return the set of raw connector field ids this handler consumes,
     filtered to strings only.
+
+    Reads through :meth:`Connector.visible_fields_for_handler`; each
+    :class:`HandlerVisibleField` exposes ``raw_id`` — the id as
+    authored in the manifest YAML, before any serializer rename.
     """
     ids: Set[str] = set()
-    for rp in handler.resolved_params or []:
-        cid = rp.connector_param_name
-        if isinstance(cid, str) and cid:
-            ids.add(cid)
+    for vf in connector.visible_fields_for_handler(handler):
+        if isinstance(vf.raw_id, str) and vf.raw_id:
+            ids.add(vf.raw_id)
     return ids
 
 
-def _handler_proxy_alias_ids(handler: Any) -> Set[str]:
+def _handler_proxy_alias_ids(
+    connector: Connector, handler: HandlerData
+) -> Set[str]:
     """Return the set of raw connector field ids this handler consumes
-    whose runtime ``content_param_name`` is a CO120 proxy alias
+    whose ``runtime_name`` is a CO120 proxy alias
     (``proxy`` / ``useproxy`` / ``use_proxy``).
+
+    The runtime name is the post-serializer id — i.e. what the backing
+    integration will actually see. Reads through the walker so
+    grouped sub-cap ``configurations[]`` entries (which the legacy
+    resolved_params list dropped) are correctly included.
     """
     ids: Set[str] = set()
-    for rp in handler.resolved_params or []:
-        cid = rp.connector_param_name
-        if rp.content_param_name in PROXY_ALIASES and isinstance(cid, str) and cid:
-            ids.add(cid)
+    for vf in connector.visible_fields_for_handler(handler):
+        if vf.runtime_name in PROXY_ALIASES and isinstance(vf.raw_id, str) and vf.raw_id:
+            ids.add(vf.raw_id)
     return ids
 
 
@@ -212,8 +226,8 @@ def _prefix_proxy_map(connector: Connector) -> Dict[str, Set[str]]:
     for handler in connector.handlers or []:
         if not handler.is_xsoar:
             continue
-        field_ids = _handler_field_ids(handler)
-        proxy_ids = _handler_proxy_alias_ids(handler)
+        field_ids = _handler_field_ids(connector, handler)
+        proxy_ids = _handler_proxy_alias_ids(connector, handler)
         # Find every engine_mode prefix this handler consumes.
         handler_prefixes: Set[str] = set()
         for fid in field_ids:

@@ -1,92 +1,76 @@
 """CO132 - IsValidFetchAssetsValidator.
 
-Per §3.9.1 of the standard connector guide, every handler that
-subscribes to the ``fetch-assets-and-vulnerabilities`` capability
-MUST:
+Every XSOAR handler
+that subscribes to the ``fetch-assets-and-vulnerabilities``
+capability MUST satisfy two independent requirements:
 
-1. Emit the legacy ``isFetchAssets: true`` backend flag via its
-   ``serializer.yaml`` ``computed_fields`` block, gated by a
-   capability condition matching the subscribed cap id with
-   ``value == "on"``. In UCP the ``isFetchAssets`` user checkbox
-   is removed (picking the capability IS the opt-in - CO145 owns
-   the "must not emit as user checkbox" side); the backend flag
-   is delivered exclusively via serializer computed_fields.
+1. Its ``serializer.yaml`` emits the legacy
+   ``isFetchAssets: true`` backend flag via a ``computed_fields``
+   rule, gated by a capability condition matching the subscribed
+   cap id with ``value == "on"``. The user-visible checkbox is
+   removed (picking the capability IS the opt-in - see CO145);
+   the backend flag is delivered exclusively via serializer
+   ``computed_fields``.
 
-2. Have an ``assetsFetchInterval`` field declared in
-   ``configurations.yaml`` under the capability entry (bare id or
-   grouped-namespaced variant). Without this field the user has no
-   way to control how frequently assets are fetched.
+2. An ``assetsFetchInterval`` field is declared in
+   ``configurations.yaml`` and is visible to the handler at
+   runtime, so the user can control fetch cadence. The field may
+   live under the capability entry
+   (``configurations.yaml.configurations[<cap>]``) or under
+   ``configurations.yaml.general_configurations`` - both surfaces
+   are user-visible and either satisfies the requirement.
 
-Mirrors:
+One ``ValidationResult`` is emitted per (handler, defect):
 
-- CO131 (v1, feed-flag) for the serializer half. Reuses
-  ``iter_handler_capability_ids`` + ``computed_field_emits_flag``
-  from CO130.
-- CO145 for the raw-YAML walker approach on the configurations.yaml
-  half. This is required (rather than reading
-  ``handler.resolved_params``) because
-  ``ConnectorParser._parse_capabilities_with_configs`` merges
-  configurations entries by PARENT capability id, and grouped
-  connectors write per-cap entries keyed by SUB-capability id
-  (e.g. ``fetch-assets-and-vulnerabilities_myvendor``). Reading
-  ``resolved_params`` for grouped connectors would silently miss
-  the sub-cap entries. Reading raw ``configurations_file.file_content``
-  matches the author's actual YAML shape.
-
-Result granularity: one ``ValidationResult`` per (handler, defect)
-finding. The serializer half's ``path`` = handler's
-``serializer.yaml`` (per-handler ignore chain resolves cleanly);
-the configurations half's ``path`` = ``configurations.yaml``
-(connector-scoped ignore key).
-
-Serializer-flag half overlaps CO171 (which enforces the same
-mapping for all 5 collection caps). Keeping CO132 separate gives
-authors a per-capability error code and preserves symmetry with
-CO130/CO131/CO133/CO134.
+- Serializer half: ``path = <handler>/serializer.yaml`` (per-handler
+  ignore chain).
+- Interval-field half: ``path = configurations.yaml`` (connector-
+  scoped ignore key). Emitted once per subscribed cap id -
+  handlers that share a cap id share the defect.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Set
+from typing import Iterable, List, Optional, Set
 
 from demisto_sdk.commands.content_graph.objects.connector import (
     Connector,
     HandlerData,
+)
+from demisto_sdk.commands.content_graph.objects.connector_handler_view import (
+    FieldOrigin,
 )
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
     ConnectorsValidator,
     ValidationResult,
 )
-from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
-    computed_field_emits_flag,
-    iter_handler_capability_ids,
-)
-
 ContentTypes = Connector
 
-# ============================================================
-# CO132 constants
-# ============================================================
 FETCH_ASSETS_CAPABILITY = "fetch-assets-and-vulnerabilities"
 FETCH_ASSETS_FLAG = "isFetchAssets"
 FETCH_ASSETS_INTERVAL_FIELD = "assetsFetchInterval"
 
+# The interval field is a per-connector user knob, so only
+# configurations.yaml surfaces count as satisfying it.
+_CONFIGURATIONS_YAML_ORIGINS = frozenset(
+    {
+        FieldOrigin.CONFIGURATIONS_GENERAL,
+        FieldOrigin.CONFIGURATIONS_CAPABILITY,
+    }
+)
 
-# ============================================================
-# CO132 validator
-# ============================================================
+
 class IsValidFetchAssetsValidator(ConnectorsValidator[ContentTypes]):
     error_code = "CO132"
     description = (
         "Validates that every XSOAR handler subscribing to the "
         "`fetch-assets-and-vulnerabilities` capability emits "
         "`isFetchAssets: true` via its serializer.yaml "
-        "`computed_fields`, and that the capability's "
-        "`configurations.yaml` entry declares the "
-        "`assetsFetchInterval` field so the user can control fetch "
-        "frequency."
+        "`computed_fields`, and that `assetsFetchInterval` is a "
+        "user-visible field in configurations.yaml so the user can "
+        "control fetch frequency."
     )
     rationale = (
         "The XSOAR BE needs the legacy `isFetchAssets: true` flag "
@@ -104,13 +88,6 @@ class IsValidFetchAssetsValidator(ConnectorsValidator[ContentTypes]):
     )
     related_field = "serializer"
     is_auto_fixable = False
-    # Two file types feed independent ignore chains (same rationale
-    # documented on CO130):
-    #   - CONNECTOR_SERIALIZER for the serializer-flag half's
-    #     ``[file:<handler>/serializer.yaml]`` preflight,
-    #   - CONNECTOR_HANDLER for the post-hoc per-handler filter,
-    #   - CONNECTOR_CONFIGURATIONS for the interval-field half's
-    #     ``[file:configurations.yaml]`` preflight.
     related_file_type = [
         RelatedFileType.CONNECTOR_HANDLER,
         RelatedFileType.CONNECTOR_SERIALIZER,
@@ -121,24 +98,14 @@ class IsValidFetchAssetsValidator(ConnectorsValidator[ContentTypes]):
         self,
         content_items: Iterable[ContentTypes],
     ) -> List[ValidationResult]:
-        """Emit one ``ValidationResult`` per (handler, defect) finding.
-
-        Two halves per handler, each emitted independently:
-        - Serializer half: missing/misshaped ``isFetchAssets: true``
-          computed_field rule for a subscribed cap id.
-          ``path = <handler>/serializer.yaml``.
-        - Configurations half: missing ``assetsFetchInterval`` field
-          under the cap's ``configurations[]`` entry.
-          ``path = configurations.yaml``.
-        """
         results: List[ValidationResult] = []
         for connector in content_items:
             results.extend(self._collect_serializer_results(connector))
-            results.extend(self._collect_configurations_results(connector))
+            results.extend(self._collect_interval_field_results(connector))
         return results
 
     # ------------------------------------------------------------------
-    # Serializer half (mirrors CO131 / CO130 Part 1)
+    # Serializer half - ``isFetchAssets: true`` computed_field rule.
     # ------------------------------------------------------------------
 
     def _collect_serializer_results(
@@ -147,8 +114,10 @@ class IsValidFetchAssetsValidator(ConnectorsValidator[ContentTypes]):
         results: List[ValidationResult] = []
         for handler in connector.xsoar_handlers:
             per_handler_issues: List[str] = []
-            for cap_id in iter_handler_capability_ids(handler, FETCH_ASSETS_CAPABILITY):
-                if not computed_field_emits_flag(handler, FETCH_ASSETS_FLAG, cap_id):
+            for cap_id in handler.capability_ids_matching(FETCH_ASSETS_CAPABILITY):
+                if not handler.serializer_emits_capability_flag(
+                    FETCH_ASSETS_FLAG, cap_id
+                ):
                     per_handler_issues.append(
                         f"handler '{handler.id}' subscribes to "
                         f"capability '{cap_id}' but its serializer.yaml "
@@ -167,142 +136,86 @@ class IsValidFetchAssetsValidator(ConnectorsValidator[ContentTypes]):
                         issues="; ".join(per_handler_issues),
                     ),
                     content_object=connector,
-                    path=self._serializer_path(handler),
+                    path=handler.serializer_path,
                 )
             )
         return results
 
     # ------------------------------------------------------------------
-    # Configurations half (walks raw configurations.yaml file_content
-    # to sidestep the parent-id-only merge in the parser - same as CO145)
+    # Interval-field half - ``assetsFetchInterval`` must be visible to
+    # the handler at runtime from a configurations.yaml surface (either
+    # the per-cap entry or general_configurations). The walker resolves
+    # per-handler serializer renames and grouped sub-cap visibility so
+    # a namespaced authored id (e.g.
+    # ``xsoar-tenable-sc_assetsFetchInterval``) that the handler's
+    # serializer renames back to ``assetsFetchInterval`` is correctly
+    # recognised.
     # ------------------------------------------------------------------
 
-    def _collect_configurations_results(
+    def _collect_interval_field_results(
         self, connector: Connector
     ) -> List[ValidationResult]:
-        """Emit one result per capability entry missing
-        ``assetsFetchInterval``.
-
-        Deduplicates across handlers that subscribe to the same cap id
-        (the underlying `configurations[]` entry is shared - the same
-        defect would surface once per handler otherwise).
-        """
         results: List[ValidationResult] = []
 
-        # Collect unique cap ids subscribed by ANY XSOAR handler.
-        subscribed_cap_ids: Set[str] = set()
+        cfg_file = connector.configurations_file
+        cfg_path: Optional[Path] = getattr(cfg_file, "file_path", None)
+
+        # One error per (subscribed cap id) across the connector,
+        # deduplicated across handlers that subscribe to the same cap.
+        cap_ids_missing_interval: Set[str] = set()
+
         for handler in connector.xsoar_handlers:
-            for cap_id in iter_handler_capability_ids(handler, FETCH_ASSETS_CAPABILITY):
-                subscribed_cap_ids.add(cap_id)
-
-        if not subscribed_cap_ids:
-            return results
-
-        raw = connector.configurations_file.file_content
-        cfg_path = connector.configurations_file.file_path
-        # For each subscribed cap id, look for a matching
-        # configurations[] entry and check for assetsFetchInterval.
-        # A missing entry OR a present entry without the field both
-        # fail; the message distinguishes the two.
-        for cap_id in sorted(subscribed_cap_ids):
-            entry = _find_cap_entry(raw, cap_id)
-            if entry is None:
-                results.append(
-                    ValidationResult(
-                        validator=self,
-                        message=self.error_message.format(
-                            connector_id=connector.object_id,
-                            capability=FETCH_ASSETS_CAPABILITY,
-                            issues=(
-                                f"capability '{cap_id}' has no "
-                                f"`configurations[]` entry in "
-                                f"configurations.yaml - the entry is "
-                                f"required to declare the "
-                                f"'{FETCH_ASSETS_INTERVAL_FIELD}' field"
-                            ),
-                        ),
-                        content_object=connector,
-                        path=cfg_path,
-                    )
-                )
+            subscribed_cap_ids = list(
+                handler.capability_ids_matching(FETCH_ASSETS_CAPABILITY)
+            )
+            if not subscribed_cap_ids:
                 continue
-            if not _entry_has_field(entry, FETCH_ASSETS_INTERVAL_FIELD):
-                results.append(
-                    ValidationResult(
-                        validator=self,
-                        message=self.error_message.format(
-                            connector_id=connector.object_id,
-                            capability=FETCH_ASSETS_CAPABILITY,
-                            issues=(
-                                f"capability '{cap_id}' entry in "
-                                f"configurations.yaml is missing the "
-                                f"required '{FETCH_ASSETS_INTERVAL_FIELD}' "
-                                f"field (users need it to control "
-                                f"assets-fetch cadence)"
-                            ),
+
+            if self._handler_sees_interval_in_configurations(connector, handler):
+                continue
+
+            for cap_id in subscribed_cap_ids:
+                cap_ids_missing_interval.add(cap_id)
+
+        for cap_id in sorted(cap_ids_missing_interval):
+            results.append(
+                ValidationResult(
+                    validator=self,
+                    message=self.error_message.format(
+                        connector_id=connector.object_id,
+                        capability=FETCH_ASSETS_CAPABILITY,
+                        issues=(
+                            f"capability '{cap_id}' has no visible "
+                            f"'{FETCH_ASSETS_INTERVAL_FIELD}' field in "
+                            f"configurations.yaml (users need it to "
+                            f"control assets-fetch cadence); declare it "
+                            f"under the `configurations[]` entry for "
+                            f"'{cap_id}' or under `general_configurations`"
                         ),
-                        content_object=connector,
-                        path=cfg_path,
-                    )
+                    ),
+                    content_object=connector,
+                    path=cfg_path,
                 )
+            )
 
         return results
 
     @staticmethod
-    def _serializer_path(handler: HandlerData) -> Optional[Path]:
-        """Best-effort path to the handler's ``serializer.yaml``.
-        Mirrors CO130 / CO131 / CO171 / CO172 so per-handler ignore
-        keys (``<handler-folder>/serializer.yaml``) resolve cleanly.
+    def _handler_sees_interval_in_configurations(
+        connector: Connector, handler: HandlerData
+    ) -> bool:
+        """True iff ``assetsFetchInterval`` is a user-visible field on
+        the handler from ANY ``configurations.yaml`` surface (the
+        per-cap entry or ``general_configurations``).
+
+        Matches on ``runtime_name`` (post-serializer), so grouped
+        connectors that authored the field under a namespaced id and
+        renamed it back via ``serializer.yaml`` are recognised.
         """
-        handler_yaml = handler.file_path
-        if handler_yaml is None:
-            return None
-        return handler_yaml.parent / "serializer.yaml"
-
-
-# ============================================================
-# Module-level helpers (shared with CO133 - both walk
-# configurations.yaml the same way looking for a specific field
-# under a per-cap entry).
-# ============================================================
-
-
-def _find_cap_entry(raw: Any, cap_id: str) -> Optional[Dict[str, Any]]:
-    """Return the raw ``configurations[]`` entry dict whose ``id``
-    equals ``cap_id``, or ``None`` if not present / raw is malformed.
-
-    Mirrors ``CO130.find_capability_config_entry`` but takes the raw
-    file_content directly (so callers with the raw dict in hand don't
-    round-trip through the connector object).
-    """
-    if not isinstance(raw, dict):
-        return None
-    entries = raw.get("configurations")
-    if not isinstance(entries, list):
-        return None
-    for entry in entries:
-        if isinstance(entry, dict) and entry.get("id") == cap_id:
-            return entry
-    return None
-
-
-def _entry_has_field(entry: Dict[str, Any], field_id: str) -> bool:
-    """True if any ``fields[]`` block under
-    ``entry.configurations[*]`` contains a field with the given id.
-
-    Walks the standard shape:
-        entry.configurations[*].fields[*].id == field_id
-    """
-    groups = entry.get("configurations")
-    if not isinstance(groups, list):
-        return False
-    for group in groups:
-        if not isinstance(group, dict):
-            continue
-        fields = group.get("fields")
-        if not isinstance(fields, list):
-            continue
-        for field in fields:
-            if isinstance(field, dict) and field.get("id") == field_id:
+        for vf in connector.visible_fields_for_handler(handler):
+            if vf.origin not in _CONFIGURATIONS_YAML_ORIGINS:
+                continue
+            if vf.runtime_name == FETCH_ASSETS_INTERVAL_FIELD:
                 return True
-    return False
+        return False
+

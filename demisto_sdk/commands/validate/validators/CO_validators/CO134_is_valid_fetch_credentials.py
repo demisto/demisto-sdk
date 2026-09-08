@@ -1,20 +1,14 @@
 """CO134 - IsValidFetchCredentialsValidator.
 
-Per §3.9.1 of the standard connector guide, every handler that
+Every handler that
 subscribes to the ``fetch-secrets`` capability MUST emit the legacy
 ``isFetchCredentials: true`` backend flag via its ``serializer.yaml``
 ``computed_fields`` block, gated by a capability condition matching
 the subscribed cap id with ``value == "on"``.
 
 In UCP the ``isFetchCredentials`` user checkbox is removed (picking
-the capability IS the opt-in - CO145 owns the "must not emit as user
-checkbox" side); the backend flag is delivered exclusively via
+the capability IS the opt-in. The backend flag is delivered exclusively via
 serializer computed_fields.
-
-No interval-field half: ``fetch-secrets`` is stateless (per CO161
-which requires no reset action for this capability, unlike the other
-fetch families). The doc row for CO134 lists only ``isFetchCredentials``
-as the param to validate.
 
 Sibling of CO131 (feed serializer-flag only). Same shape - just
 swap the constants.
@@ -34,11 +28,6 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ConnectorsValidator,
     ValidationResult,
 )
-from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
-    computed_field_emits_flag,
-    iter_handler_capability_ids,
-)
-
 ContentTypes = Connector
 
 # ============================================================
@@ -92,11 +81,11 @@ class IsValidFetchCredentialsValidator(ConnectorsValidator[ContentTypes]):
         results: List[ValidationResult] = []
         for handler in connector.xsoar_handlers:
             per_handler_issues: List[str] = []
-            for cap_id in iter_handler_capability_ids(
-                handler, FETCH_CREDENTIALS_CAPABILITY
+            for cap_id in handler.capability_ids_matching(
+                FETCH_CREDENTIALS_CAPABILITY
             ):
-                if not computed_field_emits_flag(
-                    handler, FETCH_CREDENTIALS_FLAG, cap_id
+                if not handler.serializer_emits_capability_flag(
+                    FETCH_CREDENTIALS_FLAG, cap_id
                 ):
                     per_handler_issues.append(
                         f"handler '{handler.id}' subscribes to "
@@ -116,14 +105,8 @@ class IsValidFetchCredentialsValidator(ConnectorsValidator[ContentTypes]):
                         issues="; ".join(per_handler_issues),
                     ),
                     content_object=connector,
-                    path=self._serializer_path(handler),
+                    path=handler.serializer_path,
                 )
             )
         return results
 
-    @staticmethod
-    def _serializer_path(handler: HandlerData) -> Optional[Path]:
-        handler_yaml = handler.file_path
-        if handler_yaml is None:
-            return None
-        return handler_yaml.parent / "serializer.yaml"

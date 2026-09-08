@@ -8,7 +8,7 @@ and creates cross-repo relationships to content-repo Integrations and Packs.
 
 from functools import cached_property
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
@@ -50,7 +50,6 @@ from demisto_sdk.commands.content_graph.objects.connector import (
     Label,
     LabelTooltip,
     ProfileOptions,
-    ResolvedParamMapping,
     SerializerData,
     SubCapability,
     ValidationEntry,
@@ -528,9 +527,6 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
                 is_general=hdata.get("general", False),
                 handler_dir_name=handler_dir.name,
             )
-
-            # Build resolved parameter mappings
-            handler_data.resolved_params = self._build_resolved_params(handler_data)
             handlers.append(handler_data)
 
         return handlers
@@ -606,104 +602,6 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
             computed_fields=computed_fields,
         )
 
-    # ============================================================
-    # Resolved parameter mapping
-    # ============================================================
-
-    def _build_resolved_params(
-        self, handler: HandlerData
-    ) -> List[ResolvedParamMapping]:
-        """Build the connector_param_name <-> content_param_name mapping for a handler.
-
-        For each connector field visible to this handler:
-        - If the field ID appears in the serializer, use the serializer's field_name
-          as content_param_name
-        - If not, both connector_param_name and content_param_name equal the field ID
-        """
-        # Build serializer lookup: connector field ID -> FieldMapping
-        serializer_map: Dict[str, FieldMapping] = {}
-        if handler.serializer:
-            for fm in handler.serializer.field_mappings:
-                serializer_map[fm.id] = fm
-
-        resolved: List[ResolvedParamMapping] = []
-        all_fields = self._collect_handler_fields(handler)
-
-        seen: Set[str] = set()
-        for field_id, source_file in all_fields:
-            if field_id in seen:
-                continue
-            seen.add(field_id)
-
-            if field_id in serializer_map:
-                fm = serializer_map[field_id]
-                resolved.append(
-                    ResolvedParamMapping(
-                        connector_param_name=field_id,
-                        content_param_name=fm.field_name,
-                        is_serialized=True,
-                        source_file=source_file,
-                    )
-                )
-            else:
-                resolved.append(
-                    ResolvedParamMapping(
-                        connector_param_name=field_id,
-                        content_param_name=field_id,
-                        is_serialized=False,
-                        source_file=source_file,
-                    )
-                )
-
-        return resolved
-
-    def _collect_handler_fields(self, handler: HandlerData) -> List[Tuple[str, str]]:
-        """Collect all connector field IDs relevant to a handler.
-
-        Returns list of (field_id, source_file) tuples.
-        Fields come from:
-        1. connection.yaml general_configurations (shared across all handlers)
-        2. connection.yaml profiles used by this handler's auth_options
-        3. capabilities.yaml general_configurations
-        4. configurations.yaml entries matching this handler's capability IDs
-        """
-        fields: List[Tuple[str, str]] = []
-
-        # 1. Connection general configurations
-        if self.connection and self.connection.general_configurations:
-            for group in self.connection.general_configurations.configurations:
-                for f in group.fields:
-                    fields.append((f.id, "connection.yaml"))
-
-        # 2. Connection profiles used by this handler
-        handler_auth_ids: Set[str] = {
-            ao.id for hc in handler.capabilities for ao in hc.auth_options
-        }
-        if self.connection:
-            for profile in self.connection.profiles:
-                if profile.id in handler_auth_ids:
-                    for group in profile.configurations:
-                        for f in group.fields:
-                            fields.append((f.id, "connection.yaml"))
-
-        # 3. Capabilities general configurations
-        cap_data = self._capabilities_rf.file_content
-        if cap_data:
-            gen_cfg = cap_data.get("general_configurations")
-            if gen_cfg:
-                for fg in gen_cfg.get("configurations", []):
-                    for f in fg.get("fields", []):
-                        fields.append((f.get("id", ""), "capabilities.yaml"))  # type:ignore
-
-        # 4. Configurations for this handler's capabilities (already unified in CapabilityData)
-        handler_cap_ids: Set[str] = {hc.id for hc in handler.capabilities}
-        for cap in self.capabilities:
-            if cap.id in handler_cap_ids:
-                for group in cap.configurations:
-                    for f in group.fields:
-                        fields.append((f.id, "configurations.yaml"))
-
-        return fields
 
     # ============================================================
     # Capability-handler mapping

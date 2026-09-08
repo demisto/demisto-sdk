@@ -33,16 +33,23 @@ unless BOTH:
 
 Discovery
 ---------
-1. Walk each XSOAR handler's visible surface (connection.yaml +
-   capabilities.yaml + configurations.yaml, same walkers as
-   CO141/CO143/CO145) for ``longRunningPort`` fields matched by
-   post-serializer runtime name.
+1. Walk each XSOAR handler's visible surface via
+   :meth:`Connector.visible_fields_for_handler` — that consolidates
+   ``connection.yaml`` (general + handler-bound profiles) /
+   ``capabilities.yaml`` general / ``configurations.yaml`` general
+   + per-capability entries (including grouped sub-cap ids the
+   parser drops from ``self.capabilities``), applies the
+   ``serializer.yaml`` ``field_mappings`` rename per field, and
+   scopes ``general_configurations`` groups through the
+   ``view_group`` / ``required_for_capabilities`` predicate. Collect
+   fields whose ``runtime_name`` is ``longRunningPort``.
 2. Determine the shape: check serializer ``computed_fields`` for
    a ``longRunning: true`` emission (shape 2); else check the
-   handler's visible surface for a user-visible ``longRunning``
-   checkbox (shape 1); else ambiguous.
-3. Determine engine/engineGroup presence via runtime-name walk
-   of the same surface.
+   walker output for a user-visible ``longRunning`` runtime name
+   (shape 1); else ambiguous.
+3. Determine engine/engineGroup presence via runtime-name lookup
+   over the same walker output; when present, the raw id used in
+   triggers is the walker's ``raw_id`` for that runtime name.
 4. Locate a trigger whose ``effects[].id`` matches the raw port
    id with ``hidden: false`` and whose ``conditions`` is an
    ``operator: AND`` block whose ``children`` match the expected
@@ -82,11 +89,14 @@ long-running-server integrations.
 
 from __future__ import annotations
 
-from typing import Any, Dict, Iterable, Iterator, List, Optional, Set, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from demisto_sdk.commands.content_graph.objects.connector import (
     Connector,
     HandlerData,
+)
+from demisto_sdk.commands.content_graph.objects.connector_handler_view import (
+    HandlerVisibleField,
 )
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -161,26 +171,28 @@ class IsLongRunningPortGatedValidator(ConnectorsValidator[ContentTypes]):
     # ------------------------------------------------------------------
 
     def _check_connector(self, connector: Connector) -> List[ValidationResult]:
-        # First scan every XSOAR handler for longRunningPort fields.
-        # A handler may see the port via multiple source files; we
-        # dedupe by raw id per handler.
+        # First scan every XSOAR handler for longRunningPort fields via
+        # the unified visible-fields walker. A handler may see the port
+        # via multiple source files; we dedupe by raw id per handler.
         findings: List[Tuple[HandlerData, str]] = []
-        seen: Set[Tuple[str, str]] = set()  # (handler.id, raw_id)
+        seen: set = set()  # (handler.id, raw_id)
+
+        # Cache the per-handler walker output so we don't rewalk when we
+        # later probe engine / engineGroup / long-running-checkbox
+        # presence.
+        handler_visible: Dict[str, List[HandlerVisibleField]] = {}
 
         for handler in connector.xsoar_handlers:
-            rename_map = self._serializer_rename_map(handler)
-            for field, _source_file, _hint in self._iter_all_fields(connector, handler):
-                raw_id = field.get("id")
-                if not isinstance(raw_id, str):
+            visible = connector.visible_fields_for_handler(handler)
+            handler_visible[handler.id] = visible
+            for vf in visible:
+                if vf.runtime_name != CANONICAL_PORT_RUNTIME_NAME:
                     continue
-                runtime_name = rename_map.get(raw_id, raw_id)
-                if runtime_name != CANONICAL_PORT_RUNTIME_NAME:
-                    continue
-                key = (handler.id, raw_id)
+                key = (handler.id, vf.raw_id)
                 if key in seen:
                     continue
                 seen.add(key)
-                findings.append((handler, raw_id))
+                findings.append((handler, vf.raw_id))
 
         if not findings:
             return []
@@ -194,11 +206,12 @@ class IsLongRunningPortGatedValidator(ConnectorsValidator[ContentTypes]):
 
         results: List[ValidationResult] = []
         for handler, raw_port_id in findings:
-            rename_map = self._serializer_rename_map(handler)
+            visible = handler_visible[handler.id]
+
             # Determine the shape.
             capability_id = self._serializer_long_running_capability(handler)
-            has_checkbox = self._handler_has_visible_long_running_checkbox(
-                connector, handler, rename_map
+            has_checkbox = self._handler_has_visible_runtime_name(
+                visible, CANONICAL_LONG_RUNNING_RUNTIME_NAME
             )
             if capability_id is not None:
                 shape = "shape2"
@@ -219,27 +232,17 @@ class IsLongRunningPortGatedValidator(ConnectorsValidator[ContentTypes]):
                 )
                 continue
 
-            # Determine engine / engineGroup presence via runtime name.
-            has_engine = self._handler_has_visible_field(
-                connector, handler, rename_map, CANONICAL_ENGINE_RUNTIME_NAME
+            # Determine engine / engineGroup presence via runtime name,
+            # capturing the raw id we need for the trigger comparison
+            # (triggers reference the raw id, not the runtime name).
+            engine_raw_id = self._raw_id_for_visible_runtime_name(
+                visible, CANONICAL_ENGINE_RUNTIME_NAME
             )
-            has_engine_group = self._handler_has_visible_field(
-                connector,
-                handler,
-                rename_map,
-                CANONICAL_ENGINE_GROUP_RUNTIME_NAME,
+            engine_group_raw_id = self._raw_id_for_visible_runtime_name(
+                visible, CANONICAL_ENGINE_GROUP_RUNTIME_NAME
             )
-            # For engine children we compare raw ids since triggers use
-            # raw ids. Resolve raw ids that map to the runtime engine /
-            # engineGroup via the rename map (inverse).
-            engine_raw_id = self._raw_id_for_runtime(
-                rename_map, CANONICAL_ENGINE_RUNTIME_NAME, has_engine
-            )
-            engine_group_raw_id = self._raw_id_for_runtime(
-                rename_map,
-                CANONICAL_ENGINE_GROUP_RUNTIME_NAME,
-                has_engine_group,
-            )
+            has_engine = engine_raw_id is not None
+            has_engine_group = engine_group_raw_id is not None
 
             expected_summary = self._expected_shape_summary(
                 shape, capability_id, has_engine, has_engine_group
@@ -345,58 +348,38 @@ class IsLongRunningPortGatedValidator(ConnectorsValidator[ContentTypes]):
             return None
         return None
 
-    def _handler_has_visible_long_running_checkbox(
-        self,
-        connector: Connector,
-        handler: HandlerData,
-        rename_map: Dict[str, str],
+    @staticmethod
+    def _handler_has_visible_runtime_name(
+        visible: Sequence[HandlerVisibleField], runtime_name_target: str
     ) -> bool:
-        """Return True if a user-visible ``longRunning`` checkbox is
-        emitted somewhere in the handler's XSOAR-visible surface."""
-        for field, _source_file, _hint in self._iter_all_fields(connector, handler):
-            raw_id = field.get("id")
-            if not isinstance(raw_id, str):
-                continue
-            runtime_name = rename_map.get(raw_id, raw_id)
-            if runtime_name != CANONICAL_LONG_RUNNING_RUNTIME_NAME:
-                continue
-            # Accept any field_type - the plan focuses on presence;
-            # checkbox is canonical but any user-visible field is a
-            # valid signal to gate against.
-            return True
-        return False
-
-    def _handler_has_visible_field(
-        self,
-        connector: Connector,
-        handler: HandlerData,
-        rename_map: Dict[str, str],
-        runtime_name_target: str,
-    ) -> bool:
-        for field, _source_file, _hint in self._iter_all_fields(connector, handler):
-            raw_id = field.get("id")
-            if not isinstance(raw_id, str):
-                continue
-            runtime_name = rename_map.get(raw_id, raw_id)
-            if runtime_name == runtime_name_target:
-                return True
-        return False
+        """Return True if any :class:`HandlerVisibleField` in ``visible``
+        has ``runtime_name == runtime_name_target``. Structural
+        predicate, ignores field_type — the caller decides whether
+        that matters (CO152 needs presence-only for both the
+        ``longRunning`` checkbox signal and the engine/engineGroup
+        gating fields)."""
+        return any(vf.runtime_name == runtime_name_target for vf in visible)
 
     @staticmethod
-    def _raw_id_for_runtime(
-        rename_map: Dict[str, str], runtime_name: str, present: bool
+    def _raw_id_for_visible_runtime_name(
+        visible: Sequence[HandlerVisibleField], runtime_name_target: str
     ) -> Optional[str]:
-        """Return the raw id that maps to ``runtime_name`` in the
-        serializer rename map. If nothing maps (i.e. the field uses
-        the bare canonical id with no rename), return the runtime
-        name itself when ``present`` is True, else None."""
-        if not present:
-            return None
-        for raw_id, name in rename_map.items():
-            if name == runtime_name:
-                return raw_id
-        # No rename entry — the bare runtime name is also the raw id.
-        return runtime_name
+        """Return the raw id of the first visible field whose runtime
+        name matches ``runtime_name_target``, or ``None`` when the
+        field is not present.
+
+        Triggers reference raw ids (pre-serializer-rename), so when the
+        gating trigger's ``is_empty`` child needs to line up with
+        ``engine`` / ``engineGroup`` we must translate the runtime name
+        we know back to the raw id the trigger will see. First-hit in
+        walker order (see :func:`walk_visible_fields`) determines which
+        raw id wins when the same runtime name appears in multiple
+        origins.
+        """
+        for vf in visible:
+            if vf.runtime_name == runtime_name_target:
+                return vf.raw_id
+        return None
 
     # ------------------------------------------------------------------
     # Trigger analysis
@@ -613,114 +596,3 @@ class IsLongRunningPortGatedValidator(ConnectorsValidator[ContentTypes]):
         if has_engine_group:
             parts.append("engineGroup=empty")
         return "AND[" + ", ".join(parts) + "]"
-
-    # ------------------------------------------------------------------
-    # Field discovery (walker helpers - structurally identical to CO141)
-    # ------------------------------------------------------------------
-
-    @staticmethod
-    def _serializer_rename_map(handler: HandlerData) -> Dict[str, str]:
-        mapping: Dict[str, str] = {}
-        ser = handler.serializer
-        if ser is None:
-            return mapping
-        for fm in ser.field_mappings or []:
-            if fm.field_name:
-                mapping[fm.id] = fm.field_name
-        return mapping
-
-    @staticmethod
-    def _iter_field_dicts_from_field_groups(
-        groups: Any,
-    ) -> Iterator[Dict[str, Any]]:
-        if not isinstance(groups, list):
-            return
-        for group in groups:
-            if not isinstance(group, dict):
-                continue
-            fields = group.get("fields")
-            if not isinstance(fields, list):
-                continue
-            for field in fields:
-                if isinstance(field, dict):
-                    yield field
-
-    def _iter_connection_yaml_fields(
-        self, connector: Connector, handler: HandlerData
-    ) -> Iterator[Tuple[Dict[str, Any], str]]:
-        raw = connector.connection_file.file_content
-        if not isinstance(raw, dict):
-            return
-        general = raw.get("general_configurations")
-        if isinstance(general, dict):
-            for field in self._iter_field_dicts_from_field_groups(
-                general.get("configurations")
-            ):
-                yield field, "general_configurations"
-        auth_ids: Set[str] = {
-            ao.id for hc in handler.capabilities for ao in hc.auth_options
-        }
-        profiles = raw.get("profiles")
-        if not isinstance(profiles, list):
-            return
-        for profile in profiles:
-            if not isinstance(profile, dict):
-                continue
-            profile_id = profile.get("id")
-            if profile_id not in auth_ids:
-                continue
-            for field in self._iter_field_dicts_from_field_groups(
-                profile.get("configurations")
-            ):
-                yield field, f"profile '{profile_id}'"
-
-    def _iter_capabilities_yaml_fields(
-        self, connector: Connector
-    ) -> Iterator[Tuple[Dict[str, Any], str]]:
-        raw = connector.capabilities_file.file_content
-        if not isinstance(raw, dict):
-            return
-        general = raw.get("general_configurations")
-        if not isinstance(general, dict):
-            return
-        for field in self._iter_field_dicts_from_field_groups(
-            general.get("configurations")
-        ):
-            yield field, "general_configurations"
-
-    def _iter_configurations_yaml_fields(
-        self, connector: Connector, handler: HandlerData
-    ) -> Iterator[Tuple[Dict[str, Any], str]]:
-        raw = connector.configurations_file.file_content
-        if not isinstance(raw, dict):
-            return
-        general = raw.get("general_configurations")
-        if isinstance(general, dict):
-            for field in self._iter_field_dicts_from_field_groups(
-                general.get("configurations")
-            ):
-                yield field, "general_configurations"
-        handler_cap_ids: Set[str] = {hc.id for hc in handler.capabilities}
-        entries = raw.get("configurations")
-        if not isinstance(entries, list):
-            return
-        for entry in entries:
-            if not isinstance(entry, dict):
-                continue
-            entry_id = entry.get("id")
-            if entry_id not in handler_cap_ids:
-                continue
-            for field in self._iter_field_dicts_from_field_groups(
-                entry.get("configurations")
-            ):
-                yield field, f"capability '{entry_id}'"
-
-    def _iter_all_fields(
-        self, connector: Connector, handler: HandlerData
-    ) -> Iterator[Tuple[Dict[str, Any], str, str]]:
-        for field, hint in self._iter_connection_yaml_fields(connector, handler):
-            yield field, "connection.yaml", hint
-        for field, hint in self._iter_capabilities_yaml_fields(connector):
-            yield field, "capabilities.yaml", hint
-        for field, hint in self._iter_configurations_yaml_fields(connector, handler):
-            yield field, "configurations.yaml", hint

@@ -1,6 +1,6 @@
 """CO131 - IsValidFeedValidator (SCOPED-DOWN v1).
 
-Per §3.9.1 of the standard connector guide, every handler that
+Every handler that
 subscribes to the ``threat-intelligence-and-enrichment`` (TI&E)
 capability MUST emit the legacy ``feed: true`` backend flag via its
 ``serializer.yaml`` ``computed_fields`` block, gated by a capability
@@ -13,8 +13,7 @@ The full CO131 spec also requires 6 user-visible parameters
 (``feedFetchInterval``, ``feedReputation``, ``feedReliability``,
 ``feedExpirationPolicy``, ``feedExpirationInterval``,
 ``feedBypassExclusionList``) to exist in ``configurations.yaml``
-under the TI&E capability entry. That half is DEFERRED - see the
-"PARTIAL" note in ``Manifest validations.md`` next to CO131; a
+under the TI&E capability entry. That half is DEFERRED; a
 follow-up decision is pending on whether to enforce presence of
 those 6 params.
 
@@ -30,8 +29,6 @@ Result granularity: one ``ValidationResult`` per offending handler
 ``.connector-ignore`` per-handler chain
 (``[file:<handler-folder>/serializer.yaml]``) resolves cleanly.
 
-Reuses ``iter_handler_capability_ids`` and
-``computed_field_emits_flag`` from CO130 to avoid duplication.
 """
 
 from __future__ import annotations
@@ -48,11 +45,6 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ConnectorsValidator,
     ValidationResult,
 )
-from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
-    computed_field_emits_flag,
-    iter_handler_capability_ids,
-)
-
 ContentTypes = Connector
 
 # ============================================================
@@ -133,8 +125,8 @@ class IsValidFeedValidator(ConnectorsValidator[ContentTypes]):
         results: List[ValidationResult] = []
         for handler in connector.xsoar_handlers:
             per_handler_issues: List[str] = []
-            for cap_id in iter_handler_capability_ids(handler, FEED_CAPABILITY):
-                if not computed_field_emits_flag(handler, FEED_FLAG, cap_id):
+            for cap_id in handler.capability_ids_matching(FEED_CAPABILITY):
+                if not handler.serializer_emits_capability_flag(FEED_FLAG, cap_id):
                     per_handler_issues.append(
                         f"handler '{handler.id}' subscribes to "
                         f"capability '{cap_id}' but its serializer.yaml "
@@ -153,22 +145,8 @@ class IsValidFeedValidator(ConnectorsValidator[ContentTypes]):
                         issues="; ".join(per_handler_issues),
                     ),
                     content_object=connector,
-                    path=self._serializer_path(handler),
+                    path=handler.serializer_path,
                 )
             )
         return results
 
-    @staticmethod
-    def _serializer_path(handler: HandlerData) -> Optional[Path]:
-        """Best-effort path to the handler's ``serializer.yaml``.
-
-        Mirrors CO130 / CO171 / CO172 so the per-handler ignore key
-        (``<handler-folder>/serializer.yaml``) resolves the same way.
-        Falls back to ``None`` if the handler's on-disk location
-        can't be determined; downstream per-handler ignore lookup
-        handles ``None`` gracefully (safe default: not ignored).
-        """
-        handler_yaml = handler.file_path
-        if handler_yaml is None:
-            return None
-        return handler_yaml.parent / "serializer.yaml"

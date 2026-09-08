@@ -201,6 +201,24 @@ class XifRelatedFile(TextFiles):
             return {dataset_name.strip('"') for dataset_name in dataset}
         return set()
 
+    def get_user_identity_fields(self) -> Set[str]:
+        """Return the `xdm.*.user.*` / `xdm.*.identity.*` fields assigned in the XIF (left of `=`).
+        """
+        content = self.file_content
+        if not content:
+            return set()
+        # drop comments
+        content = re.sub(r"//[^\n]*", " ", content)
+        # drop backticks
+        content = content.replace("`", "")
+        # take only user/identity xdm paths that are assignment targets (followed by `=`)
+        return set(
+            re.findall(
+                r"(xdm(?:\.[a-zA-Z0-9_]+)*?\.(?:user|identity)(?:\.[a-zA-Z0-9_]+)+)\s*=",
+                content,
+            )
+        )
+
 
 class JsonFiles(RelatedFile):
     file_type = RelatedFileType.JSON

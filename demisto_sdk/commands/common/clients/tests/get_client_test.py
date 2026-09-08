@@ -5,6 +5,8 @@ from demisto_client.demisto_api import DefaultApi
 from demisto_client.demisto_api.rest import ApiException
 
 from demisto_sdk.commands.common.clients import (
+    PlatformClient,
+    PlatformClientConfig,
     XsiamClient,
     XsiamClientConfig,
     XsoarClient,
@@ -42,6 +44,12 @@ def base_mocker(mocker):
                 base_api_url="https://test.com", api_key="test", auth_id="2"
             ),
             XsiamClient,
+        ),
+        (
+            PlatformClientConfig(
+                base_api_url="https://test.com", api_key="test", auth_id="3"
+            ),
+            PlatformClient,
         ),
     ],
 )
@@ -95,6 +103,7 @@ def test_get_client_from_config(
         ("https://test2.com", MarketplaceVersions.XSOAR_ON_PREM, XsoarClient),
         ("https://test3.com", MarketplaceVersions.XSOAR_SAAS, XsoarSaasClient),
         ("https://test4.com", MarketplaceVersions.MarketplaceV2, XsiamClient),
+        ("https://test5.com", MarketplaceVersions.PLATFORM, PlatformClient),
     ],
 )
 def test_get_client_from_marketplace(
@@ -109,6 +118,7 @@ def test_get_client_from_marketplace(
      - Case A + B: a predefined MarketplaceVersions.XSOAR_ON_PREM or MarketplaceVersions.XSOAR
      - Case C: a predefined MarketplaceVersions.XSOAR_SAAS
      - Case D: a predefined MarketplaceVersions.MarketplaceV2
+     - Case E: a predefined MarketplaceVersions.PLATFORM
 
     When:
      - running get_client_from_marketplace function
@@ -117,6 +127,7 @@ def test_get_client_from_marketplace(
      - Case A + B: make sure XsoarOnPremClient is returned
      - Case C: make sure XsoarSaasClient is returned
      - Case D: make sure XsiamClient is returned
+     - Case E: make sure PlatformClient is returned
     """
     from demisto_sdk.commands.common.clients import get_client_from_marketplace
 

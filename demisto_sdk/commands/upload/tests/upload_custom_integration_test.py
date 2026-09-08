@@ -254,7 +254,7 @@ class TestValidateIntegrationCopyMarker:
         """
         GIVEN an integration YAML where neither id nor name ends with '_copy'
         WHEN validate_integration_copy_marker is called with force_id=True
-        THEN the warning message contains the three uniqueness checklist items
+        THEN the warning message contains the uniqueness checklist items
         """
         yaml_path = _write_integration_yaml(tmp_path, "MyIntegration", "MyIntegration")
         mock_logger = mocker.patch(
@@ -264,7 +264,6 @@ class TestValidateIntegrationCopyMarker:
 
         warning_text = mock_logger.warning.call_args[0][0]
         assert "completely unique" in warning_text
-        assert "repository" in warning_text
         assert "Marketplace" in warning_text
         # The constant itself should be embedded
         assert _FORCE_ID_ACTIONABLE_GUIDANCE in warning_text

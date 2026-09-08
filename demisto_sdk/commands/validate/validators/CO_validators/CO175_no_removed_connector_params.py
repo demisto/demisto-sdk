@@ -20,10 +20,14 @@ class NoRemovedConnectorParamsValidator(ConnectorsValidator[ContentTypes]):
     description = (
         "Breaking-change check: no XSOAR-relevant connector parameter that "
         "existed in the prior version of a handler may be removed. The set "
-        "of parameters per handler is derived from `handler.resolved_params` "
-        "(connection.yaml general_configurations, the profiles this handler "
-        "authenticates against, capabilities.yaml general_configurations, "
-        "and configurations.yaml entries for this handler's capabilities)."
+        "of parameters per handler is derived from "
+        "`Connector.visible_fields_for_handler(handler)` — i.e. every raw "
+        "field id visible to that handler across ``connection.yaml`` "
+        "(general_configurations and the profiles the handler auth-binds "
+        "to), ``capabilities.yaml`` (general_configurations), and "
+        "``configurations.yaml`` (both parent-capability entries AND "
+        "grouped sub-capability entries the pre-walker code silently "
+        "dropped)."
     )
     rationale = (
         "Removing a parameter that existed in a prior release is a breaking "
@@ -36,7 +40,10 @@ class NoRemovedConnectorParamsValidator(ConnectorsValidator[ContentTypes]):
         "Handler '{handler_id}' removed parameters that existed in the prior "
         "version: {removed}."
     )
-    related_field = "resolved_params"
+    # Concrete descriptor of the physical files the walker aggregates from
+    # (per plans/handler-visible-fields-walker.md §Section 7 Q6). Points
+    # authors at the YAMLs they can edit rather than a runtime concept.
+    related_field = "connection.yaml / capabilities.yaml / configurations.yaml"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]
 
@@ -44,7 +51,8 @@ class NoRemovedConnectorParamsValidator(ConnectorsValidator[ContentTypes]):
         self,
         content_items: Iterable[ContentTypes],
     ) -> List[ValidationResult]:
-        """Per-handler diff of the ``resolved_params`` connector-side names.
+        """Per-handler diff of the connector-side raw field ids visible to
+        each XSOAR handler.
 
         Only XSOAR handlers that exist in BOTH the old and the new version
         are diffed (matched by ``handler.id``). Newly-added handlers cannot
@@ -65,7 +73,9 @@ class NoRemovedConnectorParamsValidator(ConnectorsValidator[ContentTypes]):
                 if old_handler is None:
                     continue  # newly-added handler
 
-                removed = self._removed_param_ids(old_handler, handler)
+                removed = self._removed_param_ids(
+                    old_connector, old_handler, connector, handler
+                )
                 if not removed:
                     continue
 
@@ -84,16 +94,24 @@ class NoRemovedConnectorParamsValidator(ConnectorsValidator[ContentTypes]):
         return results
 
     @staticmethod
-    def _param_ids(handler: HandlerData) -> Set[str]:
-        """Return the set of connector-side parameter names visible to
-        `handler` (as resolved by the parser)."""
+    def _param_ids(connector: Connector, handler: HandlerData) -> Set[str]:
+        """Return the set of raw connector-side parameter names visible
+        to ``handler`` on ``connector`` (as produced by
+        :meth:`Connector.visible_fields_for_handler`).
+        """
         return {
-            rp.connector_param_name
-            for rp in (handler.resolved_params or [])
-            if rp and rp.connector_param_name
+            vf.raw_id
+            for vf in connector.visible_fields_for_handler(handler)
+            if vf.raw_id
         }
 
     def _removed_param_ids(
-        self, old_handler: HandlerData, new_handler: HandlerData
+        self,
+        old_connector: Connector,
+        old_handler: HandlerData,
+        new_connector: Connector,
+        new_handler: HandlerData,
     ) -> Set[str]:
-        return self._param_ids(old_handler) - self._param_ids(new_handler)
+        return self._param_ids(old_connector, old_handler) - self._param_ids(
+            new_connector, new_handler
+        )

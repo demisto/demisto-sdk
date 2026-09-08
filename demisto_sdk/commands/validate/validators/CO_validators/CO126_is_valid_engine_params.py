@@ -101,13 +101,21 @@ class _ResolvedField:
 
 def _resolver_for_profile(connector: Connector, profile_id: str) -> dict:
     """Build ``{raw_id -> canonical_id}`` from the profile's owning XSOAR
-    handlers' serializer rewrites (identical logic to CO125)."""
+    handlers' serializer rewrites.
+
+    Reads through the handler-visible-fields walker
+    (:meth:`Connector.visible_fields_for_handler`) — each
+    :class:`HandlerVisibleField` already knows its ``raw_id`` (as
+    authored) and ``runtime_name`` (after serializer rename). First-wins
+    per raw id if multiple handlers on the profile expose the same id,
+    matching the pre-walker behaviour.
+    """
     resolver: dict = {}
     for handler in xsoar_handlers_for_profile(connector, profile_id):
-        for rp in handler.resolved_params:
-            if rp.connector_param_name in resolver:
+        for vf in connector.visible_fields_for_handler(handler):
+            if vf.raw_id in resolver:
                 continue
-            resolver[rp.connector_param_name] = rp.content_param_name
+            resolver[vf.raw_id] = vf.runtime_name
     return resolver
 
 

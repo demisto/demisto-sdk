@@ -142,7 +142,7 @@ class IsFetchFlagGatedOnOwnSubCapabilityValidator(ConnectorsValidator[ContentTyp
                             problems="; ".join(problems),
                         ),
                         content_object=connector,
-                        path=self._serializer_path(handler),
+                        path=handler.serializer_path,
                     )
                 )
 
@@ -198,10 +198,3 @@ class IsFetchFlagGatedOnOwnSubCapabilityValidator(ConnectorsValidator[ContentTyp
 
         return problems
 
-    @staticmethod
-    def _serializer_path(handler: HandlerData) -> Optional[object]:
-        """Best-effort path to the handler's ``serializer.yaml``."""
-        handler_yaml = handler.file_path
-        if handler_yaml is None:
-            return None
-        return handler_yaml.parent / "serializer.yaml"

@@ -13,7 +13,7 @@ from configparser import ConfigParser
 from enum import Enum
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, FrozenSet, Iterator, List, Optional, Set, Union
 
 from pydantic import BaseModel, Field, root_validator, validator
 
@@ -267,6 +267,78 @@ class ViewGroup(BaseModel):
     help_text: Optional[str] = None
 
 
+# ============================================================
+# general_configurations visibility predicate
+# ============================================================
+
+
+def general_configurations_field_group_visible_for_handler(
+    group: Any,
+    connector: "Connector",
+    handler: "HandlerData",
+) -> bool:
+    """Whether a ``general_configurations`` field group is visible to
+    ``handler`` on ``connector``.
+
+    Implements the visibility predicate verbatim:
+
+        visible(field_group, handler) :=
+            if field_group.view_group is set:
+                return field_group.view_group in
+                       handler_owned_view_groups(handler)
+            if field_group.required_for_capabilities is set:
+                return any(cap in handler_capability_ids(handler)
+                           for cap in field_group.required_for_capabilities)
+            return True   # shared / no scoping marker
+
+    Both markers set simultaneously is authoring drift and not expected
+    in real content; this predicate ANDs them defensively (narrower
+    visibility on authoring bugs).
+
+    ``group`` may be either a raw YAML dict OR a pydantic ``FieldGroup``
+    model. Anything without recognisable scoping markers defaults to
+    visible (shared), including malformed / non-dict inputs — a defensive
+    default that keeps validators from crashing on garbage content.
+
+    This predicate MUST NOT be applied outside ``general_configurations``
+    surfaces. Field groups inside a ``connection.yaml`` profile or a
+    ``configurations.yaml.configurations[<cap>]`` entry are already
+    scoped by the enclosing entity; running this predicate on them would
+    be a semantic error (their view_group is a UI hint, not a scoping
+    marker).
+    """
+
+    def _get(attr: str) -> Any:
+        if isinstance(group, dict):
+            return group.get(attr)
+        return getattr(group, attr, None)
+
+    if not isinstance(group, (dict, FieldGroup)):
+        return True
+
+    view_group = _get("view_group")
+    required_for_caps = _get("required_for_capabilities")
+
+    has_view_group_marker = isinstance(view_group, str) and view_group
+    has_required_caps_marker = (
+        isinstance(required_for_caps, list) and len(required_for_caps) > 0
+    )
+
+    if not has_view_group_marker and not has_required_caps_marker:
+        return True  # shared
+
+    if has_view_group_marker:
+        if view_group not in connector.owned_view_groups_for_handler(handler):
+            return False
+
+    if has_required_caps_marker:
+        handler_caps = handler.capability_ids
+        if not any(cap in handler_caps for cap in required_for_caps):
+            return False
+
+    return True
+
+
 class GeneralConfigurations(BaseModel):
     description: Optional[str] = None
     configurations: List[FieldGroup] = []
@@ -470,16 +542,13 @@ class CapabilityData(BaseModel):
 class FieldMapping(BaseModel):
     """Raw serializer entry from serializer.yaml (SerializerEntry).
 
-    The schema requires only ``id`` and at least one of ``field_name`` /
-    ``field_value``, so ``field_name`` is optional here (transform-only
-    entries omit it).
+    Bridges a manifest field ``id`` (as it appears in the yaml files)
+    to the runtime ``field_name`` the handler / integration expects.
     """
 
     id: str  # connector field ID (connector_param_name)
-    # Target field name for the handler (rename). Optional for transform-only
-    # entries.
+    # Target field name for the handler (rename).
     field_name: Optional[str] = None
-    field_value: Optional[str] = None  # optional value transform (e.g. "toString")
 
 
 class ComputedCondition(BaseModel):
@@ -512,27 +581,6 @@ class ComputedFieldRule(BaseModel):
 class SerializerData(BaseModel):
     field_mappings: List[FieldMapping] = []
     computed_fields: List[ComputedFieldRule] = []
-
-
-# ============================================================
-# Resolved parameter mapping
-# (defined before HandlerData to avoid forward references)
-# ============================================================
-
-
-class ResolvedParamMapping(BaseModel):
-    """Resolved parameter mapping for a handler.
-
-    Maps connector field IDs to integration parameter names.
-    If a field appears in the serializer, the names differ.
-    If not, both names equal the field ID.
-    """
-
-    connector_param_name: str  # field ID in connector YAML (e.g. "domain")
-    content_param_name: str  # param name in integration YAML (e.g. "InstanceURL")
-    field_value_transform: Optional[str] = None  # optional value transform
-    is_serialized: bool = False  # True if mapping came from serializer.yaml
-    source_file: str = ""  # which connector file defines this field
 
 
 # ============================================================
@@ -622,7 +670,6 @@ class HandlerData(BaseModel):
     service_ids: List[str] = []
     is_general: bool = False
     handler_dir_name: str  # directory name for path resolution
-    resolved_params: List[ResolvedParamMapping] = []  # built by parser
 
     # Cross-link to matched Integration (set by ConnectorAwareInitializer)
     related_integration: Optional[Any] = None
@@ -652,6 +699,39 @@ class HandlerData(BaseModel):
         )
 
     @property
+    def serializer_path(self) -> Optional[Path]:
+        """Absolute path to this handler's ``serializer.yaml`` sibling.
+
+        Returns ``None`` when :attr:`file_path` is unresolvable. Used by
+        every serializer-touching validator (CO130 / CO131 / CO132 / CO133
+        / CO134 / CO141 / CO171 / CO172) to route ``ValidationResult.path``
+        so per-handler ``.connector-ignore`` keys resolve correctly.
+        """
+        handler_yaml = self.file_path
+        if handler_yaml is None:
+            return None
+        return handler_yaml.parent / "serializer.yaml"
+
+    def serializer_computed_output_ids(self) -> FrozenSet[str]:
+        """Set of every ``computed_fields[].output[].id`` this handler's
+        serializer emits.
+
+        Empty when the handler has no serializer or no ``computed_fields``
+        rules. Consumers use this to detect that a runtime param is
+        smuggled into the integration via a serializer rule (CO141's
+        mirroring defense-in-depth) or to short-circuit "does the
+        serializer emit X?" checks without walking the rule structure.
+        """
+        if self.serializer is None:
+            return frozenset()
+        ids: set = set()
+        for rule in self.serializer.computed_fields or []:
+            for out in rule.output or []:
+                if isinstance(out.id, str) and out.id:
+                    ids.add(out.id)
+        return frozenset(ids)
+
+    @property
     def module(self) -> Optional[str]:
         return self.metadata.module
 
@@ -679,6 +759,96 @@ class HandlerData(BaseModel):
         if self.triggering.labels:
             return self.triggering.labels.get("xsoar-pack-id")
         return None
+
+    @property
+    def capability_ids(self) -> FrozenSet[str]:
+        """Flat set of ``(sub-)capability`` ids this handler subscribes to.
+
+        Corresponds to ``handler_capability_ids(handler)`` in
+        ``plans/connector-data-model-reference.md`` §Handler-derived
+        helper sets. Each entry is a capability id or sub-capability id
+        exactly as declared in ``handler.yaml``; no sub-capability
+        expansion is performed.
+
+        Consumers: any validator scoping fields by handler capability
+        subscription (e.g. ``configurations.yaml.configurations[<cap>]``
+        entry-id filtering, ``required_for_capabilities`` predicate on
+        ``general_configurations``).
+        """
+        return frozenset(hc.id for hc in self.capabilities)
+
+    def capability_ids_matching(self, base_id: str) -> Iterator[str]:
+        """Yield every ``capabilities[].id`` on this handler that matches
+        ``base_id`` — either the bare id (e.g. ``fetch-issues``) or its
+        namespaced form used by grouped connectors
+        (``<base_id>_<suffix>``, e.g. ``fetch-issues_qualys_fim``).
+
+        Grouped connectors namespace capability subscriptions per
+        view-group / integration so multiple integrations bundled into
+        a single connector can each opt into the same "family" of
+        capabilities independently. Every collection-family validator
+        (CO130 fetch-issues, CO131 feed, CO132 fetch-assets,
+        CO133 fetch-events, CO134 fetch-credentials, CO136 automation)
+        needs this exact "bare-or-prefixed" match to enumerate the
+        cap ids to police for a given handler.
+        """
+        prefix = f"{base_id}_"
+        for cap in self.capabilities:
+            cap_id = cap.id
+            if cap_id == base_id or cap_id.startswith(prefix):
+                yield cap_id
+
+    def serializer_emits_capability_flag(
+        self, flag_id: str, capability_id: str
+    ) -> bool:
+        """True iff this handler's ``serializer.yaml`` has a
+        ``computed_fields`` rule whose ``output`` emits
+        ``{id: flag_id, value: true}`` under an ``any_of`` group
+        containing a ``type: capability`` condition with
+        ``capability_id == capability_id`` and ``value == 'on'``.
+
+        Per §3.9.1 of the standard connector guide the canonical rule
+        shape is::
+
+            computed_fields:
+              - output:
+                  - id: <flag_id>
+                  value: true
+                any_of:
+                  - conditions:
+                      - type: capability
+                        options:
+                          capability_id: <capability_id>
+                          value: 'on'
+
+        Every collection-family validator that used to check its own
+        legacy flag (``isFetch`` / ``feed`` / ``isFetchAssets`` /
+        ``isFetchEvents`` / ``isFetchCredentials``) uses this same
+        predicate — centralising it here removes the "each validator
+        copies CO130's helper" duplication.
+        """
+        if self.serializer is None:
+            return False
+        for rule in self.serializer.computed_fields or []:
+            outputs = rule.output or []
+            has_flag = any(
+                out.id == flag_id and out.value is True for out in outputs
+            )
+            if not has_flag:
+                continue
+            for group in rule.any_of or []:
+                for cond in group.conditions or []:
+                    if cond.type != "capability":
+                        continue
+                    opts = cond.options or {}
+                    if not isinstance(opts, dict):
+                        continue
+                    if (
+                        opts.get("capability_id") == capability_id
+                        and str(opts.get("value")).lower() == "on"
+                    ):
+                        return True
+        return False
 
 
 # ============================================================
@@ -967,6 +1137,132 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
     def all_connection_profile_ids(self) -> List[str]:
         return [p.id for p in (self.connection.profiles if self.connection else [])]
 
+    def owned_view_groups_for_handler(self, handler: "HandlerData") -> FrozenSet[str]:
+        """Set of ``view_group`` ids ``handler`` transitively owns via
+        its auth-bound profiles on this connector.
+
+        Resolves the chain
+        ``handler.capabilities[].auth_options[].id →
+         connection.profiles[].id → profile.view_group``.
+
+        Empty result cases:
+        - Standard connector — no profile carries ``view_group``.
+        - Grouped connector, anonymous handler — no ``auth_options``
+          to walk (this should not be valid case, 
+          but is caught as a hard error at a higher layer;
+          this helper stays silent so it can be called during error
+          reporting without extra guards).
+        - Grouped connector, handler auth-bound to a profile id that
+          isn't present in ``connection.profiles`` — authoring drift;
+          returns empty rather than raising.
+        """
+        if not self.connection or not self.connection.profiles:
+            logger.debug(
+                "Connector %s has no connection.profiles; owned_view_groups_for_handler returns empty set",
+                self.object_id,
+            )
+            return frozenset()
+        view_group_by_profile_id: Dict[str, Optional[str]] = {
+            p.id: p.view_group for p in self.connection.profiles
+        }
+        owned: set = set()
+        for hc in handler.capabilities:
+            for ao in hc.auth_options:
+                vg = view_group_by_profile_id.get(ao.id)
+                if isinstance(vg, str) and vg:
+                    owned.add(vg)
+        return frozenset(owned)
+
+    # === Handler-visible-fields walker ===
+    # These methods delegate to the pure aggregator defined in
+    # ``connector_handler_view.walk_visible_fields``. Together they form
+    # the unified per-handler visible-field API — the sole source of truth
+    # for "which fields does this handler expose", consumed by every CO
+    # validator that used to duplicate its own raw-YAML walker (Family A,
+    # B, and C). See ``plans/handler-visible-fields-walker.md`` for the
+    # design spec.
+
+    def visible_fields_for_handler(
+        self, handler: HandlerData
+    ) -> List["HandlerVisibleField"]:  # noqa: F821 (forward ref, imported lazily inside body to avoid circular import)
+        """All connector fields visible to ``handler``, in deterministic
+        walker order.
+
+        Delegates to :func:`walk_visible_fields`. No dedup — a field id
+        that appears in multiple physical locations produces multiple
+        entries.
+        """
+        from demisto_sdk.commands.content_graph.objects.connector_handler_view import (
+            walk_visible_fields,
+        )
+
+        return walk_visible_fields(self, handler)
+
+    def visible_field_for_handler_by_runtime_name(
+        self, handler: HandlerData, name: str
+    ) -> Optional["HandlerVisibleField"]:  # noqa: F821 (forward ref)
+        """First-match lookup by post-serializer integration runtime name.
+
+        Returns ``None`` when no visible field has that runtime name for
+        the given handler. Preferred over scanning
+        :meth:`visible_fields_for_handler` in a loop.
+        """
+        for f in self.visible_fields_for_handler(handler):
+            if f.runtime_name == name:
+                return f
+        return None
+
+    def visible_fields_for_handler_by_origin(
+        self, handler: HandlerData, origin: "FieldOrigin"  # noqa: F821 (forward ref)
+    ) -> List["HandlerVisibleField"]:  # noqa: F821 (forward ref)
+        """Fields filtered by :class:`FieldOrigin`.
+        Allows filtering fields by their physical origin (``configurations.yaml``, ``connection.yaml``, ``capabilities.yaml``) after the walker has
+        flattened them into a single list. This is useful for validators that need to check only fields from a specific source.
+
+        Convenience wrapper — equivalent to a list-comprehension over
+        :meth:`visible_fields_for_handler`.
+        """
+        return [
+            f for f in self.visible_fields_for_handler(handler) if f.origin == origin
+        ]
+
+    def raw_configurations_entry(
+        self, capability_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Return the raw ``configurations.yaml`` ``configurations[]``
+        entry whose ``id`` equals ``capability_id``, or ``None`` when the
+        file is missing / malformed / has no entry for that cap id.
+
+        Reads from :attr:`configurations_file.file_content` (raw dict)
+        because per-capability configurations aren't hoisted onto
+        :attr:`capabilities` (that field holds the ``capabilities.yaml``
+        shape, not the ``configurations.yaml`` per-capability field
+        lists). Used by validators that need to reason about the entry's
+        top-level metadata (title / description / labels), inspect a
+        raw-YAML shape the walker doesn't expose (e.g. nested
+        ``checkbox_group`` items in CO143), or emit an "entry is absent"
+        error keyed to a bare capability id.
+
+        For per-handler-visible field enumeration prefer
+        :meth:`visible_fields_for_handler_by_origin` with
+        :class:`FieldOrigin.CONFIGURATIONS_CAPABILITY` — it handles
+        grouped sub-cap resolution + per-handler serializer renames
+        that this raw accessor deliberately does not.
+        """
+        configurations_file = self.configurations_file
+        if not configurations_file.exist:
+            return None
+        raw = configurations_file.file_content or {}
+        if not isinstance(raw, dict):
+            return None
+        entries = raw.get("configurations")
+        if not isinstance(entries, list):
+            return None
+        for entry in entries:
+            if isinstance(entry, dict) and entry.get("id") == capability_id:
+                return entry
+        return None
+
     # === Path resolution ===
 
     @validator("path", always=True)
@@ -1011,8 +1307,9 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
 
         Runs after field validation so ``path`` is already resolved by
         ``validate_path``. This lets any handler-level validator use
-        ``handler.file_path`` to locate its ``handler.yaml`` without knowing
-        the connector directory layout.
+        ``handler.file_path`` / ``handler.serializer_path`` to locate
+        its ``handler.yaml`` without knowing the connector directory
+        layout.
         """
         connector_path = values.get("path")
         if connector_path is not None:

@@ -2870,6 +2870,78 @@ class TestConnectorHandlerIgnoreFiltering:
 
         assert result in filtered
 
+    def test_run_validations_applies_per_handler_filter_for_non_always_run_code(
+        self, mocker
+    ):
+        """
+        Given: A connector serializer validator whose error code is NOT in
+               ``ALWAYS_RUN_ON_ERROR_CODE`` (e.g. CO130) that emits two
+               per-handler results - ``handler_a`` (ignored via
+               ``handler_a/serializer.yaml`` in ``.connector-ignore``) and
+               ``handler_b`` (not ignored).
+        When: ``ValidateManager.run_validations`` executes the batch.
+        Then: The per-handler filter runs, so ``handler_a``'s result is dropped
+              while ``handler_b``'s is kept (still enforced).
+
+        Regression: previously ``filter_validation_results`` was only invoked
+        from ``run_validations`` when the code was in
+        ``ALWAYS_RUN_ON_ERROR_CODE`` (``GR107``/``GR109``). Every other
+        connector handler/serializer code - including CO130/CO171 - skipped the
+        per-result filter entirely, silently dropping per-handler
+        ``.connector-ignore`` scoping. ``filter_validation_results`` itself was
+        correct and covered above; the gap was the *gating* at the call site,
+        which only an end-to-end ``run_validations`` drive can pin.
+        """
+        manager = get_validate_manager(mocker)
+
+        ignored_map = {"handler_a/serializer.yaml": ["CO130"]}
+        result_a = self._make_result(
+            "CO130",
+            Path("/repo/connectors/foo/components/handlers/handler_a/serializer.yaml"),
+            ignored_map,
+            related_file_type=[RelatedFileType.CONNECTOR_SERIALIZER],
+        )
+        result_b = self._make_result(
+            "CO130",
+            Path("/repo/connectors/foo/components/handlers/handler_b/serializer.yaml"),
+            ignored_map,
+            related_file_type=[RelatedFileType.CONNECTOR_SERIALIZER],
+        )
+
+        # A single fake validator that produces both per-handler results, so the
+        # batch flows through the real ``run_validations`` gating -> filter path.
+        validator = mocker.Mock()
+        validator.error_code = "CO130"
+        validator.expected_execution_mode = None
+        validator.is_auto_fixable = False
+        validator.should_run.return_value = True
+        validator.obtain_invalid_content_items.return_value = [result_a, result_b]
+
+        manager.validators = [validator]
+        manager.objects_to_run = {mocker.Mock()}
+        manager.allow_autofix = False
+
+        extend_spy = mocker.patch.object(
+            manager.validation_results, "extend_validation_results"
+        )
+        mocker.patch.object(manager, "add_invalid_content_items")
+        mocker.patch.object(
+            manager.validation_results, "post_results", return_value=0
+        )
+
+        manager.run_validations()
+
+        extend_spy.assert_called_once()
+        extended_results = extend_spy.call_args[0][0]
+        assert result_a not in extended_results, (
+            "handler_a's ignored CO130 result should be filtered out by "
+            "run_validations for a non-always-run connector serializer code"
+        )
+        assert result_b in extended_results, (
+            "handler_b's CO130 result should remain enforced (sibling handler "
+            "does not ignore the code)"
+        )
+
 
 class TestImplicitGraphInitialization:
     """Tests for the connectors-flow graph initialization.

@@ -341,7 +341,7 @@ class IsHandlerContainLoglevelValidator(ConnectorsValidator[ContentTypes]):
                     f"XSOAR handler '{handler.id}' sees "
                     f"{len(visible)} `integrationLogLevel` field "
                     f"instances in `general_configurations` (must "
-                    f"be exactly one — see guide §3.7)"
+                    f"be exactly one)"
                 )
                 # Continue with the FIRST visible instance for
                 # shape/coverage checks so authors get every kind of
@@ -523,14 +523,13 @@ class IsHandlerContainLoglevelValidator(ConnectorsValidator[ContentTypes]):
                         f"grouped connector: {label} has {count} "
                         f"`integrationLogLevel` field-groups in "
                         f"`general_configurations` (must be exactly "
-                        f"one per view_group — see guide §3.7)"
+                        f"one per view_group)"
                     )
         else:
             if len(occurrences) > 1:
                 issues.append(
                     f"standard connector: `general_configurations` "
                     f"has {len(occurrences)} field-groups carrying "
-                    f"`integrationLogLevel` (must be exactly one — "
-                    f"see guide §3.7)"
+                    f"`integrationLogLevel` (must be exactly one)"
                 )
         return issues

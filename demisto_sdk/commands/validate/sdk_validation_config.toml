@@ -82,6 +82,8 @@ ignorable_errors = [
   "CO104",
   "CO116",
   "CO130",
+  "CO133",
+  "CO145",
   "CO171"
 ]
 

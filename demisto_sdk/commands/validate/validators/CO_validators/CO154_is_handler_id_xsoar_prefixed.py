@@ -25,12 +25,15 @@ Scope
 Runs on every XSOAR-classified handler (``HandlerData.is_xsoar``).
 Non-XSOAR handlers are skipped.
 
-Git-status gate: only runs on ``ADDED`` connectors. A handler id is a
-breaking-change identity key frozen by CO176 once shipped, so the
-naming convention can only be enforced when the id is authored for the
-first time (i.e. on a newly added connector). Enforcing it on existing
-connectors would demand an id rename that CO176 correctly forbids,
-producing findings that are impossible to remediate.
+Git-status gate + per-handler diff: runs on ``ADDED``, ``MODIFIED`` and
+``RENAMED`` connectors so a newly-added handler on an *existing*
+connector is still checked. Within the run, each handler id is diffed
+against the connector's previous version (``old_base_content_object``):
+ids that already existed are frozen by CO176 (renaming them breaks
+upgrades) and are grandfathered, so only genuinely-new handler ids are
+checked against the naming convention. Because the check needs a prior
+version, it is git-only (never runs path-based, where there is no old
+object and every id would look new).
 
 Two defects:
 
@@ -49,7 +52,7 @@ defect. Path points at ``handler.yaml`` so
 
 from __future__ import annotations
 
-from typing import Iterable, List
+from typing import FrozenSet, Iterable, List, Optional, cast
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.connector import Connector
@@ -102,10 +105,30 @@ class IsHandlerIdXsoarPrefixedValidator(ConnectorsValidator[ContentTypes]):
     related_field = "id"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.CONNECTOR_HANDLER]
-    # Handler ids are breaking-change identity keys frozen by CO176 once
-    # shipped. Enforce the naming convention only when the connector (and
-    # thus its handler ids) is authored for the first time.
-    expected_git_statuses = [GitStatuses.ADDED]
+    # Runs on ADDED (brand-new connector), MODIFIED and RENAMED (new handler
+    # added to an existing connector). Per-handler filtering against the prior
+    # version (below) restricts the naming check to genuinely-new handler ids;
+    # existing ids are frozen by CO176 and are grandfathered. The explicit
+    # status list also keeps this validator OUT of the path-based flow
+    # (git_status is None there, and without a prior version every id would
+    # look "new").
+    expected_git_statuses = [
+        GitStatuses.ADDED,
+        GitStatuses.MODIFIED,
+        GitStatuses.RENAMED,
+    ]
+
+    @staticmethod
+    def _prior_handler_ids(connector: ContentTypes) -> FrozenSet[str]:
+        """Handler ids present in the connector's previous version.
+
+        Empty when there is no prior version (brand-new connector, or a run
+        with no git base), so every handler id is treated as new.
+        """
+        old = cast(Optional[ContentTypes], connector.old_base_content_object)
+        if old is None:
+            return frozenset()
+        return frozenset(h.id for h in (old.handlers or []) if h and h.id)
 
     def obtain_invalid_content_items(
         self,
@@ -114,7 +137,12 @@ class IsHandlerIdXsoarPrefixedValidator(ConnectorsValidator[ContentTypes]):
         results: List[ValidationResult] = []
 
         for connector in content_items:
+            prior_ids = self._prior_handler_ids(connector)
             for handler in connector.xsoar_handlers:
+                # Frozen id — existed in the prior version, cannot be renamed
+                # (CO176). Only genuinely-new handler ids are checked.
+                if handler.id in prior_ids:
+                    continue
                 integration = handler.related_integration
                 if integration is None:
                     results.append(

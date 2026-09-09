@@ -1649,20 +1649,83 @@ class TestCO113IsSubCapabilityIdDerived:
 
         assert len(results) == 0
 
-    def test_expected_git_statuses_is_added_only(self):
+    def test_expected_git_statuses_added_modified_renamed(self):
         """
         Given: The CO113 validator class.
         When: Its ``expected_git_statuses`` attribute is inspected.
-        Then: It is restricted to ``GitStatuses.ADDED`` so the SDK's
-              ``should_run_according_to_status`` gate skips CO113 for any
-              already-published (MODIFIED / RENAMED / no-status) connector.
-              This is what grandfathers existing non-mechanical ids.
+        Then: It runs on ADDED + MODIFIED + RENAMED (never path-based, where
+              git_status is None) so a NEW sub-capability on an existing
+              connector is caught; the per-sub-capability diff against
+              old_base_content_object restricts the check to genuinely-new ids.
         """
         from demisto_sdk.commands.common.constants import GitStatuses
 
         assert IsSubCapabilityIdDerivedValidator.expected_git_statuses == [
-            GitStatuses.ADDED
+            GitStatuses.ADDED,
+            GitStatuses.MODIFIED,
+            GitStatuses.RENAMED,
         ]
+
+    def test_new_sub_capability_on_existing_connector_is_checked(self):
+        """
+        Given: An existing grouped connector gains a NEW sub-capability whose
+               id is not derived (not present in the prior version).
+        When: CO113 runs.
+        Then: The new sub-capability id is flagged.
+        """
+        connector = _grouped_connector_with_sub_capability(
+            "fetch-issues_wrongid", "Title"
+        )
+        # Prior version: same connector but WITHOUT this sub-capability.
+        old_connector = _grouped_connector_with_sub_capability(
+            "fetch-issues_wrongid", "Title"
+        )
+        old_connector.capabilities[0].sub_capabilities = []
+        connector.old_base_content_object = old_connector
+
+        results = IsSubCapabilityIdDerivedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "fetch-issues_wrongid" in results[0].message
+
+    def test_frozen_sub_capability_id_is_grandfathered(self):
+        """
+        Given: A non-derived sub-capability id that ALREADY existed in the
+               prior version (immutable after publish).
+        When: CO113 runs.
+        Then: No finding — existing ids are grandfathered.
+        """
+        connector = _grouped_connector_with_sub_capability(
+            "fetch-issues_wrongid", "Title"
+        )
+        old_connector = _grouped_connector_with_sub_capability(
+            "fetch-issues_wrongid", "Title"
+        )
+        connector.old_base_content_object = old_connector
+
+        results = IsSubCapabilityIdDerivedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_brand_new_connector_checks_all_sub_capabilities(self):
+        """
+        Given: A brand-new grouped connector (no old_base_content_object) with
+               a non-derived sub-capability id.
+        When: CO113 runs.
+        Then: The sub-capability id is flagged (empty prior set → all "new").
+        """
+        connector = _grouped_connector_with_sub_capability(
+            "fetch-issues_wrongid", "Title"
+        )
+        assert connector.old_base_content_object is None
+
+        results = IsSubCapabilityIdDerivedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "fetch-issues_wrongid" in results[0].message
 
 
 class TestNormalizeIntegrationId:
@@ -15161,22 +15224,85 @@ class TestCO154IsHandlerIdXsoarPrefixed:
         assert results[0].path == h.file_path
         assert str(results[0].path).endswith("handler.yaml")
 
-    def test_expected_git_statuses_is_added_only(self):
+    def test_expected_git_statuses_added_modified_renamed(self):
         """
         Given: The CO154 validator class.
         When: Its ``expected_git_statuses`` attribute is inspected.
-        Then: It is restricted to ``GitStatuses.ADDED`` so the SDK's
-              ``should_run_according_to_status`` gate skips CO154 for any
-              existing (MODIFIED/RENAMED) connector. Handler ids are
-              breaking-change identity keys frozen by CO176 once shipped, so
-              the naming convention can only be enforced when the id is
-              authored for the first time.
+        Then: It runs on ADDED + MODIFIED + RENAMED (never path-based, where
+              git_status is None) so a new handler on an existing connector is
+              caught; the per-handler diff against old_base_content_object
+              (below) restricts the check to genuinely-new ids.
         """
         from demisto_sdk.commands.common.constants import GitStatuses
 
         assert IsHandlerIdXsoarPrefixedValidator.expected_git_statuses == [
-            GitStatuses.ADDED
+            GitStatuses.ADDED,
+            GitStatuses.MODIFIED,
+            GitStatuses.RENAMED,
         ]
+
+    def test_new_handler_on_existing_connector_is_checked(self):
+        """
+        Given: An existing connector gains a NEW handler with a
+               non-conforming id (not in the prior version).
+        When: CO154 runs.
+        Then: The new handler is flagged (naming convention enforced on new
+              ids even when the connector itself already existed).
+        """
+        old_connector = create_connector_object(handlers=[{"id": "xsoar-old"}])
+        connector = create_connector_object(handlers=[{"id": "xsoar-old"}])
+        # Add a brand-new, non-conforming handler.
+        new_handler = connector.handlers[0].copy(deep=True)
+        new_handler.id = "wrong-new-handler"
+        connector.handlers.append(new_handler)
+        connector.handlers[1].related_integration = _co154_stub_integration(
+            "TestIntegration"
+        )
+        connector.old_base_content_object = old_connector
+
+        results = IsHandlerIdXsoarPrefixedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        messages = " ".join(r.message for r in results)
+        assert "wrong-new-handler" in messages
+
+    def test_frozen_handler_id_is_grandfathered(self):
+        """
+        Given: A non-conforming handler id that ALREADY existed in the prior
+               version (frozen by CO176).
+        When: CO154 runs.
+        Then: No finding — existing ids are grandfathered.
+        """
+        old_connector = create_connector_object(handlers=[{"id": "wrong-old"}])
+        connector = create_connector_object(handlers=[{"id": "wrong-old"}])
+        connector.handlers[0].related_integration = _co154_stub_integration(
+            "TestIntegration"
+        )
+        connector.old_base_content_object = old_connector
+
+        results = IsHandlerIdXsoarPrefixedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_brand_new_connector_checks_all_handlers(self):
+        """
+        Given: A brand-new connector (no old_base_content_object) with a
+               non-conforming handler id.
+        When: CO154 runs.
+        Then: The handler is flagged (empty prior set → every id is "new").
+        """
+        connector = create_connector_object(handlers=[{"id": "wrong"}])
+        connector.handlers[0].related_integration = _co154_stub_integration(
+            "TestIntegration"
+        )
+        assert connector.old_base_content_object is None
+
+        results = IsHandlerIdXsoarPrefixedValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "wrong" in results[0].message
 
 
 class TestCO155IsHandlerModuleXsoar:

@@ -68,8 +68,6 @@ class PackMetadata(BaseModel):
     modules: List[str] = Field([])
     integrations: List[str] = Field([])
     hybrid: bool = Field(False, alias="hybrid")
-    default_data_source_id: Optional[str] = Field("", alias="defaultDataSource")
-    default_data_source_name: Optional[str] = Field("", exclude=True)
 
     # For private packs
     premium: Optional[bool]
@@ -97,8 +95,6 @@ class PackMetadata(BaseModel):
             pack_id (str): The pack ID.
             content_items (PackContentItems): The pack content items object.
         """
-        if not self.hybrid:
-            self._set_default_data_source(content_items)
         self.tags = self._get_pack_tags(marketplace, pack_id, content_items)
         self.author = self._get_author(self.author, marketplace)
         # We want to add the pipeline_id only if this is called within our repo.
@@ -119,7 +115,6 @@ class PackMetadata(BaseModel):
         - Adding the content items display names.
         - Gathering the pack dependencies and adding the metadata.
         - Unifying the `url` and `email` into the `support_details` property.
-        - Adding the default data source if exists.
 
         Args:
             marketplace (MarketplaceVersions): The marketplace to which the pack should belong to.
@@ -141,49 +136,16 @@ class PackMetadata(BaseModel):
             marketplace, content_items, strip_internal=strip_internal
         )
 
-        default_data_source_value = (
-            {
-                "name": self.default_data_source_name,
-                "id": self.default_data_source_id,
-            }
-            if self.default_data_source_name
-            and self.default_data_source_id
-            and marketplace
-            in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]
-            and not self.hybrid
-            else None  # if the pack is multiple marketplace, override the initially set str default_data_source_id
-        )
-
         _metadata.update(
             {
                 "contentItems": collected_content_items,
                 "contentDisplays": content_displays,
                 "dependencies": self._enhance_dependencies(marketplace, dependencies),
                 "supportDetails": self._get_support_details(),
-                "defaultDataSource": default_data_source_value,
             }
         )
 
         return _metadata
-
-    @staticmethod
-    def _place_data_source_integration_first(
-        integration_list: List[Dict],
-        data_source_id: str,
-    ):
-        integration_metadata_object = [
-            integration
-            for integration in integration_list
-            if integration.get("id") == data_source_id
-        ]
-
-        if not integration_metadata_object:
-            logger.error(
-                f"Integration metadata object was not found for {data_source_id=} in {integration_list=}."
-            )
-        logger.info(f"Placing {data_source_id=} first in the integration_list.")
-        integration_list.remove(integration_metadata_object[0])
-        integration_list.insert(0, integration_metadata_object[0])
 
     def _get_content_items_and_displays_metadata(
         self,
@@ -243,19 +205,6 @@ class PackMetadata(BaseModel):
             )
             for content_type, content_type_display in content_displays.items()
         }
-        if (
-            self.default_data_source_id
-            and self.default_data_source_name
-            and collected_content_items
-            and marketplace
-            in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]
-            and not self.hybrid
-        ):
-            # order collected_content_items integration list so that the defaultDataSource will be first
-            self._place_data_source_integration_first(
-                collected_content_items[ContentType.INTEGRATION.metadata_name],
-                self.default_data_source_id,
-            )
         return collected_content_items, content_displays
 
     def _enhance_dependencies(
@@ -412,50 +361,7 @@ class PackMetadata(BaseModel):
         if self.hybrid:
             # hybrid packs have a builtin data source
             return False
-        if self.default_data_source_id and self.default_data_source_name:
-            return True
         return any(self.get_valid_data_source_integrations(content_items))
-
-    def _set_default_data_source(self, content_items: PackContentItems) -> None:
-        """If there is more than one data source in the pack, return the default data source."""
-        data_sources: List[Dict[str, str]] = self.get_valid_data_source_integrations(  # type: ignore[assignment]
-            content_items, self.support, include_name=True
-        )
-
-        if self.default_data_source_id and self.default_data_source_id in [
-            data_source.get("id") for data_source in data_sources
-        ]:
-            # the provided default_data_source_id is of a valid integration, keep it
-            self.default_data_source_name = [
-                data_source.get("name")
-                for data_source in data_sources
-                if data_source.get("id") == self.default_data_source_id
-            ][0]
-            logger.info(
-                f"Keeping the provided {self.default_data_source_id=} with {self.default_data_source_name=}"
-            )
-            return
-
-        if not data_sources:
-            return
-
-        logger.info(
-            f"No defaultDataSource provided ({self.default_data_source_id}) or it is not a valid data source,"
-            f" choosing default from {data_sources=}"
-        )
-        if len(data_sources) > 1:
-            # should not happen because of validation PA131
-            logger.info(
-                f"{self.name} has multiple data sources. Setting a default value."
-            )
-
-        # setting a value to the defaultDataSource in case there is a data source
-        self.default_data_source_name = (
-            data_sources[0].get("name") if data_sources else None
-        )
-        self.default_data_source_id = (
-            data_sources[0].get("id") if data_sources else None
-        )
 
     @staticmethod
     def get_valid_data_source_integrations(

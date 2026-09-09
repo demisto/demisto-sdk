@@ -17217,19 +17217,43 @@ class TestCO153IsHandlerFolderNameMatchesId:
         assert "xsoar_b" in results[0].message
         assert "xsoar-a" not in results[0].message
 
-    def test_non_xsoar_handler_also_flagged(self):
-        """CO153 is ownership-agnostic — tooling breakage applies to
-        any handler, so non-XSOAR mismatches are flagged too."""
+    def test_non_xsoar_handler_skipped(self):
+        """CO153 is scoped to XSOAR handlers only. Non-XSOAR handlers
+        are owned by other teams and follow their own module-specific
+        naming conventions (``saas-*``, ``datasecurity-*``,
+        ``identity-*``) that deliberately do not match their folder
+        verbatim, so a drifted folder on a non-XSOAR handler is
+        skipped rather than flagged."""
         connector = create_connector_object()
         h = connector.handlers[0]
-        h.id = "third-party-foo"
-        h.handler_dir_name = "third_party_foo"
+        h.id = "datasecurity-foo"
+        h.handler_dir_name = "datasecurity"
         _clear_xsoar_signals(h)
 
         results = IsHandlerFolderNameMatchesIdValidator().obtain_invalid_content_items(
             [connector]
         )
+        assert results == []
+
+    def test_mixed_xsoar_and_non_xsoar_only_xsoar_flagged(self):
+        """With one drifted XSOAR handler and one drifted non-XSOAR
+        handler, only the XSOAR handler is flagged (scope gate)."""
+        connector = create_connector_object(
+            handlers=[{"id": "xsoar-a"}, {"id": "datasecurity-b"}]
+        )
+        by_id = {h.id: h for h in connector.handlers}
+        # xsoar-a: folder drifts, stays XSOAR → flagged.
+        by_id["xsoar-a"].handler_dir_name = "xsoar_a"
+        # datasecurity-b: folder drifts, non-XSOAR → skipped.
+        by_id["datasecurity-b"].handler_dir_name = "datasecurity"
+        _clear_xsoar_signals(by_id["datasecurity-b"])
+
+        results = IsHandlerFolderNameMatchesIdValidator().obtain_invalid_content_items(
+            [connector]
+        )
         assert len(results) == 1
+        assert "xsoar-a" in results[0].message
+        assert "datasecurity-b" not in results[0].message
 
     def test_missing_file_path_skipped(self):
         """Handler without a resolvable ``file_path`` (e.g. an

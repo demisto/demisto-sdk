@@ -21,11 +21,18 @@ because filesystems are byte-exact and the tooling never
 
 Scope
 -----
-Runs on every handler in every connector (ownership-agnostic — the
-tooling breakage applies whether the handler is XSOAR or not). One
-``ValidationResult`` per handler with a mismatch. Handlers whose
-``file_path`` is unresolvable (constructed in memory / stub) are
-skipped.
+Runs on XSOAR-classified handlers only (``HandlerData.is_xsoar``).
+The strict ``folder == id`` convention is an XSOAR-handler rule:
+XSOAR handler ids are mechanically derived from the backing
+integration id (CO154) and the folder name has to track that id for
+build scripts, migration fixtures, and ``.connector-ignore``
+resolution. Non-XSOAR handlers are owned by other teams and follow
+their own module-specific naming conventions (``saas-*``,
+``datasecurity-*``, ``identity-*``, …) that deliberately do not
+match their folder verbatim, so checking them only produces noise.
+One ``ValidationResult`` per XSOAR handler with a mismatch. Handlers
+whose ``file_path`` is unresolvable (constructed in memory / stub)
+are skipped.
 
 Path routing: the finding's ``path`` points at the handler's
 ``handler.yaml`` so ``[file:<folder>/handler.yaml]`` in
@@ -84,7 +91,7 @@ class IsHandlerFolderNameMatchesIdValidator(ConnectorsValidator[ContentTypes]):
         results: List[ValidationResult] = []
 
         for connector in content_items:
-            for handler in connector.handlers:
+            for handler in connector.xsoar_handlers:
                 folder_name = self._folder_name(handler)
                 if folder_name is None:
                     # Handler constructed without a file_path (stub /

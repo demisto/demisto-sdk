@@ -77,6 +77,8 @@ mapping:
     type: seq
     sequence:
     - type: str
+  excludefromtightlycoupled:
+    type: bool
   id:xsoar:
     type: str
   id:marketplacev2:

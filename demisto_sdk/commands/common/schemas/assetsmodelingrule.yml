@@ -21,6 +21,8 @@ mapping:
     type: str
   deprecated:
     type: bool
+  excludefromtightlycoupled:
+    type: bool
   name:xsoar:
     type: str
   name:marketplacev2:

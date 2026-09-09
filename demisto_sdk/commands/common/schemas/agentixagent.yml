@@ -80,3 +80,5 @@ mapping:
     type: seq
     sequence:
     - type: str
+  excludefromtightlycoupled:
+    type: bool

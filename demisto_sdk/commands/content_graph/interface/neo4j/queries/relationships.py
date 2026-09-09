@@ -11,6 +11,8 @@ from demisto_sdk.commands.content_graph.common import (
     RelationshipType,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
+    are_in_the_same_split_pack_family,
+    is_managed_or_derived,
     labels_of,
     node_map,
     run_query,
@@ -193,7 +195,19 @@ UNWIND $data AS rel_data
 MATCH (p1:{ContentType.PACK}{{object_id: rel_data.source}}),
     (p2:{ContentType.PACK}{{object_id: rel_data.target}})
 
-// Create the relationship, and mark as "from_metadata"
+// A pack and its derived twin are two representations of the same source
+// directory, and managed/derived packs ship as self-contained units, so
+// neither may carry a pack-level dependency. Metadata-declared edges are
+// guarded here because remove_existing_depends_on_relationships only clears
+// edges with from_metadata = false, so these are never recalculated.
+WHERE NOT {are_in_the_same_split_pack_family("p1", "p2")}
+AND NOT {is_managed_or_derived("p1")}
+AND NOT {is_managed_or_derived("p2")}
+
+// Create the relationship, and mark as "from_metadata".
+// CREATE rather than MERGE: target_min_version is null whenever the dependency
+// declares no minVersion, and neo4j rejects a null property inside a MERGE
+// pattern.
 CREATE (p1)-[r:{RelationshipType.DEPENDS_ON}{{
     mandatorily: rel_data.mandatorily,
     target_min_version: rel_data.target_min_version,

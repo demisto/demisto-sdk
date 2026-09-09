@@ -73,6 +73,9 @@ class _StrictCaseField(BaseStrictModel):
     marketplaces: Literal[
         MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM
     ] = Field(default_factory=list)
+    exclude_from_tightly_coupled: Optional[bool] = Field(
+        None, alias="excludefromtightlycoupled"
+    )
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
     aliases: Optional[List[StrictAliases]] = Field(None, alias="Aliases")
     alias_to: Optional[str] = Field(None, alias="aliasTo")

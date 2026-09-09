@@ -11,6 +11,8 @@ from demisto_sdk.commands.content_graph.common import (
     get_server_content_items,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
+    are_in_the_same_split_pack_family,
+    is_managed_or_derived,
     run_query,
     to_node_pattern,
 )
@@ -71,6 +73,21 @@ def get_relationships_to_preserve(
     """
     Get the relationships to preserve before removing packs
     """
+    # The third branch below matches (s)-[r]->(t) for *every* relationship
+    # type, and its results are replayed by return_preserved_relationships
+    # once the packs have been recreated. Without this guard a DEPENDS_ON
+    # between a pack and its derived twin - or any DEPENDS_ON touching a
+    # managed/derived pack - is carried across the rebuild, re-creating the
+    # exact edge the dependency queries refuse to create. The guard is scoped
+    # to DEPENDS_ON so every other relationship type is still preserved.
+    depends_on_is_not_between_twins = f"""(
+    type(r) <> "{RelationshipType.DEPENDS_ON}"
+    OR (
+        NOT {are_in_the_same_split_pack_family("s", "t")}
+        AND NOT {is_managed_or_derived("s")}
+        AND NOT {is_managed_or_derived("t")}
+    )
+)"""
     query = f"""// Gets the relationships to preserve before removing packs
 MATCH (s)-[r]->(t)-[:{RelationshipType.IN_PACK}]->(p)
 WHERE NOT (s)-[:{RelationshipType.IN_PACK}]->(p)
@@ -89,6 +106,7 @@ UNION
 MATCH (s)-[r]->(t)
 WHERE NOT (s)-[:{RelationshipType.IN_PACK}]->(t)
 AND t.object_id in {pack_ids}
+AND {depends_on_is_not_between_twins}
 RETURN elementId(s) as source_id, s as source, type(r) as r_type, properties(r) as r_properties, t as target"""
     return run_query(tx, query).data()
 

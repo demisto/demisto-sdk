@@ -48,6 +48,9 @@ class _StrictIndicatorType(BaseStrictModel):
     layout: Optional[str] = None
     legacy_names: Optional[List[str]] = Field(None, alias="legacyNames")
     marketplaces: Optional[List[MarketplaceVersions]] = None
+    exclude_from_tightly_coupled: Optional[bool] = Field(
+        None, alias="excludefromtightlycoupled"
+    )
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 
 

@@ -28,6 +28,9 @@ class _StrictMapper(BaseStrictModel):
     feed: Optional[bool] = None
     definition_id: Optional[str] = Field(None, alias="definitionId")
     marketplaces: Optional[List[MarketplaceVersions]] = None
+    exclude_from_tightly_coupled: Optional[bool] = Field(
+        None, alias="excludefromtightlycoupled"
+    )
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 
 

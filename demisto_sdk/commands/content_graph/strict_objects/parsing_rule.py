@@ -21,6 +21,9 @@ class _StrictParsingRule(BaseStrictModel):
     samples: Optional[str] = None
     comment: Optional[str] = None
     deprecated: Optional[bool] = None
+    exclude_from_tightly_coupled: Optional[bool] = Field(
+        None, alias="excludefromtightlycoupled"
+    )
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 
 

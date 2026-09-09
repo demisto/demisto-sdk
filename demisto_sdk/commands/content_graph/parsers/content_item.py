@@ -11,7 +11,9 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import (
+    EXCLUDE_FROM_TIGHTLY_COUPLED_KEY,
     UNIFIED_FILES_SUFFIXES,
     ContentType,
     Relationships,
@@ -240,6 +242,15 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     @abstractmethod
     def is_silent(self) -> bool:
         pass
+
+    @property
+    def exclude_from_tightly_coupled(self) -> bool:
+        """Whether this item opts out of being treated as tightly coupled.
+
+        Read generically from the item's raw data, so a single implementation
+        covers every content family (yml, json and unified connectors).
+        """
+        return bool(get_value(self.raw_data, EXCLUDE_FROM_TIGHTLY_COUPLED_KEY, False))
 
     def get_marketplaces(self, data: dict) -> List[MarketplaceVersions]:
         if file_marketplaces := [

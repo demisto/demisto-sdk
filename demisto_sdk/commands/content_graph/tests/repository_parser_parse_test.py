@@ -52,6 +52,19 @@ def parser(mocker):
     mocker.patch.object(p, "iter_connectors", return_value=iter(()))
 
     fake_pack_parser = MagicMock(name="PackParser_instance")
+    # A bare MagicMock answers ``hasattr(pack, "derived_pack")`` with True and
+    # auto-creates a *truthy* child mock for ``pack.derived_pack``. ``parse()``
+    # reads exactly those two things to decide whether to append a split-pack
+    # twin, so an unconfigured mock fabricates a phantom derived pack for every
+    # parsed pack and doubles ``self.packs``.
+    #
+    # The real contract is in PackParser.__init__: ``self.derived_pack`` is
+    # always assigned, and it is ``None`` unless the ``ENABLE_SPLIT_PACKS``
+    # feature flag is on (it defaults to False) *and* the pack qualifies as a
+    # split candidate. These narrowing tests parse no real packs and do not
+    # enable the flag, so the faithful default for the double is ``None``.
+    fake_pack_parser.derived_pack = None
+
     fake_connector_parser = MagicMock(name="ConnectorParser_instance")
 
     mocker.patch.object(RepositoryParser, "parse_pack", return_value=fake_pack_parser)

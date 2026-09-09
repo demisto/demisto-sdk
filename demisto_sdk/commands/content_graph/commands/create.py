@@ -9,7 +9,10 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger, logging_setup
-from demisto_sdk.commands.content_graph.commands.common import recover_if_fails
+from demisto_sdk.commands.content_graph.commands.common import (
+    isolate_managed_packs_before_export,
+    recover_if_fails,
+)
 from demisto_sdk.commands.content_graph.common import (
     NEO4J_DATABASE_HTTP,
     NEO4J_PASSWORD,
@@ -86,6 +89,9 @@ def _create_content_graph_inner(
     builder.create_graph()
     if dependencies:
         content_graph_interface.create_pack_dependencies()
+    # Unconditional: cross-pack content-item edges exist even when dependency
+    # calculation was skipped, so isolation must not be gated on `dependencies`.
+    isolate_managed_packs_before_export(content_graph_interface)
     content_graph_interface.export_graph(
         output_path, override_commit=True, marketplace=marketplace
     )

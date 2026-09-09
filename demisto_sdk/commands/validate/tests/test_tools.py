@@ -1,7 +1,7 @@
 import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, cast
-from unittest.mock import MagicMock
+from unittest.mock import patch
 
 from packaging.version import Version
 
@@ -421,7 +421,6 @@ def create_pack_object(
     if version_config:
         pack.version_config.write_json(version_config)
 
-    PackParser.parse_ignored_errors = MagicMock(return_value={})
     pack.pack_metadata.write_json(json_content)
     pack.readme.write_text(readme_text)
 
@@ -431,7 +430,13 @@ def create_pack_object(
         for _ in range(playbooks):
             pack.create_playbook()
 
-    return cast(Pack, BaseContent.from_path(pack_path))
+    # Scoped to the single call that builds a `PackParser`: patching the class
+    # attribute unscoped leaks into every later test in the session (this helper
+    # also runs at collection time, from `parametrize` argument lists), leaving
+    # real `PackParser` instances without the `ignored_errors_dict` that
+    # `parse_ignored_errors` is responsible for setting.
+    with patch.object(PackParser, "parse_ignored_errors", return_value={}):
+        return cast(Pack, BaseContent.from_path(pack_path))
 
 
 def remove_fields_from_dict(

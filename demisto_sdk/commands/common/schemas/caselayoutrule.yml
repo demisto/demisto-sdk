@@ -35,6 +35,10 @@ mapping:
             - include: filter_schema
             - include: or_schema
             - include: and_schema
+  supportedFeatures:
+    type: seq
+    sequence:
+    - type: str
 
 schema;filter_schema:
   type: map

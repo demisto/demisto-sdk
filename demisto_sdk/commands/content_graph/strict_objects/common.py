@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Any, Dict, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence
 
 import pydantic
 from pydantic import BaseModel, Extra, validator
@@ -8,6 +8,53 @@ from pydantic.fields import FieldInfo
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 marketplace_suffixes = tuple((marketplace.value for marketplace in MarketplaceVersions))
+
+
+class SupportedFeaturesList(List[str]):
+    """A `supportedFeatures` value: a non-empty list of unique, non-blank strings.
+
+    The field is optional - omit it to declare no required features - but an
+    authored value must be meaningful, so empty/blank/duplicate entries fail.
+    """
+
+    @classmethod
+    def __get_validators__(cls):
+        yield cls._validate
+
+    @classmethod
+    def _validate(cls, value: Any) -> List[str]:
+        if not isinstance(value, list):
+            raise TypeError("supportedFeatures must be a list of strings")
+
+        if not value:
+            raise ValueError(
+                "supportedFeatures cannot be an empty list. "
+                "Omit the field entirely if no features are required."
+            )
+
+        seen: set = set()
+        duplicates: List[str] = []
+        for item in value:
+            if not isinstance(item, str):
+                raise TypeError(
+                    f"supportedFeatures must contain only strings, got {type(item).__name__}"
+                )
+            if not item.strip():
+                raise ValueError(
+                    "supportedFeatures cannot contain empty or whitespace-only values."
+                )
+            # Collected rather than raised immediately, so one error names them all.
+            if item in seen and item not in duplicates:
+                duplicates.append(item)
+            seen.add(item)
+
+        if duplicates:
+            raise ValueError(
+                "supportedFeatures cannot contain duplicate values: "
+                f"{', '.join(duplicates)}."
+            )
+
+        return value
 
 
 class BaseStrictModel(BaseModel, ABC):
@@ -75,6 +122,18 @@ class BaseStrictModel(BaseModel, ABC):
                 value is not None
             ), f"The field {field.alias or field.name} is not required, but should not be None if it exists"
         return value
+
+
+class SupportedFeaturesMixin(BaseStrictModel):
+    """Adds the optional `supportedFeatures` field.
+
+    Declared once and mixed into every strict model that supports it, so the
+    field's type and validation live in a single place.
+    """
+
+    supportedFeatures: Optional[SupportedFeaturesList] = pydantic.Field(
+        None, alias="supportedFeatures"
+    )
 
 
 def create_model(model_name: str, base_models: tuple, **kwargs) -> BaseModel:

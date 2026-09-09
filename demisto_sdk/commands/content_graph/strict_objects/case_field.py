@@ -12,6 +12,7 @@ from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import 
 )
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     BaseStrictModel,
+    SupportedFeaturesMixin,
     create_model,
 )
 
@@ -27,7 +28,7 @@ class StrictAliases(BaseStrictModel):
     type: Union[IncidentFieldType, AliasesTypes]
 
 
-class _StrictCaseField(BaseStrictModel):
+class _StrictCaseField(SupportedFeaturesMixin):
     id_: str = Field(alias="id")
     version: Optional[int] = None
     modified: Optional[str] = None

@@ -8,12 +8,12 @@ from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import 
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
     NAME_DYNAMIC_MODEL,
-    BaseStrictModel,
+    SupportedFeaturesMixin,
     create_model,
 )
 
 
-class _StrictCorrelationRule(BaseStrictModel):
+class _StrictCorrelationRule(SupportedFeaturesMixin):
     global_rule_id: str
     name: str  # not included in NAME_DYNAMIC_MODEL
     alert_name: str

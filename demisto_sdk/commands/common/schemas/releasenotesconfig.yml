@@ -16,3 +16,7 @@ mapping:
     type: seq
     sequence:
     - type: str
+  supportedFeatures:
+    type: seq
+    sequence:
+    - type: str

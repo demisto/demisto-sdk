@@ -10,12 +10,12 @@ from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import 
 )
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     SUFFIXED_ID_DYNAMIC_MODEL,
-    BaseStrictModel,
+    SupportedFeaturesMixin,
     create_model,
 )
 
 
-class _StrictIndicatorType(BaseStrictModel):
+class _StrictIndicatorType(SupportedFeaturesMixin):
     modified: Optional[str] = None
     id_: str = Field(alias="id")
     version: int

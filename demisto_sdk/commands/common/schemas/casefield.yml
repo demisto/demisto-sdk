@@ -106,6 +106,10 @@ mapping:
     type: str
   aliasTo:
     type: str
+  supportedFeatures:
+    type: seq
+    sequence:
+    - type: str
 
 schema;aliases_schema:
   type: map

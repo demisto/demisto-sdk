@@ -25,6 +25,7 @@ from demisto_sdk.commands.content_graph.objects.layout import Layout
 from demisto_sdk.commands.content_graph.objects.layout_rule import LayoutRule
 from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
+from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.report import Report
@@ -41,6 +42,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 )
 
 ContentTypes = Union[
+    Pack,
     Integration,
     Script,
     Playbook,
@@ -126,8 +128,9 @@ class UnknownSupportedFeatureValidator(BaseValidator[ContentTypes]):
     ) -> Set[str]:
         """Returns the item's declared features that no region or global enables.
 
-        Only the item's own value is checked - an inherited one is validated on
-        the pack itself, to avoid reporting it on every item in the pack.
+        Only the item's own value is checked. A pack's value is validated on the
+        pack itself, which this validator also runs on, so a pack-level typo is
+        reported once at its source rather than on every item inheriting it.
         """
         item_features: Optional[List[str]] = getattr(item, "supportedFeatures", None)
         if not item_features:

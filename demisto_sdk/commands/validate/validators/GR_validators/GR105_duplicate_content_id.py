@@ -128,7 +128,10 @@ class DuplicateContentIdValidator(BaseValidator[ContentTypes], ABC):
         # long as the variants are never active in the same region.
         rules = RegionalRules.from_path()
         if rules is None:
-            logger.info(
+            # Warning, not info: without the file a legitimately region-partitioned
+            # pair is reported anyway, and the author cannot tell why from the
+            # message alone. Say so where they will actually see it.
+            logger.warning(
                 f"[GR105] {REGIONAL_RULES_PATH} not found - region-aware duplicate "
                 "handling is disabled, every duplicate ID will be reported."
             )

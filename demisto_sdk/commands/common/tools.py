@@ -4947,9 +4947,8 @@ def get_content_item_supported_features(item) -> Optional[FrozenSet[str]]:
     author actually wrote should read `.supportedFeatures` directly.
 
     Returns:
-        A frozenset of feature names, or `None` for "supported everywhere".
-        Branch on `is None`, not truthiness - an empty frozenset means
-        "restricted to features no region enables", which is not the same.
+        A frozenset of feature names, or `None` for "supported everywhere",
+        which is what an absent value means at both the item and the pack level.
     """
     # Imported here to avoid a circular import, as in the supportedModules resolver.
     from demisto_sdk.commands.content_graph.objects.pack import Pack
@@ -4957,7 +4956,10 @@ def get_content_item_supported_features(item) -> Optional[FrozenSet[str]]:
     features = getattr(item, "supportedFeatures", None)
 
     if features is None and not isinstance(item, Pack):
-        pack = getattr(item, "pack", None)
+        # `in_pack`, not the `pack` field: the latter is a lazily-filled cache
+        # that is None until something resolves it, so reading it directly
+        # would silently skip inheritance and report the item as unrestricted.
+        pack = getattr(item, "in_pack", None)
         if pack is not None:
             features = getattr(pack, "supportedFeatures", None)
 

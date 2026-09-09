@@ -10,9 +10,15 @@ without standing up a Neo4j graph per case.
 import pytest
 
 from demisto_sdk.commands.common.regional_rules import RegionalRules
+from demisto_sdk.commands.common.tools import get_relative_path_from_packs_dir
+from demisto_sdk.commands.validate.tests.test_tools import (
+    REPO,
+    create_integration_object,
+)
 from demisto_sdk.commands.validate.validators.GR_validators.GR105_duplicate_content_id_all_files import (
     DuplicateContentIdValidatorAllFiles,
 )
+from TestSuite.test_tools import ChangeCWD
 
 RULES = RegionalRules(
     {
@@ -30,13 +36,18 @@ class FakePack:
 
 
 class FakeItem:
-    """A stand-in carrying only what the collision check reads."""
+    """A stand-in carrying only what the collision check reads.
+
+    The pack is exposed as `in_pack`, matching the accessor production code
+    uses. Exposing a bare `pack` field instead would let the fake pass even if
+    the resolver went back to reading that lazily-filled cache directly.
+    """
 
     def __init__(
         self, supported_features=None, pack_features=None, path="Packs/P/x.yml"
     ):
         self.supportedFeatures = supported_features
-        self.pack = FakePack(pack_features)
+        self.in_pack = FakePack(pack_features)
         self.path = path
         self.object_id = "SharedId"
 
@@ -435,3 +446,66 @@ class TestUnresolvableRegions:
         )
 
         assert _collide(FakeItem(None), FakeItem(None), rules=global_only) is not None
+
+
+class TestReportedContentObject:
+    """Each result must be attributed to the file its message was built from.
+
+    Items in a duplicate-ID group share an `object_id` by definition, so any
+    attribution keyed on the ID collapses the whole group onto one item and the
+    reported file stops matching the message - it names the counterpart, making
+    the error read as though a file duplicates itself.
+    """
+
+    def test_each_result_is_attributed_to_the_item_it_describes(self, mocker):
+        """
+        Given:
+        - Two real content items sharing an ID and a region, so the pair
+          genuinely collides.
+
+        When:
+        - Running the validator over the graph.
+
+        Then:
+        - Ensure each result is attributed to the item whose *counterpart* is
+          named in its message. Attribution keyed on the shared object_id would
+          collapse both results onto one item, and the reported file would then
+          name itself as its own duplicate.
+        """
+        with ChangeCWD(REPO.path):
+            item_a = create_integration_object(
+                paths=["supportedFeatures"], values=[["feat_a"]]
+            )
+            item_b = create_integration_object(
+                paths=["supportedFeatures"], values=[["feat_a"]]
+            )
+
+        validator = DuplicateContentIdValidatorAllFiles()
+        mocker.patch.object(RegionalRules, "from_path", return_value=RULES)
+        mocker.patch.object(
+            type(validator),
+            "graph",
+            new_callable=mocker.PropertyMock,
+            return_value=mocker.Mock(
+                validate_duplicate_ids=mocker.Mock(
+                    return_value=[(item_a, [item_b]), (item_b, [item_a])]
+                )
+            ),
+        )
+
+        results = validator.obtain_invalid_content_items_using_graph(
+            [item_a, item_b], validate_all_files=True
+        )
+
+        assert len(results) == 2
+        # Each result must be attributed to a different file...
+        assert {str(result.content_object.path) for result in results} == {
+            str(item_a.path),
+            str(item_b.path),
+        }
+        # ...and never to the file its own message names as the duplicate.
+        # Compared by repo-relative path, since the factory gives both items
+        # the same file name under different pack directories.
+        for result in results:
+            reported = get_relative_path_from_packs_dir(str(result.content_object.path))
+            assert reported not in result.message

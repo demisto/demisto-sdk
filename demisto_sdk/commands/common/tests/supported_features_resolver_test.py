@@ -13,7 +13,10 @@ class FakePack:
 class FakeItem:
     def __init__(self, supported_features=None, pack=None):
         self.supportedFeatures = supported_features
-        self.pack = pack
+        # Exposed as `in_pack`, the accessor the resolver uses. The bare `pack`
+        # field is a lazily-filled cache that is None until something resolves
+        # it, so a fake offering only that would hide a resolver reading it.
+        self.in_pack = pack
 
 
 @pytest.mark.parametrize(

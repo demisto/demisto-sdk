@@ -4,6 +4,7 @@ from demisto_sdk.commands.common.regional_rules import RegionalRules
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
     create_integration_object,
+    create_pack_object,
     create_playbook_object,
     create_script_object,
 )
@@ -90,6 +91,36 @@ class TestIsSupportedFeaturesSubsetOfPack:
                 [integration]
             )
 
+    def test_pack_restriction_applies_when_the_pack_cache_is_cold(self):
+        """
+        Given:
+            - An integration declaring a feature its pack does not allow, whose
+              `pack` cache field has not been populated yet, as is the case
+              before anything resolves it.
+        When:
+            - Running the IsSupportedFeaturesSubsetOfPack validator (ST115).
+        Then:
+            - The validation should fail. The pack must be resolved through
+              `in_pack` rather than read off the raw cache field, otherwise a
+              cold cache silently passes an item its pack does restrict.
+        """
+        with ChangeCWD(REPO.path):
+            integration = create_integration_object(
+                paths=["supportedFeatures"],
+                values=[["feat_a", "feat_c"]],
+                pack_info={"supportedFeatures": ["feat_a", "feat_b"]},
+            )
+            # Undo whatever warmed the cache during construction, so the
+            # validator has to resolve the pack itself.
+            integration.pack = None
+
+            results = IsSupportedFeaturesSubsetOfPack().obtain_invalid_content_items(
+                [integration]
+            )
+
+            assert len(results) == 1
+            assert "feat_c" in results[0].message
+
     def test_item_declaring_nothing_inherits_the_pack(self):
         """
         Given:
@@ -175,6 +206,59 @@ class TestUnknownSupportedFeature:
             assert "feat_typo" in result.message
             assert "feat_a" in result.message
             assert result.validator.error_code == "BA134"
+
+
+class TestPackLevelUnknownSupportedFeature:
+    @pytest.fixture(autouse=True)
+    def _patch_rules(self, mocker):
+        mocker.patch.object(
+            RegionalRules, "from_path", return_value=RegionalRules(RULES)
+        )
+
+    def test_pack_declaring_an_unknown_feature_is_reported(self):
+        """
+        Given:
+            - A pack whose `pack_metadata.json` declares a feature that appears
+              under 'supported_features' in no region and not in 'global'.
+        When:
+            - Running the UnknownSupportedFeatureValidator (BA134) on the pack.
+        Then:
+            - The pack is reported. A typo at the pack level is otherwise caught
+              nowhere: the strict model only checks the value's shape, and items
+              are checked on their own declared value rather than an inherited one.
+        """
+        with ChangeCWD(REPO.path):
+            pack = create_pack_object(
+                paths=["supportedFeatures"], values=[["feat_typo"]]
+            )
+
+            [result] = UnknownSupportedFeatureValidator().obtain_invalid_content_items(
+                [pack]
+            )
+
+            assert "feat_typo" in result.message
+
+    def test_a_pack_level_typo_is_not_reported_on_its_items(self):
+        """
+        Given:
+            - A pack declaring an unknown feature, and an item that declares
+              nothing and so inherits it.
+        When:
+            - Running the UnknownSupportedFeatureValidator (BA134) on the item.
+        Then:
+            - The item is not reported. The typo belongs to the pack and is
+              reported once at its source, rather than repeated on every item
+              in the pack.
+        """
+        with ChangeCWD(REPO.path):
+            integration = create_integration_object(
+                pack_info={"supportedFeatures": ["feat_typo"]}
+            )
+            integration.supportedFeatures = None
+
+            assert not UnknownSupportedFeatureValidator().obtain_invalid_content_items(
+                [integration]
+            )
 
 
 def test_unknown_feature_skipped_when_regional_rules_absent(mocker):

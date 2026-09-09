@@ -117,7 +117,10 @@ class IsSupportedFeaturesSubsetOfPack(BaseValidator[ContentTypes]):
         if not item_features:
             return set()
 
-        pack = getattr(item, "pack", None)
+        # `in_pack`, not the `pack` field: the latter is a lazily-filled cache
+        # that is None until something resolves it, so reading it directly
+        # would silently pass an item whose pack does restrict it.
+        pack = getattr(item, "in_pack", None)
         pack_features: Optional[List[str]] = (
             getattr(pack, "supportedFeatures", None) if pack else None
         )

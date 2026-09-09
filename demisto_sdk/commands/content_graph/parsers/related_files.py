@@ -214,7 +214,7 @@ class XifRelatedFile(TextFiles):
         # take only user/identity xdm paths that are assignment targets (followed by `=`)
         return set(
             re.findall(
-                r"(xdm(?:\.[a-zA-Z0-9_]+)*?\.(?:user|identity)(?:\.[a-zA-Z0-9_]+)+)\s*=",
+                r"(xdm\.(?:source|intermediate|target)(?:\.[a-zA-Z0-9_]+)*?\.(?:user|identity)(?:\.[a-zA-Z0-9_]+)+)\s*=",
                 content,
             )
         )

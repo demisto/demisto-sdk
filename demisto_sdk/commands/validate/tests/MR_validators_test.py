@@ -276,3 +276,22 @@ def test_UserFieldMissingIdentityValidator_skips_old_versioned_rule():
     assert not UserFieldMissingIdentityValidator().obtain_invalid_content_items(
         [modeling_rule]
     )
+
+
+def test_UserFieldMissingIdentityValidator_ignores_non_listed_prefix():
+    """
+    Given: A modeling rule XIF with a user field under a prefix that is not one of
+        source/intermediate/target (e.g. xdm.observer.user.*), with no identity field.
+    When: Calling UserFieldMissingIdentityValidator.obtain_invalid_content_items.
+    Then: The validation should not fail, because only source/intermediate/target
+        prefixes are checked.
+    """
+    rules = (
+        '[MODEL: dataset="user_identity_raw"]\n'
+        "alter\n"
+        "    xdm.observer.user.name = x;"
+    )
+    modeling_rule = create_modeling_rule_object(rules=rules)
+    assert not UserFieldMissingIdentityValidator().obtain_invalid_content_items(
+        [modeling_rule]
+    )

@@ -202,8 +202,7 @@ class XifRelatedFile(TextFiles):
         return set()
 
     def get_user_identity_fields(self) -> Set[str]:
-        """Return the `xdm.*.user.*` / `xdm.*.identity.*` fields assigned in the XIF (left of `=`).
-        """
+        """Return the `xdm.*.user.*` / `xdm.*.identity.*` fields assigned in the XIF (left of `=`)."""
         content = self.file_content
         if not content:
             return set()

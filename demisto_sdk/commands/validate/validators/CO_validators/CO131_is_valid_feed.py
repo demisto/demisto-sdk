@@ -33,7 +33,6 @@ Result granularity: one ``ValidationResult`` per offending handler
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Iterable, List, Optional
 
 from demisto_sdk.commands.content_graph.objects.connector import (

@@ -1374,10 +1374,6 @@ ERROR_CODE: Dict = {
         "code": "MR108",
         "related_field": "",
     },
-    "modeling_rule_user_field_missing_identity": {
-        "code": "MR109",
-        "related_field": "",
-    },
     # CR - Correlation Rules
     "correlation_rule_starts_with_hyphen": {
         "code": "CR100",

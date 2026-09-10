@@ -13,7 +13,7 @@ from configparser import ConfigParser
 from enum import Enum
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, FrozenSet, Iterator, List, Optional, Set, Union
+from typing import Any, Dict, FrozenSet, Iterator, List, Optional, Union
 
 from pydantic import BaseModel, Field, root_validator, validator
 

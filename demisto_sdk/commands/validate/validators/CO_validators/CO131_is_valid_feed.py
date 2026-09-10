@@ -37,7 +37,6 @@ from typing import Iterable, List, Optional
 
 from demisto_sdk.commands.content_graph.objects.connector import (
     Connector,
-    HandlerData,
 )
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (

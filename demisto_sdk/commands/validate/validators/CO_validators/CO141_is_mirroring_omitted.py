@@ -32,8 +32,7 @@ Non-XSOAR handlers are skipped.
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import FrozenSet, Iterable, List, Optional, Set
+from typing import FrozenSet, Iterable, List, Set
 
 from demisto_sdk.commands.content_graph.objects.connector import (
     Connector,

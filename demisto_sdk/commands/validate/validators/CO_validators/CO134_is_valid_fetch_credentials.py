@@ -16,13 +16,9 @@ swap the constants.
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Iterable, List, Optional
+from typing import Iterable, List
 
-from demisto_sdk.commands.content_graph.objects.connector import (
-    Connector,
-    HandlerData,
-)
+from demisto_sdk.commands.content_graph.objects.connector import Connector
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
     ConnectorsValidator,

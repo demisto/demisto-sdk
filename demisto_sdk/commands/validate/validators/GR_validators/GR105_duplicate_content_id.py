@@ -4,8 +4,8 @@ from abc import ABC
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.tools import get_relative_path_from_packs_dir
+from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects import (
-    AgentixAction,
     AgentixAgent,
     AgentixSkill,
 )
@@ -80,7 +80,6 @@ ContentTypes = Union[
     CaseField,
     CaseLayout,
     CaseLayoutRule,
-    AgentixAction,
     AgentixAgent,
     AgentixSkill,
     Collection,
@@ -118,5 +117,8 @@ class DuplicateContentIdValidator(BaseValidator[ContentTypes], ABC):
             for content_item, duplicates in self.graph.validate_duplicate_ids(
                 paths_of_content_items_to_validate
             )
+            # AgentixAction duplicate IDs are temporarily reported by GR117 (a warning)
+            # until the existing duplications in the private content repo are fixed.
+            if content_item.content_type != ContentType.AGENTIX_ACTION
             for duplicate in duplicates
         ]

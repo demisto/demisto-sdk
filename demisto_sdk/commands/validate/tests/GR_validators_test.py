@@ -95,6 +95,12 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR114_is_non_mandato
 from demisto_sdk.commands.validate.validators.GR_validators.GR115_action_name_changed_requires_skill_rn_list_files import (
     IsActionNameChangedRequiresSkillRNValidatorListFiles,
 )
+from demisto_sdk.commands.validate.validators.GR_validators.GR117_duplicate_agentix_action_id_all_files import (
+    DuplicateAgentixActionIdValidatorAllFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR117_duplicate_agentix_action_id_list_files import (
+    DuplicateAgentixActionIdValidatorListFiles,
+)
 from TestSuite.repo import Repo
 
 MP_XSOAR = [MarketplaceVersions.XSOAR.value]
@@ -501,6 +507,114 @@ def test_DuplicateContentIdValidatorAllFiles_is_invalid(prepared_graph_repo: Rep
         DuplicateContentIdValidatorAllFiles().obtain_invalid_content_items([])
     )
     assert len(validation_results) == 4
+
+
+def _repo_with_duplicate_agentix_action_ids(graph_repo: Repo) -> Repo:
+    """Create a repo with two AgentixActions, in different packs, sharing the same ID."""
+    for pack_name in ("ActionPack1", "ActionPack2"):
+        pack = graph_repo.create_pack(pack_name)
+        action = pack.create_agentix_action(f"{pack_name}Action")
+        action.create_default_agentix_action(
+            name=f"{pack_name}Action",
+            action_id="DuplicateActionId",
+            display=f"{pack_name} Action",
+        )
+        action.set_data(**{"commonfields.id": "DuplicateActionId"})
+    return graph_repo
+
+
+def test_DuplicateContentIdValidatorAllFiles_skips_agentix_actions(graph_repo: Repo):
+    """
+    Given:
+        - Two AgentixActions in different packs sharing the same ID.
+    When:
+        - Running the GR105 validation across the entire repository.
+    Then:
+        - No validation results are returned, since AgentixActions are temporarily
+          handled by GR117 instead.
+    """
+    repo = _repo_with_duplicate_agentix_action_ids(graph_repo)
+    BaseValidator.graph_interface = repo.create_graph()
+
+    validation_results = (
+        DuplicateContentIdValidatorAllFiles().obtain_invalid_content_items([])
+    )
+
+    assert validation_results == []
+
+
+def test_DuplicateAgentixActionIdValidatorAllFiles_is_invalid(graph_repo: Repo):
+    """
+    Given:
+        - Two AgentixActions in different packs sharing the same ID.
+    When:
+        - Running the GR117 validation across the entire repository.
+    Then:
+        - Both AgentixActions are reported as duplicates.
+    """
+    repo = _repo_with_duplicate_agentix_action_ids(graph_repo)
+    BaseValidator.graph_interface = repo.create_graph()
+
+    validation_results = (
+        DuplicateAgentixActionIdValidatorAllFiles().obtain_invalid_content_items([])
+    )
+
+    assert len(validation_results) == 2
+    assert all(
+        "Duplicate ID 'DuplicateActionId' found in" in result.message
+        for result in validation_results
+    )
+
+
+def test_DuplicateAgentixActionIdValidatorListFiles_is_invalid(graph_repo: Repo):
+    """
+    Given:
+        - Two AgentixActions in different packs sharing the same ID.
+    When:
+        - Running the GR117 validation on one of the duplicated actions.
+    Then:
+        - Only the given action is reported as a duplicate.
+    """
+    repo = _repo_with_duplicate_agentix_action_ids(graph_repo)
+    graph_interface = repo.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    action = repo.packs[0].agentix_actions[0].get_graph_object(graph_interface)
+    validation_results = (
+        DuplicateAgentixActionIdValidatorListFiles().obtain_invalid_content_items(
+            [action]
+        )
+    )
+
+    assert len(validation_results) == 1
+    assert "Duplicate ID 'DuplicateActionId' found in" in validation_results[0].message
+
+
+def test_DuplicateAgentixActionIdValidator_is_valid(graph_repo: Repo):
+    """
+    Given:
+        - Two AgentixActions in different packs with different IDs.
+    When:
+        - Running the GR117 validation across the entire repository.
+    Then:
+        - No validation results are returned.
+    """
+    for pack_name in ("ActionPack1", "ActionPack2"):
+        pack = graph_repo.create_pack(pack_name)
+        action = pack.create_agentix_action(f"{pack_name}Action")
+        action.create_default_agentix_action(
+            name=f"{pack_name}Action",
+            action_id=f"{pack_name}ActionId",
+            display=f"{pack_name} Action",
+        )
+        action.set_data(**{"commonfields.id": f"{pack_name}ActionId"})
+    BaseValidator.graph_interface = graph_repo.create_graph()
+
+    validation_results = (
+        DuplicateAgentixActionIdValidatorAllFiles().obtain_invalid_content_items([])
+    )
+
+    assert validation_results == []
 
 
 @pytest.fixture

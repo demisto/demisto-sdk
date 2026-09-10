@@ -1,15 +1,16 @@
 from __future__ import annotations
 
-from typing import Iterable, List
+from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.constants import ExecutionMode
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
+from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.validate.validators.base_validator import ValidationResult
 from demisto_sdk.commands.validate.validators.GR_validators.GR117_duplicate_agentix_action_id import (
     DuplicateAgentixActionIdValidator,
 )
 
-ContentTypes = AgentixAction
+ContentTypes = Union[AgentixAction, AgentixAgent]
 
 
 class DuplicateAgentixActionIdValidatorListFiles(DuplicateAgentixActionIdValidator):

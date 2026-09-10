@@ -617,6 +617,62 @@ def test_DuplicateAgentixActionIdValidator_is_valid(graph_repo: Repo):
     assert validation_results == []
 
 
+def _repo_with_duplicate_agentix_agent_ids(graph_repo: Repo) -> Repo:
+    """Create a repo with two AgentixAgents, in different packs, sharing the same ID."""
+    for pack_name in ("AgentPack1", "AgentPack2"):
+        pack = graph_repo.create_pack(pack_name)
+        agent = pack.create_agentix_agent(f"{pack_name}Agent")
+        agent.create_default_agentix_agent(
+            name=f"{pack_name}Agent",
+            agent_id="DuplicateAgentId",
+        )
+        agent.set_data(**{"commonfields.id": "DuplicateAgentId"})
+    return graph_repo
+
+
+def test_DuplicateContentIdValidatorAllFiles_skips_agentix_agents(graph_repo: Repo):
+    """
+    Given:
+        - Two AgentixAgents in different packs sharing the same ID.
+    When:
+        - Running the GR105 validation across the entire repository.
+    Then:
+        - No validation results are returned, since AgentixAgents are temporarily
+          handled by GR117 instead.
+    """
+    repo = _repo_with_duplicate_agentix_agent_ids(graph_repo)
+    BaseValidator.graph_interface = repo.create_graph()
+
+    validation_results = (
+        DuplicateContentIdValidatorAllFiles().obtain_invalid_content_items([])
+    )
+
+    assert validation_results == []
+
+
+def test_DuplicateAgentixActionIdValidatorAllFiles_agents_is_invalid(graph_repo: Repo):
+    """
+    Given:
+        - Two AgentixAgents in different packs sharing the same ID.
+    When:
+        - Running the GR117 validation across the entire repository.
+    Then:
+        - Both AgentixAgents are reported as duplicates.
+    """
+    repo = _repo_with_duplicate_agentix_agent_ids(graph_repo)
+    BaseValidator.graph_interface = repo.create_graph()
+
+    validation_results = (
+        DuplicateAgentixActionIdValidatorAllFiles().obtain_invalid_content_items([])
+    )
+
+    assert len(validation_results) == 2
+    assert all(
+        "Duplicate ID 'DuplicateAgentId' found in" in result.message
+        for result in validation_results
+    )
+
+
 @pytest.fixture
 def repo_for_test(graph_repo):
     # A repository with 3 packs:

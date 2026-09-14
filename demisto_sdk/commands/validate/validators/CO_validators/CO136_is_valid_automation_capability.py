@@ -61,6 +61,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ConnectorsValidator,
     ValidationResult,
 )
+
 ContentTypes = Connector
 
 # ============================================================
@@ -158,9 +159,7 @@ class IsValidAutomationCapabilityValidator(ConnectorsValidator[ContentTypes]):
                 if cap_id in checked_cap_ids:
                     continue
                 checked_cap_ids.add(cap_id)
-                issues.extend(
-                    self._check_capability_wiring(connector, handler, cap_id)
-                )
+                issues.extend(self._check_capability_wiring(connector, handler, cap_id))
         return issues
 
     def _check_capability_wiring(

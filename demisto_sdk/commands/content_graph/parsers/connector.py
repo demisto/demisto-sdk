@@ -604,7 +604,6 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
             computed_fields=computed_fields,
         )
 
-
     # ============================================================
     # Capability-handler mapping
     # ============================================================

@@ -763,7 +763,9 @@ def walk_visible_fields(
     results.extend(_walk_connection_profiles(connector, handler, serializer_rename))
     results.extend(_walk_capabilities_general(connector, handler, serializer_rename))
     results.extend(_walk_configurations_general(connector, handler, serializer_rename))
-    results.extend(_walk_configurations_capability(connector, handler, serializer_rename))
+    results.extend(
+        _walk_configurations_capability(connector, handler, serializer_rename)
+    )
     return results
 
 

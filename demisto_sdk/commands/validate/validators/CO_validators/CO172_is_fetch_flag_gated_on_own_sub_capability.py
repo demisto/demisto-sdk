@@ -197,4 +197,3 @@ class IsFetchFlagGatedOnOwnSubCapabilityValidator(ConnectorsValidator[ContentTyp
             )
 
         return problems
-

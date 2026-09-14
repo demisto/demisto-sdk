@@ -403,4 +403,3 @@ class IsFeedExpirationIntervalGatedValidator(ConnectorsValidator[ContentTypes]):
                 if isinstance(entry, dict):
                     out.append(entry)
         return out
-

@@ -177,9 +177,7 @@ def _combined_rename_map(connector: Connector) -> Dict[str, str]:
 # ============================================================
 # Field-shape sub-checks
 # ============================================================
-def _check_log_level_field_shape(
-    field: HandlerVisibleField, where: str
-) -> List[str]:
+def _check_log_level_field_shape(field: HandlerVisibleField, where: str) -> List[str]:
     """Return a list of shape sub-rule failures for a visible
     ``integrationLogLevel`` field. ``where`` is a locator string used
     in messages (e.g. ``"general_configurations entry #1"``).
@@ -350,27 +348,24 @@ class IsHandlerContainLoglevelValidator(ConnectorsValidator[ContentTypes]):
             field = visible[0]
             if field.raw_id not in seen_shape_raw_ids:
                 seen_shape_raw_ids.add(field.raw_id)
-                where = f"field group scoped to '{field.field_group_scope}'" \
-                    if field.field_group_scope else "general_configurations"
+                where = (
+                    f"field group scoped to '{field.field_group_scope}'"
+                    if field.field_group_scope
+                    else "general_configurations"
+                )
                 issues.extend(_check_log_level_field_shape(field, where))
 
             # Group-level checks require the raw group dict, which the
             # walker doesn't surface (by design — per-group metadata is
             # out of scope for a per-field walker).
-            group = self._find_containing_group(
-                connector, handler, field.raw_id
-            )
+            group = self._find_containing_group(connector, handler, field.raw_id)
             if group is None:
                 continue  # Defensive: walker & raw walk should agree.
 
             if is_grouped:
-                issues.extend(
-                    self._check_grouped_group_attrs(handler, group)
-                )
+                issues.extend(self._check_grouped_group_attrs(handler, group))
             else:
-                issues.extend(
-                    self._check_standard_group_coverage(handler, group)
-                )
+                issues.extend(self._check_standard_group_coverage(handler, group))
 
         # Duplicate detection at the file level (grouped OR standard).
         # A field-group that carries the log-level field but is NOT
@@ -516,9 +511,7 @@ class IsHandlerContainLoglevelValidator(ConnectorsValidator[ContentTypes]):
                 per_view_group[vg] = per_view_group.get(vg, 0) + 1
             for vg, count in per_view_group.items():
                 if count > 1:
-                    label = (
-                        f"view_group '{vg}'" if vg else "no-view_group group"
-                    )
+                    label = f"view_group '{vg}'" if vg else "no-view_group group"
                     issues.append(
                         f"grouped connector: {label} has {count} "
                         f"`integrationLogLevel` field-groups in "

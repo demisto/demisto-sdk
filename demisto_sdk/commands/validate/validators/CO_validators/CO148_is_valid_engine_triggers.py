@@ -181,9 +181,7 @@ def _handler_field_ids(connector: Connector, handler: HandlerData) -> Set[str]:
     return ids
 
 
-def _handler_proxy_alias_ids(
-    connector: Connector, handler: HandlerData
-) -> Set[str]:
+def _handler_proxy_alias_ids(connector: Connector, handler: HandlerData) -> Set[str]:
     """Return the set of raw connector field ids this handler consumes
     whose ``runtime_name`` is a CO120 proxy alias
     (``proxy`` / ``useproxy`` / ``use_proxy``).
@@ -195,7 +193,11 @@ def _handler_proxy_alias_ids(
     """
     ids: Set[str] = set()
     for vf in connector.visible_fields_for_handler(handler):
-        if vf.runtime_name in PROXY_ALIASES and isinstance(vf.raw_id, str) and vf.raw_id:
+        if (
+            vf.runtime_name in PROXY_ALIASES
+            and isinstance(vf.raw_id, str)
+            and vf.raw_id
+        ):
             ids.add(vf.raw_id)
     return ids
 

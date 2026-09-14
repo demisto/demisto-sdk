@@ -2852,9 +2852,7 @@ def _install_serializer_rename(handler, raw_id: str, runtime_name: str) -> None:
 
     if handler.serializer is None:
         handler.serializer = SerializerData(field_mappings=[], computed_fields=[])
-    existing = [
-        fm for fm in handler.serializer.field_mappings if fm.id != raw_id
-    ]
+    existing = [fm for fm in handler.serializer.field_mappings if fm.id != raw_id]
     existing.append(FieldMapping(id=raw_id, field_name=runtime_name))
     handler.serializer.field_mappings = existing
 
@@ -6641,9 +6639,7 @@ class TestCO130IsValidFetch:
         handler = connector.handlers[0]
         handler.metadata.module = "xsoar"
         handler.capabilities = [
-            HandlerCapability(
-                id=sub_cap, auth_options=[], workloads=[], actions=[]
-            )
+            HandlerCapability(id=sub_cap, auth_options=[], workloads=[], actions=[])
         ]
         handler.serializer = SerializerData(
             field_mappings=[
@@ -6687,18 +6683,14 @@ class TestCO130IsValidFetch:
             {
                 "metadata": {
                     "title": "Configuration",
-                    "description": (
-                        "Adjust and refine your configuration settings"
-                    ),
+                    "description": ("Adjust and refine your configuration settings"),
                 },
                 "view_groups": [],
                 "configurations": [namespaced_entry],
             },
         )
 
-        results = IsValidFetchValidator().obtain_invalid_content_items(
-            [connector]
-        )
+        results = IsValidFetchValidator().obtain_invalid_content_items([connector])
         assert results == []
 
 
@@ -9778,9 +9770,7 @@ class TestCO136IsValidAutomationCapability:
                 },
                 "view_groups": [],
                 "general_configurations": {
-                    "configurations": [
-                        {"fields": [_default_ignore_field()]}
-                    ]
+                    "configurations": [{"fields": [_default_ignore_field()]}]
                 },
                 "configurations": [
                     {"id": "automation-and-remediation", "configurations": []}
@@ -10966,8 +10956,7 @@ class TestCO139IsHandlerContainLoglevel:
         assert len(results) == 1
         msg = results[0].message
         assert (
-            "view_group 'qualysfim' has 2 `integrationLogLevel` field-groups"
-            in msg
+            "view_group 'qualysfim' has 2 `integrationLogLevel` field-groups" in msg
             or "must be exactly one per view_group" in msg
         )
 
@@ -12662,9 +12651,7 @@ def _stamp_proxy_resolved_param(
     """
     _inject_general_config_field(connector, raw_id)
     if runtime_name != raw_id:
-        _install_serializer_rename(
-            connector.handlers[0], raw_id, runtime_name
-        )
+        _install_serializer_rename(connector.handlers[0], raw_id, runtime_name)
     _invalidate_walker_cache(connector)
 
 
@@ -18994,9 +18981,7 @@ class TestCO175NoRemovedConnectorParams:
         connector = create_connector_object()
         old_connector = create_connector_object()
 
-        _set_resolved_params(
-            old_connector, ["proxy", "insecure", "url", "port"]
-        )
+        _set_resolved_params(old_connector, ["proxy", "insecure", "url", "port"])
         _set_resolved_params(connector, ["proxy", "insecure"])
         connector.old_base_content_object = old_connector
 
@@ -19061,9 +19046,7 @@ class TestCO175NoRemovedConnectorParams:
             {
                 "id": f"profile-{h_id}",
                 "type": "plain",
-                "configurations": [
-                    {"fields": [{"id": fid} for fid in fields]}
-                ],
+                "configurations": [{"fields": [{"id": fid} for fid in fields]}],
             }
             for h_id, fields in per_handler_fields.items()
         ]
@@ -19552,11 +19535,7 @@ def _set_connection_general_fields(connector, fields):
         connector.connection_file.file_content = file_content
     file_content["general_configurations"] = {
         "configurations": [
-            {
-                "fields": [
-                    f.dict(exclude_none=True, by_alias=False) for f in fields
-                ]
-            }
+            {"fields": [f.dict(exclude_none=True, by_alias=False) for f in fields]}
         ]
     }
     _invalidate_walker_cache(connector)

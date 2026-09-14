@@ -43,6 +43,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ConnectorsValidator,
     ValidationResult,
 )
+
 ContentTypes = Connector
 
 # ============================================================
@@ -147,4 +148,3 @@ class IsValidFeedValidator(ConnectorsValidator[ContentTypes]):
                 )
             )
         return results
-

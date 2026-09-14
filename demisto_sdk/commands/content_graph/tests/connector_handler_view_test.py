@@ -34,7 +34,6 @@ from demisto_sdk.commands.content_graph.objects.connector_handler_view import (
 )
 from demisto_sdk.commands.content_graph.parsers.connector import ConnectorParser
 
-
 # ============================================================
 # Test fixture factory
 # ============================================================
@@ -84,9 +83,8 @@ def _default_handler_yaml(
             "labels": {"xsoar-integration-id": "TestIntegration"},
             "args": {},
         },
-        "capabilities": capabilities or [
-            {"id": "test-capability", "auth_options": [{"id": "default"}]}
-        ],
+        "capabilities": capabilities
+        or [{"id": "test-capability", "auth_options": [{"id": "default"}]}],
         "test_connection": {"type": "ENDPOINT"},
     }
 
@@ -409,15 +407,11 @@ class TestGeneralConfigurationsScoping:
             handlers=[
                 _default_handler_yaml(
                     "xsoar-a",
-                    capabilities=[
-                        {"id": "cap-a", "auth_options": [{"id": "default"}]}
-                    ],
+                    capabilities=[{"id": "cap-a", "auth_options": [{"id": "default"}]}],
                 ),
                 _default_handler_yaml(
                     "xsoar-b",
-                    capabilities=[
-                        {"id": "cap-b", "auth_options": [{"id": "default"}]}
-                    ],
+                    capabilities=[{"id": "cap-b", "auth_options": [{"id": "default"}]}],
                 ),
             ],
         )
@@ -452,23 +446,23 @@ class TestGeneralConfigurationsScoping:
             handlers=[
                 _default_handler_yaml(
                     "xsoar-a",
-                    capabilities=[
-                        {"id": "cap-a", "auth_options": [{"id": "default"}]}
-                    ],
+                    capabilities=[{"id": "cap-a", "auth_options": [{"id": "default"}]}],
                 ),
                 _default_handler_yaml(
                     "xsoar-b",
-                    capabilities=[
-                        {"id": "cap-b", "auth_options": [{"id": "default"}]}
-                    ],
+                    capabilities=[{"id": "cap-b", "auth_options": [{"id": "default"}]}],
                 ),
             ],
         )
         handler_a = _get_handler(connector, "xsoar-a")
         handler_b = _get_handler(connector, "xsoar-b")
 
-        assert "shared_field" in {f.raw_id for f in walk_visible_fields(connector, handler_a)}
-        assert "shared_field" in {f.raw_id for f in walk_visible_fields(connector, handler_b)}
+        assert "shared_field" in {
+            f.raw_id for f in walk_visible_fields(connector, handler_a)
+        }
+        assert "shared_field" in {
+            f.raw_id for f in walk_visible_fields(connector, handler_b)
+        }
 
     def test_both_markers_and_semantics(self, tmp_path):
         """
@@ -589,10 +583,13 @@ class TestGroupedSubCapabilityDirectRead:
         handler = _get_handler(connector, "xsoar-tenable-sc")
         fields = walk_visible_fields(connector, handler)
 
-        per_cap = [f for f in fields if f.origin == FieldOrigin.CONFIGURATIONS_CAPABILITY]
-        assert {f.raw_id for f in per_cap} == {"assetsFetchInterval", "assetsMaxFetch"}, (
-            "Bug 3 regression: sub-cap configurations[] entry was dropped."
-        )
+        per_cap = [
+            f for f in fields if f.origin == FieldOrigin.CONFIGURATIONS_CAPABILITY
+        ]
+        assert {f.raw_id for f in per_cap} == {
+            "assetsFetchInterval",
+            "assetsMaxFetch",
+        }, "Bug 3 regression: sub-cap configurations[] entry was dropped."
         for f in per_cap:
             assert f.capability_id == "fetch-assets-and-vulnerabilities_tenable-sc"
             assert f.parent_capability_id == "fetch-assets-and-vulnerabilities"
@@ -625,9 +622,7 @@ class TestGroupedSubCapabilityDirectRead:
                 "configurations": [
                     {
                         "id": "fetch-assets-and-vulnerabilities_tenable-sc",
-                        "configurations": [
-                            {"fields": [{"id": "assetsFetchInterval"}]}
-                        ],
+                        "configurations": [{"fields": [{"id": "assetsFetchInterval"}]}],
                     }
                 ]
             },
@@ -672,11 +667,7 @@ class TestSerializerRename:
                 "metadata": {"title": "Capabilities"},
                 "general_configurations": {
                     "configurations": [
-                        {
-                            "fields": [
-                                {"id": "xsoar-splunkpy-v2_integrationLogLevel"}
-                            ]
-                        }
+                        {"fields": [{"id": "xsoar-splunkpy-v2_integrationLogLevel"}]}
                     ]
                 },
                 "capabilities": [{"id": "test-capability"}],
@@ -743,9 +734,7 @@ class TestSerializerRename:
                         "id": "akamai-default",
                         "type": "plain",
                         "view_group": "vg-akamai",
-                        "configurations": [
-                            {"fields": [{"id": "xsoar-akamai_engine"}]}
-                        ],
+                        "configurations": [{"fields": [{"id": "xsoar-akamai_engine"}]}],
                     }
                 ],
             },
@@ -810,9 +799,7 @@ class TestNoDedup:
                 "configurations": [
                     {
                         "id": "test-capability",
-                        "configurations": [
-                            {"fields": [{"id": "duplicated_id"}]}
-                        ],
+                        "configurations": [{"fields": [{"id": "duplicated_id"}]}],
                     }
                 ]
             },
@@ -1144,9 +1131,7 @@ class TestConnectorPublicMethods:
             },
         )
         handler = _get_handler(connector, "xsoar-test")
-        hit = connector.visible_field_for_handler_by_runtime_name(
-            handler, "duplicated"
-        )
+        hit = connector.visible_field_for_handler_by_runtime_name(handler, "duplicated")
         assert hit is not None
         assert hit.origin == FieldOrigin.CONNECTION_GENERAL
 
@@ -1171,9 +1156,7 @@ class TestConnectorPublicMethods:
             },
             serializers={
                 "xsoar-test": {
-                    "field_mappings": [
-                        {"id": "raw_only", "field_name": "runtime_name"}
-                    ]
+                    "field_mappings": [{"id": "raw_only", "field_name": "runtime_name"}]
                 }
             },
         )
@@ -1302,9 +1285,9 @@ class TestInvariants:
                 f"{f.source_file!r} for {f.raw_id!r}"
             )
             # And the file it points at must actually exist on disk.
-            assert f.source_file.exists(), (
-                f"source_file {f.source_file!r} for {f.raw_id!r} does not exist"
-            )
+            assert (
+                f.source_file.exists()
+            ), f"source_file {f.source_file!r} for {f.raw_id!r} does not exist"
 
     def test_non_xsoar_handler_still_walks(self, tmp_path):
         """Section 6 row 21: the walker is NOT xsoar-gated. Whether to
@@ -1424,9 +1407,7 @@ class TestConnectionWalkerRawYAMLOnly:
             "block, not the (empty) parsed model"
         )
 
-    def test_connection_general_seeded_only_via_file_content_is_visible(
-        self, tmp_path
-    ):
+    def test_connection_general_seeded_only_via_file_content_is_visible(self, tmp_path):
         """Same regression, for the general_configurations branch. Seed
         an extra field group via raw YAML after parse and assert the
         walker sees it.
@@ -1443,15 +1424,11 @@ class TestConnectionWalkerRawYAMLOnly:
 
         assert connector.connection is not None
         assert connector.connection.general_configurations is not None
-        assert (
-            connector.connection.general_configurations.configurations == []
-        )
+        assert connector.connection.general_configurations.configurations == []
 
         # Splice a general_configurations field group in via raw YAML.
         connector.connection_file.file_content["general_configurations"] = {
-            "configurations": [
-                {"fields": [{"id": "api_url"}, {"id": "verify_ssl"}]}
-            ]
+            "configurations": [{"fields": [{"id": "api_url"}, {"id": "verify_ssl"}]}]
         }
 
         try:
@@ -1461,9 +1438,7 @@ class TestConnectionWalkerRawYAMLOnly:
 
         fields = walk_visible_fields(connector, handler)
         general_ids = {
-            f.raw_id
-            for f in fields
-            if f.origin == FieldOrigin.CONNECTION_GENERAL
+            f.raw_id for f in fields if f.origin == FieldOrigin.CONNECTION_GENERAL
         }
         assert general_ids == {"api_url", "verify_ssl"}, (
             "Raw-YAML-only general_configurations seed must be visible "

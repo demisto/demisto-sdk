@@ -29,7 +29,7 @@ absent).
 
 from __future__ import annotations
 
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, Iterable, List
 
 from demisto_sdk.commands.content_graph.objects.connector import (
     ComputedFieldRule,
@@ -202,4 +202,3 @@ class IsCollectionSubCapabilityFetchFlagValidValidator(
                     f"capability_id={cap_id!r} value='on'"
                 )
         return problems
-

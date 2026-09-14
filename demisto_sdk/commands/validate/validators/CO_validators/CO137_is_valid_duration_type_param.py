@@ -65,7 +65,7 @@ DURATION_FIELD_TYPE: str = "duration"
 # Walker migration: the walker exposes ``vf.origin.file_label``
 # ("connection.yaml" / "capabilities.yaml" / "configurations.yaml")
 # directly, so we don't need to map by hand. But keeping this local
-# alias documents the two files CO137 cares about — 
+# alias documents the two files CO137 cares about —
 # capabilities.yaml is intentionally excluded because duration fields live in
 # connection.yaml (general + profiles) and configurations.yaml
 # (general + per-capability) only.
@@ -246,13 +246,14 @@ class IsValidDurationTypeParamValidator(ConnectorsValidator[ContentTypes]):
                 # Capabilities.yaml duration fields would be dead content
                 # per §2.11 (which puts duration fields under
                 # connection/configurations only) — guard defensively.
-                if vf.origin not in _CONNECTION_YAML_ORIGINS | _CONFIGURATIONS_YAML_ORIGINS:
+                if (
+                    vf.origin
+                    not in _CONNECTION_YAML_ORIGINS | _CONFIGURATIONS_YAML_ORIGINS
+                ):
                     continue
 
                 raw_dict = vf.raw_dict or {}
-                field_issues = _check_duration_field(
-                    raw_dict, _location_label(vf)
-                )
+                field_issues = _check_duration_field(raw_dict, _location_label(vf))
                 if field_issues:
                     if first_bad_path is None:
                         first_bad_path = Path(vf.source_file)

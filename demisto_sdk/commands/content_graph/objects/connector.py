@@ -13,7 +13,16 @@ from configparser import ConfigParser
 from enum import Enum
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, FrozenSet, Iterator, List, Optional, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    FrozenSet,
+    Iterator,
+    List,
+    Optional,
+    Union,
+)
 
 from pydantic import BaseModel, Field, root_validator, validator
 
@@ -34,6 +43,15 @@ from demisto_sdk.commands.content_graph.parsers.related_files import (
     SummaryRelatedFile,
     TriggersRelatedFile,
 )
+
+if TYPE_CHECKING:
+    # Imported for type checking only: ``connector_handler_view`` imports
+    # this module at runtime, so a real import here would be circular.
+    # The walker is imported lazily inside the method bodies instead.
+    from demisto_sdk.commands.content_graph.objects.connector_handler_view import (
+        FieldOrigin,
+        HandlerVisibleField,
+    )
 
 json = JSON_Handler()
 
@@ -839,9 +857,7 @@ class HandlerData(BaseModel):
             return False
         for rule in self.serializer.computed_fields or []:
             outputs = rule.output or []
-            has_flag = any(
-                out.id == flag_id and out.value is True for out in outputs
-            )
+            has_flag = any(out.id == flag_id and out.value is True for out in outputs)
             if not has_flag:
                 continue
             for group in rule.any_of or []:
@@ -1156,7 +1172,7 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
         Empty result cases:
         - Standard connector — no profile carries ``view_group``.
         - Grouped connector, anonymous handler — no ``auth_options``
-          to walk (this should not be valid case, 
+          to walk (this should not be valid case,
           but is caught as a hard error at a higher layer;
           this helper stays silent so it can be called during error
           reporting without extra guards).
@@ -1192,7 +1208,7 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
 
     def visible_fields_for_handler(
         self, handler: HandlerData
-    ) -> List["HandlerVisibleField"]:  # noqa: F821 (forward ref, imported lazily inside body to avoid circular import)
+    ) -> List["HandlerVisibleField"]:
         """All connector fields visible to ``handler``, in deterministic
         walker order.
 
@@ -1208,7 +1224,7 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
 
     def visible_field_for_handler_by_runtime_name(
         self, handler: HandlerData, name: str
-    ) -> Optional["HandlerVisibleField"]:  # noqa: F821 (forward ref)
+    ) -> Optional["HandlerVisibleField"]:
         """First-match lookup by post-serializer integration runtime name.
 
         Returns ``None`` when no visible field has that runtime name for
@@ -1221,8 +1237,10 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
         return None
 
     def visible_fields_for_handler_by_origin(
-        self, handler: HandlerData, origin: "FieldOrigin"  # noqa: F821 (forward ref)
-    ) -> List["HandlerVisibleField"]:  # noqa: F821 (forward ref)
+        self,
+        handler: HandlerData,
+        origin: "FieldOrigin",
+    ) -> List["HandlerVisibleField"]:
         """Fields filtered by :class:`FieldOrigin`.
         Allows filtering fields by their physical origin (``configurations.yaml``, ``connection.yaml``, ``capabilities.yaml``) after the walker has
         flattened them into a single list. This is useful for validators that need to check only fields from a specific source.
@@ -1234,9 +1252,7 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
             f for f in self.visible_fields_for_handler(handler) if f.origin == origin
         ]
 
-    def raw_configurations_entry(
-        self, capability_id: str
-    ) -> Optional[Dict[str, Any]]:
+    def raw_configurations_entry(self, capability_id: str) -> Optional[Dict[str, Any]]:
         """Return the raw ``configurations.yaml`` ``configurations[]``
         entry whose ``id`` equals ``capability_id``, or ``None`` when the
         file is missing / malformed / has no entry for that cap id.

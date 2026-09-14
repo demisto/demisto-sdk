@@ -60,7 +60,7 @@ ContentTypes = Connector
 # The 6 field ids that MAY carry ``metadata.xsoar.config_type:
 # "backend"``. All matches use the post-serializer RUNTIME name.
 #
-# ``outgoingMapperId`` is intentionally NOT included - CO141 
+# ``outgoingMapperId`` is intentionally NOT included - CO141
 # forbids it as a user-visible field on Platform. If it does
 # appear, CO141 will flag it.
 WHITELISTED_BACKEND_PARAMS: FrozenSet[str] = frozenset(

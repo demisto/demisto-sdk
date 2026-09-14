@@ -2925,9 +2925,7 @@ class TestConnectorHandlerIgnoreFiltering:
             manager.validation_results, "extend_validation_results"
         )
         mocker.patch.object(manager, "add_invalid_content_items")
-        mocker.patch.object(
-            manager.validation_results, "post_results", return_value=0
-        )
+        mocker.patch.object(manager.validation_results, "post_results", return_value=0)
 
         manager.run_validations()
 

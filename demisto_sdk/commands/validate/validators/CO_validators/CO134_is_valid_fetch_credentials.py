@@ -24,6 +24,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ConnectorsValidator,
     ValidationResult,
 )
+
 ContentTypes = Connector
 
 # ============================================================
@@ -77,9 +78,7 @@ class IsValidFetchCredentialsValidator(ConnectorsValidator[ContentTypes]):
         results: List[ValidationResult] = []
         for handler in connector.xsoar_handlers:
             per_handler_issues: List[str] = []
-            for cap_id in handler.capability_ids_matching(
-                FETCH_CREDENTIALS_CAPABILITY
-            ):
+            for cap_id in handler.capability_ids_matching(FETCH_CREDENTIALS_CAPABILITY):
                 if not handler.serializer_emits_capability_flag(
                     FETCH_CREDENTIALS_FLAG, cap_id
                 ):
@@ -105,4 +104,3 @@ class IsValidFetchCredentialsValidator(ConnectorsValidator[ContentTypes]):
                 )
             )
         return results
-

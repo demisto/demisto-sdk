@@ -46,6 +46,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ConnectorsValidator,
     ValidationResult,
 )
+
 ContentTypes = Connector
 
 FETCH_ASSETS_CAPABILITY = "fetch-assets-and-vulnerabilities"
@@ -218,4 +219,3 @@ class IsValidFetchAssetsValidator(ConnectorsValidator[ContentTypes]):
             if vf.runtime_name == FETCH_ASSETS_INTERVAL_FIELD:
                 return True
         return False
-

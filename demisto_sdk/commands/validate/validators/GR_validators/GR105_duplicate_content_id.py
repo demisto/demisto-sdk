@@ -4,7 +4,6 @@ from abc import ABC
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.tools import get_relative_path_from_packs_dir
-from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects import (
     AgentixSkill,
 )

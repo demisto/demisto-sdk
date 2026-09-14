@@ -128,8 +128,18 @@ class ValidateManager:
                             in filtered_content_objects_for_validator
                         ]
                     try:
-                        # check if the validator error code appears in ALWAYS_RUN_ON_ERROR_CODE
-                        if validator.error_code in ALWAYS_RUN_ON_ERROR_CODE:
+                        # Run the post-hoc per-result filter when either:
+                        #   * the validator is in ALWAYS_RUN_ON_ERROR_CODE (its results
+                        #     must be produced first, then filtered) , or
+                        #   * the batch is a connector handler/serializer validation,
+                        #     whose per-handler `.connector-ignore` scoping can only be
+                        #     resolved after the results exist (one result per handler).
+                        if validator.error_code in ALWAYS_RUN_ON_ERROR_CODE or (
+                            validation_results
+                            and self._is_connector_handler_validation(
+                                validation_results[0]
+                            )
+                        ):
                             validation_results = self.filter_validation_results(
                                 validation_results
                             )

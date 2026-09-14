@@ -76,8 +76,6 @@ class StrictPackMetadata(BaseStrictModel):
     modules: List[str] = Field(default_factory=list)
     integrations: Optional[List[str]] = Field(default_factory=list)
     hybrid: bool = Field(False, alias="hybrid")
-    default_data_source_id: Optional[str] = Field(None, alias="defaultDataSource")
-    default_data_source_name: Optional[str] = Field(None, exclude=True)
     beta: Optional[bool] = None
     dependencies: Optional[dict] = Field(default_factory=dict)
     deprecated: Optional[bool] = None

@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where the `ST110` validation was incorrectly flagging valid `supportlevelheader` values (community, partner, developer, xsoar) as false positives in integration YMLs.
+  type: fix
+pr_number: '5488'

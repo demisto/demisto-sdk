@@ -115,10 +115,5 @@ class DuplicateContentIdValidator(BaseValidator[ContentTypes], ABC):
             for content_item, duplicates in self.graph.validate_duplicate_ids(
                 paths_of_content_items_to_validate
             )
-            # AgentixAction and AgentixAgent duplicate IDs are temporarily reported by
-            # GR117 (a warning) until the existing duplications in the private content
-            # repo are fixed.
-            if content_item.content_type
-            not in (ContentType.AGENTIX_ACTION, ContentType.AGENTIX_AGENT)
             for duplicate in duplicates
         ]

@@ -54,7 +54,5 @@ class DuplicateAgentixActionIdValidator(BaseValidator[ContentTypes], ABC):
             for content_item, duplicates in self.graph.validate_duplicate_ids(
                 paths_of_content_items_to_validate
             )
-            if content_item.content_type
-            in (ContentType.AGENTIX_ACTION, ContentType.AGENTIX_AGENT)
             for duplicate in duplicates
         ]

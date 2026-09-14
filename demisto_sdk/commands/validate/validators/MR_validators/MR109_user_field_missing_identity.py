@@ -33,7 +33,6 @@ class UserFieldMissingIdentityValidator(BaseValidator[ContentTypes]):
     related_field = "XIF"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.XIF]
-    expected_execution_mode = [ExecutionMode.USE_GIT, ExecutionMode.SPECIFIC_FILES]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

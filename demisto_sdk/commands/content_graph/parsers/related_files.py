@@ -2,6 +2,7 @@ import ast
 import base64
 import re
 from abc import ABC
+from collections import Counter
 from enum import Enum
 from functools import cached_property
 from pathlib import Path
@@ -201,17 +202,21 @@ class XifRelatedFile(TextFiles):
             return {dataset_name.strip('"') for dataset_name in dataset}
         return set()
 
-    def get_user_identity_fields(self) -> Set[str]:
-        """Return the `xdm.*.user.*` / `xdm.*.identity.*` fields assigned in the XIF (left of `=`)."""
+    def get_user_identity_fields(self) -> Counter:
+        """Count `xdm.*.user.*` / `xdm.*.identity.*` assignments in the XIF (left of `=`).
+
+        Returns a Counter mapping each assigned field path to how many times it is
+        assigned, so callers can compare user vs identity assignment counts.
+        """
         content = self.file_content
         if not content:
-            return set()
+            return Counter()
         # drop comments
         content = re.sub(r"//[^\n]*", " ", content)
         # drop backticks
         content = content.replace("`", "")
-        # take only user/identity xdm paths that are assignment targets (followed by `=`)
-        return set(
+        # count every user/identity xdm path that is an assignment target (followed by `=`)
+        return Counter(
             re.findall(
                 r"(xdm\.(?:source|intermediate|target)(?:\.[a-zA-Z0-9_]+)*?\.(?:user|identity)(?:\.[a-zA-Z0-9_]+)+)\s*=",
                 content,

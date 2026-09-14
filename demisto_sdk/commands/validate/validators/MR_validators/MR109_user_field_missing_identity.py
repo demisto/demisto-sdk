@@ -43,12 +43,14 @@ class UserFieldMissingIdentityValidator(BaseValidator[ContentTypes]):
             # only the latest modeling rule (no explicit toversion) is validated
             if content_item.toversion != DEFAULT_CONTENT_ITEM_TO_VERSION:
                 continue
-            fields = content_item.xif_file.get_user_identity_fields()
+            field_counts = content_item.xif_file.get_user_identity_fields()
+            # each xdm.*.user.* field must be mapped at least as many times as its
+            # matching xdm.*.identity.* field
             missing = sorted(
                 field
-                for field in fields
+                for field, user_count in field_counts.items()
                 if ".user." in field
-                and field.replace(".user.", ".identity.", 1) not in fields
+                and field_counts[field.replace(".user.", ".identity.", 1)] < user_count
             )
             if missing:
                 results.append(

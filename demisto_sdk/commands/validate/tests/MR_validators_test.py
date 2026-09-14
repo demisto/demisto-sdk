@@ -295,3 +295,47 @@ def test_UserFieldMissingIdentityValidator_ignores_non_listed_prefix():
     assert not UserFieldMissingIdentityValidator().obtain_invalid_content_items(
         [modeling_rule]
     )
+
+
+def test_UserFieldMissingIdentityValidator_unequal_counts_fail():
+    """
+    Given: A modeling rule XIF that assigns xdm.source.user.username twice but its
+        matching xdm.source.identity.username only once (one identity mapping was
+        removed from one of the blocks).
+    When: Calling UserFieldMissingIdentityValidator.obtain_invalid_content_items.
+    Then: The validation should fail, because the number of user assignments must
+        equal the number of matching identity assignments.
+    """
+    rules = (
+        '[MODEL: dataset="user_identity_raw"]\n'
+        "alter\n"
+        "    xdm.source.user.username = a, xdm.source.identity.username = a;\n"
+        "alter\n"
+        "    xdm.source.user.username = b;"
+    )
+    modeling_rule = create_modeling_rule_object(rules=rules)
+    results = UserFieldMissingIdentityValidator().obtain_invalid_content_items(
+        [modeling_rule]
+    )
+    assert len(results) == 1
+    assert "xdm.source.user.username" in results[0].message
+
+
+def test_UserFieldMissingIdentityValidator_equal_counts_valid():
+    """
+    Given: A modeling rule XIF that assigns xdm.source.user.username twice and its
+        matching xdm.source.identity.username twice (in separate blocks).
+    When: Calling UserFieldMissingIdentityValidator.obtain_invalid_content_items.
+    Then: The validation should not fail, because the counts match.
+    """
+    rules = (
+        '[MODEL: dataset="user_identity_raw"]\n'
+        "alter\n"
+        "    xdm.source.user.username = a, xdm.source.identity.username = a;\n"
+        "alter\n"
+        "    xdm.source.user.username = b, xdm.source.identity.username = b;"
+    )
+    modeling_rule = create_modeling_rule_object(rules=rules)
+    assert not UserFieldMissingIdentityValidator().obtain_invalid_content_items(
+        [modeling_rule]
+    )

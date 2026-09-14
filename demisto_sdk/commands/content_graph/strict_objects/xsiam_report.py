@@ -9,7 +9,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
     SUFFIXED_ID_DYNAMIC_MODEL,
     BaseStrictModel,
-    SupportedFeaturesMixin,
+    SupportedFeaturesList,
     create_model,
 )
 
@@ -69,7 +69,8 @@ WidgetsData = create_model(
 )
 
 
-class _StrictXSIAMReport(SupportedFeaturesMixin):
+class _StrictXSIAMReport(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     templates_data: List[TemplatesData]
     widgets_data: Optional[List[WidgetsData]] = None  # type:ignore[valid-type]
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")

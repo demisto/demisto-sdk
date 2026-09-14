@@ -9,12 +9,14 @@ from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import 
     StrictGenericIncidentType,
 )
 from demisto_sdk.commands.content_graph.strict_objects.common import (
-    SupportedFeaturesMixin,
+    BaseStrictModel,
+    SupportedFeaturesList,
     create_model,
 )
 
 
-class _StrictIncidentType(SupportedFeaturesMixin):
+class _StrictIncidentType(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     marketplaces: Optional[List[MarketplaceVersions]] = Field(
         None, alias="marketplaces"
     )

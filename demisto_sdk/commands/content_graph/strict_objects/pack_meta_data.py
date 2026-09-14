@@ -8,7 +8,8 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.content_graph.strict_objects.common import (
-    SupportedFeaturesMixin,
+    BaseStrictModel,
+    SupportedFeaturesList,
 )
 
 
@@ -19,7 +20,9 @@ class PackSupportOption(StrEnum):
     DEVELOPER_SUPPORT = "developer"
 
 
-class StrictPackMetadata(SupportedFeaturesMixin):
+class StrictPackMetadata(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
+
     @validator("current_version")
     def is_valid_current_version(cls, value: str) -> str:
         """

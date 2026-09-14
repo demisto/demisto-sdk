@@ -5,12 +5,14 @@ from pydantic import Field
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     NAME_DYNAMIC_MODEL,
     SUFFIXED_ID_DYNAMIC_MODEL,
-    SupportedFeaturesMixin,
+    BaseStrictModel,
+    SupportedFeaturesList,
     create_model,
 )
 
 
-class _StrictGenericDefinition(SupportedFeaturesMixin):
+class _StrictGenericDefinition(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     id_: str = Field(alias="id")
     name: str
     partitioned: Optional[bool] = None

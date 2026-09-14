@@ -21,7 +21,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     SCRIPT_ID_DYNAMIC_MODEL,
     VALUE_DYNAMIC_MODEL,
     BaseStrictModel,
-    SupportedFeaturesMixin,
+    SupportedFeaturesList,
     create_model,
 )
 
@@ -278,7 +278,8 @@ TaskPlaybook = create_model(
 )
 
 
-class StrictPlaybook(SupportedFeaturesMixin):
+class StrictPlaybook(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     content_item_exportable_fields: Optional[ContentItemExportableFields] = Field(
         None, alias="contentitemexportablefields"
     )

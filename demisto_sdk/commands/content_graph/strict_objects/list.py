@@ -9,12 +9,14 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
     NAME_DYNAMIC_MODEL,
     SUFFIXED_ID_DYNAMIC_MODEL,
-    SupportedFeaturesMixin,
+    BaseStrictModel,
+    SupportedFeaturesList,
     create_model,
 )
 
 
-class _StrictList(SupportedFeaturesMixin):
+class _StrictList(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     all_read: Optional[bool] = Field(None, alias="allRead")
     all_read_write: Optional[bool] = Field(None, alias="allReadWrite")
     data: Optional[str] = None

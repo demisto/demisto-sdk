@@ -12,12 +12,14 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
     NAME_DYNAMIC_MODEL,
     SUFFIXED_ID_DYNAMIC_MODEL,
-    SupportedFeaturesMixin,
+    BaseStrictModel,
+    SupportedFeaturesList,
     create_model,
 )
 
 
-class _StrictWidget(SupportedFeaturesMixin):
+class _StrictWidget(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     id_: str = Field(alias="id")
     version: int
     name: str

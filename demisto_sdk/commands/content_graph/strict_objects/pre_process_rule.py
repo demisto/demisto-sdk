@@ -8,7 +8,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     NAME_DYNAMIC_MODEL,
     SUFFIXED_ID_DYNAMIC_MODEL,
     BaseStrictModel,
-    SupportedFeaturesMixin,
+    SupportedFeaturesList,
     create_model,
 )
 
@@ -18,7 +18,8 @@ class Period(BaseStrictModel):
     from_value: Optional[int] = Field(None, alias="fromValue")
 
 
-class _StrictPreProcessRule(SupportedFeaturesMixin):
+class _StrictPreProcessRule(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     action: str
     enabled: bool
     existing_events_filters: List[Any] = Field(

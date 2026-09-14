@@ -10,7 +10,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     ID_DYNAMIC_MODEL,
     NAME_DYNAMIC_MODEL,
     BaseStrictModel,
-    SupportedFeaturesMixin,
+    SupportedFeaturesList,
     create_model,
 )
 
@@ -89,11 +89,13 @@ class Mapping(BaseStrictModel):
     sections: Optional[List[Section]] = None  # type:ignore[valid-type]
 
 
-class _StrictLayout(SupportedFeaturesMixin):
+class _StrictLayout(BaseStrictModel):
     """
     This is the layout-container item in Content repo.
     Since there are no layouts in Content, StrictLayout is for layout-container same like the graph.
     """
+
+    supportedFeatures: Optional[SupportedFeaturesList] = None
 
     id: str
     group: str = Field(..., enum=["incident", "indicator", "case"])

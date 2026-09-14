@@ -12,12 +12,14 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
     ID_DYNAMIC_MODEL,
     NAME_DYNAMIC_MODEL,
-    SupportedFeaturesMixin,
+    BaseStrictModel,
+    SupportedFeaturesList,
     create_model,
 )
 
 
-class _StrictClassifier(SupportedFeaturesMixin):
+class _StrictClassifier(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     feed: Optional[bool] = None
     incident_samples: Optional[List[str]] = Field(None, alias="incidentSamples")
     indicator_samples: Optional[List[str]] = Field(None, alias="indicatorSamples")

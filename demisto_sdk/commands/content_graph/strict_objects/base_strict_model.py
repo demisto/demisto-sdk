@@ -22,7 +22,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     NAME_DYNAMIC_MODEL,
     REQUIRED_DYNAMIC_MODEL,
     BaseStrictModel,
-    SupportedFeaturesMixin,
+    SupportedFeaturesList,
     create_dynamic_model,
     create_model,
 )
@@ -141,7 +141,8 @@ class StructureError(BaseStrictModel):
         return f"Structure error ({self.error_type}) in field {field_name} of {self.path.name}: {error_message}"
 
 
-class _BaseIntegrationScript(SupportedFeaturesMixin):
+class _BaseIntegrationScript(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     name: str
     deprecated: Optional[bool] = None
     system: Optional[bool] = None
@@ -173,7 +174,8 @@ class ExtractSettings(BaseStrictModel):
     mode: Optional[str] = None
 
 
-class _StrictGenericIncidentType(SupportedFeaturesMixin):
+class _StrictGenericIncidentType(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     vc_should_ignore: Optional[bool] = Field(None, alias="vcShouldIgnore")
     sort_values: Optional[Any] = Field(None, alias="sortValues")
     locked: Optional[bool] = None
@@ -242,7 +244,8 @@ class AlertsFilter(BaseStrictModel):
     filter: Optional[Union[Or, And]] = None
 
 
-class AgentixBase(SupportedFeaturesMixin):
+class AgentixBase(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     common_fields: CommonFields = Field(..., alias="commonfields")  # type:ignore[valid-type]
     tags: Optional[list[str]] = None
     category: Optional[str] = None

@@ -124,18 +124,6 @@ class BaseStrictModel(BaseModel, ABC):
         return value
 
 
-class SupportedFeaturesMixin(BaseStrictModel):
-    """Adds the optional `supportedFeatures` field.
-
-    Declared once and mixed into every strict model that supports it, so the
-    field's type and validation live in a single place.
-    """
-
-    supportedFeatures: Optional[SupportedFeaturesList] = pydantic.Field(
-        None, alias="supportedFeatures"
-    )
-
-
 def create_model(model_name: str, base_models: tuple, **kwargs) -> BaseModel:
     """
     Wrapper for pydantic.create_model so type:ignore[call-overload] appears only once.

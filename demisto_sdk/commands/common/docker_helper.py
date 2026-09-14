@@ -150,6 +150,17 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
     else:
         msg = "docker client already available, using current DOCKER_CLIENT"
         logger.debug(f"{log_prompt} - {msg}" if log_prompt else msg)
+        # The client is a module-level singleton, so the timeout of whichever caller
+        # built it first would otherwise apply to every later caller. Raise it when a
+        # caller needs longer (e.g. create_container with DOCKER_CONTAINER_TIMEOUT),
+        # but never shrink it, so a short-timeout caller cannot starve a long one.
+        current_timeout = DOCKER_CLIENT.api.timeout
+        if current_timeout is None or timeout > current_timeout:
+            DOCKER_CLIENT.api.timeout = timeout
+            logger.debug(
+                f"{log_prompt} - upgrading docker client timeout from "
+                f"{current_timeout} to {timeout} seconds"
+            )
     return DOCKER_CLIENT
 
 

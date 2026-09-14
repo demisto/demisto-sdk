@@ -23,6 +23,177 @@ def test_init_global_docker_client():
         assert res == dhelper.DOCKER_CLIENT
 
 
+class FakeAPIClient:
+    """Minimal stand-in for docker.APIClient, which owns the request timeout."""
+
+    def __init__(self, timeout: int):
+        self.timeout = timeout
+
+
+class FakeDockerClient:
+    """Minimal stand-in for docker.DockerClient built by docker.from_env()."""
+
+    def __init__(self, timeout: int):
+        self.api = FakeAPIClient(timeout)
+        self.login = mock.MagicMock()
+        self.containers = mock.MagicMock()
+
+    def ping(self):
+        return True
+
+
+@pytest.fixture
+def reset_global_docker_client():
+    """Isolate the DOCKER_CLIENT module global so tests never leak it."""
+    original = dhelper.DOCKER_CLIENT
+    dhelper.DOCKER_CLIENT = None
+    yield
+    dhelper.DOCKER_CLIENT = original
+
+
+@pytest.fixture
+def fake_from_env(mocker):
+    """Patch docker.from_env so a FakeDockerClient is built, and record the kwargs."""
+
+    def _from_env(**kwargs):
+        return FakeDockerClient(timeout=kwargs["timeout"])
+
+    mocker.patch.object(dhelper, "docker_login")
+    return mocker.patch.object(dhelper.docker, "from_env", side_effect=_from_env)
+
+
+@pytest.mark.parametrize("is_gitlab_ci", [False, True])
+def test_init_global_docker_client_upgrades_timeout(
+    mocker, reset_global_docker_client, fake_from_env, is_gitlab_ci
+):
+    """
+    Given:
+        - A cached global docker client that was built with the default 60s timeout.
+
+    When:
+        - init_global_docker_client is called again requesting the longer
+          DOCKER_CONTAINER_TIMEOUT (300s), as create_container does.
+
+    Then:
+        - The cached client's effective request timeout is raised to 300s.
+
+    Regression test: the singleton was guarded by ``if DOCKER_CLIENT is None``, so
+    every later caller silently got the first caller's 60s ceiling. In content
+    nightly pipelines this surfaced as a 60s ReadTimeout against a slow DinD daemon.
+    """
+    # Given: a client first built at the 60s default, through either construction path
+    mocker.patch.object(dhelper, "IS_CONTENT_GITLAB_CI", is_gitlab_ci)
+    first = dhelper.init_global_docker_client()
+    assert fake_from_env.call_args.kwargs["timeout"] == 60
+    assert first.api.timeout == 60
+
+    # When: a later caller asks for the longer container timeout
+    second = dhelper.init_global_docker_client(timeout=300)
+
+    # Then: the existing client is reused but its timeout is upgraded to 300s
+    assert second is first
+    assert fake_from_env.call_count == 1
+    assert second.api.timeout == 300
+
+
+def test_init_global_docker_client_does_not_downgrade_timeout(
+    reset_global_docker_client, fake_from_env
+):
+    """
+    Given:
+        - A cached global docker client that was built with a 300s timeout.
+
+    When:
+        - init_global_docker_client is called again with the shorter 60s default.
+
+    Then:
+        - The client keeps its 300s timeout; an existing timeout is never shrunk.
+    """
+    # Given
+    first = dhelper.init_global_docker_client(timeout=300)
+    assert first.api.timeout == 300
+
+    # When
+    second = dhelper.init_global_docker_client(timeout=60)
+
+    # Then
+    assert second is first
+    assert second.api.timeout == 300
+
+
+def test_init_global_docker_client_reuses_client_instance(
+    reset_global_docker_client, fake_from_env
+):
+    """
+    Given:
+        - No global docker client yet.
+
+    When:
+        - init_global_docker_client is called several times with varying timeouts.
+
+    Then:
+        - The very same client object is returned every time, i.e. upgrading the
+          timeout does not rebuild the singleton and invalidate existing callers.
+    """
+    # When
+    clients = [
+        dhelper.init_global_docker_client(),
+        dhelper.init_global_docker_client(timeout=300),
+        dhelper.init_global_docker_client(timeout=120),
+    ]
+
+    # Then
+    assert all(client is clients[0] for client in clients)
+    assert fake_from_env.call_count == 1
+
+
+def test_create_image_commits_with_container_timeout(
+    mocker, reset_global_docker_client, fake_from_env
+):
+    """
+    Given:
+        - A global docker client already built at the default 60s timeout by an
+          earlier caller (e.g. the pre-commit docker hook logging in).
+
+    When:
+        - create_image runs, which pulls the base image, creates a container
+          (requesting DOCKER_CONTAINER_TIMEOUT) and then commits it.
+
+    Then:
+        - By the time container.commit is invoked, the shared client's timeout has
+          been raised to DOCKER_CONTAINER_TIMEOUT, so the commit is not capped at 60s.
+
+    Regression test: content nightly pipelines 12908277/12952714 hit
+    ``ReadTimeout ... (read timeout=60)`` from container.commit, because commit
+    inherits the shared client's timeout and nothing had ever raised it.
+    """
+    # Given: the singleton is first built by an unrelated caller at the 60s default
+    client = dhelper.init_global_docker_client()
+    assert client.api.timeout == 60
+
+    container = mock.MagicMock()
+    timeout_at_commit = {}
+    container.wait.return_value = {"StatusCode": 0}
+    container.commit.side_effect = lambda **kwargs: timeout_at_commit.update(
+        value=client.api.timeout
+    )
+    # The real create_container is kept, since it is the call that requests the
+    # longer timeout; only the daemon interaction underneath it is stubbed out.
+    client.containers.create.return_value = container
+    mocker.patch.object(dhelper.DockerBase, "pull_image")
+    mocker.patch.object(dhelper.DockerBase, "copy_files_container")
+
+    # When: create_image builds and commits the dev/test image
+    dhelper.DockerBase().create_image(
+        base_image="demisto/python3:3.10.0.12345",
+        image="devtestdemisto/python3:3.10.0.12345-abcdef",
+    )
+
+    # Then: the commit ran with the longer container timeout, not the 60s default
+    container.commit.assert_called_once()
+    assert timeout_at_commit["value"] == dhelper.DOCKER_CONTAINER_TIMEOUT
+
+
 @pytest.mark.parametrize(
     argnames="image, output, expected",
     argvalues=[

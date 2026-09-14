@@ -1,4 +1,14 @@
 # Changelog
+## 1.39.9 (2026-09-06)
+### Feature
+* Added support for "data_security" license. [#5515](https://github.com/demisto/demisto-sdk/pull/5515)
+* Added the is_long_running and long_running_timeout_seconds fields to the AgentixAction schema. [#5511](https://github.com/demisto/demisto-sdk/pull/5511)
+* Added support for the **mcps** field in the AgentixAgent schema. [#5509](https://github.com/demisto/demisto-sdk/pull/5509)
+
+### Internal
+* add pb-runner-v2 workload to validation CO162_is_valid_workloads [#5507](https://github.com/demisto/demisto-sdk/pull/5507)
+
+
 ## 1.39.8 (2026-08-24)
 ### Fix
 * Fixed an issue where the pack-level `[pack]` section of `.pack-ignore` was not honored for validators listed in `ALWAYS_RUN_ON_ERROR_CODE`. `ValidateManager.filter_validation_results` now consults both the content item's per-file `ignored_errors` and the pack's `pack_level_ignored_errors`. [#5503](https://github.com/demisto/demisto-sdk/pull/5503)

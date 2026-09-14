@@ -4,6 +4,7 @@ from abc import ABC
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.tools import get_relative_path_from_packs_dir
+from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -53,5 +54,7 @@ class DuplicateAgentixActionIdValidator(BaseValidator[ContentTypes], ABC):
             for content_item, duplicates in self.graph.validate_duplicate_ids(
                 paths_of_content_items_to_validate
             )
+            if content_item.content_type
+            in (ContentType.AGENTIX_ACTION, ContentType.AGENTIX_AGENT)
             for duplicate in duplicates
         ]

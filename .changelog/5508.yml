@@ -17,4 +17,6 @@ changes:
   type: fix
 - description: The **GR105** duplicate-ID validation now logs a warning, rather than an informational message, when **Config/regional_rules.json** is unavailable, since every duplicate ID is reported in that case regardless of the regions it is restricted to.
   type: fix
+- description: Fixed content items sharing an ID but declaring disjoint **supportedFeatures** being collapsed into a single entry in the pack metadata content items, so only one of them was listed. Such items are variants targeting different regions and are now all listed. Items sharing an ID and at least one feature, or where either declares none, are collapsed as before.
+  type: fix
 pr_number: 5508

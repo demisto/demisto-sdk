@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_TO_VERSION
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_TO_VERSION,
+    GitStatuses,
+)
 from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -30,6 +33,15 @@ class UserFieldMissingIdentityValidator(BaseValidator[ContentTypes]):
     related_field = "XIF"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.XIF]
+    # Only validate modeling rules that were added/modified/renamed in the current
+    # change set. Pre-existing modeling rules (git_status is None, e.g. during a
+    # full `validate -a` run) are intentionally skipped so that legacy rules that
+    # predate this validation do not fail the build.
+    expected_git_statuses = [
+        GitStatuses.ADDED,
+        GitStatuses.MODIFIED,
+        GitStatuses.RENAMED,
+    ]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

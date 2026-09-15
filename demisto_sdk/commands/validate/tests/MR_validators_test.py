@@ -1,6 +1,10 @@
 from demisto_sdk.commands.common.constants import (
     MODELING_RULE_ID_SUFFIX,
     MODELING_RULE_NAME_SUFFIX,
+    GitStatuses,
+)
+from demisto_sdk.commands.validate.validators.base_validator import (
+    should_run_according_to_status,
 )
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_modeling_rule_object,
@@ -16,6 +20,9 @@ from demisto_sdk.commands.validate.validators.MR_validators.MR107_is_schema_matc
 )
 from demisto_sdk.commands.validate.validators.MR_validators.MR108_invalid_modeling_rule_suffix_name import (
     ModelingRuleSuffixNameValidator,
+)
+from demisto_sdk.commands.validate.validators.MR_validators.MR109_user_field_missing_identity import (
+    UserFieldMissingIdentityValidator,
 )
 
 
@@ -192,3 +199,177 @@ def test_IsSchemaMatchXIFValidator_obtain_invalid_content_items():
         results[0].message
         == "There is a mismatch between datasets in schema file and in the xif file. Either there are more datasets declared in one of the files, or the datasets titles are not the same."
     )
+
+
+def test_UserFieldMissingIdentityValidator_valid():
+    """
+    Given: A modeling rule XIF where every user field has a matching identity field
+        (including a sub-namespace field and backtick-quoted identifiers).
+    When: Calling UserFieldMissingIdentityValidator.obtain_invalid_content_items.
+    Then: The validation should not fail.
+    """
+    rules = (
+        '[MODEL: dataset="user_identity_raw"]\n'
+        "alter\n"
+        "    xdm.source.user.username = a, xdm.source.identity.username = a,\n"
+        "    xdm.source.user.group.guid = g, xdm.source.identity.group.guid = g,\n"
+        "    xdm.target.`user`.name = b, xdm.target.`identity`.name = b;"
+    )
+    modeling_rule = create_modeling_rule_object(rules=rules)
+    assert not UserFieldMissingIdentityValidator().obtain_invalid_content_items(
+        [modeling_rule]
+    )
+
+
+def test_UserFieldMissingIdentityValidator_user_without_identity():
+    """
+    Given: A modeling rule XIF where a user field has no identity counterpart, the
+        counterpart only appears in a comment, and xdm.*.user.* also appears as a
+        right-hand-side argument (which must be ignored).
+    When: Calling UserFieldMissingIdentityValidator.obtain_invalid_content_items.
+    Then: The validation should fail and report the missing user field.
+    """
+    rules = (
+        '[MODEL: dataset="user_identity_raw"]\n'
+        "alter\n"
+        "    xdm.source.user.username = to_string(xdm.source.user.username), "
+        "// xdm.source.identity.username = x\n"
+        "    xdm.source.user.policy.name = p;"
+    )
+    modeling_rule = create_modeling_rule_object(rules=rules)
+    results = UserFieldMissingIdentityValidator().obtain_invalid_content_items(
+        [modeling_rule]
+    )
+    assert len(results) == 1
+    assert "xdm.source.user.username" in results[0].message
+    assert "xdm.source.user.policy.name" in results[0].message
+
+
+def test_UserFieldMissingIdentityValidator_identity_without_user_is_valid():
+    """
+    Given: A modeling rule XIF that maps only xdm.target.identity.username (no user).
+    When: Calling UserFieldMissingIdentityValidator.obtain_invalid_content_items.
+    Then: The validation should not fail (the check is only user -> identity).
+    """
+    rules = (
+        '[MODEL: dataset="user_identity_raw"]\n'
+        "alter\n"
+        "    xdm.target.identity.username = t;"
+    )
+    modeling_rule = create_modeling_rule_object(rules=rules)
+    assert not UserFieldMissingIdentityValidator().obtain_invalid_content_items(
+        [modeling_rule]
+    )
+
+
+def test_UserFieldMissingIdentityValidator_skips_old_versioned_rule():
+    """
+    Given: An old (non-latest) modeling rule - its yml has an explicit toversion -
+        that maps a user field with no identity counterpart.
+    When: Calling UserFieldMissingIdentityValidator.obtain_invalid_content_items.
+    Then: The validation should skip the old rule.
+    """
+    rules = (
+        '[MODEL: dataset="user_identity_raw"]\n'
+        "alter\n"
+        "    xdm.source.user.username = a;"
+    )
+    modeling_rule = create_modeling_rule_object(
+        paths=["toversion"], values=["8.8.0"], rules=rules
+    )
+    assert not UserFieldMissingIdentityValidator().obtain_invalid_content_items(
+        [modeling_rule]
+    )
+
+
+def test_UserFieldMissingIdentityValidator_ignores_non_listed_prefix():
+    """
+    Given: A modeling rule XIF with a user field under a prefix that is not one of
+        source/intermediate/target (e.g. xdm.observer.user.*), with no identity field.
+    When: Calling UserFieldMissingIdentityValidator.obtain_invalid_content_items.
+    Then: The validation should not fail, because only source/intermediate/target
+        prefixes are checked.
+    """
+    rules = (
+        '[MODEL: dataset="user_identity_raw"]\n'
+        "alter\n"
+        "    xdm.observer.user.name = x;"
+    )
+    modeling_rule = create_modeling_rule_object(rules=rules)
+    assert not UserFieldMissingIdentityValidator().obtain_invalid_content_items(
+        [modeling_rule]
+    )
+
+
+def test_UserFieldMissingIdentityValidator_unequal_counts_fail():
+    """
+    Given: A modeling rule XIF that assigns xdm.source.user.username twice but its
+        matching xdm.source.identity.username only once (one identity mapping was
+        removed from one of the blocks).
+    When: Calling UserFieldMissingIdentityValidator.obtain_invalid_content_items.
+    Then: The validation should fail, because the number of user assignments must
+        equal the number of matching identity assignments.
+    """
+    rules = (
+        '[MODEL: dataset="user_identity_raw"]\n'
+        "alter\n"
+        "    xdm.source.user.username = a, xdm.source.identity.username = a;\n"
+        "alter\n"
+        "    xdm.source.user.username = b;"
+    )
+    modeling_rule = create_modeling_rule_object(rules=rules)
+    results = UserFieldMissingIdentityValidator().obtain_invalid_content_items(
+        [modeling_rule]
+    )
+    assert len(results) == 1
+    assert "xdm.source.user.username" in results[0].message
+
+
+def test_UserFieldMissingIdentityValidator_equal_counts_valid():
+    """
+    Given: A modeling rule XIF that assigns xdm.source.user.username twice and its
+        matching xdm.source.identity.username twice (in separate blocks).
+    When: Calling UserFieldMissingIdentityValidator.obtain_invalid_content_items.
+    Then: The validation should not fail, because the counts match.
+    """
+    rules = (
+        '[MODEL: dataset="user_identity_raw"]\n'
+        "alter\n"
+        "    xdm.source.user.username = a, xdm.source.identity.username = a;\n"
+        "alter\n"
+        "    xdm.source.user.username = b, xdm.source.identity.username = b;"
+    )
+    modeling_rule = create_modeling_rule_object(rules=rules)
+    assert not UserFieldMissingIdentityValidator().obtain_invalid_content_items(
+        [modeling_rule]
+    )
+
+
+def test_UserFieldMissingIdentityValidator_scoped_to_changed_files():
+    """
+    Given: The MR109 validator class and its git-status gate.
+    When: Evaluating which git statuses the validator should run on.
+    Then: It runs only on ADDED/MODIFIED/RENAMED modeling rules, and is skipped
+        for pre-existing rules (git_status is None, as in a full `validate -a`
+        run) so legacy content does not fail the build.
+    """
+    validator = UserFieldMissingIdentityValidator()
+    assert validator.expected_git_statuses == [
+        GitStatuses.ADDED,
+        GitStatuses.MODIFIED,
+        GitStatuses.RENAMED,
+    ]
+    # Pre-existing content (no git status) is skipped.
+    assert (
+        should_run_according_to_status(None, validator.expected_git_statuses) is False
+    )
+    # Newly added/modified/renamed content is validated.
+    for status in (
+        GitStatuses.ADDED,
+        GitStatuses.MODIFIED,
+        GitStatuses.RENAMED,
+    ):
+        assert (
+            should_run_according_to_status(status, validator.expected_git_statuses)
+            is True
+        )

@@ -1524,6 +1524,7 @@ ALLOWED_IGNORE_ERRORS = (
         "RN115",
         "RN116",
         "MR108",
+        "MR109",
         "PR101",
         "LO107",
         "IN107",

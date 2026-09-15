@@ -26,11 +26,18 @@ from demisto_sdk.commands.common.tools import (
     get_pack_latest_rn_version,
 )
 from demisto_sdk.commands.content_graph.common import (
+    DERIVED_PACK_ALLOWED_SUPPORT_LEVELS,
+    DERIVED_PACK_SUFFIX,
+    ENABLE_SPLIT_PACKS,
     PACK_CONTRIBUTORS_FILENAME,
     PACK_METADATA_FILENAME,
     ContentType,
     Relationships,
     RelationshipType,
+    derived_pack_exclusions,
+    is_deprecated_content_item,
+    is_deprecated_pack,
+    resolve_derived_pack_source,
 )
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
 from demisto_sdk.commands.content_graph.parsers.content_item import (
@@ -50,6 +57,7 @@ from demisto_sdk.commands.content_graph.strict_objects.pack_meta_data import (
 from demisto_sdk.commands.content_graph.strict_objects.release_notes_config import (
     StrictReleaseNotesConfig,
 )
+from demisto_sdk.commands.upload.constants import CONTENT_TYPES_EXCLUDED_FROM_UPLOAD
 
 
 class PackContentItems:
@@ -205,6 +213,8 @@ class PackMetadataParser:
         self.source: str = metadata.get("source", "")
         self.managed: bool = metadata.get("managed", False)
         self.internal: bool = metadata.get("internal", False)
+        # Per-pack override of the derived twin's source; see ``resolve_derived_pack_source()``.
+        self.derived_source: Optional[str] = metadata.get("derivedSource")
 
         # Marketplace-suffixed managed/source fields (not private-pack specific).
         # Kept as-is here; they are resolved into the plain managed/source
@@ -331,11 +341,120 @@ class PackParser(BaseContentParser, PackMetadataParser):
             self.parse_pack_folders()
         self.get_rn_info(git_sha)
 
+        # Generate derived pack for split-pack candidates (feature-flagged)
+        self.derived_pack: Optional["DerivedPackParser"] = None
+        if ENABLE_SPLIT_PACKS and not metadata_only:
+            self.derived_pack = self._generate_derived_pack()
+
         logger.debug(f"Successfully parsed {self.node_id}")
 
     @property
     def object_id(self) -> Optional[str]:
         return self.path.name
+
+    def _is_item_tightly_coupled(self, content_item: "ContentItemParser") -> bool:
+        """True when the item is tightly coupled: not deprecated and not opted out. Mirrors ``Pack._is_item_tightly_coupled``."""
+        if content_item.exclude_from_tightly_coupled:
+            return False
+        if is_deprecated_content_item(content_item):
+            return False
+        return content_item.content_type.is_tightly_coupled
+
+    def _is_derived_pack_eligible(self) -> bool:
+        """True when the pack may be split: not managed, xsoar-supported, not deprecated, not hidden, not in DERIVED_PACKS_EXCLUDE."""
+        pack_id = self.object_id or ""
+        if self.managed:
+            logger.debug(
+                f"Pack '{pack_id}' is not derived-pack eligible: it is already managed"
+            )
+            return False
+        if (self.support or "").casefold() not in DERIVED_PACK_ALLOWED_SUPPORT_LEVELS:
+            logger.debug(
+                f"Pack '{pack_id}' is not derived-pack eligible: support level "
+                f"'{self.support}' is not one of {sorted(DERIVED_PACK_ALLOWED_SUPPORT_LEVELS)}"
+            )
+            return False
+        if is_deprecated_pack(self):
+            logger.debug(
+                f"Pack '{pack_id}' is not derived-pack eligible: the pack is deprecated"
+            )
+            return False
+        if self.hidden:
+            logger.debug(
+                f"Pack '{pack_id}' is not derived-pack eligible: the pack is hidden"
+            )
+            return False
+        if pack_id.casefold() in derived_pack_exclusions():
+            logger.debug(
+                f"Pack '{pack_id}' is not derived-pack eligible: it is listed in the exclusion list"
+            )
+            return False
+        return True
+
+    def _has_eligible_integration(self) -> bool:
+        """True when at least one integration passes ``_is_item_tightly_coupled``."""
+        return any(
+            item.content_type == ContentType.INTEGRATION
+            and self._is_item_tightly_coupled(item)
+            for item_list in self.content_items.iter_lists()
+            for item in item_list
+        )
+
+    @cached_property
+    def exclusively_managed_paired(self) -> bool:
+        """``all`` sibling of the managed-pair rule; mirrors ``Pack.is_exclusively_managed_paired`` and is copied verbatim by the twin."""
+        if not self._is_derived_pack_eligible():
+            return False
+        considered = [
+            item
+            for item_list in self.content_items.iter_lists()
+            for item in item_list
+            if item.content_type not in CONTENT_TYPES_EXCLUDED_FROM_UPLOAD
+        ]
+        if not considered:
+            return False
+        return all(self._is_item_tightly_coupled(item) for item in considered)
+
+    def _generate_derived_pack(self) -> Optional["DerivedPackParser"]:
+        """Return a ``DerivedPackParser`` when the pack is eligible and owns a qualifying integration plus a tightly coupled item, else None."""
+        if not self._is_derived_pack_eligible():
+            return None
+
+        if not self._has_eligible_integration():
+            logger.debug(
+                f"Pack '{self.object_id}' yields no derived pack: "
+                "it has no eligible integration"
+            )
+            return None
+
+        tightly_coupled_items = [
+            item
+            for item_list in self.content_items.iter_lists()
+            for item in item_list
+            if self._is_item_tightly_coupled(item)
+        ]
+
+        if not tightly_coupled_items:
+            return None
+
+        derived_id = f"{self.object_id}{DERIVED_PACK_SUFFIX}"
+        logger.debug(
+            f"Generating derived pack '{derived_id}' from '{self.object_id}' "
+            f"with {len(tightly_coupled_items)} tightly coupled items"
+        )
+
+        derived = DerivedPackParser(
+            original_parser=self,
+            derived_id=derived_id,
+        )
+
+        # The twin holds the same item objects, so ``Pack.to_nodes`` must not emit them again.
+        for item in tightly_coupled_items:
+            item.add_to_pack(derived_id)
+            derived.content_items.append(item)
+            derived.relationships.update(item.relationships)
+
+        return derived
 
     def connect_pack_dependencies(self, metadata: Dict[str, Any]) -> None:
         dependency: Dict[str, Dict[str, Any]]
@@ -430,9 +549,9 @@ class PackParser(BaseContentParser, PackMetadataParser):
     def parse_ignored_errors(self):
         """Sets the pack's ignored_errors field."""
         try:
-            self.ignored_errors_dict = (
-                dict(get_pack_ignore_content(self.path.name) or {})  # type:ignore[var-annotated]
-            )
+            self.ignored_errors_dict = dict(
+                get_pack_ignore_content(self.path.name) or {}
+            )  # type: ignore[var-annotated]
         except Exception as e:
             logger.warning(
                 f"Failed to extract ignored errors list for {self.path.name} for {self.object_id}, reason: {e}"
@@ -470,6 +589,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
             "source": "source",
             "managed": "managed",
             "internal": "internal",
+            "derived_source": "derivedSource",
         }
 
     def raw_data(self) -> dict:
@@ -516,3 +636,130 @@ def validate_structure(file: Path, pydantic_error_list: list) -> None:
         pydantic_error_list += [
             StructureError(path=file, **error) for error in e.errors()
         ]
+
+
+class DerivedPackParser:
+    """Virtual parser for a derived (managed) pack: inherits the source parser and overrides only its identity fields."""
+
+    content_type = ContentType.PACK
+
+    def __init__(
+        self,
+        original_parser: PackParser,
+        derived_id: str,
+    ) -> None:
+        self._original = original_parser
+        self._derived_id = derived_id
+
+        # Copy essential attributes from the original parser
+        self.path = original_parser.path
+        self.name = f"{original_parser.name} {DERIVED_PACK_SUFFIX}"
+        self.display_name = self.name
+        self.description = original_parser.description
+        self.support = original_parser.support
+        self.created = original_parser.created
+        self.updated = original_parser.updated
+        self.legacy = original_parser.legacy
+        self.email = original_parser.email
+        self.eulaLink = original_parser.eulaLink
+        self.author_image = original_parser.author_image
+        self.price = original_parser.price
+        self.hidden = original_parser.hidden
+        self.server_min_version = original_parser.server_min_version
+        self.current_version = original_parser.current_version
+        self.version_info = original_parser.version_info
+        self.commit = original_parser.commit
+        self.downloads = original_parser.downloads
+        self.tags = original_parser.tags
+        self.default_data_source_id = original_parser.default_data_source_id
+        self.keywords = original_parser.keywords
+        self.search_rank = original_parser.search_rank
+        self.videos = original_parser.videos
+        self.excluded_dependencies = original_parser.excluded_dependencies
+        self.modules = original_parser.modules
+        self.integrations = original_parser.integrations
+        self.premium = original_parser.premium
+        self.vendor_id = original_parser.vendor_id
+        self.partner_id = original_parser.partner_id
+        self.partner_name = original_parser.partner_name
+        self.preview_only = original_parser.preview_only
+        self.disable_monthly = original_parser.disable_monthly
+        self.content_commit_hash = original_parser.content_commit_hash
+        self.hybrid = original_parser.hybrid
+        self.pack_metadata_dict = original_parser.pack_metadata_dict.copy()
+        self.supportedModules = original_parser.supportedModules
+
+        # Override fields for derived identity
+        self.managed = True
+        # Published under the feature name, not the origin pack's name; ``derived_from`` keeps the link back.
+        self.source = resolve_derived_pack_source(
+            getattr(original_parser, "derived_source", None)
+        )
+        self.internal = original_parser.internal
+        self.is_derived = True
+        self.derived_from = original_parser.object_id
+        # Copied, never recomputed: the twin holds only the tightly coupled subset.
+        self.exclusively_managed_paired = original_parser.exclusively_managed_paired
+
+        # Items are shared with the original; only the second IN_PACK edges belong to the twin.
+        self.content_items = PackContentItems()
+        self.relationships = Relationships()
+        self.structure_errors: List[StructureError] = []
+        # No directory of its own, so the original's ``.pack-ignore`` is inherited (shallow copy avoids aliasing).
+        self.ignored_errors_dict: dict = dict(original_parser.ignored_errors_dict)
+        self.contributors: List[str] = (
+            original_parser.contributors
+            if hasattr(original_parser, "contributors")
+            else []
+        )
+        self.latest_rn_version = original_parser.latest_rn_version
+        self.deprecated = original_parser.deprecated
+        self.private_pack_path = original_parser.private_pack_path
+
+        # Inherit the original's relationships except pack-level DEPENDS_ON: a twin ships self-contained.
+        self.relationships.update(
+            Relationships(
+                {
+                    relationship_type: entries
+                    for relationship_type, entries in original_parser.relationships.items()
+                    if relationship_type != RelationshipType.DEPENDS_ON
+                }
+            )
+        )
+
+    @property
+    def object_id(self) -> Optional[str]:
+        return self._derived_id
+
+    @property
+    def node_id(self) -> str:
+        return self._derived_id
+
+    @property
+    def marketplaces(self) -> List:
+        return self._original.marketplaces
+
+    @property
+    def url(self) -> str:
+        return self._original.url
+
+    @property
+    def certification(self) -> str:
+        return self._original.certification
+
+    @property
+    def author(self) -> str:
+        return self._original.author
+
+    @property
+    def categories(self) -> list:
+        return self._original.categories
+
+    @property
+    def use_cases(self) -> list:
+        return self._original.use_cases
+
+    @cached_property
+    def field_mapping(self) -> dict:
+        mapping = self._original.field_mapping.copy()
+        return mapping

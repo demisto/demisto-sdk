@@ -9,6 +9,17 @@ from neo4j.exceptions import (
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
+
+
+def isolate_managed_packs_before_export(
+    content_graph_interface: ContentGraphInterface,
+) -> None:
+    """Run managed-pack isolation on the fully built graph, before export; prunes the cached depends_on."""
+    severed_dependencies = content_graph_interface.isolate_managed_packs()
+    logger.debug(
+        f"Managed pack isolation severed {len(severed_dependencies)} pack dependencies."
+    )
 
 
 def recover_if_fails(func):

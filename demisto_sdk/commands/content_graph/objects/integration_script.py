@@ -19,6 +19,7 @@ from demisto_sdk.commands.common.native_image import (
     ScriptIntegrationSupportedNativeImages,
 )
 from demisto_sdk.commands.content_graph.common import (
+    EXCLUDE_FROM_TIGHTLY_COUPLED_KEY,
     ContentType,
     lazy_property,
     replace_marketplace_references,
@@ -110,11 +111,12 @@ class IntegrationScript(ContentItem):
         current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
         **kwargs,
     ) -> dict:
-        data = (
-            self.data
-            if kwargs.get("unify_only")
-            else super().prepare_for_upload(current_marketplace)
-        )
+        if kwargs.get("unify_only"):
+            # ``super().prepare_for_upload`` is bypassed, so strip the SDK-only flag here, on a copy (``self.data`` may be shared).
+            data = dict(self.data)
+            data.pop(EXCLUDE_FROM_TIGHTLY_COUPLED_KEY, None)
+        else:
+            data = super().prepare_for_upload(current_marketplace)
         if self.content_type != ContentType.SCRIPT or (
             self.content_type == ContentType.SCRIPT and not self.is_llm  # type: ignore
         ):

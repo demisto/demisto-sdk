@@ -321,6 +321,11 @@ class ContentGraphInterface(ABC):
     def create_pack_dependencies(self): ...
 
     @abstractmethod
+    def isolate_managed_packs(self) -> List[Tuple[str, str]]:
+        """Sever every relationship crossing a managed pack boundary; returns the deleted ``(source, target)`` pack ids."""
+        ...
+
+    @abstractmethod
     def run_single_query(self, query: str, **kwargs) -> Any:
         pass
 

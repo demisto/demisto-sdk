@@ -41,12 +41,7 @@ def get_all_level_packs_relationships(
     params_str = to_neo4j_map(properties)
 
     if relationship_type == RelationshipType.DEPENDS_ON:
-        # Split-pack isolation, applied here in addition to
-        # create_depends_on_relationships: that query only guards the *direct*
-        # edge, while this one walks paths of up to MAX_DEPTH hops. Without the
-        # guard below an indirect route (pack -> CommonScripts -> packManaged)
-        # would still surface a twin, or any managed/derived pack, as an
-        # all-level dependency.
+        # Guard the all-level paths too: MAX_DEPTH hops could surface a twin or managed pack indirectly.
         query = f"""
             UNWIND $ids_list AS node_id
             MATCH path = shortestPath((p1:{ContentType.PACK}{params_str})-[r:{relationship_type}*..{MAX_DEPTH}]->(p2:{ContentType.PACK}))
@@ -84,11 +79,7 @@ def create_pack_dependencies(tx: Transaction) -> dict:
     update_uses_for_integration_commands(tx)
     delete_deprecatedcontent_relationship(tx)  # TODO decide what to do with this
     depends_on_data = create_depends_on_relationships(tx)
-    # Final, unconditional sweep. Individual queries are guarded, but a
-    # DEPENDS_ON edge can also enter the graph through paths that never consult
-    # those guards - most notably relationship preservation across a rebuild.
-    # Sweeping once at the end makes the invariant hold regardless of how an
-    # edge got there.
+    # Final unconditional sweep: edges also enter through relationship preservation, which consults no guard.
     severed_dependencies = remove_split_pack_dependencies(tx)
     depends_on_data = prune_severed_dependencies(depends_on_data, severed_dependencies)
     write_depends_on_artifact(depends_on_data)
@@ -96,23 +87,7 @@ def create_pack_dependencies(tx: Transaction) -> dict:
 
 
 def remove_split_pack_dependencies(tx: Transaction) -> Set[Tuple[str, str]]:
-    """Deletes every pack-level dependency that involves a managed or derived pack.
-
-    Managed and derived packs ship to the Managed Content bucket as
-    self-contained units: everything they need travels with them as content
-    items. They must therefore never depend on another pack, and no pack may
-    depend on them. The same holds for a pack and its own derived twin, which
-    are two graph representations of one source directory.
-
-    This runs after every other dependency query as a catch-all, so the
-    invariant does not rely on each individual writer being guarded.
-
-    Args:
-        tx: The neo4j transaction.
-
-    Returns:
-        The ``(source_pack_id, target_pack_id)`` pairs whose edges were deleted.
-    """
+    """Delete every pack-level dependency involving a managed, derived or twin pack; returns the deleted pairs."""
     query = f"""// Severs pack dependencies involving managed, derived or twin packs
 MATCH (pack_a:{ContentType.PACK})-[r:{RelationshipType.DEPENDS_ON}]->(pack_b:{ContentType.PACK})
 WHERE {is_managed_or_derived("pack_a")}
@@ -135,18 +110,7 @@ def prune_severed_dependencies(
     depends_on_data: Dict[str, Dict[str, list]],
     severed_dependencies: Set[Tuple[str, str]],
 ) -> Dict[str, Dict[str, list]]:
-    """Drops severed edges from the dependency mapping.
-
-    ``depends_on_data`` is serialized to ``depends_on.json`` and consumed
-    downstream, so it must describe the graph as it stands after the sweep.
-
-    Args:
-        depends_on_data: Mapping of source pack id to target pack id to reasons.
-        severed_dependencies: The pairs deleted by the sweep.
-
-    Returns:
-        The mapping without the severed pairs, and without sources left empty.
-    """
+    """Drop the severed pairs from the mapping so ``depends_on.json`` matches the graph."""
     if not severed_dependencies:
         return depends_on_data
 
@@ -176,14 +140,7 @@ RETURN source.node_id AS source, target.node_id AS target"""
 
 
 def remove_existing_depends_on_relationships(tx: Transaction) -> None:
-    # Calculated edges (from_metadata = false) are always cleared, because
-    # create_depends_on_relationships recreates the ones that are still valid.
-    #
-    # Metadata-declared edges (from_metadata = true) are normally kept, since
-    # nothing recreates them - but a dependency involving a split-pack twin, or
-    # any managed/derived pack, is never legitimate. Such an edge is not
-    # recreated by any query either, so unless it is deleted here an edge
-    # written by an older build survives in a persistent graph forever.
+    # Calculated edges are always cleared; metadata edges only when a managed/derived/twin pack is involved.
     query = f"""// Removes all existing DEPENDS_ON relationships before recalculation
 MATCH (p1)-[r:{RelationshipType.DEPENDS_ON}]->(p2)
 WHERE r.from_metadata = false
@@ -284,14 +241,7 @@ RETURN
 
 
 def write_depends_on_artifact(depends_on_data: Dict[str, Dict[str, list]]) -> None:
-    """Serializes the dependency mapping to ``depends_on.json``.
-
-    Called after the split-pack sweep so the artifact matches the graph, rather
-    than the intermediate state before severed edges were removed.
-
-    Args:
-        depends_on_data: Mapping of source pack id to target pack id to reasons.
-    """
+    """Serialize the dependency mapping to ``depends_on.json``, after the sweep."""
     if (artifacts_folder := os.getenv("ARTIFACTS_FOLDER")) and Path(
         artifacts_folder
     ).exists():

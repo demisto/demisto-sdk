@@ -55,10 +55,7 @@ class PackSupportedModulesCoverageValidator(BaseValidator[ContentTypes]):
         results: List[ValidationResult] = []
         for pack in content_items:
             if pack.is_derived:
-                # A derived pack has no pack_metadata.json of its own - it copies the
-                # original pack's supportedModules while holding only a subset of its
-                # content items, so modules may appear uncovered here. The metadata
-                # itself is already validated through the original pack.
+                # A derived pack has no pack_metadata.json of its own; its metadata is validated through the original pack.
                 continue
             uncovered = self._get_uncovered_modules(pack)
             if uncovered:

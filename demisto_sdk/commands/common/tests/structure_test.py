@@ -777,7 +777,7 @@ class TestGetMatchingRegex:
         ({"breakingChanges": False, "breakingChangesNotes": "BC"}, True),
         ({"breakingChanges": "true", "breakingChangesNotes": "BC"}, False),
         ({"breakingChanges": True, "breakingChangesNotes": True}, False),
-        # forceUpdate object (ConnectUS / Managed Content) - see CIAC-17085 / CIAC-17086.
+        # forceUpdate object (ConnectUS / Managed Content) - CIAC-17085 / CIAC-17086.
         (
             {
                 "breakingChanges": True,

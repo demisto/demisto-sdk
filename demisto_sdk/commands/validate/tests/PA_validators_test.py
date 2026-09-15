@@ -990,20 +990,7 @@ def test_IsValidDefaultDataSourceNameValidator_fix():
 
 
 def test_IsValidDefaultDataSourceNameValidator_skips_derived_pack():
-    """
-    Given
-        - A pack whose 'defaultDataSource' does not match any data source integration
-          among its content items (the real Box / BoxManaged case).
-
-    When
-        - Calling the IsValidDefaultDataSourceNameValidator obtain_invalid_content_items
-          function, once with is_derived=False and once with is_derived=True.
-
-    Then
-        - The non-derived pack is reported.
-        - The derived pack is not reported: it has no pack_metadata.json of its own,
-          and its metadata is validated through the original pack.
-    """
+    """PA132: an unmatched ``defaultDataSource`` is reported for a normal pack, not for a derived one."""
     pack = create_pack_object(["defaultDataSource"], ["InvalidDefaultDataSourceValue"])
     pack.content_items.integration.append(
         create_integration_object(
@@ -2767,20 +2754,7 @@ def test_PackSupportedModulesCoverageValidator_fix_creates_supported_modules_whe
 
 
 def test_PackSupportedModulesCoverageValidator_skips_derived_pack():
-    """
-    Given
-        - A platform pack declaring supportedModules ["edr", "xsiam"] with a content
-          item covering only "edr", so "xsiam" is uncovered.
-
-    When
-        - Calling the PackSupportedModulesCoverageValidator obtain_invalid_content_items
-          function, once with is_derived=False and once with is_derived=True.
-
-    Then
-        - The non-derived pack is reported.
-        - The derived pack is not reported: it has no pack_metadata.json of its own,
-          and its supportedModules are validated through the original pack.
-    """
+    """PA134: an uncovered ``supportedModule`` is reported for a normal pack, not for a derived one."""
     pack = create_pack_object(
         paths=["marketplaces", "supportedModules"],
         values=[["platform"], ["edr", "xsiam"]],

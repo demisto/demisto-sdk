@@ -969,20 +969,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._depends_on = session.execute_write(create_pack_dependencies)
 
     def isolate_managed_packs(self) -> List[Tuple[str, str]]:
-        """Severs every relationship crossing the boundary of a managed pack.
-
-        The cached ``depends_on`` mapping is pruned in place with the severed
-        pairs. It is captured by :meth:`create_pack_dependencies`, which runs
-        *before* this step, and it is what ``export_graph`` serializes into
-        ``depends_on.json`` - so without pruning the artifact would advertise
-        dependencies that no longer exist in the graph. Pruning here rather
-        than at each call site keeps the graph and the artifact consistent for
-        every caller.
-
-        Returns:
-            The ``(source_pack_id, target_pack_id)`` pairs of the pack-level
-            dependencies that were deleted.
-        """
+        """Sever managed-pack boundary relationships and prune the cached ``depends_on``; returns the deleted pack id pairs."""
         logger.info("Isolating managed packs...")
         with self.driver.session() as session:
             severed_dependencies: List[Tuple[str, str]] = session.execute_write(

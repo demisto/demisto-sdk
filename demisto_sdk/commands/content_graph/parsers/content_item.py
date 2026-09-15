@@ -245,11 +245,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
 
     @property
     def exclude_from_tightly_coupled(self) -> bool:
-        """Whether this item opts out of being treated as tightly coupled.
-
-        Read generically from the item's raw data, so a single implementation
-        covers every content family (yml, json and unified connectors).
-        """
+        """True when the item opts out of tight coupling; read generically from the raw data."""
         return bool(get_value(self.raw_data, EXCLUDE_FROM_TIGHTLY_COUPLED_KEY, False))
 
     def get_marketplaces(self, data: dict) -> List[MarketplaceVersions]:

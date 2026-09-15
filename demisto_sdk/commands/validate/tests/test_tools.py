@@ -430,11 +430,7 @@ def create_pack_object(
         for _ in range(playbooks):
             pack.create_playbook()
 
-    # Scoped to the single call that builds a `PackParser`: patching the class
-    # attribute unscoped leaks into every later test in the session (this helper
-    # also runs at collection time, from `parametrize` argument lists), leaving
-    # real `PackParser` instances without the `ignored_errors_dict` that
-    # `parse_ignored_errors` is responsible for setting.
+    # Scoped patch: an unscoped one leaks into later tests, leaving real `PackParser`s without `ignored_errors_dict`.
     with patch.object(PackParser, "parse_ignored_errors", return_value={}):
         return cast(Pack, BaseContent.from_path(pack_path))
 

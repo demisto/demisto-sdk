@@ -1,30 +1,4 @@
-"""Tests for the managed-pack isolation step.
-
-The invariant under test: once the content graph is fully built, a pack with
-``managed = true`` (or ``is_derived = true``) has no dependency or usage
-relationship to anything, and nothing depends on or uses it.
-
-Precisely:
-
-- No pack-level ``DEPENDS_ON`` in either direction where an endpoint pack is
-  managed or derived.
-- No cross-pack content-item relationship (``USES``, ``TESTED_BY``,
-  ``REFERENCES_INTEGRATION``, ...) where one endpoint's pack is managed/derived
-  and the other endpoint lies outside that pack.
-- ``IN_PACK``, ``HAS_COMMAND`` and ``IMPORTS`` survive - a managed pack still
-  owns its content items.
-
-Two layers of tests:
-
-1. Seeded-graph tests. A small graph is written straight into neo4j so the exact
-   topology under test - two ``IN_PACK`` edges on one item, endpoints with no
-   pack at all, absent ``managed`` properties - can be expressed unambiguously,
-   then :meth:`isolate_managed_packs` is run against it. These pin the isolation
-   semantics themselves.
-2. End-to-end tests. A real repository is parsed and built through
-   ``create_content_graph``, proving the step is actually wired into the build
-   and that the artifacts it exports agree with the graph.
-"""
+"""Managed/derived packs end up isolated - no cross-pack edge either way, IN_PACK/HAS_COMMAND/IMPORTS kept; seeded-graph plus e2e tests."""
 
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Set, Tuple
@@ -42,11 +16,10 @@ from TestSuite.repo import Repo
 
 json = JSON_Handler()
 
-# A relationship as asserted on: (source object_id, relationship type, target object_id).
+# A relationship as asserted on: (source object_id, type, target object_id).
 Edge = Tuple[str, str, str]
 
-# Every non-structural relationship type that may connect two content items.
-# Each one must be severed when it crosses the boundary of a managed pack.
+# Every non-structural relationship type; each must be severed at a managed pack boundary.
 CROSS_PACK_RELATIONSHIP_TYPES: Tuple[RelationshipType, ...] = (
     RelationshipType.USES,
     RelationshipType.USES_BY_ID,
@@ -58,7 +31,7 @@ CROSS_PACK_RELATIONSHIP_TYPES: Tuple[RelationshipType, ...] = (
     RelationshipType.REFERENCES_INTEGRATION,
 )
 
-# Ids used by the seeded graphs. Named so each test reads as a specification.
+# Ids used by the seeded graphs.
 MANAGED_PACK = "ManagedPack"
 ORIGIN_PACK = "OriginPack"
 TWIN_PACK = "OriginPackManaged"
@@ -66,9 +39,7 @@ REGULAR_PACK = "RegularPack"
 OTHER_REGULAR_PACK = "OtherRegularPack"
 
 
-# ---------------------------------------------------------------------------
 # Fixtures
-# ---------------------------------------------------------------------------
 
 
 @pytest.fixture
@@ -83,9 +54,7 @@ def graph(mocker, tmp_path_factory) -> Iterator[ContentGraphInterface]:
         interface.clean_graph()
 
 
-# ---------------------------------------------------------------------------
 # Seeding helpers
-# ---------------------------------------------------------------------------
 
 
 def create_pack(
@@ -95,12 +64,7 @@ def create_pack(
     is_derived: Optional[bool] = None,
     derived_from: Optional[str] = None,
 ) -> None:
-    """Creates a Pack node.
-
-    ``None`` is written as an absent property, which is how a graph built by an
-    older SDK - or imported from a bucket - represents a pack that carries no
-    ``managed`` flag at all.
-    """
+    """Create a Pack node; ``None`` is written as an absent property, as an older build would."""
     interface.run_single_query(
         f"CREATE (pack:{labels_of(ContentType.PACK)} {{"
         "object_id: $object_id, content_type: $content_type, managed: $managed, "
@@ -120,11 +84,7 @@ def create_item(
     in_packs: Tuple[str, ...] = (),
     not_in_repository: bool = False,
 ) -> None:
-    """Creates a content item node and its ``IN_PACK`` edges.
-
-    ``in_packs`` may hold more than one pack: a tightly-coupled item belongs to
-    both its origin pack and that pack's derived twin.
-    """
+    """Create a content item node and its IN_PACK edges; a tightly coupled item has two."""
     interface.run_single_query(
         f"CREATE (item:{labels_of(content_type)} {{"
         "object_id: $object_id, content_type: $content_type, "
@@ -143,9 +103,8 @@ def create_relationship(
     relationship_type: RelationshipType,
     target_id: str,
 ) -> None:
-    """Creates a relationship of the given type between two existing nodes."""
-    # A relationship type cannot be parameterized in cypher, so it is
-    # interpolated - through the enum, which rejects anything unknown.
+    """Create a relationship of the given type between two existing nodes."""
+    # A relationship type cannot be parameterized in cypher, so interpolate it through the enum.
     validated_type = RelationshipType(relationship_type).value
     interface.run_single_query(
         "MATCH (source {object_id: $source_id}) "
@@ -157,7 +116,7 @@ def create_relationship(
 
 
 def edges_of(interface: ContentGraphInterface) -> Set[Edge]:
-    """Returns every relationship in the graph as a comparable set."""
+    """Return every relationship in the graph as a comparable set."""
     rows: List[Dict[str, Any]] = interface.run_single_query(
         "MATCH (source)-[relationship]->(target) "
         "RETURN source.object_id AS source, type(relationship) AS type, "
@@ -167,7 +126,7 @@ def edges_of(interface: ContentGraphInterface) -> Set[Edge]:
 
 
 def pack_dependencies_of(interface: ContentGraphInterface, pack_id: str) -> Set[str]:
-    """Returns the ids of the packs the given pack depends on, in either direction."""
+    """Return the ids of the packs the given pack depends on, either direction."""
     return {
         source if target == pack_id else target
         for source, relationship_type, target in edges_of(interface)
@@ -176,9 +135,7 @@ def pack_dependencies_of(interface: ContentGraphInterface, pack_id: str) -> Set[
     }
 
 
-# ---------------------------------------------------------------------------
 # 1. A managed pack has zero outgoing dependencies
-# ---------------------------------------------------------------------------
 
 
 class TestManagedPackHasNoOutgoingDependencies:
@@ -272,9 +229,7 @@ class TestManagedPackHasNoOutgoingDependencies:
         ), "REFERENCES_PACK is a soft reference to a foreign pack, not ownership"
 
 
-# ---------------------------------------------------------------------------
 # 2. Nothing depends on a managed pack
-# ---------------------------------------------------------------------------
 
 
 class TestNothingDependsOnAManagedPack:
@@ -333,9 +288,7 @@ class TestNothingDependsOnAManagedPack:
         ), f"{relationship_type.value} must be severed when it enters a managed pack"
 
 
-# ---------------------------------------------------------------------------
 # 3. Derived packs are isolated too
-# ---------------------------------------------------------------------------
 
 
 class TestDerivedPacksAreIsolated:
@@ -357,11 +310,7 @@ class TestDerivedPacksAreIsolated:
     def test_derived_pack_without_the_managed_flag_is_isolated(
         self, graph: ContentGraphInterface
     ) -> None:
-        """``managed`` may be absent on graphs written by an older build.
-
-        ``is_derived`` must then carry the isolation on its own, otherwise a
-        bare ``managed = true`` predicate silently matches nothing.
-        """
+        """``managed`` may be absent on older graphs, so ``is_derived`` must isolate on its own."""
         create_pack(graph, TWIN_PACK, is_derived=True, derived_from=ORIGIN_PACK)
         create_pack(graph, REGULAR_PACK)
         create_relationship(graph, REGULAR_PACK, RelationshipType.DEPENDS_ON, TWIN_PACK)
@@ -404,13 +353,7 @@ class TestDerivedPacksAreIsolated:
     def test_twin_dependency_is_severed_by_family_key_alone(
         self, graph: ContentGraphInterface
     ) -> None:
-        """``derived_from`` alone identifies a twin pair.
-
-        Both flags may be missing on a pack imported from an externally built
-        bucket graph; the shared family key is then the only thing left that
-        marks the two nodes as one source directory, and a pack is never
-        dependent on another representation of itself.
-        """
+        """``derived_from`` alone identifies a twin pair when both flags are missing."""
         create_pack(graph, ORIGIN_PACK)
         create_pack(graph, TWIN_PACK, derived_from=ORIGIN_PACK)
         create_relationship(graph, ORIGIN_PACK, RelationshipType.DEPENDS_ON, TWIN_PACK)
@@ -421,9 +364,7 @@ class TestDerivedPacksAreIsolated:
         assert pack_dependencies_of(graph, TWIN_PACK) == set()
 
 
-# ---------------------------------------------------------------------------
 # 4. Structural relationships survive
-# ---------------------------------------------------------------------------
 
 
 class TestStructuralRelationshipsSurvive:
@@ -479,11 +420,7 @@ class TestStructuralRelationshipsSurvive:
     def test_api_module_imports_out_of_a_managed_pack_survive(
         self, graph: ContentGraphInterface
     ) -> None:
-        """``IMPORTS`` is consumed by unify/validate, not shipped.
-
-        It is almost always cross-pack (into ``ApiModules``), so severing it
-        would silently break ApiModule change-impact detection.
-        """
+        """IMPORTS is consumed by unify/validate; severing it would break ApiModule change-impact detection."""
         create_pack(graph, MANAGED_PACK, managed=True)
         create_pack(graph, "ApiModules")
         create_item(graph, "ManagedScript", in_packs=(MANAGED_PACK,))
@@ -501,13 +438,11 @@ class TestStructuralRelationshipsSurvive:
         ) in edges_of(graph)
 
 
-# ---------------------------------------------------------------------------
 # 5. Intra-pack edges are not severed
-# ---------------------------------------------------------------------------
 
 
 class TestIntraPackEdgesAreNotSevered:
-    """Sever only when *no* pack contains both endpoints."""
+    """Sever only when no pack contains both endpoints."""
 
     def test_edge_between_two_items_of_the_same_managed_pack_survives(
         self, graph: ContentGraphInterface
@@ -530,18 +465,12 @@ class TestIntraPackEdgesAreNotSevered:
     def test_edge_between_items_sharing_the_origin_pack_of_a_twin_survives(
         self, graph: ContentGraphInterface
     ) -> None:
-        """The shared-pack trap.
-
-        A tightly-coupled item has two ``IN_PACK`` edges - to its origin pack and
-        to that pack's derived twin. A per-binding ``pack_a <> pack_b`` test sees
-        such an edge as cross-pack under the twin binding and intra-pack under
-        the origin binding, and deletes a legitimate intra-pack edge.
-        """
+        """The shared-pack trap: a tightly coupled item has two IN_PACK edges, so a per-binding comparison over-deletes."""
         create_pack(graph, ORIGIN_PACK)
         create_pack(
             graph, TWIN_PACK, managed=True, is_derived=True, derived_from=ORIGIN_PACK
         )
-        # Tightly coupled: lives in the origin pack *and* in the twin.
+        # Tightly coupled: lives in the origin pack and in the twin.
         create_item(graph, "CoupledIntegration", in_packs=(ORIGIN_PACK, TWIN_PACK))
         # Loosely coupled: stays in the origin pack only.
         create_item(graph, "LooseScript", in_packs=(ORIGIN_PACK,))
@@ -576,13 +505,11 @@ class TestIntraPackEdgesAreNotSevered:
         } <= edges_of(graph)
 
 
-# ---------------------------------------------------------------------------
 # 6. Pack-less endpoints are untouched
-# ---------------------------------------------------------------------------
 
 
 class TestPackLessEndpointsAreUntouched:
-    """A node outside every pack is not "another pack", so it is not severed."""
+    """A node outside every pack is not another pack, so it is not severed."""
 
     def test_edge_to_a_command_node_survives(
         self, graph: ContentGraphInterface
@@ -652,9 +579,7 @@ class TestPackLessEndpointsAreUntouched:
         ) in edges_of(graph)
 
 
-# ---------------------------------------------------------------------------
 # 7. Regular pack relationships are untouched
-# ---------------------------------------------------------------------------
 
 
 class TestRegularPackRelationshipsAreUntouched:
@@ -717,13 +642,11 @@ class TestRegularPackRelationshipsAreUntouched:
         assert edges_of(graph) == edges_before
 
 
-# ---------------------------------------------------------------------------
 # 8. Idempotency
-# ---------------------------------------------------------------------------
 
 
 class TestIsolationIsIdempotent:
-    """Running the step twice must be indistinguishable from running it once."""
+    """Running the step twice is indistinguishable from running it once."""
 
     @staticmethod
     def _seed_mixed_graph(interface: ContentGraphInterface) -> None:
@@ -766,9 +689,7 @@ class TestIsolationIsIdempotent:
         assert edges_of(graph) == edges_after_first_run
 
 
-# ---------------------------------------------------------------------------
 # 9. depends_on artifact consistency
-# ---------------------------------------------------------------------------
 
 
 class TestDependsOnArtifactConsistency:
@@ -818,21 +739,11 @@ class TestDependsOnArtifactConsistency:
         assert graph._depends_on == {}
 
 
-# ---------------------------------------------------------------------------
 # End-to-end: a real repository, parsed and built
-# ---------------------------------------------------------------------------
 
 
 def build_repo_with_a_managed_pack(repo: Repo) -> None:
-    """Creates a repository whose content crosses a managed pack's boundary.
-
-    - ``RegularPackA`` holds ``RegularScriptA``.
-    - ``RegularPackB``'s script uses ``RegularScriptA`` - a regular cross-pack
-      dependency that must survive, and that keeps ``depends_on.json`` non-empty.
-    - ``ManagedPack`` is ``managed`` and its script uses ``RegularScriptA``
-      - an outbound crossing.
-    - ``RegularPackC``'s script uses ``ManagedScript`` - an inbound crossing.
-    """
+    """Repo whose edges cross a managed pack boundary both ways, plus a regular cross-pack dependency."""
     regular_pack_a = repo.create_pack("RegularPackA")
     regular_pack_a.create_script("RegularScriptA")
 
@@ -854,7 +765,7 @@ def build_repo_with_a_managed_pack(repo: Repo) -> None:
 
 
 class TestManagedPackIsolationEndToEnd:
-    """Proves the step is wired into ``create_content_graph`` and into its artifacts."""
+    """The step is wired into ``create_content_graph`` and into its artifacts."""
 
     def test_a_built_graph_satisfies_the_isolation_invariant(
         self, graph_repo: Repo

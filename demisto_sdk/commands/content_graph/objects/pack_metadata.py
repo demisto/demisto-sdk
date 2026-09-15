@@ -74,8 +74,7 @@ class PackMetadata(BaseModel):
     hybrid: bool = Field(False, alias="hybrid")
     default_data_source_id: Optional[str] = Field("", alias="defaultDataSource")
     default_data_source_name: Optional[str] = Field("", exclude=True)
-    # Per-pack override for the feature name this pack's derived (split) twin is
-    # published under. See resolve_derived_pack_source().
+    # Per-pack override of the derived twin's source; see ``resolve_derived_pack_source()``.
     derived_source: Optional[str] = Field(None, alias="derived_source")
 
     # For private packs
@@ -215,9 +214,7 @@ class PackMetadata(BaseModel):
         """
         collected_content_items: dict = {}
         content_displays: dict = {}
-        # Computed once per dump: `is_managed_paired()` scans every content item of the pack,
-        # so evaluating it per item would be O(n^2) (and the incident-to-alert recursion below
-        # would recompute it yet again). It is threaded down as an explicit argument.
+        # Computed once per dump: ``is_managed_paired()`` scans every item, so evaluating it per item would be O(n^2).
         pack_is_managed_paired: bool = (
             bool(self.is_managed_paired())  # type:ignore[attr-defined]
             if ENABLE_SPLIT_PACKS
@@ -228,9 +225,7 @@ class PackMetadata(BaseModel):
                 content_item, marketplace, strip_internal=strip_internal
             ):
                 continue
-            # Must be evaluated on the ORIGINAL object, before the re-parse below:
-            # the per-item opt-out key is stripped by `prepare_for_upload`, so the item
-            # re-parsed from the dumped artifact always looks tightly coupled.
+            # Must be evaluated before the re-parse below: ``prepare_for_upload`` strips the opt-out key.
             item_is_tightly_coupled: bool = ENABLE_SPLIT_PACKS and bool(
                 self._is_item_tightly_coupled(content_item)  # type:ignore[attr-defined]
             )
@@ -570,37 +565,12 @@ class PackMetadata(BaseModel):
         pack_is_managed_paired: bool = False,
         item_is_tightly_coupled: bool = False,
     ):
-        """
-        Adds the given content item to the metadata content items list.
-        - Checks if the given content item was already added to the metadata content items list
-        and replaces the object if its `toversion` is higher than the existing metadata object's `toversion`.
-        - If the content item name should be replaced from incident to alert, then the function will be called recursively
-        to replace also the item that its name was replaced from incident to alert.
-
-        Args:
-            collected_content_items (dict): The content items metadata list that were already collected.
-            content_item (ContentItem): The current content item to check.
-            marketplace (MarketplaceVersions): The marketplace to prepare the pack to upload.
-            incident_to_alert (bool, optional): Whether should replace incident to alert. Defaults to False.
-            pack_is_managed_paired (bool, optional): Whether the owning pack actually splits, i.e. the
-                value of `Pack.is_managed_paired()`, computed once per dump by the caller. Defaults to False.
-            item_is_tightly_coupled (bool, optional): Whether this content item is tightly coupled to the
-                pack, i.e. the value of `Pack._is_item_tightly_coupled()`, computed by the caller on the
-                pre-re-parse object. Defaults to False.
-        """
+        """Add a content item to the metadata list, replacing a lower-``toversion`` duplicate and recursing for incident-to-alert."""
         collected_content_items.setdefault(content_item.content_type.metadata_name, [])
         content_item_summary = content_item.summary(
             marketplace, incident_to_alert=incident_to_alert
         )
-        # CIAC-16414: expose per content item whether it is actually paired into the pack's managed
-        # twin, i.e. `managedPaired == (the pack splits) AND (the item is tightly coupled)`.
-        # A pack that does not split - for any reason: non-xsoar support, hidden, deprecated,
-        # natively managed, or excluded - yields no twin at all, so every one of its items is
-        # `false` regardless of its own coupling. Flag-gated: while ENABLE_SPLIT_PACKS is off the
-        # key is omitted entirely.
-        # Injected here, at the single funnel every per-item summary dict passes through, rather
-        # than inside `summary()`: only the owning pack can classify its items' coupling. Both
-        # operands are computed by the caller - see `_get_content_items_and_displays_metadata`.
+        # CIAC-16414: ``managedPaired == (pack splits) AND (item is tightly coupled)``; both operands come from the caller.
         if ENABLE_SPLIT_PACKS:
             content_item_summary["managedPaired"] = bool(
                 pack_is_managed_paired and item_is_tightly_coupled

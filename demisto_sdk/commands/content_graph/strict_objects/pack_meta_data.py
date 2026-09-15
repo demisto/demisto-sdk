@@ -103,9 +103,7 @@ class StrictPackMetadata(BaseStrictModel):
     source: Optional[str] = Field("", alias="source")
     managed: Optional[bool] = Field(False, alias="managed")
     internal: Optional[bool] = Field(False, alias="internal")
-    # Per-pack override for the feature name this pack's derived (split) twin is
-    # published under. When unset, resolve_derived_pack_source() falls back to
-    # the DERIVED_PACK_SOURCE env var and then to DEFAULT_DERIVED_PACK_SOURCE.
+    # Per-pack override of the derived twin's source; falls back to DERIVED_PACK_SOURCE, then the default.
     derived_source: Optional[str] = Field(None, alias="derived_source")
 
     # Marketplace-suffixed managed/source fields (e.g. ``managed:platform``).

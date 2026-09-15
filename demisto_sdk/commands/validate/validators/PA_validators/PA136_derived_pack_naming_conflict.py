@@ -35,14 +35,12 @@ class DerivedPackNamingConflictValidator(BaseValidator[ContentTypes]):
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
-        # Collect all pack IDs first
         all_packs = list(content_items)
         all_pack_ids = {pack.object_id for pack in all_packs}
 
         results: List[ValidationResult] = []
         for pack in all_packs:
-            # Only check non-managed, non-derived packs that could generate
-            # a derived pack
+            # Only non-managed, non-derived packs can generate a derived pack.
             if pack.managed or getattr(pack, "is_derived", False):
                 continue
             derived_id = f"{pack.object_id}{DERIVED_PACK_SUFFIX}"

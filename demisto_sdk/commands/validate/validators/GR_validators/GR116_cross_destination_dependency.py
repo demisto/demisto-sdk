@@ -40,10 +40,7 @@ class CrossDestinationDependencyValidator(BaseValidator[ContentTypes], ABC):
             if pack.destination != PackDestination.MARKETPLACE:
                 continue
             for dep in pack.depends_on:
-                # `RelationshipData.content_item_to` is statically typed as the
-                # generic `BaseNode`, but a DEPENDS_ON target of a pack is always
-                # a `Pack` at runtime. The `hasattr` guard below is kept as-is so
-                # runtime behavior is unchanged.
+                # `content_item_to` is typed `BaseNode` but is a `Pack` at runtime; the `hasattr` guard is kept as-is.
                 dep_pack = cast(Pack, dep.content_item_to)
                 if (
                     hasattr(dep_pack, "destination")

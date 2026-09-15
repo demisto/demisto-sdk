@@ -7,10 +7,7 @@ from demisto_sdk.commands.content_graph.strict_objects.release_notes_config impo
 
 
 class TestStrictReleaseNotesConfigForceUpdate:
-    """
-    Coverage for the optional `forceUpdate` object added to the per-version breaking-changes config
-    (ReleaseNotes/x_x_x.json) for the ConnectUS (Managed Content) flow. See CIAC-17085 / CIAC-17086.
-    """
+    """Coverage for the optional ``forceUpdate`` object in ReleaseNotes/x_x_x.json (CIAC-17085 / CIAC-17086)."""
 
     @pytest.mark.parametrize(
         "config",
@@ -35,7 +32,7 @@ class TestStrictReleaseNotesConfigForceUpdate:
                     "breakingChangesNotesTightly": "Tightly BC note.",
                 },
             },
-            # forceUpdate with empty-string notes (as authored in content).
+            # forceUpdate with empty-string notes.
             {
                 "breakingChanges": True,
                 "forceUpdate": {
@@ -46,11 +43,7 @@ class TestStrictReleaseNotesConfigForceUpdate:
         ],
     )
     def test_valid_force_update_configs(self, config: dict):
-        """
-        Given: A release-notes-config dict with a valid (optional) forceUpdate object.
-        When: Parsing it with StrictReleaseNotesConfig.
-        Then: Parsing succeeds.
-        """
+        """A valid optional ``forceUpdate`` parses successfully."""
         StrictReleaseNotesConfig.parse_obj(config)
 
     @pytest.mark.parametrize(
@@ -60,7 +53,7 @@ class TestStrictReleaseNotesConfigForceUpdate:
             {"breakingChanges": True, "unknownField": "value"},
             # Unknown field nested inside forceUpdate.
             {"breakingChanges": True, "forceUpdate": {"unknownField": "value"}},
-            # breakingChangesNotesTightly is now a plain string - an object is rejected.
+            # breakingChangesNotesTightly is a plain string - an object is rejected.
             {
                 "breakingChanges": True,
                 "forceUpdate": {
@@ -73,11 +66,6 @@ class TestStrictReleaseNotesConfigForceUpdate:
         ],
     )
     def test_invalid_force_update_configs(self, config: dict):
-        """
-        Given: A release-notes-config dict with an invalid forceUpdate (unknown field, or a non-string
-            breakingChangesNotesTightly).
-        When: Parsing it with StrictReleaseNotesConfig.
-        Then: A ValidationError is raised.
-        """
+        """An unknown field, or a non-string ``breakingChangesNotesTightly``, raises ValidationError."""
         with pytest.raises(ValidationError):
             StrictReleaseNotesConfig.parse_obj(config)

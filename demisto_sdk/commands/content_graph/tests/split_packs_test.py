@@ -1,15 +1,4 @@
-"""Tests for the split-pack / derived-pack feature (Phase 1 SDK implementation).
-
-Covers:
-- ContentType coupling classification
-- PackDestination enum
-- Pack.destination property
-- Pack._is_item_tightly_coupled
-- DerivedPackParser generation
-- ContentDTO destination filtering
-- pack_destinations.json generation
-- Validators: PA136, PA137
-"""
+"""Tests for the split-pack / derived-pack feature (Phase 1 SDK implementation)."""
 
 from __future__ import annotations
 
@@ -39,9 +28,7 @@ from demisto_sdk.commands.content_graph.common import (
 
 json = JSON_Handler()
 
-# ---------------------------------------------------------------------------
 # ContentType coupling classification tests
-# ---------------------------------------------------------------------------
 
 
 class TestContentTypeCoupling:
@@ -88,7 +75,7 @@ class TestContentTypeCoupling:
         assert ContentType.CLASSIFIER.is_tightly_coupled is True
 
     def test_pack_is_not_tightly_coupled(self):
-        """Non-content items should not be tightly coupled."""
+        """Non-content items are not tightly coupled."""
         assert ContentType.PACK.is_tightly_coupled is False
 
     def test_command_is_not_tightly_coupled(self):
@@ -105,7 +92,7 @@ class TestContentTypeCoupling:
             assert ct not in TIGHTLY_COUPLED_TYPES
 
     def test_tightly_and_loosely_cover_all_content_items(self):
-        """Tightly + loosely coupled should cover all content items."""
+        """Tightly + loosely coupled cover all content items."""
         all_content = frozenset(ContentType.content_items())
         tightly = ContentType.tightly_coupled_types()
         loosely = ContentType.loosely_coupled_types()
@@ -113,9 +100,7 @@ class TestContentTypeCoupling:
         assert tightly & loosely == frozenset()  # no overlap
 
 
-# ---------------------------------------------------------------------------
 # PackDestination enum tests
-# ---------------------------------------------------------------------------
 
 
 class TestPackDestination:
@@ -129,9 +114,7 @@ class TestPackDestination:
         assert isinstance(PackDestination.MARKETPLACE, str)
 
 
-# ---------------------------------------------------------------------------
 # DERIVED_PACK_SUFFIX constant test
-# ---------------------------------------------------------------------------
 
 
 class TestDerivedPackSuffix:
@@ -139,14 +122,11 @@ class TestDerivedPackSuffix:
         assert DERIVED_PACK_SUFFIX == "Managed"
 
 
-# ---------------------------------------------------------------------------
 # resolve_derived_pack_source precedence tests
-# ---------------------------------------------------------------------------
 
 
 class TestResolveDerivedPackSource:
-    """The resolver decides the Managed Content feature directory a derived pack
-    lands in: <bucket>/<bucket_path>/<source>/<pack_id>/."""
+    """The resolver decides the feature directory a derived pack lands in: <bucket>/<bucket_path>/<source>/<pack_id>/."""
 
     def test_default_is_connectus(self, monkeypatch):
         monkeypatch.delenv("DERIVED_PACK_SOURCE", raising=False)
@@ -167,8 +147,7 @@ class TestResolveDerivedPackSource:
 
     @pytest.mark.parametrize("empty_value", [None, ""])
     def test_empty_per_pack_value_falls_through(self, monkeypatch, empty_value):
-        """An absent or blank ``derived_source`` must not shadow the lower
-        precedence levels."""
+        """A blank ``derived_source`` must not shadow the lower precedence levels."""
         monkeypatch.setenv("DERIVED_PACK_SOURCE", "env_feature")
         assert resolve_derived_pack_source(empty_value) == "env_feature"
 
@@ -177,17 +156,14 @@ class TestResolveDerivedPackSource:
         assert resolve_derived_pack_source() == DEFAULT_DERIVED_PACK_SOURCE
 
     def test_env_var_is_read_per_call_not_at_import(self, monkeypatch):
-        """Unlike ENABLE_SPLIT_PACKS, the value must not be frozen at import
-        time - otherwise it is neither testable nor settable by CI."""
+        """Unlike ENABLE_SPLIT_PACKS the value is read per call, so it stays testable and CI-settable."""
         monkeypatch.setenv("DERIVED_PACK_SOURCE", "first")
         assert resolve_derived_pack_source() == "first"
         monkeypatch.setenv("DERIVED_PACK_SOURCE", "second")
         assert resolve_derived_pack_source() == "second"
 
 
-# ---------------------------------------------------------------------------
 # Pack.destination property tests (using mock Pack objects)
-# ---------------------------------------------------------------------------
 
 
 class TestPackDestinationProperty:
@@ -204,7 +180,6 @@ class TestPackDestinationProperty:
         mock = MagicMock(spec=Pack)
         mock.managed = managed
         mock.is_derived = is_derived
-        # Use the real property logic
         mock.destination = (
             PackDestination.MANAGED_CONTENT if managed else PackDestination.MARKETPLACE
         )
@@ -223,9 +198,7 @@ class TestPackDestinationProperty:
         assert pack.destination == PackDestination.MANAGED_CONTENT
 
 
-# ---------------------------------------------------------------------------
 # Pack._is_item_tightly_coupled tests
-# ---------------------------------------------------------------------------
 
 
 class TestIsItemTightlyCoupled:
@@ -243,9 +216,7 @@ class TestIsItemTightlyCoupled:
         mock = MagicMock()
         mock.object_id = object_id
         mock.content_type = content_type
-        # Set explicitly: an unset attribute on a MagicMock auto-creates a truthy
-        # child mock, which the deprecation predicate would read as "deprecated"
-        # and the opt-out guard would read as "excluded".
+        # Set explicitly: an unset MagicMock attribute is truthy, reading as deprecated/excluded.
         mock.deprecated = deprecated
         mock.exclude_from_tightly_coupled = exclude_from_tightly_coupled
         mock.name = name if name is not None else object_id
@@ -256,7 +227,6 @@ class TestIsItemTightlyCoupled:
         from demisto_sdk.commands.content_graph.objects.pack import Pack
 
         mock = MagicMock(spec=Pack)
-        # Bind the real method
         mock._is_item_tightly_coupled = Pack._is_item_tightly_coupled.__get__(
             mock, Pack
         )
@@ -273,8 +243,7 @@ class TestIsItemTightlyCoupled:
         assert pack._is_item_tightly_coupled(item) is False
 
     def test_deprecated_item_is_never_tightly_coupled(self):
-        """A deprecated integration must not be carried into a derived pack,
-        even though its content type is tightly coupled."""
+        """A deprecated integration is not carried into a derived pack, despite its tightly coupled type."""
         pack = self._make_pack()
         item = self._make_content_item(
             "MyIntegration", ContentType.INTEGRATION, deprecated=True
@@ -284,8 +253,7 @@ class TestIsItemTightlyCoupled:
         ), "a deprecated item is never tightly coupled, regardless of its content type"
 
     def test_item_deprecated_by_name_and_description_convention(self):
-        """The shared predicate also honours the legacy name/description
-        convention, not just the explicit ``deprecated`` field."""
+        """The predicate also honours the legacy name/description convention."""
         pack = self._make_pack()
         item = self._make_content_item(
             "MyIntegration",
@@ -299,9 +267,7 @@ class TestIsItemTightlyCoupled:
         ), "an item marked deprecated by the name/description convention is treated as deprecated too"
 
 
-# ---------------------------------------------------------------------------
 # DerivedPackParser tests
-# ---------------------------------------------------------------------------
 
 
 class TestDerivedPackParser:
@@ -410,9 +376,7 @@ class TestDerivedPackParser:
         assert derived.derived_from == "TestPack"
 
     def test_derived_pack_source_is_the_feature_not_the_origin_pack(self):
-        """``source`` is the Managed Content feature directory, so it must be the
-        feature name - not the originating pack's name. The link back to the
-        origin is carried by ``derived_from``, asserted separately above."""
+        """``source`` is the feature name, not the origin pack's name; the link back is ``derived_from``."""
         from demisto_sdk.commands.content_graph.parsers.pack import DerivedPackParser
 
         original = self._make_mock_original_parser()
@@ -466,9 +430,7 @@ class TestDerivedPackParser:
         assert derived.content_type == ContentType.PACK
 
 
-# ---------------------------------------------------------------------------
 # Validator tests
-# ---------------------------------------------------------------------------
 
 
 class TestPA136DerivedPackNamingConflict:
@@ -579,18 +541,14 @@ class TestPA137ManagedPackMustHaveSource:
         assert "managed" in results[0].message.lower()
 
 
-# ---------------------------------------------------------------------------
 # StrictPackMetadata validation tests
-# ---------------------------------------------------------------------------
 
 
 class TestStrictPackMetadata:
     """Tests for StrictPackMetadata schema validation."""
 
     def test_derived_source_is_accepted_by_the_strict_schema(self):
-        """StrictPackMetadata sets ``extra = Extra.forbid``, so an undeclared
-        ``derived_source`` in pack_metadata.json would fail validation and make
-        the per-pack override unusable."""
+        """``StrictPackMetadata`` forbids extra fields, so ``derived_source`` must be declared."""
         from demisto_sdk.commands.content_graph.strict_objects.pack_meta_data import (
             StrictPackMetadata,
         )
@@ -607,9 +565,7 @@ class TestStrictPackMetadata:
         assert metadata.derived_source == "my_feature"
 
 
-# ---------------------------------------------------------------------------
 # ContentDTO destination filtering tests
-# ---------------------------------------------------------------------------
 
 
 class TestContentDTODestinationFiltering:
@@ -639,7 +595,7 @@ class TestContentDTODestinationFiltering:
         return mock
 
     def test_destination_filter_marketplace(self):
-        """Only marketplace packs should be included when filtering."""
+        """Only marketplace packs are included when filtering."""
         from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 
         mp_pack = self._make_mock_pack("PackA", PackDestination.MARKETPLACE)
@@ -650,7 +606,6 @@ class TestContentDTODestinationFiltering:
         dto = MagicMock(spec=ContentDTO)
         dto.packs = [mp_pack, mc_pack]
 
-        # Simulate the filtering logic
         filtered = [
             p for p in dto.packs if p.destination == PackDestination.MARKETPLACE
         ]
@@ -658,7 +613,7 @@ class TestContentDTODestinationFiltering:
         assert filtered[0].object_id == "PackA"
 
     def test_destination_filter_managed(self):
-        """Only managed packs should be included when filtering."""
+        """Only managed packs are included when filtering."""
         from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 
         mp_pack = self._make_mock_pack("PackA", PackDestination.MARKETPLACE)
@@ -676,7 +631,7 @@ class TestContentDTODestinationFiltering:
         assert filtered[0].object_id == "PackBManaged"
 
     def test_no_destination_filter_returns_all(self):
-        """When destination is None, all packs should be included."""
+        """A ``None`` destination includes all packs."""
         from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 
         mp_pack = self._make_mock_pack("PackA", PackDestination.MARKETPLACE)
@@ -696,9 +651,7 @@ class TestContentDTODestinationFiltering:
         assert len(filtered) == 2
 
 
-# ---------------------------------------------------------------------------
 # pack_destinations.json generation tests
-# ---------------------------------------------------------------------------
 
 
 class TestPackDestinationsJson:
@@ -734,7 +687,6 @@ class TestPackDestinationsJson:
 
         dto = MagicMock(spec=ContentDTO)
         dto.packs = [mp_pack, derived_pack]
-        # Bind the real method
         dto.write_pack_destinations = ContentDTO.write_pack_destinations.__get__(
             dto, ContentDTO
         )
@@ -747,14 +699,12 @@ class TestPackDestinationsJson:
         assert "packs" in data
         assert len(data["packs"]) == 2
 
-        # Check first pack (marketplace)
         pack_a = next(p for p in data["packs"] if p["pack_id"] == "PackA")
         assert pack_a["destination"] == "MARKETPLACE"
         assert pack_a["is_derived"] is False
         assert pack_a["managed"] is False
         assert pack_a["current_version"] == "1.2.3"
 
-        # Check derived pack
         pack_a_managed = next(
             p for p in data["packs"] if p["pack_id"] == "PackAManaged"
         )
@@ -766,9 +716,7 @@ class TestPackDestinationsJson:
         assert pack_a_managed["current_version"] == "2.0.1"
 
 
-# ---------------------------------------------------------------------------
 # pack_destinations.json shared helpers
-# ---------------------------------------------------------------------------
 
 
 def _mock_pack(
@@ -779,14 +727,7 @@ def _mock_pack(
     source: str = "",
     current_version: Optional[str] = "1.0.0",
 ) -> MagicMock:
-    """Build a mock pack for the destinations writer.
-
-    ``current_version`` passing ``None`` *deletes* the attribute from the mock
-    rather than setting it. This matters: on a bare ``MagicMock`` every
-    attribute access auto-creates a truthy child mock, so a pack whose graph
-    object carries no version at all must have the attribute genuinely absent
-    for ``getattr(pack, "current_version", None)`` to return ``None``.
-    """
+    """Build a mock pack for the destinations writer; ``current_version=None`` deletes the attribute rather than setting it."""
     pack = MagicMock()
     pack.object_id = object_id
     pack.name = object_id
@@ -813,7 +754,6 @@ def _write_and_read(
 
     dto = MagicMock(spec=ContentDTO)
     dto.packs = packs
-    # Bind the real method
     dto.write_pack_destinations = ContentDTO.write_pack_destinations.__get__(
         dto, ContentDTO
     )
@@ -824,20 +764,14 @@ def _write_and_read(
     return json.loads(output_file.read_text())
 
 
-# ---------------------------------------------------------------------------
 # pack_destinations.json current_version tests
-# ---------------------------------------------------------------------------
 
 
 class TestPackDestinationsCurrentVersion:
-    """Tests for the ``current_version`` field in the destinations output.
-
-    Infra decides what to upload from this artifact alone, so the pack version
-    must be readable without unzipping the dumped pack.
-    """
+    """``current_version`` must be readable from the artifact alone, without unzipping the pack."""
 
     def test_every_entry_has_a_current_version_key(self, tmp_path: Path):
-        """The key must be present on every entry, whether or not it has a value."""
+        """The key is present on every entry, whether or not it has a value."""
         packs = [
             _mock_pack("AWS", managed=True, current_version="3.2.1"),
             _mock_pack("PackA", current_version=None),
@@ -858,7 +792,7 @@ class TestPackDestinationsCurrentVersion:
         assert data["packs"][0]["current_version"] == "1.4.7"
 
     def test_empty_current_version_is_normalized_to_null(self, tmp_path: Path):
-        """An empty string must never reach consumers as an empty string."""
+        """An empty string never reaches consumers as an empty string."""
         packs = [_mock_pack("PackA", current_version="")]
 
         data = _write_and_read(tmp_path, packs)
@@ -870,7 +804,7 @@ class TestPackDestinationsCurrentVersion:
         )
 
     def test_missing_current_version_is_null(self, tmp_path: Path):
-        """A pack whose graph object carries no version serializes as JSON null."""
+        """A pack with no version serializes as JSON null."""
         packs = [_mock_pack("PackA", current_version=None)]
 
         data = _write_and_read(tmp_path, packs)
@@ -878,7 +812,7 @@ class TestPackDestinationsCurrentVersion:
         assert data["packs"][0]["current_version"] is None
 
     def test_current_version_is_per_pack(self, tmp_path: Path):
-        """The value must not be copied between packs in a single call."""
+        """The value is not copied between packs in a single call."""
         packs = [
             _mock_pack("PackA", current_version="1.0.0"),
             _mock_pack("PackB", current_version="2.5.0"),
@@ -890,9 +824,7 @@ class TestPackDestinationsCurrentVersion:
         assert versions == {"PackA": "1.0.0", "PackB": "2.5.0"}
 
 
-# ---------------------------------------------------------------------------
 # pack_destinations.json artifact_path tests
-# ---------------------------------------------------------------------------
 
 
 def _artifact_mock_pack(
@@ -902,12 +834,7 @@ def _artifact_mock_pack(
     is_derived: bool = False,
     derived_from: Optional[str] = None,
 ) -> MagicMock:
-    """Build a mock pack whose source directory name is independent of its id.
-
-    ``dir_name`` is deliberately decoupled from ``object_id`` so a fixture can
-    express the case the invariant is about: a pack whose directory on disk is
-    not named after its id.
-    """
+    """Build a mock pack whose directory name is decoupled from ``object_id``."""
     pack = MagicMock()
     pack.object_id = object_id
     pack.name = object_id
@@ -928,18 +855,12 @@ def _artifact_mock_pack(
 def _dump_and_write_destinations(
     packs: List[MagicMock], output_dir: Path
 ) -> Tuple[dict, Dict[str, Path]]:
-    """Run the real ``dump()`` and the real writer over the same packs.
-
-    Returns the parsed destinations JSON together with
-    ``{pack_id: dumped_path}``, captured from the output directory
-    ``ContentDTO.dump()`` actually handed to each ``Pack.dump()`` call.
-    """
+    """Run the real ``dump()`` and writer over the same packs; returns the JSON and ``{pack_id: dumped_path}``."""
     from demisto_sdk.commands.common.constants import MarketplaceVersions
     from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 
     dto = MagicMock(spec=ContentDTO)
     dto.packs = packs
-    # Bind the real methods
     dto._artifact_path = ContentDTO._artifact_path
     dto.dump = ContentDTO.dump.__get__(dto, ContentDTO)
     dto.write_pack_destinations = ContentDTO.write_pack_destinations.__get__(
@@ -949,8 +870,7 @@ def _dump_and_write_destinations(
     dto.dump(output_dir, MarketplaceVersions.XSOAR, zip=False)
     dumped_paths = {pack.object_id: pack.dump.call_args.args[0] for pack in packs}
 
-    # The writer derives the artifact directory from the file's parent, so the
-    # artifact must be written inside the very directory that was dumped to.
+    # The writer derives the artifact dir from the file's parent, so write it inside the dumped dir.
     output_file = output_dir / "pack_destinations.json"
     dto.write_pack_destinations(output_file)
 
@@ -958,12 +878,7 @@ def _dump_and_write_destinations(
 
 
 class TestPackDestinationsArtifactPath:
-    """``artifact_path`` must name the directory ``dump()`` actually wrote.
-
-    Infra's now-deleted writer always used ``object_id``, while ``dump()`` uses
-    ``pack.path.name`` for non-derived packs. The two disagree for every pack
-    whose directory name differs from its id, so the agreement is pinned here.
-    """
+    """``artifact_path`` must name the directory ``dump()`` wrote: ``pack.path.name``, not ``object_id``."""
 
     def test_artifact_path_matches_dump_when_dir_name_differs_from_id(
         self, tmp_path: Path
@@ -1020,9 +935,7 @@ class TestPackDestinationsArtifactPath:
             assert entry["artifact_path"] == str(dumped_paths[entry["pack_id"]])
 
 
-# ---------------------------------------------------------------------------
 # pack_destinations.json artifact_path dump-directory routing tests
-# ---------------------------------------------------------------------------
 
 
 def _write_destinations_with_dump_dirs(
@@ -1031,16 +944,7 @@ def _write_destinations_with_dump_dirs(
     artifacts_dir: Optional[Path] = None,
     managed_artifacts_dir: Optional[Path] = None,
 ) -> dict:
-    """Run the real writer with explicit dump directories and return the JSON.
-
-    Only ``_artifact_path`` and ``write_pack_destinations`` are rebound to the
-    real implementations - every other attribute stays a ``MagicMock`` so an
-    accidental extra ``self.<method>()`` call inside the writer would surface as
-    a corrupted ``artifact_path`` instead of silently passing.
-
-    When both directories are omitted the legacy two-argument form is used, so
-    the same helper can exercise the backward-compatible call shape.
-    """
+    """Run the real writer with explicit dump dirs; only ``_artifact_path`` and ``write_pack_destinations`` are unmocked."""
     from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 
     dto = MagicMock(spec=ContentDTO)
@@ -1059,15 +963,7 @@ def _write_destinations_with_dump_dirs(
 
 
 class TestPackDestinationsDumpDirectories:
-    """``artifact_path`` must be rooted at the directory the pack is dumped to.
-
-    ``dump()`` writes regular packs into ``artifacts_dir`` and managed packs
-    into ``managed_artifacts_dir``. The writer used to always root the path at
-    ``output_path.parent``, which silently dropped the dump-directory segment
-    whenever the JSON artifact did not live inside the dump directory - exactly
-    the CI layout. The two axes pinned here are independent: the *base* dir is
-    chosen by ``pack.managed``, the *last segment* by ``pack.is_derived``.
-    """
+    """``artifact_path`` is rooted at the pack's dump dir: base chosen by ``managed``, last segment by ``is_derived``."""
 
     def test_regular_pack_is_rooted_at_the_artifacts_dir(self, tmp_path: Path):
         """An unmanaged pack keeps the artifacts-dir segment in its path."""
@@ -1130,7 +1026,7 @@ class TestPackDestinationsDumpDirectories:
     def test_relative_artifacts_dir_yields_an_absolute_artifact_path(
         self, tmp_path: Path
     ):
-        """Consumers resolve the path from a different cwd, so it must be absolute."""
+        """Consumers resolve the path from another cwd, so it must be absolute."""
         artifacts_dir = Path("content_packs")
         packs = [_artifact_mock_pack("PackA", "PackADirectory")]
 
@@ -1187,7 +1083,7 @@ class TestPackDestinationsDumpDirectories:
     def test_managed_pack_without_a_managed_artifacts_dir_is_empty(
         self, tmp_path: Path
     ):
-        """No managed dump ran, so the pack is recorded with an empty artifact path."""
+        """No managed dump ran, so the pack gets an empty artifact path."""
         pack = _artifact_mock_pack("AWSManaged", "AWSManagedDirectory")
         pack.managed = True
 
@@ -1203,7 +1099,7 @@ class TestPackDestinationsDumpDirectories:
     def test_legacy_two_argument_call_with_a_managed_pack_does_not_raise(
         self, tmp_path: Path
     ):
-        """Omitting the dump dirs entirely keeps the historical output."""
+        """Omitting the dump dirs keeps the historical output."""
         output_path = tmp_path / "pack_destinations.json"
         pack = _artifact_mock_pack("AWSManaged", "AWSManagedDirectory")
         pack.managed = True
@@ -1215,9 +1111,7 @@ class TestPackDestinationsDumpDirectories:
         )
 
 
-# ---------------------------------------------------------------------------
 # ContentDTO mapping API tests
-# ---------------------------------------------------------------------------
 
 
 class TestContentDTOMappingAPI:
@@ -1269,22 +1163,17 @@ class TestContentDTOMappingAPI:
         assert mapping == {"PackAManaged": "PackA"}
 
 
-# ---------------------------------------------------------------------------
 # Feature flag tests
-# ---------------------------------------------------------------------------
 
 
 class TestFeatureFlag:
     """Tests for ENABLE_SPLIT_PACKS feature flag."""
 
     def test_feature_flag_default_is_false(self):
-        """By default, ENABLE_SPLIT_PACKS should be False."""
-        # The actual value depends on the environment, but we test the
-        # parsing logic
+        """ENABLE_SPLIT_PACKS defaults to False."""
         import os
 
         with patch.dict(os.environ, {}, clear=True):
-            # Re-evaluate the flag
             result = os.getenv("ENABLE_SPLIT_PACKS", "false").lower() == "true"
             assert result is False
 
@@ -1296,20 +1185,11 @@ class TestFeatureFlag:
             assert result is True
 
 
-# ---------------------------------------------------------------------------
 # Split-pack dependency isolation tests
-# ---------------------------------------------------------------------------
 
 
 class TestSplitPackFamilyPredicates:
-    """Tests for the cypher predicates that isolate split-pack families.
-
-    A derived pack and the pack it was derived from are two graph
-    representations of the same source directory. They share their tightly
-    coupled content items via a second IN_PACK edge, which would otherwise make
-    the dependency calculation infer a DEPENDS_ON between them in one or both
-    directions. These predicates are what prevent that.
-    """
+    """Cypher predicates preventing a DEPENDS_ON between a pack and its twin, which share items via a second IN_PACK edge."""
 
     def test_family_key_of_a_regular_pack_is_its_own_id(self):
         """A pack with no ``derived_from`` is the sole member of its family."""
@@ -1323,9 +1203,7 @@ class TestSplitPackFamilyPredicates:
         )
 
     def test_family_predicate_compares_both_family_keys(self):
-        """Comparing family keys covers every twin direction in one predicate:
-        original vs. derived, derived vs. original, and two derived packs that
-        share an origin."""
+        """Comparing family keys covers every twin direction in one predicate."""
         from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
             are_in_the_same_split_pack_family,
         )
@@ -1336,9 +1214,7 @@ class TestSplitPackFamilyPredicates:
         )
 
     def test_managed_or_derived_predicate_defaults_missing_flags_to_false(self):
-        """Regular packs predate these flags and may not carry them at all, so
-        both must default to false rather than null - a null would make the
-        enclosing ``NOT`` filter out legitimate dependencies."""
+        """The flags must default to false, not null: a null would make the enclosing ``NOT`` drop legitimate dependencies."""
         from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
             is_managed_or_derived,
         )
@@ -1349,17 +1225,10 @@ class TestSplitPackFamilyPredicates:
 
 
 class TestDependencyQueriesExcludeTwinsAndManagedPacks:
-    """Tests that every query producing DEPENDS_ON applies the isolation guards.
-
-    There are three independent paths that can create a pack-level dependency,
-    and a guard on only one of them still lets twin edges through. These tests
-    pin all three.
-    """
+    """All three DEPENDS_ON-producing queries must apply the isolation guards."""
 
     def test_direct_dependency_query_guards_twins_and_managed_packs(self):
-        """``create_depends_on_relationships`` derives DEPENDS_ON from USES
-        edges between items in different packs - the path that produces twin
-        edges, because a tightly coupled item is IN_PACK for both twins."""
+        """``create_depends_on_relationships`` derives DEPENDS_ON from cross-pack USES - the path producing twin edges."""
         from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
             create_depends_on_relationships,
         )
@@ -1386,10 +1255,7 @@ class TestDependencyQueriesExcludeTwinsAndManagedPacks:
         )
 
     def test_all_level_dependency_query_guards_twins_and_managed_packs(self):
-        """The all-level query walks paths of up to MAX_DEPTH hops. Guarding
-        only the direct edge is not enough: an indirect route such as
-        ``pack -> CommonScripts -> packManaged`` would still surface the twin
-        as an all-level dependency."""
+        """The all-level query walks MAX_DEPTH hops, so an indirect route would still surface the twin."""
         from demisto_sdk.commands.common.constants import MarketplaceVersions
         from demisto_sdk.commands.content_graph.common import RelationshipType
         from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
@@ -1423,10 +1289,7 @@ class TestDependencyQueriesExcludeTwinsAndManagedPacks:
         )
 
     def test_metadata_dependency_query_guards_twins_and_managed_packs(self):
-        """Metadata-declared dependencies bypass the calculation entirely, and
-        ``remove_existing_depends_on_relationships`` only clears edges with
-        ``from_metadata = false`` - so an unguarded twin edge here would never
-        be recalculated away."""
+        """Metadata-declared edges bypass the calculation and are never recalculated away, so they need their own guard."""
         from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
             build_depends_on_relationships_query,
         )
@@ -1450,8 +1313,7 @@ class TestDependencyQueriesExcludeTwinsAndManagedPacks:
     def test_all_level_dependency_query_is_balanced_for_both_mandatorily_modes(
         self, mandatorily: bool
     ):
-        """The ``mandatorily`` branch used to close the ``all(`` predicate only
-        when it was enabled, producing unbalanced cypher in the default mode."""
+        """The ``mandatorily`` branch used to close the ``all(`` predicate only when enabled, producing unbalanced cypher."""
         from demisto_sdk.commands.common.constants import MarketplaceVersions
         from demisto_sdk.commands.content_graph.common import RelationshipType
         from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
@@ -1476,9 +1338,7 @@ class TestDependencyQueriesExcludeTwinsAndManagedPacks:
         assert ("r.mandatorily = true" in query) is mandatorily
 
     def test_metadata_dependency_query_creates_rather_than_merges(self):
-        """``target_min_version`` is null whenever a dependency declares no
-        ``minVersion``, and neo4j rejects a null property inside a MERGE
-        pattern - so this query must keep using CREATE."""
+        """``target_min_version`` may be null and neo4j rejects nulls in MERGE, so this query must keep using CREATE."""
         from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
             build_depends_on_relationships_query,
         )
@@ -1490,7 +1350,7 @@ class TestDependencyQueriesExcludeTwinsAndManagedPacks:
 
 
 class TestDerivedPackCarriesNoPackLevelDependencies:
-    """Tests that a derived pack inherits content, but never dependencies."""
+    """A derived pack inherits content, but never dependencies."""
 
     def _make_original_parser_with_dependencies(self) -> MagicMock:
         from demisto_sdk.commands.content_graph.common import RelationshipType
@@ -1513,8 +1373,7 @@ class TestDerivedPackCarriesNoPackLevelDependencies:
         return original
 
     def test_derived_pack_does_not_inherit_depends_on(self):
-        """A derived pack ships to Managed Content as a self-contained unit, so
-        it declares no pack-level dependencies."""
+        """A derived pack ships self-contained, so it declares no pack-level dependencies."""
         from demisto_sdk.commands.content_graph.common import RelationshipType
         from demisto_sdk.commands.content_graph.parsers.pack import DerivedPackParser
 
@@ -1526,8 +1385,7 @@ class TestDerivedPackCarriesNoPackLevelDependencies:
         assert derived.relationships.get(RelationshipType.DEPENDS_ON, []) == []
 
     def test_derived_pack_still_inherits_other_relationships(self):
-        """Only DEPENDS_ON is dropped - the content graph still needs the rest,
-        which is what makes the shared items resolvable from the derived pack."""
+        """Only DEPENDS_ON is dropped; the rest is what makes the shared items resolvable."""
         from demisto_sdk.commands.content_graph.common import RelationshipType
         from demisto_sdk.commands.content_graph.parsers.pack import DerivedPackParser
 
@@ -1539,8 +1397,7 @@ class TestDerivedPackCarriesNoPackLevelDependencies:
         assert len(derived.relationships.get(RelationshipType.IN_PACK, [])) == 1
 
     def test_original_pack_dependencies_are_left_untouched(self):
-        """Building the derived pack must not mutate the original's
-        relationships: regular packs keep the dependencies they always had."""
+        """Building the twin must not mutate the original's relationships."""
         from demisto_sdk.commands.content_graph.common import RelationshipType
         from demisto_sdk.commands.content_graph.parsers.pack import DerivedPackParser
 
@@ -1553,34 +1410,11 @@ class TestDerivedPackCarriesNoPackLevelDependencies:
         assert depends_on[0]["target"] == "Base"
 
 
-# ---------------------------------------------------------------------------
-# Twin isolation on a persistent graph
-# ---------------------------------------------------------------------------
-#
-# The queries guarded above all *create* DEPENDS_ON. On a graph that is reused
-# between builds (which is how CI runs it) two further paths keep twin edges
-# alive even though no query creates them any more. Both were confirmed
-# against a live neo4j before these tests were written:
-#
-#   1. ``get_relationships_to_preserve`` captures every relationship pointing
-#      at a pack that is about to be recreated, with no type filter, and
-#      ``return_preserved_relationships`` writes them all back afterwards.
-#      Measured: refreshing only ``PackA`` captured 2 DEPENDS_ON edges from
-#      ``PackAManaged`` and restored both.
-#   2. ``remove_existing_depends_on_relationships`` only deletes edges with
-#      ``from_metadata = false``, so a ``from_metadata = true`` twin edge
-#      survives every recalculation. Measured: after injecting all four twin
-#      edge variants and running ``create_pack_dependencies``, the two
-#      ``from_metadata = true`` edges remained.
+# Twin isolation on a persistent graph: preservation replays edges, and metadata edges survive recalculation.
 
 
 class TestPreserveQueryExcludesTwinDependsOn:
-    """``get_relationships_to_preserve`` must not carry twin DEPENDS_ON over.
-
-    It runs before ``remove_packs_before_creation`` and its results are
-    replayed after the nodes are recreated, so anything it captures bypasses
-    every guard on the creating queries.
-    """
+    """``get_relationships_to_preserve`` runs before the guards and its results are replayed, so it must drop twin DEPENDS_ON."""
 
     def _preserve_query(self) -> str:
         from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
@@ -1597,9 +1431,7 @@ class TestPreserveQueryExcludesTwinDependsOn:
         return mock_run_query.call_args[0][1]
 
     def test_preserve_query_excludes_twin_depends_on(self):
-        """The pack-to-pack branch matches ``(s)-[r]->(t)`` for every
-        relationship type. Without a family guard it re-attaches exactly the
-        edge the dependency queries refuse to create."""
+        """The pack-to-pack branch matches every relationship type, so without a family guard it re-attaches the twin edge."""
         query = self._preserve_query()
 
         assert (
@@ -1608,8 +1440,7 @@ class TestPreserveQueryExcludesTwinDependsOn:
         )
 
     def test_preserve_query_excludes_depends_on_touching_a_managed_pack(self):
-        """Managed and derived packs ship self-contained, so no pack-level
-        dependency may be restored in either direction."""
+        """No pack-level dependency of a managed or derived pack may be restored, in either direction."""
         query = self._preserve_query()
 
         assert (
@@ -1620,24 +1451,15 @@ class TestPreserveQueryExcludesTwinDependsOn:
         )
 
     def test_preserve_query_only_guards_depends_on(self):
-        """The guards are scoped to DEPENDS_ON. Every other relationship type
-        must still be preserved - that is the whole point of the query."""
+        """The guards are scoped to DEPENDS_ON; every other type is still preserved."""
         query = self._preserve_query()
 
-        # Anything that is not a DEPENDS_ON short-circuits the guard.
         assert 'type(r) <> "DEPENDS_ON"' in query
-        # The three original branches are still there.
         assert query.count("UNION") == 2
 
 
 class TestDependsOnRemovalClearsTwinEdges:
-    """``remove_existing_depends_on_relationships`` must clear twin edges
-    regardless of ``from_metadata``.
-
-    Metadata-declared edges are deliberately kept across recalculations, but a
-    twin edge is never legitimate, so the ``from_metadata`` exemption must not
-    apply to it. Otherwise an edge written by a pre-fix build is immortal.
-    """
+    """``remove_existing_depends_on_relationships`` must clear twin edges regardless of ``from_metadata``."""
 
     def _removal_query(self) -> str:
         from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
@@ -1653,8 +1475,7 @@ class TestDependsOnRemovalClearsTwinEdges:
         return mock_run_query.call_args[0][1]
 
     def test_removal_deletes_twin_edges_even_when_from_metadata(self):
-        """A twin edge with ``from_metadata = true`` is not recalculated by any
-        query, so if this deletion skips it, it stays in the graph forever."""
+        """A ``from_metadata = true`` twin edge is recreated by nothing, so skipping it makes it immortal."""
         query = self._removal_query()
 
         assert (
@@ -1663,8 +1484,7 @@ class TestDependsOnRemovalClearsTwinEdges:
         )
 
     def test_removal_deletes_edges_touching_a_managed_pack(self):
-        """Same reasoning, for any dependency involving a managed or derived
-        pack in either direction."""
+        """Same, for any dependency involving a managed or derived pack in either direction."""
         query = self._removal_query()
 
         assert (
@@ -1675,26 +1495,17 @@ class TestDependsOnRemovalClearsTwinEdges:
         )
 
     def test_removal_still_keeps_metadata_edges_between_regular_packs(self):
-        """The pre-existing contract must not change: a metadata-declared
-        dependency between two regular packs survives recalculation, because
-        nothing recreates it."""
+        """Unchanged contract: a metadata dependency between two regular packs survives recalculation."""
         query = self._removal_query()
 
         assert "r.from_metadata = false" in query
 
 
-# ---------------------------------------------------------------------------
 # Pack.is_managed_paired tests
-# ---------------------------------------------------------------------------
 
 
 class TestIsManagedPaired:
-    """Tests for Pack.is_managed_paired - "this pack is half of a source/twin pair".
-
-    True for a derived twin and for a source pack that yields one. False for a
-    natively managed pack (AWS/Azure/GCP style), which has no twin at all, and
-    for an ordinary pack with nothing tightly coupled to split out.
-    """
+    """``is_managed_paired``: true for a twin and for a pack that yields one, false for a natively managed or unsplittable pack."""
 
     def _make_content_item(
         self,
@@ -1706,9 +1517,7 @@ class TestIsManagedPaired:
         mock = MagicMock()
         mock.object_id = object_id
         mock.content_type = content_type
-        # Set explicitly: an unset attribute on a MagicMock auto-creates a truthy
-        # child mock, which the deprecation predicate would read as "deprecated"
-        # and the opt-out guard would read as "excluded".
+        # Set explicitly: an unset MagicMock attribute is truthy, reading as deprecated/excluded.
         mock.deprecated = deprecated
         mock.exclude_from_tightly_coupled = exclude_from_tightly_coupled
         mock.name = object_id
@@ -1731,7 +1540,7 @@ class TestIsManagedPaired:
         mock.managed = managed
         mock.is_derived = is_derived
         mock.content_items = content_items
-        # Eligibility inputs, all set explicitly for the same reason as above.
+        # Eligibility inputs, set explicitly for the same reason.
         mock.object_id = object_id
         mock.support = support
         mock.hidden = hidden
@@ -1739,7 +1548,6 @@ class TestIsManagedPaired:
         mock.name = object_id
         mock.description = ""
         mock.pack_metadata_dict = {}
-        # Bind the real methods
         mock._is_item_tightly_coupled = Pack._is_item_tightly_coupled.__get__(
             mock, Pack
         )
@@ -1750,7 +1558,7 @@ class TestIsManagedPaired:
         return mock
 
     def test_derived_twin_is_managed_paired(self):
-        """The twin IS the managed half of the pair, regardless of what it holds."""
+        """The twin is the managed half of the pair, regardless of what it holds."""
         pack = self._make_pack(
             [self._make_content_item("MyIntegration", ContentType.INTEGRATION)],
             managed=True,
@@ -1773,7 +1581,7 @@ class TestIsManagedPaired:
         ), "an unmanaged pack with a tightly coupled item yields a twin, so it is the marketplace half of a pair"
 
     def test_natively_managed_pack_is_not_managed_paired(self):
-        """GCP/AWS/Azure style packs are managed at the source - no twin exists."""
+        """A natively managed pack (GCP/AWS/Azure style) has no twin."""
         pack = self._make_pack(
             [self._make_content_item("GoogleCloudPlatform", ContentType.INTEGRATION)],
             managed=True,
@@ -1785,7 +1593,7 @@ class TestIsManagedPaired:
         )
 
     def test_pack_with_only_loosely_coupled_items_is_not_managed_paired(self):
-        """No tightly coupled item means no twin is generated."""
+        """No tightly coupled item means no twin."""
         pack = self._make_pack(
             [self._make_content_item("MyPlaybook", ContentType.PLAYBOOK)],
         )
@@ -1795,7 +1603,7 @@ class TestIsManagedPaired:
 
     @pytest.mark.parametrize("support", ["partner", "community", "developer", ""])
     def test_non_xsoar_supported_pack_is_not_managed_paired(self, support: str):
-        """Only xsoar-supported packs are split, so no other pack advertises a twin."""
+        """Only xsoar-supported packs are split."""
         pack = self._make_pack(
             [self._make_content_item("MyIntegration", ContentType.INTEGRATION)],
             support=support,
@@ -1807,7 +1615,7 @@ class TestIsManagedPaired:
     def test_pack_whose_only_tightly_coupled_item_is_deprecated_is_not_managed_paired(
         self,
     ):
-        """Nothing eligible is left to split out, so no twin is generated."""
+        """Nothing eligible is left to split out."""
         pack = self._make_pack(
             [
                 self._make_content_item(
@@ -1847,22 +1655,11 @@ class TestIsManagedPaired:
         ), "an explicitly excluded pack must not advertise a managed twin either"
 
 
-# ---------------------------------------------------------------------------
 # Top level `managedPaired` key in the dumped metadata.json (CIAC-16414)
-# ---------------------------------------------------------------------------
 
 
 class TestManagedPairedTopLevelMetadata:
-    """Tests for the top level ``managedPaired`` key written by ``Pack.dump_metadata``.
-
-    The key is always emitted (including when it is False) while ENABLE_SPLIT_PACKS is
-    on, and is omitted entirely while the flag is off, which is the production default.
-
-    These tests drive the real ``Pack.dump_metadata`` against a real ``Pack`` and read
-    the JSON back, rather than the ``MagicMock(spec=Pack)`` idiom used above: the mock
-    idiom cannot exercise a large real method, and a source-inspection test would not
-    detect the gate being removed.
-    """
+    """``managedPaired`` at the top level of ``metadata.json``: always emitted while ENABLE_SPLIT_PACKS is on, omitted while off."""
 
     @staticmethod
     def _make_pack(managed: bool = False, is_derived: bool = False):
@@ -1902,7 +1699,7 @@ class TestManagedPairedTopLevelMetadata:
         return json.loads(destination.read_text())
 
     def test_managed_paired_true_is_written_when_flag_on(self, mocker, tmp_path):
-        """A derived twin is managed-paired, so the key must be written as True."""
+        """A derived twin is managed-paired, so the key is True."""
         mocker.patch(
             "demisto_sdk.commands.content_graph.objects.pack.ENABLE_SPLIT_PACKS", True
         )
@@ -1922,7 +1719,7 @@ class TestManagedPairedTopLevelMetadata:
         )
 
     def test_managed_paired_false_is_still_written_when_flag_on(self, mocker, tmp_path):
-        """A natively managed pack has no twin - the key must be PRESENT and False, never omitted."""
+        """A natively managed pack has no twin: the key must be present and False, never omitted."""
         mocker.patch(
             "demisto_sdk.commands.content_graph.objects.pack.ENABLE_SPLIT_PACKS", True
         )
@@ -1943,7 +1740,7 @@ class TestManagedPairedTopLevelMetadata:
         )
 
     def test_managed_paired_is_absent_when_flag_off(self, mocker, tmp_path):
-        """With the flag off (the production default) the key must not appear at all."""
+        """With the flag off (the production default) the key must not appear."""
         mocker.patch(
             "demisto_sdk.commands.content_graph.objects.pack.ENABLE_SPLIT_PACKS", False
         )
@@ -1960,23 +1757,11 @@ class TestManagedPairedTopLevelMetadata:
         )
 
 
-# ---------------------------------------------------------------------------
 # Per content item `managedPaired` key in the dumped metadata.json (CIAC-16414)
-# ---------------------------------------------------------------------------
 
 
 class TestManagedPairedContentItemMetadata:
-    """Tests for the per content item ``managedPaired`` key inside ``contentItems``.
-
-    Each entry states whether that individual item is tightly coupled, i.e. whether it
-    is one of the items paired into the pack's managed twin. It is emitted on every item
-    of every type (including when False) while ENABLE_SPLIT_PACKS is on, and is absent
-    entirely while the flag is off.
-
-    Like ``TestManagedPairedTopLevelMetadata`` these drive the real ``Pack.dump_metadata``
-    against a real ``Pack`` and read the written JSON back, because the value is injected
-    by the metadata writer and cannot be observed through a mocked pack.
-    """
+    """The per item ``managedPaired`` key inside ``contentItems``: emitted on every item while ENABLE_SPLIT_PACKS is on."""
 
     INTEGRATION_ID = "MyIntegration"
     PLAYBOOK_ID = "MyPlaybook"
@@ -2037,15 +1822,7 @@ class TestManagedPairedContentItemMetadata:
         derived_from: Optional[str] = None,
         deprecated_integration: bool = False,
     ):
-        """Builds a real ``Pack`` holding real content items, so ``contentItems`` is non-empty.
-
-        This is the single ``Pack`` factory shared by the per item suite and by
-        ``TestManagedPairedEndToEnd``: every knob that makes a pack stop splitting (a non-xsoar
-        ``support`` level, ``hidden``, ``deprecated``, natively ``managed``) is exposed here, so the
-        two suites cannot drift apart in what "a pack that does not split" means.
-
-        The defaults describe the happy shape - an eligible, xsoar-supported, splitting pack.
-        """
+        """The shared real-``Pack`` factory; every knob that stops a pack splitting (``support``, ``hidden``, ``deprecated``, ``managed``) is exposed."""
         from demisto_sdk.commands.common.constants import MarketplaceVersions
         from demisto_sdk.commands.content_graph.objects.pack import Pack
         from demisto_sdk.commands.content_graph.objects.pack_content_items import (
@@ -2098,12 +1875,7 @@ class TestManagedPairedContentItemMetadata:
 
     @staticmethod
     def _enable_both_flags(mocker) -> None:
-        """Turns the flag on in BOTH consuming modules, so ONE file carries both levels.
-
-        Needed by the cases that compare the per item key against the pack level key: the two are
-        read from separately bound ``ENABLE_SPLIT_PACKS`` names, so the top level key is absent
-        unless ``objects.pack`` is patched as well.
-        """
+        """Turn the flag on in BOTH consuming modules, so one file carries both levels."""
         mocker.patch(
             "demisto_sdk.commands.content_graph.objects.pack.ENABLE_SPLIT_PACKS", True
         )
@@ -2114,14 +1886,7 @@ class TestManagedPairedContentItemMetadata:
 
     @staticmethod
     def _enable_flag(mocker) -> None:
-        """Turns the flag on in the module that consumes it for the PER ITEM key.
-
-        The name is bound at import time in each consuming module, so patching
-        ``content_graph.common`` would have no effect. Only ``objects.pack_metadata``
-        is patched here: these assertions are about ``contentItems`` entries alone, and
-        deliberately leave the top level key (read from ``objects.pack``) off, which also
-        proves the two gates are independent.
-        """
+        """Turn the flag on in ``objects.pack_metadata`` only, which gates the per item key."""
         mocker.patch(
             "demisto_sdk.commands.content_graph.objects.pack_metadata.ENABLE_SPLIT_PACKS",
             True,
@@ -2129,14 +1894,14 @@ class TestManagedPairedContentItemMetadata:
 
     @staticmethod
     def _all_item_entries(metadata: dict) -> List[dict]:
-        """Flattens every per item entry across every content type in ``contentItems``."""
+        """Flatten every per item entry across every content type in ``contentItems``."""
         entries: List[dict] = []
         for type_entries in (metadata.get("contentItems") or {}).values():
             entries.extend(type_entries)
         return entries
 
     def test_tightly_coupled_item_is_marked_true(self, mocker, tmp_path):
-        """An integration is tightly coupled, so its entry must carry `managedPaired: True`."""
+        """An integration is tightly coupled: the key is True."""
         assert (
             ContentType.INTEGRATION in TIGHTLY_COUPLED_TYPES
         ), "test premise: an integration must be tightly coupled, otherwise this case asserts nothing"
@@ -2160,7 +1925,7 @@ class TestManagedPairedContentItemMetadata:
         )
 
     def test_loosely_coupled_item_is_present_and_false(self, mocker, tmp_path):
-        """A playbook is loosely coupled: the key must be PRESENT and False, never omitted."""
+        """A playbook is loosely coupled: the key must be present and False."""
         assert (
             ContentType.PLAYBOOK not in TIGHTLY_COUPLED_TYPES
         ), "test premise: a playbook must be loosely coupled, otherwise this case asserts nothing"
@@ -2184,7 +1949,7 @@ class TestManagedPairedContentItemMetadata:
         )
 
     def test_value_is_per_item_within_a_single_pack(self, mocker, tmp_path):
-        """Both item kinds in one pack: the value must differ per item, not be copied from the pack."""
+        """The value differs per item, and is not copied from the pack."""
         self._enable_flag(mocker)
         pack = self._make_pack(with_integration=True, with_playbook=True)
 
@@ -2202,7 +1967,7 @@ class TestManagedPairedContentItemMetadata:
         )
 
     def test_key_is_absent_from_every_entry_when_flag_off(self, mocker, tmp_path):
-        """With the flag off (the production default) no item entry may carry the key."""
+        """With the flag off no item entry may carry the key."""
         mocker.patch(
             "demisto_sdk.commands.content_graph.objects.pack_metadata.ENABLE_SPLIT_PACKS",
             False,
@@ -2222,14 +1987,7 @@ class TestManagedPairedContentItemMetadata:
             f"(not even False), keeping the blast radius at zero; offending entries: {offenders!r}"
         )
 
-    # -- the per item key must also respect whether the OWNING PACK splits at all ------------
-    #
-    # A tightly coupled item only ends up in a managed twin if a twin is generated for its pack.
-    # When the pack does not split - for ANY of the reasons enumerated by
-    # `Pack._is_derived_pack_eligible` - no twin exists, nothing is paired, and every item of that
-    # pack must therefore read False. The rule the cases below pin down is:
-    #
-    #     item managedPaired == (pack splits) AND (item is tightly coupled)
+    # The per item key is ``(pack splits) AND (item is tightly coupled)``, so an unsplittable pack makes every item False.
 
     @pytest.mark.parametrize("support", ["partner", "community", "developer", ""])
     def test_tightly_coupled_item_in_a_non_xsoar_supported_pack_is_false(
@@ -2256,7 +2014,7 @@ class TestManagedPairedContentItemMetadata:
     def test_tightly_coupled_item_in_a_hidden_pack_is_false(
         self, mocker, monkeypatch, tmp_path
     ):
-        """A hidden pack never splits, so its tightly coupled item is not paired into anything."""
+        """A hidden pack never splits, so nothing is paired."""
         monkeypatch.setenv(DERIVED_PACKS_EXCLUDE_ENV, "")
         self._enable_flag(mocker)
         pack = self._make_pack(with_integration=True, hidden=True)
@@ -2275,7 +2033,7 @@ class TestManagedPairedContentItemMetadata:
     def test_tightly_coupled_item_in_a_deprecated_pack_is_false(
         self, mocker, monkeypatch, tmp_path
     ):
-        """A deprecated pack never splits, so its tightly coupled item is not paired into anything."""
+        """A deprecated pack never splits, so nothing is paired."""
         monkeypatch.setenv(DERIVED_PACKS_EXCLUDE_ENV, "")
         self._enable_flag(mocker)
         pack = self._make_pack(with_integration=True, deprecated=True)
@@ -2294,7 +2052,7 @@ class TestManagedPairedContentItemMetadata:
     def test_tightly_coupled_item_in_an_excluded_pack_is_false(
         self, mocker, monkeypatch, tmp_path
     ):
-        """A pack named in `DERIVED_PACKS_EXCLUDE` never splits, so its items are never paired."""
+        """A pack in ``DERIVED_PACKS_EXCLUDE`` never splits, so nothing is paired."""
         monkeypatch.setenv(DERIVED_PACKS_EXCLUDE_ENV, self.PACK_ID)
         self._enable_flag(mocker)
         pack = self._make_pack(with_integration=True)
@@ -2314,7 +2072,7 @@ class TestManagedPairedContentItemMetadata:
     def test_tightly_coupled_item_in_a_natively_managed_pack_is_false(
         self, mocker, monkeypatch, tmp_path
     ):
-        """AWS/Azure/GCP shape: the pack is already managed at the source, so nothing is paired."""
+        """A natively managed pack is already managed at the source, so nothing is paired."""
         monkeypatch.setenv(DERIVED_PACKS_EXCLUDE_ENV, "")
         self._enable_flag(mocker)
         pack = self._make_pack(with_integration=True, managed=True, is_derived=False)
@@ -2359,7 +2117,7 @@ class TestManagedPairedContentItemMetadata:
     def test_loosely_coupled_item_in_a_non_splitting_pack_is_false(
         self, mocker, monkeypatch, tmp_path
     ):
-        """Both conjuncts are false at once: the value must be False, never inverted or or-ed."""
+        """Both conjuncts false: the value must be False, never inverted or or-ed."""
         monkeypatch.setenv(DERIVED_PACKS_EXCLUDE_ENV, "")
         self._enable_flag(mocker)
         pack = self._make_pack(with_playbook=True, support="partner")
@@ -2381,7 +2139,7 @@ class TestManagedPairedContentItemMetadata:
     def test_pack_whose_only_tightly_coupled_item_is_deprecated_is_false_at_both_levels(
         self, mocker, monkeypatch, tmp_path
     ):
-        """A deprecated item is not carried into a twin, so no twin exists and both levels are False."""
+        """A deprecated item yields no twin, so both levels are False."""
         monkeypatch.setenv(DERIVED_PACKS_EXCLUDE_ENV, "")
         self._enable_both_flags(mocker)
         pack = self._make_pack(with_integration=True, deprecated_integration=True)
@@ -2420,12 +2178,7 @@ class TestManagedPairedContentItemMetadata:
         pack_kwargs: Dict[str, object],
         exclude_this_pack: bool,
     ):
-        """The whole rule, in one invariant, across every pack shape that matters.
-
-        Each pack below holds one tightly coupled item (an integration) and one loosely coupled one
-        (a playbook), and every entry is checked against the conjunction of the pack level answer -
-        read from the very same written file - and the item's own coupling.
-        """
+        """The whole rule in one invariant: every entry equals the pack level answer AND the item's own coupling."""
         monkeypatch.setenv(
             DERIVED_PACKS_EXCLUDE_ENV, self.PACK_ID if exclude_this_pack else ""
         )
@@ -2454,51 +2207,33 @@ class TestManagedPairedContentItemMetadata:
             )
 
 
-# ---------------------------------------------------------------------------
 # End to end: BOTH `managedPaired` levels in a single written metadata.json (CIAC-16414)
-# ---------------------------------------------------------------------------
 
 
 class TestManagedPairedEndToEnd:
-    """Drives both ``managedPaired`` gates together, into ONE written ``metadata.json``.
-
-    ``TestManagedPairedTopLevelMetadata`` and ``TestManagedPairedContentItemMetadata`` each patch
-    exactly ONE of the two independent module level ``ENABLE_SPLIT_PACKS`` names, so neither proves
-    that the top level key and the per item keys coexist correctly in the shipped artifact. This
-    class patches BOTH and asserts the two levels in the same file, which is what a consumer of the
-    bucket actually reads.
-
-    Construction is deliberately delegated to ``TestManagedPairedContentItemMetadata``'s builders -
-    including its ``Pack`` factory, which now exposes every split-pack flag this class needs - rather
-    than duplicated. No ``MagicMock`` is used anywhere here - the real writer runs end to end.
-    """
+    """Patches BOTH ENABLE_SPLIT_PACKS bindings and asserts the two ``managedPaired`` levels in one written file, with no mocks."""
 
     INTEGRATION_ID = TestManagedPairedContentItemMetadata.INTEGRATION_ID
     PLAYBOOK_ID = TestManagedPairedContentItemMetadata.PLAYBOOK_ID
 
     @staticmethod
     def _make_pack(**kwargs):
-        """Reuses the single shared real-``Pack`` factory, so the two suites cannot drift apart."""
+        """Reuses the shared real-``Pack`` factory."""
         return TestManagedPairedContentItemMetadata._make_pack(**kwargs)
 
     @staticmethod
     def _dump(pack, tmp_path: Path) -> dict:
-        """Reuses the existing real-writer dump helper - one file, read back as JSON."""
+        """Reuses the real-writer dump helper - one file, read back as JSON."""
         return TestManagedPairedContentItemMetadata._dump(pack, tmp_path)
 
     @staticmethod
     def _all_item_entries(metadata: dict) -> List[dict]:
-        """Reuses the existing flattener over every ``contentItems`` entry of every type."""
+        """Reuses the flattener over every ``contentItems`` entry."""
         return TestManagedPairedContentItemMetadata._all_item_entries(metadata)
 
     @staticmethod
     def _set_both_flags(mocker, value: bool) -> None:
-        """Sets BOTH gates at once.
-
-        ``ENABLE_SPLIT_PACKS`` is bound at import time in each consuming module, so the top level key
-        (``objects.pack``) and the per item key (``objects.pack_metadata``) are gated by two separate
-        names. Patching ``content_graph.common`` would affect neither.
-        """
+        """Set both gates: the two levels read separately bound ``ENABLE_SPLIT_PACKS`` names."""
         mocker.patch(
             "demisto_sdk.commands.content_graph.objects.pack.ENABLE_SPLIT_PACKS", value
         )
@@ -2510,7 +2245,7 @@ class TestManagedPairedEndToEnd:
     def test_source_pack_writes_true_top_level_with_mixed_item_values(
         self, mocker, tmp_path
     ):
-        """The marketplace half (the user's `Core` shape): pack True, integration True, playbook False."""
+        """The marketplace half: pack True, integration True, playbook False."""
         assert (
             ContentType.INTEGRATION in TIGHTLY_COUPLED_TYPES
         ), "test premise: an integration must be tightly coupled, otherwise this case asserts nothing"
@@ -2553,7 +2288,7 @@ class TestManagedPairedEndToEnd:
         )
 
     def test_derived_twin_writes_true_at_both_levels(self, mocker, tmp_path):
-        """The managed half (the user's `AttlasianManaged` shape): pack True and its integration True."""
+        """The managed half: pack True and its integration True."""
         self._set_both_flags(mocker, True)
         pack = self._make_pack(
             with_integration=True,
@@ -2584,14 +2319,7 @@ class TestManagedPairedEndToEnd:
         )
 
     def test_natively_managed_pack_writes_false_at_both_levels(self, mocker, tmp_path):
-        """AWS/Azure/GCP shape: the pack never splits, so BOTH levels are False and agree.
-
-        The per item key does not report the item's coupling in isolation - it reports whether the
-        item is actually paired into a managed twin, which requires the owning pack to split in the
-        first place. A natively managed pack (``managed=True, is_derived=False``) is already managed
-        at the source, so no twin is ever generated and there is nothing for its integration to be
-        paired into.
-        """
+        """A natively managed pack never splits, so both levels are False and agree."""
         self._set_both_flags(mocker, True)
         pack = self._make_pack(with_integration=True, managed=True, is_derived=False)
 
@@ -2622,7 +2350,7 @@ class TestManagedPairedEndToEnd:
     def test_both_gates_off_writes_no_managed_paired_key_anywhere(
         self, mocker, tmp_path
     ):
-        """The production default: neither the top level key nor ANY item entry key may appear."""
+        """The production default: neither the top level nor any item key appears."""
         self._set_both_flags(mocker, False)
         pack = self._make_pack(
             with_integration=True, with_playbook=True, managed=True, is_derived=True
@@ -2650,58 +2378,32 @@ class TestManagedPairedEndToEnd:
         )
 
 
-# ---------------------------------------------------------------------------
 # Pack level `exclusivelyManagedPaired` key in the dumped metadata.json
-# ---------------------------------------------------------------------------
 
 
 class TestExclusivelyManagedPairedMetadata:
-    """Tests for the top level ``exclusivelyManagedPaired`` key written by ``Pack.dump_metadata``.
-
-    ``managedPaired`` is an ``any`` (the pack owns at least one tightly coupled item, so a twin
-    is generated). ``exclusivelyManagedPaired`` is its ``all`` sibling: EVERY considered item of
-    the pack travels into that twin, i.e. the marketplace half is left with nothing.
-
-    Only items that can reach managed content are considered - test items
-    (``CONTENT_TYPES_EXCLUDED_FROM_UPLOAD``) are ignored - and a pack with no considered items
-    is never exclusively paired.
-
-    Like the neighbouring ``managedPaired`` suites these drive the real ``Pack.dump_metadata``
-    against a real ``Pack`` and read the written JSON back, and they reuse the same shared
-    builders so the suites cannot drift apart.
-    """
+    """``exclusivelyManagedPaired`` is the ``all`` sibling of ``managedPaired``: every considered (non-test) item travels into the twin."""
 
     @staticmethod
     def _make_pack(**kwargs):
-        """Reuses the single shared real-``Pack`` factory used by the ``managedPaired`` suites."""
+        """Reuses the shared real-``Pack`` factory."""
         return TestManagedPairedContentItemMetadata._make_pack(**kwargs)
 
     @staticmethod
     def _dump(pack, tmp_path: Path) -> dict:
-        """Reuses the existing real-writer dump helper - one file, read back as JSON."""
+        """Reuses the real-writer dump helper - one file, read back as JSON."""
         return TestManagedPairedContentItemMetadata._dump(pack, tmp_path)
 
     @staticmethod
     def _enable_flag(mocker) -> None:
-        """Turns on the gate that guards the PACK level keys.
-
-        ``ENABLE_SPLIT_PACKS`` is bound at import time in each consuming module, and
-        ``exclusivelyManagedPaired`` is written by ``objects.pack`` - the same binding that
-        gates the top level ``managedPaired`` key.
-        """
+        """Turn on the ``objects.pack`` binding, which gates both pack level keys."""
         mocker.patch(
             "demisto_sdk.commands.content_graph.objects.pack.ENABLE_SPLIT_PACKS", True
         )
 
     @classmethod
     def _make_twin(cls, source):
-        """Builds the derived twin the parser would generate for ``source``.
-
-        ``DerivedPackParser`` copies ``exclusively_managed_paired`` from the original parser
-        verbatim, and the twin never recomputes it (its own ``content_items`` hold only the
-        tightly coupled subset, which would always read True). This mirrors that copy, so the
-        assertions below prove the two halves of the pair report the same value.
-        """
+        """Build the twin the parser would generate, copying ``exclusively_managed_paired`` verbatim as ``DerivedPackParser`` does."""
         twin = cls._make_pack(
             with_integration=True,
             managed=True,
@@ -2713,7 +2415,7 @@ class TestExclusivelyManagedPairedMetadata:
 
     @staticmethod
     def _add_test_playbook(pack, object_id: str = "MyTestPlaybook") -> None:
-        """Appends a TEST_PLAYBOOK to an existing pack built by the shared factory."""
+        """Append a TEST_PLAYBOOK to a pack from the shared factory."""
         from demisto_sdk.commands.common.constants import MarketplaceVersions
         from demisto_sdk.commands.content_graph.objects.test_playbook import (
             TestPlaybook,
@@ -2738,8 +2440,7 @@ class TestExclusivelyManagedPairedMetadata:
     def test_pack_whose_every_item_is_tightly_coupled_is_true_on_both_halves(
         self, mocker, tmp_path
     ):
-        """A pack holding nothing but an integration is emptied by the split, so BOTH the
-        source's and the twin's metadata must say True."""
+        """A pack holding only an integration is emptied by the split: both halves report True."""
         assert (
             ContentType.INTEGRATION in TIGHTLY_COUPLED_TYPES
         ), "test premise: an integration must be tightly coupled, otherwise this case asserts nothing"
@@ -2767,8 +2468,7 @@ class TestExclusivelyManagedPairedMetadata:
     def test_mixed_pack_is_false_on_both_halves_while_managed_paired_stays_true(
         self, mocker, tmp_path
     ):
-        """Integration + playbook: the pack DOES split (``managedPaired`` True), but the playbook
-        stays behind, so ``exclusivelyManagedPaired`` is False - the distinction between the keys."""
+        """Integration + playbook: ``managedPaired`` is True but ``exclusivelyManagedPaired`` is False."""
         assert (
             ContentType.PLAYBOOK not in TIGHTLY_COUPLED_TYPES
         ), "test premise: a playbook must be loosely coupled, otherwise this case asserts nothing"
@@ -2795,8 +2495,7 @@ class TestExclusivelyManagedPairedMetadata:
         )
 
     def test_test_only_items_are_ignored(self, mocker, tmp_path):
-        """A test playbook cannot travel to managed content, so it must not keep the pack from
-        being exclusively paired."""
+        """A test playbook cannot reach managed content, so it must not close the ``all`` gate."""
         assert ContentType.TEST_PLAYBOOK not in TIGHTLY_COUPLED_TYPES, (
             "test premise: a test playbook is not tightly coupled, so it could only pass the `all` "
             "gate by being excluded from the considered set"
@@ -2815,7 +2514,7 @@ class TestExclusivelyManagedPairedMetadata:
     def test_opted_out_integration_makes_the_pack_not_exclusively_paired(
         self, mocker, tmp_path
     ):
-        """A single item carrying ``excludefromtightlycoupled`` is enough to close the `all` gate."""
+        """A single ``excludefromtightlycoupled`` item closes the ``all`` gate."""
         self._enable_flag(mocker)
         source = self._make_pack(with_integration=True)
         source.content_items.integration[0].exclude_from_tightly_coupled = True
@@ -2829,7 +2528,7 @@ class TestExclusivelyManagedPairedMetadata:
         )
 
     def test_pack_with_no_content_items_is_false(self, mocker, tmp_path):
-        """An empty considered set is never exclusively paired - ``all([])`` must not leak True."""
+        """``all([])`` must not leak True for an empty considered set."""
         self._enable_flag(mocker)
         source = self._make_pack()
 
@@ -2849,15 +2548,7 @@ class TestExclusivelyManagedPairedMetadata:
     def test_internal_snake_case_field_never_reaches_the_metadata(
         self, mocker, tmp_path
     ):
-        """Regression: the internal ``exclusively_managed_paired`` model field must not be dumped.
-
-        The value is exposed under exactly one public key - the camelCase
-        ``exclusivelyManagedPaired`` injected by ``dump_metadata``. The Pydantic field that
-        carries it between the source pack and its twin is propagation-only, so a plain
-        (non-excluded) declaration would leak a second, snake_case key into ``metadata.json``.
-        Both halves of the pair are checked, because the twin is the one that actually holds a
-        non-default value for the field.
-        """
+        """Regression: the propagation-only ``exclusively_managed_paired`` field must not leak a snake_case key into the dump."""
         self._enable_flag(mocker)
         source = self._make_pack(with_integration=True)
 
@@ -2877,17 +2568,10 @@ class TestExclusivelyManagedPairedMetadata:
 
 
 class TestSplitPackDependencySweep:
-    """Tests for the final sweep that severs dependencies of managed packs.
-
-    Guarding each writing query individually is not airtight: a DEPENDS_ON edge
-    can also reach the graph through relationship preservation across a rebuild,
-    which never consults those guards. The sweep runs unconditionally at the end
-    of the dependency phase, so the invariant holds no matter how an edge got in.
-    """
+    """The final sweep severs managed-pack dependencies unconditionally, covering edges that bypass the per-query guards."""
 
     def test_sweep_deletes_edges_on_either_side_and_between_twins(self):
-        """One deletion covers all three illegitimate shapes: a managed source,
-        a managed target, and two packs of the same split family."""
+        """One deletion covers a managed source, a managed target, and two packs of one split family."""
         from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
             remove_split_pack_dependencies,
         )
@@ -2914,8 +2598,7 @@ class TestSplitPackDependencySweep:
         assert "DELETE r" in query, f"the sweep must delete, got: {query}"
 
     def test_sweep_matches_packs_in_both_directions(self):
-        """A managed pack must neither depend on another pack nor be depended
-        upon, so the pattern is directional but the predicates cover both ends."""
+        """The pattern is directional but the predicates cover both ends."""
         from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
             remove_split_pack_dependencies,
         )
@@ -2932,8 +2615,7 @@ class TestSplitPackDependencySweep:
         ), f"the sweep must be restricted to pack-to-pack edges, got: {query}"
 
     def test_sweep_returns_the_severed_pairs(self):
-        """The caller prunes the mapping using these pairs, so they must be
-        reported back rather than silently dropped."""
+        """The severed pairs must be reported back, since the caller prunes the mapping with them."""
         from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
             remove_split_pack_dependencies,
         )
@@ -2953,9 +2635,7 @@ class TestSplitPackDependencySweep:
         }
 
     def test_pruning_drops_severed_pairs_and_keeps_the_rest(self):
-        """``depends_on.json`` must describe the graph after the sweep, so a
-        severed pair cannot survive in the mapping - but unrelated dependencies
-        of the same source pack must be preserved."""
+        """A severed pair is dropped from the mapping, while the source's other dependencies survive."""
         from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
             prune_severed_dependencies,
         )
@@ -2976,8 +2656,7 @@ class TestSplitPackDependencySweep:
         }
 
     def test_pruning_removes_a_source_left_with_no_targets(self):
-        """A source whose every dependency was severed must disappear entirely,
-        rather than linger as an empty mapping."""
+        """A source whose every dependency was severed disappears, rather than lingering as an empty mapping."""
         from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
             prune_severed_dependencies,
         )
@@ -2990,8 +2669,7 @@ class TestSplitPackDependencySweep:
         assert pruned == {}
 
     def test_pruning_is_a_no_op_when_nothing_was_severed(self):
-        """The common case - a repo with no split packs - must leave the
-        existing mapping untouched."""
+        """A repo with no split packs leaves the mapping untouched."""
         from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
             prune_severed_dependencies,
         )
@@ -3001,8 +2679,7 @@ class TestSplitPackDependencySweep:
         assert prune_severed_dependencies(depends_on_data, set()) is depends_on_data
 
     def test_regular_pack_dependencies_are_never_pruned(self):
-        """The whole point of the change is that only managed/derived packs are
-        affected; ordinary pack-to-pack dependencies must keep working."""
+        """Ordinary pack-to-pack dependencies keep working."""
         from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
             prune_severed_dependencies,
         )
@@ -3019,8 +2696,7 @@ class TestSplitPackDependencySweep:
         assert pruned == depends_on_data
 
     def test_dependency_phase_sweeps_after_creating_dependencies(self):
-        """Order matters: sweeping before creation would let the creation query
-        reintroduce an edge. The sweep has to be the last step."""
+        """The sweep must be the last step, otherwise creation reintroduces the edge."""
         from demisto_sdk.commands.content_graph.interface.neo4j.queries import (
             dependencies as dependencies_module,
         )
@@ -3062,8 +2738,7 @@ class TestSplitPackDependencySweep:
         ), f"the sweep must run after dependency creation, got order {call_order}"
 
     def test_artifact_is_written_after_pruning(self):
-        """``depends_on.json`` is consumed downstream, so it must be serialized
-        from the pruned mapping rather than the pre-sweep one."""
+        """``depends_on.json`` is serialized from the pruned mapping, not the pre-sweep one."""
         from demisto_sdk.commands.content_graph.interface.neo4j.queries import (
             dependencies as dependencies_module,
         )
@@ -3101,25 +2776,7 @@ class TestSplitPackDependencySweep:
 
 
 class TestPackDestinationsSourceVsDumpedSource:
-    """``pack_destinations.json``'s ``source`` and the dumped ``metadata.json``'s ``source`` CAN differ.
-
-    These are two different values produced by two different stages:
-
-    * ``write_pack_destinations()`` writes the raw graph attribute ``pack.source``, which
-      ``PackParser`` populates as ``metadata.get("source", "")`` - the PLAIN key only.
-    * ``Pack.dump_metadata()`` writes ``metadata.json`` through
-      ``MarketplaceSuffixPreparer.prepare_managed_and_source()``, which lets a marketplace-suffixed
-      ``source:platform`` override win for the platform marketplace.
-
-    For a pack that declares BOTH, the two artifacts therefore disagree. These are characterization
-    tests: they document the behaviour as it is today, so that a future change which makes the two
-    agree fails here loudly and deliberately rather than silently.
-
-    This matters downstream: infra's managed-content upload derives a pack's bucket feature
-    directory from ``pack_destinations.json`` up front, but re-derives it from the dumped
-    ``metadata.json`` per pack. A disagreement can make the up-front check look for the pack under
-    the wrong feature, find it "already present", and skip an upload that never happened.
-    """
+    """Characterization: ``pack_destinations.json`` records the plain ``source`` while ``metadata.json`` lets ``source:platform`` win, so the two can disagree."""
 
     AUTHORED_METADATA = {
         "name": "ProbePack",
@@ -3130,7 +2787,7 @@ class TestPackDestinationsSourceVsDumpedSource:
     }
 
     def test_dumped_metadata_resolves_the_platform_suffixed_source(self):
-        """The dump resolves ``source:platform`` into the plain ``source`` for the platform MP."""
+        """The dump resolves ``source:platform`` into ``source`` for the platform marketplace."""
         from demisto_sdk.commands.common.constants import MarketplaceVersions
         from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer import (
             MarketplaceSuffixPreparer,
@@ -3145,7 +2802,7 @@ class TestPackDestinationsSourceVsDumpedSource:
     def test_pack_destinations_records_the_unresolved_plain_source(
         self, tmp_path: Path
     ):
-        """The destinations artifact records the PLAIN source, ignoring the platform override."""
+        """The destinations artifact records the plain source, ignoring the platform override."""
         pack = _artifact_mock_pack("ProbePack", "ProbePack")
         pack.managed = True
         pack.source = self.AUTHORED_METADATA["source"]
@@ -3155,7 +2812,7 @@ class TestPackDestinationsSourceVsDumpedSource:
         assert data["packs"][0]["source"] == "plain_feature"
 
     def test_the_two_sources_diverge_for_a_platform_suffixed_pack(self, tmp_path: Path):
-        """The two artifacts disagree for the same pack - the reason infra needs a mismatch guard."""
+        """The two artifacts disagree for the same pack - why infra needs a mismatch guard."""
         from demisto_sdk.commands.common.constants import MarketplaceVersions
         from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer import (
             MarketplaceSuffixPreparer,
@@ -3178,7 +2835,7 @@ class TestPackDestinationsSourceVsDumpedSource:
     def test_the_two_sources_agree_when_no_suffixed_source_is_declared(
         self, tmp_path: Path
     ):
-        """Without a ``source:platform`` override the two artifacts agree, which is the common case."""
+        """Without a ``source:platform`` override the two artifacts agree."""
         from demisto_sdk.commands.common.constants import MarketplaceVersions
         from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer import (
             MarketplaceSuffixPreparer,
@@ -3197,17 +2854,11 @@ class TestPackDestinationsSourceVsDumpedSource:
         assert dumped_source == data["packs"][0]["source"] == "plain_feature"
 
 
-# ---------------------------------------------------------------------------
 # DERIVED_PACKS_EXCLUDE env var parsing
-# ---------------------------------------------------------------------------
 
 
 class TestDerivedPackExclusions:
-    """``DERIVED_PACKS_EXCLUDE`` names packs that must never yield a twin.
-
-    Mirrors the ``TestResolveDerivedPackSource`` style: the variable is read per
-    call, so tests may change it freely.
-    """
+    """``DERIVED_PACKS_EXCLUDE`` names packs that never yield a twin; it is read per call."""
 
     def test_unset_var_yields_no_exclusions(self, monkeypatch):
         monkeypatch.delenv(DERIVED_PACKS_EXCLUDE_ENV, raising=False)
@@ -3243,8 +2894,7 @@ class TestDerivedPackExclusions:
         assert derived_pack_exclusions() == frozenset()
 
     def test_env_var_is_read_per_call_not_at_import(self, monkeypatch):
-        """Unlike ENABLE_SPLIT_PACKS, the value must not be frozen at import
-        time, so a second read reflects a changed environment."""
+        """The value is read per call, so a second read reflects a changed environment."""
         monkeypatch.setenv(DERIVED_PACKS_EXCLUDE_ENV, "First")
         assert derived_pack_exclusions() == frozenset({"first"})
         monkeypatch.setenv(DERIVED_PACKS_EXCLUDE_ENV, "Second")
@@ -3253,16 +2903,11 @@ class TestDerivedPackExclusions:
         assert derived_pack_exclusions() == frozenset()
 
 
-# ---------------------------------------------------------------------------
 # The shared deprecation predicate
-# ---------------------------------------------------------------------------
 
 
 class TestSharedDeprecationPredicate:
-    """``is_deprecated_entity`` is the single rule applied to BOTH a pack and a
-    content item by the split-pack logic: an explicit ``deprecated`` field OR the
-    legacy name/description convention.
-    """
+    """``is_deprecated_entity``: an explicit ``deprecated`` field OR the legacy name/description convention, for packs and items alike."""
 
     def test_explicit_field_alone_is_enough(self):
         assert is_deprecated_entity("Anything", "Any description", True) is True
@@ -3284,7 +2929,7 @@ class TestSharedDeprecationPredicate:
         )
 
     def test_deprecated_name_without_a_deprecated_description_is_not_enough(self):
-        """Both halves of the convention are required, matching the legacy rule."""
+        """Both halves of the convention are required."""
         assert (
             is_deprecated_entity("My Pack (Deprecated)", "An ordinary description")
             is False
@@ -3303,7 +2948,7 @@ class TestSharedDeprecationPredicate:
         "name, description", [(None, None), ("My Pack", None), (None, "Deprecated.")]
     )
     def test_missing_name_or_description_is_not_deprecated(self, name, description):
-        """A missing field must never raise, and never imply deprecation."""
+        """A missing field must never raise, nor imply deprecation."""
         assert is_deprecated_entity(name, description) is False
 
     def test_pack_and_content_item_agree_on_the_explicit_field(self):
@@ -3342,8 +2987,7 @@ class TestSharedDeprecationPredicate:
         assert is_deprecated_pack(pack) is False
 
     def test_pack_metadata_deprecated_field_is_honoured(self):
-        """The pack-level helper also reads ``deprecated`` from pack_metadata.json,
-        which the legacy ``PackParser.deprecated`` property ignores."""
+        """The pack helper also reads ``deprecated`` from pack_metadata.json, which the legacy property ignores."""
         pack = MagicMock()
         pack.name, pack.description, pack.deprecated = "Thing", "A thing.", False
         pack.pack_metadata_dict = {"deprecated": True}
@@ -3351,9 +2995,7 @@ class TestSharedDeprecationPredicate:
         assert is_deprecated_pack(pack) is True
 
 
-# ---------------------------------------------------------------------------
 # Derived pack eligibility at the single creation point
-# ---------------------------------------------------------------------------
 
 
 def _make_parser_content_item(
@@ -3362,13 +3004,11 @@ def _make_parser_content_item(
     deprecated: bool = False,
     exclude_from_tightly_coupled: bool = False,
 ) -> MagicMock:
-    """A content item parser stand-in for the derived-pack creation tests."""
+    """A content item parser stand-in for the creation tests."""
     item = MagicMock()
     item.object_id = object_id
     item.content_type = content_type
-    # Both are set explicitly: an unset attribute on a MagicMock auto-creates a
-    # truthy child mock, which the deprecation predicate would read as
-    # "deprecated" and the opt-out guard as "excluded".
+    # Set explicitly: an unset MagicMock attribute is truthy, reading as deprecated/excluded.
     item.deprecated = deprecated
     item.exclude_from_tightly_coupled = exclude_from_tightly_coupled
     item.name = object_id
@@ -3386,8 +3026,7 @@ def _make_pack_parser(
     deprecated: bool = False,
     pack_metadata_dict: Optional[dict] = None,
 ) -> MagicMock:
-    """A ``PackParser`` stand-in with the real eligibility/coupling/generation
-    methods bound, so the tests drive the production code paths."""
+    """A ``PackParser`` stand-in with the real methods bound."""
     from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 
     parser = MagicMock(spec=PackParser)
@@ -3401,8 +3040,7 @@ def _make_pack_parser(
     parser.deprecated = deprecated
     parser.pack_metadata_dict = pack_metadata_dict or {}
     parser.derived_source = None
-    # Remaining fields exist only so a real DerivedPackParser can be constructed
-    # in the positive cases; their values are irrelevant to these assertions.
+    # Remaining fields only let a real DerivedPackParser be constructed; their values are irrelevant.
     parser.path = Path(f"/fake/Packs/{object_id}")
     parser.display_name = object_id
     parser.created = "2024-01-01"
@@ -3462,11 +3100,7 @@ def _make_pack_parser(
 
 
 class TestDerivedPackEligibility:
-    """Only an xsoar-supported, live, visible, non-excluded pack may be split.
-
-    Every case keeps a tightly coupled integration in the pack, so a ``None``
-    result is caused by the gate under test and nothing else.
-    """
+    """Only an xsoar-supported, live, visible, non-excluded pack may be split; every case keeps a tightly coupled integration."""
 
     def test_xsoar_supported_pack_yields_a_derived_pack(self):
         """Positive control: without it, the negative cases prove nothing."""
@@ -3609,7 +3243,7 @@ class TestDeprecatedItemsAreNotTightlyCoupled:
 
 
 class TestDerivedPackRequiresAnIntegration:
-    """A derived pack is created only for a pack that owns a qualifying integration."""
+    """A derived pack is created only for a pack owning a qualifying integration."""
 
     def test_pack_without_any_integration_yields_none(self):
         """Tightly coupled non-integration items alone must not trigger a split."""
@@ -3634,27 +3268,14 @@ class TestDerivedPackRequiresAnIntegration:
         ), "a pack holding a live integration must still yield a derived pack"
 
 
-# ---------------------------------------------------------------------------
 # Per item opt-out: `excludefromtightlycoupled`
-# ---------------------------------------------------------------------------
 
 
 class TestExcludeFromTightlyCoupledOptOut:
-    """A pack author may opt a single NON-deprecated item out of being tightly coupled.
-
-    The raw item level key ``excludefromtightlycoupled`` is spelled identically in yml
-    and json content items. Setting it excludes exactly that item from the managed twin,
-    marks it ``managedPaired: false``, and - if nothing tightly coupled is left - suppresses
-    the twin altogether.
-
-    Structured after ``TestDeprecatedItemsAreNotTightlyCoupled``: the opt-out is the second
-    guard in the very same gate, and is deliberately checked BEFORE the deprecation guard so
-    it applies to live items too.
-    """
+    """``excludefromtightlycoupled`` excludes one live item from the twin, marks it ``managedPaired: false``, and can suppress the twin."""
 
     def test_flagged_item_is_not_tightly_coupled_on_both_sides_of_the_gate(self):
-        """Case a: the gate is duplicated in the parser and the model, and both must honour
-        the opt-out for an item whose content type IS tightly coupled and that is NOT deprecated."""
+        """Case a: the parser and the model both honour the opt-out for a tightly coupled, non-deprecated item."""
         from demisto_sdk.commands.content_graph.objects.pack import Pack
         from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 
@@ -3720,7 +3341,7 @@ class TestExcludeFromTightlyCoupledOptOut:
         ), "the model side must keep the same default for an unflagged live integration"
 
     def test_pack_whose_only_integration_is_flagged_yields_none(self):
-        """Case c: nothing tightly coupled is left, so no twin is generated at all."""
+        """Case c: nothing tightly coupled is left, so no twin at all."""
         parser = _make_pack_parser(
             [
                 _make_parser_content_item(
@@ -3734,8 +3355,7 @@ class TestExcludeFromTightlyCoupledOptOut:
         )
 
     def test_only_the_unflagged_integration_is_carried_into_the_twin(self):
-        """Case d: with two integrations and one opted out, the twin is created and holds
-        exactly the other one."""
+        """Case d: with one of two integrations opted out, the twin holds exactly the other."""
         kept = _make_parser_content_item("KeptIntegration")
         opted_out = _make_parser_content_item(
             "OptedOutIntegration", exclude_from_tightly_coupled=True
@@ -3755,21 +3375,13 @@ class TestExcludeFromTightlyCoupledOptOut:
         ], "exactly the unflagged integration is carried into the twin"
 
     def test_flagged_item_gets_managed_paired_false(self, mocker):
-        """Case e: the per item verdict threaded into the metadata writer.
-
-        Asserted at the two points the value is actually decided, rather than through a full
-        dump: `_add_item_to_metadata_list` computes the key from `item_is_tightly_coupled`,
-        and `Pack._is_item_tightly_coupled` is what supplies that operand. A dump cannot show
-        this - `prepare_for_upload` strips the key, so the re-parsed item the writer receives
-        no longer carries it (which is exactly why the verdict is computed before the re-parse).
-        """
+        """Case e: the per item verdict is asserted where it is decided, since ``prepare_for_upload`` strips the key before the re-parse."""
         from demisto_sdk.commands.common.constants import MarketplaceVersions
         from demisto_sdk.commands.content_graph.objects.pack_metadata import (
             PackMetadata,
         )
 
-        # The name is bound at import time in each consuming module, so the writer's own
-        # binding is the one that must be patched.
+        # The name is bound at import time, so patch the writer's own binding.
         mocker.patch(
             "demisto_sdk.commands.content_graph.objects.pack_metadata.ENABLE_SPLIT_PACKS",
             True,
@@ -3785,8 +3397,7 @@ class TestExcludeFromTightlyCoupledOptOut:
         content_item.is_incident_to_alert.return_value = False
 
         metadata = MagicMock(spec=PackMetadata)
-        # Set explicitly: an unset method on a MagicMock returns a truthy child mock, which
-        # the writer would read as "this item is already collected" and take the replace branch.
+        # Set explicitly: an unset MagicMock method returns a truthy child, sending the writer down the replace branch.
         metadata._search_content_item_metadata_object.return_value = None
 
         collected: dict = {}
@@ -3867,31 +3478,17 @@ class TestExcludeFromTightlyCoupledOptOut:
         ), "stripping the flag must not disturb the rest of the item"
 
 
-# ---------------------------------------------------------------------------
 # `.pack-ignore` inheritance by the derived pack
-# ---------------------------------------------------------------------------
 
 
 def test_derived_pack_inherits_the_pack_ignore_of_the_original(mocker, repo):
-    """The twin shares the source pack's directory, hence its `.pack-ignore`.
-
-    ``DerivedPackParser`` does not inherit from ``PackParser``, so
-    ``parse_ignored_errors`` never runs for it. Initializing
-    ``ignored_errors_dict`` to an empty dict silently dropped every ignore the
-    pack author declared, and ``validate -a`` then reported, for the twin, the
-    very errors that were already ignored for the source.
-
-    Driven end to end against a real repo rather than a ``MagicMock``: the
-    payoff of the copy is only observable once a content item resolves its
-    ignores through ``in_pack``, which a mocked parser cannot exercise.
-    """
+    """The twin shares the source pack's directory and must copy its ``ignored_errors_dict``, since ``parse_ignored_errors`` never runs for it."""
     from demisto_sdk.commands.common import tools
     from demisto_sdk.commands.content_graph.objects.pack import Pack
     from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 
     mocker.patch.object(tools, "get_content_path", return_value=Path(repo.path))
-    # Bound at import time in the parser module, so that binding is the one the
-    # twin generation reads.
+    # Bound at import time in the parser module, so patch that binding.
     mocker.patch(
         "demisto_sdk.commands.content_graph.parsers.pack.ENABLE_SPLIT_PACKS", True
     )

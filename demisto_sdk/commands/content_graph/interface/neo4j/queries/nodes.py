@@ -73,13 +73,7 @@ def get_relationships_to_preserve(
     """
     Get the relationships to preserve before removing packs
     """
-    # The third branch below matches (s)-[r]->(t) for *every* relationship
-    # type, and its results are replayed by return_preserved_relationships
-    # once the packs have been recreated. Without this guard a DEPENDS_ON
-    # between a pack and its derived twin - or any DEPENDS_ON touching a
-    # managed/derived pack - is carried across the rebuild, re-creating the
-    # exact edge the dependency queries refuse to create. The guard is scoped
-    # to DEPENDS_ON so every other relationship type is still preserved.
+    # Guard DEPENDS_ON only: preservation would otherwise replay twin/managed edges across a rebuild.
     depends_on_is_not_between_twins = f"""(
     type(r) <> "{RelationshipType.DEPENDS_ON}"
     OR (

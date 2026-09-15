@@ -89,8 +89,7 @@ def _create_content_graph_inner(
     builder.create_graph()
     if dependencies:
         content_graph_interface.create_pack_dependencies()
-    # Unconditional: cross-pack content-item edges exist even when dependency
-    # calculation was skipped, so isolation must not be gated on `dependencies`.
+    # Unconditional: cross-pack item edges exist even when dependency calculation was skipped.
     isolate_managed_packs_before_export(content_graph_interface)
     content_graph_interface.export_graph(
         output_path, override_commit=True, marketplace=marketplace

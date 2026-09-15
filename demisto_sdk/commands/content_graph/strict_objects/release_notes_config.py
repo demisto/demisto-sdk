@@ -9,15 +9,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictM
 
 
 class StrictForceUpdate(BaseStrictModel):
-    """
-    The optional `forceUpdate` object in a per-version breaking-changes config file
-    (ReleaseNotes/x_x_x.json). Holds coupling-aware breaking-change notes used by the ConnectUS
-    (Managed Content) flow. Omitting it preserves full backward compatibility. See CIAC-17085 / CIAC-17086.
-
-    - `breakingChangesNotesLoosely`: Breaking-change notes for Loosely Coupled items only.
-    - `breakingChangesNotesTightly`: Breaking-change notes for Tightly Coupled items only
-      (a Markdown string, mapped into the changelog.json `releaseNotice`).
-    """
+    """Optional ``forceUpdate`` in ReleaseNotes/x_x_x.json: coupling-aware breaking-change notes (CIAC-17085 / CIAC-17086)."""
 
     breaking_changes_notes_loosely: Optional[str] = Field(
         None, alias="breakingChangesNotesLoosely"

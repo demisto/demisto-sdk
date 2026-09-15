@@ -113,18 +113,7 @@ class ContentDTO(BaseModel):
         destination: Optional[PackDestination] = None,
         **kwargs,
     ):
-        """Dumps all (or selected) packs to ``dir``.
-
-        Args:
-            destination: When set, only packs matching this destination are
-                dumped.  ``None`` (default) dumps all packs — preserving
-                backward compatibility.
-            **kwargs: Optional flags forwarded to ``Pack.dump``. The only
-                upload-specific flag currently recognized is
-                ``strip_internal`` (set by the ``demisto-sdk upload`` flow
-                via ``zip_multiple_packs``); artifact builds and other
-                consumers do not pass it.
-        """
+        """Dump all packs, or only those matching ``destination``; ``kwargs`` (e.g. ``strip_internal``) are forwarded to ``Pack.dump``."""
         dir.mkdir(parents=True, exist_ok=True)
         logger.debug(f"Got packs to dump: {packs_to_dump}")
         packs_to_dump = (
@@ -133,7 +122,6 @@ class ContentDTO(BaseModel):
             else self.packs
         )
 
-        # Apply destination filter if specified
         if destination is not None:
             packs_to_dump = [
                 pack for pack in packs_to_dump if pack.destination == destination
@@ -181,13 +169,7 @@ class ContentDTO(BaseModel):
 
     @staticmethod
     def _artifact_path(output_dir: Path, pack: Pack) -> Path:
-        """Compute the artifact output path for a pack.
-
-        For derived packs, the directory name uses the derived pack ID
-        (e.g., ``FireEyeManaged``), materializing a separate directory.
-        For regular packs, the directory name is the pack's source
-        directory name (``pack.path.name``).
-        """
+        """Artifact directory name for a pack: the derived id for a twin, else ``pack.path.name``."""
         if getattr(pack, "is_derived", False):
             return output_dir / pack.object_id
         return output_dir / pack.path.name
@@ -210,36 +192,13 @@ class ContentDTO(BaseModel):
         artifacts_dir: Optional[Path] = None,
         managed_artifacts_dir: Optional[Path] = None,
     ) -> None:
-        """Write ``pack_destinations.json`` — the SDK→infra routing contract.
-
-        Args:
-            output_path: File path to write the JSON artifact.
-            artifacts_dir: Directory that regular (non-managed) packs are
-                dumped into — i.e. the ``dir`` passed to ``ContentDTO.dump``.
-                Relative paths are made absolute. When ``None`` (legacy
-                two-argument call), ``output_path.parent`` is used for every
-                pack, preserving the historical output.
-            managed_artifacts_dir: Directory that managed packs are dumped
-                into — i.e. the ``dir`` passed to the managed
-                ``ContentDTO.dump`` call. Relative paths are made absolute.
-                When ``artifacts_dir`` is supplied without it, no managed dump
-                happened, so managed packs are still written but with an empty
-                ``artifact_path`` — they are never routed to the regular
-                artifacts directory.
-
-        Each emitted pack entry carries ``current_version`` — the pack's
-        version as recorded on the graph (``pack_metadata.json``'s
-        ``currentVersion``). An empty value is normalized to ``None`` so
-        consumers can decide what to upload without opening the artifact.
-        """
+        """Write ``pack_destinations.json``: destination, ``current_version`` (empty -> None) and ``artifact_path`` rooted at the pack's dump dir."""
         entries: List[Dict[str, Any]] = []
         no_managed_artifacts = (
             artifacts_dir is not None and managed_artifacts_dir is None
         )
         for pack in self.packs:
-            # The pack version is surfaced as-is from the graph, with empty
-            # values normalized to ``None`` so consumers never see an empty
-            # string.
+            # Surfaced from the graph, with an empty value normalized to ``None``.
             graph_current_version = getattr(pack, "current_version", None)
             current_version: Optional[str] = (
                 graph_current_version
@@ -257,10 +216,7 @@ class ContentDTO(BaseModel):
                 "managed": pack.managed or False,
                 "source": pack.source or "",
             }
-            # ``dump()`` writes managed packs into ``managed_artifacts_dir``
-            # and regular packs into ``artifacts_dir``. When no dump directory
-            # was supplied (legacy two-argument call), fall back to the
-            # directory holding this JSON artifact.
+            # Managed packs go to ``managed_artifacts_dir``, regular ones to ``artifacts_dir``; legacy calls fall back to the JSON's dir.
             base_dir: Optional[Path]
             if artifacts_dir is None:
                 base_dir = output_path.parent
@@ -272,8 +228,7 @@ class ContentDTO(BaseModel):
                 )
             else:
                 base_dir = artifacts_dir.absolute()
-            # Delegate the last path segment to the same helper ``dump()``
-            # uses, so the recorded path can never drift from the real one.
+            # Reuse ``dump()``'s helper so the recorded segment cannot drift from the real one.
             entry["artifact_path"] = (
                 "" if base_dir is None else str(self._artifact_path(base_dir, pack))
             )

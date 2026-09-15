@@ -1,17 +1,4 @@
-"""Cypher queries that isolate managed packs from the rest of the content graph.
-
-A managed (or derived) pack ships to the Managed Content bucket as a
-self-contained unit: everything it needs travels with it. Once the graph is
-fully built, :func:`isolate_managed_packs` severs every relationship that
-crosses the boundary of such a pack, in both directions, so that no managed pack
-depends on anything and nothing depends on a managed pack.
-
-Structural relationships are preserved: a managed pack must keep owning its
-content items (``IN_PACK``), an integration must keep owning its commands
-(``HAS_COMMAND``), and ApiModule imports (``IMPORTS``) are consumed by
-unify/validate rather than shipped, so severing them would silently break
-ApiModule change-impact detection.
-"""
+"""Cypher queries severing every relationship crossing a managed pack boundary; IN_PACK, HAS_COMMAND and IMPORTS are kept."""
 
 from typing import List, Set, Tuple
 
@@ -25,20 +12,14 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     run_query,
 )
 
-# Keep-list rather than a delete-list: an unknown relationship type - for
-# example one replayed verbatim by return_preserved_relationships or carried by
-# an imported bucket graph - is severed by default, which is the safe failure
-# mode for an isolation guarantee.
+# Keep-list, not delete-list: an unknown relationship type is severed by default.
 PRESERVED_RELATIONSHIP_TYPES: Tuple[RelationshipType, ...] = (
     RelationshipType.IN_PACK,
     RelationshipType.HAS_COMMAND,
     RelationshipType.IMPORTS,
 )
 
-# A node belongs to a pack either by *being* that pack (zero hops) or by having
-# an IN_PACK edge to it (one hop). The zero-hop case is what lets pack-targeted
-# relationships (DEPENDS_ON, REFERENCES_PACK) be compared with content-item ones
-# using a single expression.
+# A node belongs to a pack by being it (zero hops) or via IN_PACK (one hop).
 _IN_PACK_HOPS = f"-[:{RelationshipType.IN_PACK}*0..1]->"
 
 
@@ -48,23 +29,12 @@ def _belongs_to_pack(node: str, pack: str) -> str:
 
 
 def _has_a_pack(node: str) -> str:
-    """Builds a predicate that is true when a node belongs to some pack.
-
-    Commands, connectors and ``not_in_repository`` stubs have no ``IN_PACK``
-    edge and are not another pack, so relationships to them are never severed.
-    """
+    """Cypher predicate: the node belongs to some pack (commands, connectors and stubs do not)."""
     return f"EXISTS {{ {_belongs_to_pack(node, f'_any_pack:{ContentType.PACK}')} }}"
 
 
 def _share_a_pack(node_a: str, node_b: str) -> str:
-    """Builds a predicate that is true when both nodes belong to a common pack.
-
-    A tightly-coupled content item belongs to **both** the origin pack and its
-    derived twin, so a per-binding ``pack_a <> pack_b`` comparison would report
-    the same edge as cross-pack under one binding and intra-pack under another,
-    and delete legitimate intra-pack edges. The comparison must therefore be
-    quantified over all packs: sever only when *no* pack contains both endpoints.
-    """
+    """Cypher predicate quantified over all packs: sever only when no pack contains both endpoints."""
     shared_pack = f"_shared_pack:{ContentType.PACK}"
     return (
         f"EXISTS {{ ({node_a}){_IN_PACK_HOPS}({shared_pack})"
@@ -73,20 +43,7 @@ def _share_a_pack(node_a: str, node_b: str) -> str:
 
 
 def _sever_managed_pack_dependencies(tx: Transaction) -> Set[Tuple[str, str]]:
-    """Deletes every pack-level ``DEPENDS_ON`` edge that involves a managed pack.
-
-    Both directions are covered by a single undirected-by-predicate match: the
-    edge is deleted when either endpoint is managed or derived. Split-pack twins
-    are matched as well, so a derived pack whose ``managed``/``is_derived``
-    properties were not persisted by an older build is still isolated from its
-    origin.
-
-    Args:
-        tx: The neo4j transaction.
-
-    Returns:
-        The ``(source_pack_id, target_pack_id)`` pairs whose edges were deleted.
-    """
+    """Delete pack-level DEPENDS_ON where either endpoint is managed, derived or a twin; returns the deleted pairs."""
     query = f"""// Severs pack dependencies involving managed, derived or twin packs
 MATCH (pack_a:{ContentType.PACK})-[r:{RelationshipType.DEPENDS_ON}]->(pack_b:{ContentType.PACK})
 WHERE {is_managed_or_derived("pack_a")}
@@ -102,19 +59,7 @@ RETURN source, target"""
 
 
 def _sever_cross_pack_content_relationships(tx: Transaction) -> int:
-    """Deletes non-structural relationships crossing a managed pack's boundary.
-
-    The match is anchored on managed packs (there are few of them) and expands
-    to the nodes they contain, then walks every relationship of those nodes in
-    both directions. An edge is severed only when the other endpoint belongs to
-    a pack of its own and the two endpoints share no pack at all.
-
-    Args:
-        tx: The neo4j transaction.
-
-    Returns:
-        The number of relationships that were deleted.
-    """
+    """Delete non-structural relationships crossing a managed pack boundary; returns the deletion count."""
     query = f"""// Severs cross-pack content relationships touching managed or derived packs
 MATCH (managed_pack:{ContentType.PACK})
 WHERE {is_managed_or_derived("managed_pack")}
@@ -137,23 +82,7 @@ RETURN count(*) AS severed"""
 
 
 def isolate_managed_packs(tx: Transaction) -> List[Tuple[str, str]]:
-    """Isolates every managed and derived pack from the rest of the graph.
-
-    Runs as a single dedicated step after the graph is fully built (including
-    dependency calculation), so it sees every relationship regardless of how it
-    entered the graph - parsed, calculated, imported or replayed. It is
-    idempotent: a second run finds nothing left to sever and is a no-op.
-
-    Args:
-        tx: The neo4j transaction.
-
-    Returns:
-        The sorted ``(source_pack_id, target_pack_id)`` pairs of the pack-level
-        ``DEPENDS_ON`` edges that were deleted. Callers holding a cached
-        ``depends_on`` mapping (which is serialized to ``depends_on.json``) must
-        prune these pairs from it before exporting, otherwise the artifact
-        advertises dependencies that no longer exist in the graph.
-    """
+    """Isolate every managed/derived pack (idempotent); the returned severed pairs must be pruned from the cached depends_on."""
     severed_dependencies = _sever_managed_pack_dependencies(tx)
     severed_relationships = _sever_cross_pack_content_relationships(tx)
     logger.info(

@@ -16,11 +16,10 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = ContentItem
 
-# Test-only items never travel to Managed Content, so they must not affect the
-# tightly/loosely classification of the pack, nor be reported themselves.
+# Test-only items never reach Managed Content, so they affect neither the classification nor the report.
 IGNORED_CONTENT_TYPES = CONTENT_TYPES_EXCLUDED_FROM_UPLOAD
 
-# A content item is identified by its type and id: ids are only unique per type.
+# A content item is identified by its type and id: ids are unique per type only.
 ItemKey = Tuple[ContentType, str]
 
 
@@ -29,14 +28,7 @@ def _item_key(content_item: ContentItem) -> ItemKey:
 
 
 def _resolve_full_pack(pack: Pack) -> Pack:
-    """Return a pack whose ``content_items`` are populated.
-
-    ``ContentItem.in_pack`` resolves the pack with ``metadata_only=True`` when the
-    item was parsed on its own (which is what the validate flow does), so the
-    returned pack carries the metadata but no content items. In that case the pack
-    is re-parsed in full (``BaseContent.from_path`` is cached, so a pack is parsed
-    at most once per run).
-    """
+    """Return the pack with ``content_items`` populated, re-parsing it when ``in_pack`` resolved metadata only."""
     if pack.content_items:
         return pack
     full_pack = BaseContent.from_path(pack.path)
@@ -103,18 +95,7 @@ class NoLooseItemAddedToTightlyCoupledPackValidator(BaseValidator[ContentTypes])
     def _was_pack_fully_tightly_coupled(
         pack: Pack, added_items: List[ContentTypes]
     ) -> bool:
-        """Whether the pack held only tightly coupled items before this change.
-
-        The pack qualifies when all three hold:
-            - it is one half of a source/twin pair, i.e. it actually splits into a
-              Managed Content twin (an ineligible pack - non-xsoar support, hidden,
-              deprecated, excluded or natively managed - is never split, so the rule
-              is meaningless for it);
-            - it has at least one content item that is not part of this change,
-              meaning the pack already existed with content in it (a brand-new pack
-              is free to mix couplings);
-            - every one of those pre-existing items is tightly coupled.
-        """
+        """True when the pack splits and every pre-existing item was tightly coupled."""
         if not pack.is_managed_paired():
             return False
 

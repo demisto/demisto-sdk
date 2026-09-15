@@ -213,9 +213,7 @@ class PackMetadataParser:
         self.source: str = metadata.get("source", "")
         self.managed: bool = metadata.get("managed", False)
         self.internal: bool = metadata.get("internal", False)
-        # Per-pack override for the feature name this pack's derived twin is
-        # published under. Highest-precedence input to
-        # resolve_derived_pack_source().
+        # Per-pack override of the derived twin's source; see ``resolve_derived_pack_source()``.
         self.derived_source: Optional[str] = metadata.get("derived_source")
 
         # Marketplace-suffixed managed/source fields (not private-pack specific).
@@ -355,17 +353,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         return self.path.name
 
     def _is_item_tightly_coupled(self, content_item: "ContentItemParser") -> bool:
-        """Check if a content item is tightly coupled.
-
-        An item that explicitly opts out via the item-level
-        ``excludefromtightlycoupled`` flag is never tightly coupled, and neither
-        is a deprecated item: such items must not be carried into a derived pack.
-
-        Kept in sync with ``Pack._is_item_tightly_coupled``
-        (``objects/pack.py``), which mirrors this rule on the object side (there
-        the opt-out is read from the ``exclude_from_tightly_coupled`` model
-        field, here from the parser property of the same name).
-        """
+        """True when the item is tightly coupled: not deprecated and not opted out. Mirrors ``Pack._is_item_tightly_coupled``."""
         if content_item.exclude_from_tightly_coupled:
             return False
         if is_deprecated_content_item(content_item):
@@ -373,22 +361,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         return content_item.content_type.is_tightly_coupled
 
     def _is_derived_pack_eligible(self) -> bool:
-        """Whether this pack may yield a derived (split) pack at all.
-
-        Checked before any content is inspected. A pack is ineligible when any of
-        the following holds:
-            - it is already ``managed`` (managed packs are never split);
-            - its ``support`` level is not in
-              ``DERIVED_PACK_ALLOWED_SUPPORT_LEVELS`` (only xsoar-supported packs
-              qualify; a missing or empty support level is not xsoar);
-            - it is deprecated;
-            - it is ``hidden``;
-            - its pack id appears in the ``DERIVED_PACKS_EXCLUDE`` environment
-              variable.
-
-        Returns:
-            True if the pack may yield a derived pack, False otherwise.
-        """
+        """True when the pack may be split: not managed, xsoar-supported, not deprecated, not hidden, not in DERIVED_PACKS_EXCLUDE."""
         pack_id = self.object_id or ""
         if self.managed:
             logger.debug(
@@ -419,15 +392,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         return True
 
     def _has_eligible_integration(self) -> bool:
-        """Whether the pack holds at least one integration fit for a derived pack.
-
-        An integration qualifies under the very same filtering applied to every
-        content item carried into the derived pack, i.e.
-        ``_is_item_tightly_coupled`` (which excludes deprecated integrations).
-
-        Returns:
-            True if at least one integration qualifies, False otherwise.
-        """
+        """True when at least one integration passes ``_is_item_tightly_coupled``."""
         return any(
             item.content_type == ContentType.INTEGRATION
             and self._is_item_tightly_coupled(item)
@@ -437,36 +402,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
 
     @cached_property
     def exclusively_managed_paired(self) -> bool:
-        """Whether *all* of the pack's content items are tightly coupled.
-
-        This is the ``all`` sibling of the ``any`` condition that turns a pack
-        into the source half of a managed pair: the pack is exclusively
-        managed-paired only when every one of its content items would be carried
-        into its managed twin.
-
-        Kept in sync with ``Pack.is_exclusively_managed_paired``
-        (``objects/pack.py``), which mirrors this rule on the object side. The
-        derived twin never recomputes it: it copies this value verbatim (see
-        ``DerivedPackParser.__init__``), because its own ``content_items``
-        collection holds only the tightly coupled subset and would therefore
-        always read True.
-
-        The rule:
-            - a pack that may not yield a twin at all (see
-              ``_is_derived_pack_eligible``) is never exclusively paired;
-            - only items that can travel to managed content are considered: test
-              items (``CONTENT_TYPES_EXCLUDED_FROM_UPLOAD``) are ignored, which
-              keeps the value marketplace-independent;
-            - a pack with no considered items is not exclusively paired;
-            - every considered item must be tightly coupled - a single item that
-              is deprecated or opts out via ``excludefromtightlycoupled`` (see
-              ``_is_item_tightly_coupled``) makes the whole pack not exclusively
-              paired. Requiring *all* of them subsumes the ``any`` condition of
-              the managed-paired rule.
-
-        Returns:
-            True if every considered content item is tightly coupled, False otherwise.
-        """
+        """``all`` sibling of the managed-pair rule; mirrors ``Pack.is_exclusively_managed_paired`` and is copied verbatim by the twin."""
         if not self._is_derived_pack_eligible():
             return False
         considered = [
@@ -480,20 +416,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         return all(self._is_item_tightly_coupled(item) for item in considered)
 
     def _generate_derived_pack(self) -> Optional["DerivedPackParser"]:
-        """Generate a derived pack for split-pack candidates.
-
-        A pack is a split-pack candidate when:
-        - It is eligible per ``_is_derived_pack_eligible``: not ``managed``,
-          xsoar-supported, not deprecated, not ``hidden``, and not listed in the
-          ``DERIVED_PACKS_EXCLUDE`` environment variable
-        - It holds at least one qualifying integration per
-          ``_has_eligible_integration``
-        - It contains at least one tightly coupled content item that is not
-          deprecated
-
-        Returns:
-            A ``DerivedPackParser`` if the pack qualifies, otherwise ``None``.
-        """
+        """Return a ``DerivedPackParser`` when the pack is eligible and owns a qualifying integration plus a tightly coupled item, else None."""
         if not self._is_derived_pack_eligible():
             return None
 
@@ -525,10 +448,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
             derived_id=derived_id,
         )
 
-        # Share the tightly coupled items with the twin and add a second IN_PACK
-        # edge for each. The twin holds the *same* item objects as the source -
-        # it does not own copies - so `Pack.to_nodes` must not emit them again
-        # (see the `is_derived` guard there).
+        # The twin holds the same item objects, so ``Pack.to_nodes`` must not emit them again.
         for item in tightly_coupled_items:
             item.add_to_pack(derived_id)
             derived.content_items.append(item)
@@ -719,18 +639,7 @@ def validate_structure(file: Path, pydantic_error_list: list) -> None:
 
 
 class DerivedPackParser:
-    """A lightweight parser representing a derived (managed) pack.
-
-    Derived packs are virtual constructs generated by the SDK for split-pack
-    candidates.  They do not correspond to a physical directory on disk — they
-    inherit most properties from the original ``PackParser`` and override only
-    the fields that distinguish them (``object_id``, ``managed``, ``source``,
-    ``is_derived``, ``derived_from``), while inheriting the source pack's
-    ``exclusively_managed_paired`` verbatim.
-
-    The ``content_type`` is set to ``ContentType.PACK`` so the graph builder
-    treats it like a regular pack node.
-    """
+    """Virtual parser for a derived (managed) pack: inherits the source parser and overrides only its identity fields."""
 
     content_type = ContentType.PACK
 
@@ -782,31 +691,21 @@ class DerivedPackParser:
 
         # Override fields for derived identity
         self.managed = True
-        # Derived packs are published under a feature name, not under the
-        # originating pack's name: the Managed Content bucket lays out as
-        # <bucket>/<bucket_path>/<source>/<pack_id>/. The link back to the
-        # originating pack is preserved via derived_from below.
+        # Published under the feature name, not the origin pack's name; ``derived_from`` keeps the link back.
         self.source = resolve_derived_pack_source(
             getattr(original_parser, "derived_source", None)
         )
         self.internal = original_parser.internal
         self.is_derived = True
         self.derived_from = original_parser.object_id
-        # Inherited as-is from the source pack: the twin only holds the tightly
-        # coupled subset, so recomputing it here would always yield True and the
-        # two halves of the pair would disagree.
+        # Copied, never recomputed: the twin holds only the tightly coupled subset.
         self.exclusively_managed_paired = original_parser.exclusively_managed_paired
 
-        # Derived packs share content items with the original but have
-        # their own relationships (the second IN_PACK edges).
+        # Items are shared with the original; only the second IN_PACK edges belong to the twin.
         self.content_items = PackContentItems()
         self.relationships = Relationships()
         self.structure_errors: List[StructureError] = []
-        # The derived pack has no directory of its own: it shares the original
-        # pack's on-disk directory (see ``self.path`` above), and therefore its
-        # ``.pack-ignore``. There is nowhere separate ignores could be declared,
-        # so the original's are inherited verbatim. A shallow copy keeps the two
-        # parsers from aliasing (and mutating) the same dict.
+        # No directory of its own, so the original's ``.pack-ignore`` is inherited (shallow copy avoids aliasing).
         self.ignored_errors_dict: dict = dict(original_parser.ignored_errors_dict)
         self.contributors: List[str] = (
             original_parser.contributors
@@ -817,15 +716,7 @@ class DerivedPackParser:
         self.deprecated = original_parser.deprecated
         self.private_pack_path = original_parser.private_pack_path
 
-        # Inherit the original pack's relationships, except its pack-level
-        # DEPENDS_ON edges. A derived pack ships to the Managed Content bucket
-        # as a self-contained unit, so it declares no pack-level dependencies.
-        # Inheriting them verbatim would also be wrong on its own terms: those
-        # entries carry the *original* pack's object_id as their source, so the
-        # graph would re-create the original's dependencies a second time
-        # (build_depends_on_relationships_query MERGEs them, but
-        # remove_existing_depends_on_relationships only clears edges with
-        # from_metadata = false, so metadata edges are never recalculated).
+        # Inherit the original's relationships except pack-level DEPENDS_ON: a twin ships self-contained.
         self.relationships.update(
             Relationships(
                 {

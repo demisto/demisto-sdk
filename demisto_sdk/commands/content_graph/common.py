@@ -330,12 +330,12 @@ class ContentType(StrEnum):
 
     @classmethod
     def tightly_coupled_types(cls) -> "frozenset[ContentType]":
-        """Return the frozenset of tightly coupled content types."""
+        """The frozenset of tightly coupled content types."""
         return TIGHTLY_COUPLED_TYPES
 
     @classmethod
     def loosely_coupled_types(cls) -> "frozenset[ContentType]":
-        """Return content item types that are loosely coupled — Marketplace only."""
+        """The loosely coupled content types - Marketplace only."""
         return frozenset(cls.content_items()) - TIGHTLY_COUPLED_TYPES
 
     @staticmethod
@@ -443,10 +443,7 @@ class ContentType(StrEnum):
         return ContentType[normalized_header]
 
 
-# ---------------------------------------------------------------------------
-# Coupling classification — which content types travel with the pack to
-# Managed Content vs. staying in Marketplace only.
-# ---------------------------------------------------------------------------
+# Coupling classification: which content types travel with the pack to Managed Content.
 
 TIGHTLY_COUPLED_TYPES: frozenset[ContentType] = frozenset(
     {
@@ -464,15 +461,12 @@ TIGHTLY_COUPLED_TYPES: frozenset[ContentType] = frozenset(
     }
 )
 
-# The raw yml/json key an item author sets to opt a single content item out of
-# tight coupling, even though its ContentType is in ``TIGHTLY_COUPLED_TYPES``.
-# Spelled identically in both YAML and JSON content items, like the other
-# generic item-level flags (``marketplaces``, ``deprecated``, ``issilent``).
+# Item-level opt-out key from tight coupling; same spelling in yml and json.
 EXCLUDE_FROM_TIGHTLY_COUPLED_KEY: str = "excludefromtightlycoupled"
 
 
 class PackDestination(str, enum.Enum):
-    """Describes where a pack's content is destined during the build process."""
+    """Where a pack's content is destined during the build."""
 
     MARKETPLACE = "marketplace"
     MANAGED_CONTENT = "managed_content"
@@ -483,64 +477,28 @@ DERIVED_PACK_SUFFIX = "Managed"
 # Feature flag: when False, derived pack generation is skipped entirely.
 ENABLE_SPLIT_PACKS = os.getenv("ENABLE_SPLIT_PACKS", "false").lower() == "true"
 
-# The feature name every derived (split) pack is published under, unless
-# overridden. Consumed downstream as the pack's ``source``, which determines the
-# Managed Content bucket layout: <bucket>/<bucket_path>/<source>/<pack_id>/.
+# Default feature name a derived pack is published under: <bucket>/<bucket_path>/<source>/<pack_id>/.
 DEFAULT_DERIVED_PACK_SOURCE = "connectus"
 
 
 def resolve_derived_pack_source(pack_derived_source: Optional[str] = None) -> str:
-    """Resolve the ``source`` (feature name) assigned to a derived pack.
-
-    Precedence, highest first:
-        1. ``pack_derived_source`` - the ``derived_source`` field of the
-           originating pack's ``pack_metadata.json``. Scopes to a single pack.
-        2. ``DERIVED_PACK_SOURCE`` environment variable. Redirects every derived
-           pack in the run at once, which is what CI sets.
-        3. ``DEFAULT_DERIVED_PACK_SOURCE``.
-
-    The environment is read here rather than at module import (unlike
-    ``ENABLE_SPLIT_PACKS``) so the value stays overridable in tests and is not
-    sensitive to import order.
-
-    Args:
-        pack_derived_source: Per-pack override from pack metadata, if declared.
-
-    Returns:
-        The feature name to publish the derived pack under.
-    """
+    """Resolve a derived pack's source: pack metadata > DERIVED_PACK_SOURCE env > default; env read per call."""
     if pack_derived_source:
         return pack_derived_source
     return os.getenv("DERIVED_PACK_SOURCE") or DEFAULT_DERIVED_PACK_SOURCE
 
 
-# Environment variable holding a comma-separated list of pack ids (folder names)
-# that must never yield a derived (split) pack, regardless of their content.
+# Env var: comma-separated pack ids that must never yield a derived pack.
 DERIVED_PACKS_EXCLUDE_ENV = "DERIVED_PACKS_EXCLUDE"
 
-# Only xsoar-supported packs may be split. Partner/community/developer packs -
-# and packs declaring no support at all - are never eligible.
+# Only xsoar-supported packs are split-eligible.
 DERIVED_PACK_ALLOWED_SUPPORT_LEVELS: frozenset[str] = frozenset({XSOAR_SUPPORT})
 
 DERIVED_PACKS_EXCLUDE_SEPARATOR = ","
 
 
 def derived_pack_exclusions() -> frozenset[str]:
-    """The set of pack ids explicitly excluded from derived (split) pack generation.
-
-    The value is read from the ``DERIVED_PACKS_EXCLUDE`` environment variable, a
-    comma-separated list of pack ids (the pack folder name, i.e.
-    ``pack.object_id``). Entries are stripped and casefolded, so matching is
-    case-insensitive and insensitive to whitespace around the separators. Blank
-    entries are dropped.
-
-    The environment is read per call (like ``resolve_derived_pack_source`` and
-    unlike ``ENABLE_SPLIT_PACKS``) so the value stays overridable in tests and is
-    not sensitive to import order.
-
-    Returns:
-        The casefolded pack ids to exclude; empty when the variable is unset or blank.
-    """
+    """Pack ids excluded from splitting, read per call from DERIVED_PACKS_EXCLUDE (casefolded, blanks dropped)."""
     raw = os.getenv(DERIVED_PACKS_EXCLUDE_ENV) or ""
     return frozenset(
         entry.strip().casefold()
@@ -549,20 +507,9 @@ def derived_pack_exclusions() -> frozenset[str]:
     )
 
 
-# ---------------------------------------------------------------------------
-# Deprecation - one canonical rule, applied identically to packs and to
-# content items by the split-pack (derived pack) logic.
-#
-# NOTE: this helper is deliberately scoped to the split-pack logic. The legacy
-# per-entity ``deprecated`` properties (``PackParser.deprecated``,
-# ``YAMLContentItemParser.deprecated``, ``JSONContentItemParser.deprecated``)
-# are left exactly as they are, so unrelated consumers keep their current
-# behaviour. Everything deciding derived-pack eligibility or tight coupling goes
-# through the functions below instead.
-# ---------------------------------------------------------------------------
+# Canonical deprecation rule, used by the split-pack logic only; legacy per-entity properties are untouched.
 
-# The explicit deprecation field, spelled identically in ``pack_metadata.json``
-# and in a content item's yml/json.
+# Explicit deprecation field; same key in pack_metadata.json and item yml/json.
 DEPRECATED_FIELD = "deprecated"
 
 
@@ -571,26 +518,7 @@ def is_deprecated_entity(
     description: Optional[str],
     deprecated_field: Optional[bool] = None,
 ) -> bool:
-    """The canonical deprecation predicate, shared by packs and content items.
-
-    An entity is deprecated when EITHER holds:
-        1. its explicit ``deprecated`` field is truthy (``deprecated`` in a
-           content item's yml/json, ``deprecated`` in ``pack_metadata.json``), or
-        2. its display name is marked ``(Deprecated)`` AND its description
-           follows one of the deprecation description conventions
-           (``Deprecated. Use X instead.`` / ``Deprecated. No available replacement.``).
-
-    Rule 2 is the historical pack-level heuristic; applying it to content items as
-    well is what makes this predicate uniform across both entity kinds.
-
-    Args:
-        name: The entity display name, if any.
-        description: The entity description, if any.
-        deprecated_field: The value of the entity's explicit ``deprecated`` field, if any.
-
-    Returns:
-        True if the entity is deprecated under either rule.
-    """
+    """True when the explicit ``deprecated`` field is truthy, or the name/description deprecation convention matches."""
     if deprecated_field:
         return True
     if not isinstance(name, str) or not isinstance(description, str):
@@ -605,19 +533,7 @@ def is_deprecated_entity(
 
 
 def is_deprecated_content_item(content_item: Any) -> bool:
-    """Apply ``is_deprecated_entity`` to a content item.
-
-    Works for both the parser representation
-    (``content_graph.parsers.content_item.ContentItemParser``) and the object
-    representation (``content_graph.objects.content_item.ContentItem``), which
-    expose the same ``name`` / ``description`` / ``deprecated`` surface.
-
-    Args:
-        content_item: The content item (parser or object) to inspect.
-
-    Returns:
-        True if the content item is deprecated.
-    """
+    """``is_deprecated_entity`` for a content item (parser or object)."""
     return is_deprecated_entity(
         name=getattr(content_item, "name", None),
         description=getattr(content_item, "description", None),
@@ -626,22 +542,7 @@ def is_deprecated_content_item(content_item: Any) -> bool:
 
 
 def is_deprecated_pack(pack: Any) -> bool:
-    """Apply ``is_deprecated_entity`` to a pack.
-
-    Works for both the parser representation
-    (``content_graph.parsers.pack.PackParser``) and the object representation
-    (``content_graph.objects.pack.Pack``).
-
-    Unlike the legacy ``PackParser.deprecated`` property - which is left
-    untouched and consults the name/description convention only - this also
-    honours an explicit ``deprecated`` field in ``pack_metadata.json``.
-
-    Args:
-        pack: The pack (parser or object) to inspect.
-
-    Returns:
-        True if the pack is deprecated.
-    """
+    """``is_deprecated_entity`` for a pack; unlike ``PackParser.deprecated`` it also honours the explicit field."""
     metadata = getattr(pack, "pack_metadata_dict", None) or {}
     return is_deprecated_entity(
         name=getattr(pack, "name", None),

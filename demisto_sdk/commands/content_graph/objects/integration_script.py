@@ -112,9 +112,7 @@ class IntegrationScript(ContentItem):
         **kwargs,
     ) -> dict:
         if kwargs.get("unify_only"):
-            # `super().prepare_for_upload` is bypassed here, so the SDK-only
-            # build-time flag must be stripped explicitly. Copy first - `self.data`
-            # may be a shared/cached dict owned by other consumers.
+            # ``super().prepare_for_upload`` is bypassed, so strip the SDK-only flag here, on a copy (``self.data`` may be shared).
             data = dict(self.data)
             data.pop(EXCLUDE_FROM_TIGHTLY_COUPLED_KEY, None)
         else:

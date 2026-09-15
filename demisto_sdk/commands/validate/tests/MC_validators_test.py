@@ -94,9 +94,7 @@ def test_ManagedPackHasDeploymentJsonValidator_error_message():
     assert "managed" in invalid_content_items[0].message
 
 
-# ---------------------------------------------------------------------------
-# MC102 – NoLooseItemAddedToTightlyCoupledPackValidator
-# ---------------------------------------------------------------------------
+# MC102 - NoLooseItemAddedToTightlyCoupledPackValidator
 
 PACK_ID = "TestPack"
 
@@ -152,7 +150,7 @@ def _make_test_playbook(object_id: str) -> TestPlaybook:
     )
 
 
-# Maps the content types used by these tests to their `PackContentItems` field.
+# Maps the content types used here to their `PackContentItems` field.
 CONTENT_TYPE_TO_PACK_FIELD = {
     ContentType.INTEGRATION: "integration",
     ContentType.PLAYBOOK: "playbook",
@@ -164,11 +162,7 @@ def _make_pack(
     content_items: List[ContentItem],
     support: str = "xsoar",
 ) -> Pack:
-    """Build a real ``Pack`` holding the given real content items.
-
-    ``support`` is exposed because only xsoar-supported packs are ever split into a
-    managed twin, which is a precondition of the rule under test.
-    """
+    """Build a real ``Pack`` with the given items; ``support`` matters, since only xsoar packs are split."""
     pack_content_items = PackContentItems()
     for item in content_items:
         getattr(
@@ -203,18 +197,7 @@ def _make_pack(
 
 
 def test_MC102_loosely_coupled_item_added_to_fully_tightly_coupled_pack_fails():
-    """
-    Given:
-        - An existing pack whose only content item is a tightly coupled integration.
-        - A newly added loosely coupled playbook.
-
-    When:
-        - Running NoLooseItemAddedToTightlyCoupledPackValidator.obtain_invalid_content_items
-          on the added playbook.
-
-    Then:
-        - The playbook is reported, since a fully tightly coupled pack must stay that way.
-    """
+    """A loose playbook added to a fully tightly coupled pack is reported."""
     assert (
         ContentType.INTEGRATION in TIGHTLY_COUPLED_TYPES
         and ContentType.PLAYBOOK not in TIGHTLY_COUPLED_TYPES
@@ -234,17 +217,7 @@ def test_MC102_loosely_coupled_item_added_to_fully_tightly_coupled_pack_fails():
 
 
 def test_MC102_tightly_coupled_item_added_to_fully_tightly_coupled_pack_passes():
-    """
-    Given:
-        - An existing pack whose only content item is a tightly coupled integration.
-        - A newly added tightly coupled integration.
-
-    When:
-        - Running the validator on the added integration.
-
-    Then:
-        - Nothing is reported: the pack stays fully tightly coupled.
-    """
+    """A tightly coupled integration added to a tightly coupled pack is not reported."""
     added_integration = _make_integration("NewIntegration")
     _make_pack([_make_integration("MyIntegration"), added_integration])
 
@@ -254,18 +227,7 @@ def test_MC102_tightly_coupled_item_added_to_fully_tightly_coupled_pack_passes()
 
 
 def test_MC102_pack_already_holding_a_loosely_coupled_item_passes():
-    """
-    Given:
-        - An existing pack holding both a tightly coupled integration and a loosely
-          coupled playbook.
-        - A newly added loosely coupled playbook.
-
-    When:
-        - Running the validator on the added playbook.
-
-    Then:
-        - Nothing is reported: the pack was already mixed, so nothing is being lost.
-    """
+    """A pack that already mixed couplings is not reported."""
     added_playbook = _make_playbook("NewPlaybook")
     _make_pack(
         [
@@ -281,17 +243,7 @@ def test_MC102_pack_already_holding_a_loosely_coupled_item_passes():
 
 
 def test_MC102_brand_new_pack_passes():
-    """
-    Given:
-        - A pack whose every content item is part of this very change (a brand-new pack),
-          holding a tightly coupled integration and a loosely coupled playbook.
-
-    When:
-        - Running the validator on both added items.
-
-    Then:
-        - Nothing is reported: the rule only protects packs that already existed.
-    """
+    """A brand-new pack, whose every item is part of this change, is not reported."""
     added_integration = _make_integration("MyIntegration")
     added_playbook = _make_playbook("MyPlaybook")
     _make_pack([added_integration, added_playbook])
@@ -302,18 +254,7 @@ def test_MC102_brand_new_pack_passes():
 
 
 def test_MC102_non_xsoar_supported_pack_passes():
-    """
-    Given:
-        - A partner-supported pack holding only a tightly coupled integration.
-        - A newly added loosely coupled playbook.
-
-    When:
-        - Running the validator on the added playbook.
-
-    Then:
-        - Nothing is reported: a non-xsoar pack never splits into a managed twin,
-          so it has no full-tightly-coupled property to preserve.
-    """
+    """A partner-supported pack never splits, so it is not reported."""
     added_playbook = _make_playbook("MyPlaybook")
     _make_pack(
         [_make_integration("MyIntegration"), added_playbook],
@@ -326,17 +267,7 @@ def test_MC102_non_xsoar_supported_pack_passes():
 
 
 def test_MC102_added_test_playbook_is_ignored():
-    """
-    Given:
-        - An existing pack holding only a tightly coupled integration.
-        - A newly added test playbook.
-
-    When:
-        - Running the validator on the added test playbook.
-
-    Then:
-        - Nothing is reported: test items never travel to Managed Content.
-    """
+    """An added test playbook is not reported: test items never reach Managed Content."""
     added_test_playbook = _make_test_playbook("MyTestPlaybook")
     _make_pack([_make_integration("MyIntegration"), added_test_playbook])
 

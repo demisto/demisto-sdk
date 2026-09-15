@@ -15,20 +15,7 @@ from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
 def isolate_managed_packs_before_export(
     content_graph_interface: ContentGraphInterface,
 ) -> None:
-    """Runs the managed-pack isolation step on a fully built graph.
-
-    Must be called after every relationship exists in the graph - including the
-    calculated ``DEPENDS_ON`` edges - and before the graph is exported, so the
-    artifacts other repositories import are already isolated. It runs
-    unconditionally, also when dependency calculation was skipped, because
-    cross-pack content-item edges exist regardless of that step.
-
-    The interface prunes its cached ``depends_on`` mapping with the severed
-    pairs, so ``depends_on.json`` stays consistent with the exported graph.
-
-    Args:
-        content_graph_interface: The content graph interface to isolate.
-    """
+    """Run managed-pack isolation on the fully built graph, before export; prunes the cached depends_on."""
     severed_dependencies = content_graph_interface.isolate_managed_packs()
     logger.debug(
         f"Managed pack isolation severed {len(severed_dependencies)} pack dependencies."

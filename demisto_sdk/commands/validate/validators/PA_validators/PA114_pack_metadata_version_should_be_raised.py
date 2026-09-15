@@ -11,6 +11,7 @@ from demisto_sdk.commands.common.constants import (
     SKIP_RELEASE_NOTES_FOR_TYPES,
     GitStatuses,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import find_type
 from demisto_sdk.commands.content_graph.objects import (
     AssetsModelingRule,
@@ -188,8 +189,23 @@ class PackMetadataVersionShouldBeRaisedValidator(BaseValidator[ContentTypes]):
 
         # Go over all the pack ids that need to be bumped.
         for pack_id in content_packs_ids_to_bump:
-            # Access them via the dict that was created earlier
-            pack = content_packs[pack_id]
+            # Access them via the dict that was created earlier.
+            #
+            # `content_packs_ids_to_bump` is filled from *any* collected content
+            # item, while `content_packs` only holds the Pack (pack_metadata.json)
+            # objects. The two can disagree: a pack whose metadata failed to parse,
+            # or that was filtered out of this validator's items (e.g. a deprecated
+            # pack), contributes no Pack object even though its content items were
+            # collected and flagged for a bump. Indexing blindly raised a KeyError
+            # that aborted the entire validate run. Without the pack's metadata
+            # there is no version to compare, so the only correct action is to skip.
+            pack = content_packs.get(pack_id)
+            if pack is None:
+                logger.debug(
+                    f"Skipping {self.error_code} for pack '{pack_id}': its pack "
+                    "metadata was not collected, so the pack version cannot be compared."
+                )
+                continue
             # Check if their old version >= current version
             old_version = pack.old_base_content_object.current_version  # type: ignore[union-attr]
             current_version = pack.current_version  # type: ignore[union-attr]

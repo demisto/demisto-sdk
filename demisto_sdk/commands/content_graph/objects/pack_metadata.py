@@ -75,7 +75,7 @@ class PackMetadata(BaseModel):
     default_data_source_id: Optional[str] = Field("", alias="defaultDataSource")
     default_data_source_name: Optional[str] = Field("", exclude=True)
     # Per-pack override of the derived twin's source; see ``resolve_derived_pack_source()``.
-    derived_source: Optional[str] = Field(None, alias="derived_source")
+    derived_source: Optional[str] = Field(None, alias="derivedSource")
 
     # For private packs
     premium: Optional[bool]
@@ -216,7 +216,7 @@ class PackMetadata(BaseModel):
         content_displays: dict = {}
         # Computed once per dump: ``is_managed_paired()`` scans every item, so evaluating it per item would be O(n^2).
         pack_is_managed_paired: bool = (
-            bool(self.is_managed_paired())  # type:ignore[attr-defined]
+            bool(self.is_managed_paired())  # type: ignore[attr-defined]
             if ENABLE_SPLIT_PACKS
             else False
         )
@@ -227,17 +227,17 @@ class PackMetadata(BaseModel):
                 continue
             # Must be evaluated before the re-parse below: ``prepare_for_upload`` strips the opt-out key.
             item_is_tightly_coupled: bool = ENABLE_SPLIT_PACKS and bool(
-                self._is_item_tightly_coupled(content_item)  # type:ignore[attr-defined]
+                self._is_item_tightly_coupled(content_item)  # type: ignore[attr-defined]
             )
             new_content_item = None
             try:
-                new_content_item = BaseContent.from_path(content_item.upload_path)  # type:ignore[assignment]
+                new_content_item = BaseContent.from_path(content_item.upload_path)  # type: ignore[assignment]
             except Exception as e:
                 logger.error(
                     f"Failed to generate content item for {content_item.upload_path}, will use original content item: {str(e)}"
                 )
             if new_content_item:
-                content_item = new_content_item  # type:ignore[assignment]
+                content_item = new_content_item  # type: ignore[assignment]
             self._add_item_to_metadata_list(
                 collected_content_items=collected_content_items,
                 content_item=content_item,
@@ -294,13 +294,13 @@ class PackMetadata(BaseModel):
             r.content_item_to.object_id: {
                 "mandatory": r.mandatorily,
                 # Get the minVersion either from the pack_metadata if exists, or from graph calculation
-                "minVersion": r.target_min_version or r.content_item_to.current_version,  # type:ignore[attr-defined]
+                "minVersion": r.target_min_version or r.content_item_to.current_version,  # type: ignore[attr-defined]
                 "author": self._get_author(
-                    r.content_item_to.author,  # type:ignore[attr-defined]
+                    r.content_item_to.author,  # type: ignore[attr-defined]
                     marketplace,
                 ),
-                "name": r.content_item_to.name,  # type:ignore[attr-defined]
-                "certification": r.content_item_to.certification  # type:ignore[attr-defined]
+                "name": r.content_item_to.name,  # type: ignore[attr-defined]
+                "certification": r.content_item_to.certification  # type: ignore[attr-defined]
                 or "",
             }
             for r in dependencies

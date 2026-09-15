@@ -559,7 +559,7 @@ class TestStrictPackMetadata:
             "author": "Test",
             "currentVersion": "1.0.0",
             "serverMinVersion": "6.0.0",
-            "derived_source": "my_feature",
+            "derivedSource": "my_feature",
         }
         metadata = StrictPackMetadata.parse_obj(data)
         assert metadata.derived_source == "my_feature"

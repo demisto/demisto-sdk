@@ -551,6 +551,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 "disable_monthly",
             }
 
+        if self.derived_source is None:
+            # Omit the `derivedSource` key entirely instead of emitting it as `null`.
+            excluded_fields_from_metadata.add("derived_source")
+
         metadata = self.dict(exclude=excluded_fields_from_metadata, by_alias=True)
         # Resolve marketplace-suffixed managed/source fields into the plain
         # managed/source fields for the current marketplace.

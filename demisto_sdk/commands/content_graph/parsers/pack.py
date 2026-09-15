@@ -214,7 +214,7 @@ class PackMetadataParser:
         self.managed: bool = metadata.get("managed", False)
         self.internal: bool = metadata.get("internal", False)
         # Per-pack override of the derived twin's source; see ``resolve_derived_pack_source()``.
-        self.derived_source: Optional[str] = metadata.get("derived_source")
+        self.derived_source: Optional[str] = metadata.get("derivedSource")
 
         # Marketplace-suffixed managed/source fields (not private-pack specific).
         # Kept as-is here; they are resolved into the plain managed/source
@@ -589,7 +589,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
             "source": "source",
             "managed": "managed",
             "internal": "internal",
-            "derived_source": "derived_source",
+            "derived_source": "derivedSource",
         }
 
     def raw_data(self) -> dict:

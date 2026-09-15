@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where the **PA114** validation crashed with a KeyError, aborting the entire validate run, when a content item required a pack version bump but its pack metadata was not collected into the run. Such packs are now skipped, since without the pack metadata there is no version to compare.
+  type: fix
+pr_number: '5521'

@@ -1804,6 +1804,27 @@ def test_PackMetadataVersionShouldBeRaisedValidator_metadata_change(mocker):
             )
 
 
+def test_PackMetadataVersionShouldBeRaisedValidator_pack_object_missing():
+    """
+    Given: A modified content item whose pack metadata object was not collected
+           into the run (e.g. its pack_metadata.json failed to parse, so no Pack
+           object reached the validator).
+    When: Running PackMetadataVersionShouldBeRaisedValidator validator.
+    Then: Ensure the validator skips the pack instead of raising a KeyError,
+          so a single uncollected pack cannot abort the whole validate run.
+    """
+    with ChangeCWD(REPO.path):
+        modeling_rule = create_modeling_rule_object()
+        modeling_rule.git_status = GitStatuses.MODIFIED
+
+        # The pack object is deliberately absent from the input, mimicking a
+        # pack whose metadata could not be parsed and was therefore dropped.
+        validator = PackMetadataVersionShouldBeRaisedValidator()
+        results = validator.obtain_invalid_content_items([modeling_rule])
+
+        assert results == []
+
+
 @pytest.fixture
 def repo_for_test_pa_124(graph_repo: Repo, mocker: MockerFixture):
     """

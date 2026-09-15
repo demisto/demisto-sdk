@@ -1,4 +1,45 @@
 # Changelog
+## 1.39.9 (2026-09-06)
+### Feature
+* Added support for "data_security" license. [#5515](https://github.com/demisto/demisto-sdk/pull/5515)
+* Added the is_long_running and long_running_timeout_seconds fields to the AgentixAction schema. [#5511](https://github.com/demisto/demisto-sdk/pull/5511)
+* Added support for the **mcps** field in the AgentixAgent schema. [#5509](https://github.com/demisto/demisto-sdk/pull/5509)
+
+### Internal
+* add pb-runner-v2 workload to validation CO162_is_valid_workloads [#5507](https://github.com/demisto/demisto-sdk/pull/5507)
+
+
+## 1.39.8 (2026-08-24)
+### Fix
+* Fixed an issue where the pack-level `[pack]` section of `.pack-ignore` was not honored for validators listed in `ALWAYS_RUN_ON_ERROR_CODE`. `ValidateManager.filter_validation_results` now consults both the content item's per-file `ignored_errors` and the pack's `pack_level_ignored_errors`. [#5503](https://github.com/demisto/demisto-sdk/pull/5503)
+
+### Internal
+* Added CO116, CO130, and CO171 to the list of ignorable ConnectUs validators, refined CO130 diagnostics and CO171 serializer awareness, and fixed a should_run preflight over-suppression where per-handler `.connector-ignore` entries silenced whole-connector validation runs. [#5505](https://github.com/demisto/demisto-sdk/pull/5505)
+
+
+## 1.39.7 (2026-08-18)
+### Feature
+* Added the **modelTier** field under the **promptConfig** object in the Script schema, allowing AI Tasks to pin an LLM tier (Flash, Thinking or Pro) instead of a concrete model id. An absent tier remains valid and resolves to the default model. [#5492](https://github.com/demisto/demisto-sdk/pull/5492)
+
+### Fix
+* Fixed an issue where a validator that declares a related_file_type (such as AG112) checked only the related-file ignore section and not the file's own per-file ignore section in `.pack-ignore`. [#5478](https://github.com/demisto/demisto-sdk/pull/5478)
+* Fixed an issue where the **GR111** and **GR112** graph validations flagged Agentix Actions as duplicates when they shared a name or display name but had the same id. They now fail only when the duplicate name or display name belongs to an action with a different id. [#5479](https://github.com/demisto/demisto-sdk/pull/5479)
+* Fixed an issue where the **AG112** validator forced its ignore entry onto the skill content file, preventing ignores placed on the main YAML from working for both AgentixAction and AgentixSkill items. [#5491](https://github.com/demisto/demisto-sdk/pull/5491)
+* Fixed an issue where re-running the **download** command with `--force` would duplicate the type prefix in file names (e.g. `indicatorfield-indicatorfield-<name>.json`) for incident fields, indicator fields, incident types, and layouts containers. [#5493](https://github.com/demisto/demisto-sdk/pull/5493)
+* Fixed post-push verification of extended dev/test images failing with "manifest unknown" by detecting GAR images from registry-qualified names. [#5496](https://github.com/demisto/demisto-sdk/pull/5496)
+* Fixed an issue where the **validate** command reported spurious BA102 errors for pack-level files (README, .pack-ignore, .secrets-ignore, release notes) when the pack name contained "ParsingRules" or "ModelingRules" as a substring. [#5500](https://github.com/demisto/demisto-sdk/pull/5500)
+* Fixed an issue where debug-logging in **validate** command failed. [#5497](https://github.com/demisto/demisto-sdk/pull/5497)
+* Fixed an issue where a **SyntaxWarning** was raised in Python 3.14 due to a 'return' statement inside a 'finally' block. [#5497](https://github.com/demisto/demisto-sdk/pull/5497)
+* The **validate** command now builds/updates the content graph automatically when running the connectors validation flow (`--run-connectors-validation`), which resolves handler-to-integration links through the graph while collecting content items. Previously this required passing `--graph` with a pre-built graph, and silently fell back to no-graph behavior otherwise. [#5480](https://github.com/demisto/demisto-sdk/pull/5480)
+
+### Internal
+* Reduced the number of content-graph queries performed by the connectors validation flow by fetching the connector table once and indexing it in memory, instead of re-scanning it for every unmatched integration. [#5480](https://github.com/demisto/demisto-sdk/pull/5480)
+* Fixed an issue where the SDK Nightly Gate PR comment rendered a stray trailing backslash after each file path. [#5489](https://github.com/demisto/demisto-sdk/pull/5489)
+* Add connectus validators. [#5477](https://github.com/demisto/demisto-sdk/pull/5477)
+* Updated the assignee in the Dependabot configuration. [#5490](https://github.com/demisto/demisto-sdk/pull/5490)
+* Changed the AG105 validation from a warning to an error. [#5482](https://github.com/demisto/demisto-sdk/pull/5482)
+
+
 ## 1.39.6 (2026-08-03)
 ### Feature
 * Docker image push now verifies the image is pullable after pushing. [#5458](https://github.com/demisto/demisto-sdk/pull/5458)

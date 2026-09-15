@@ -1,0 +1,6 @@
+changes:
+- description: Excluded AgentixAction and AgentixAgent items from the **GR105** validation, so it can be enforced as an error for all other content types.
+  type: internal
+- description: Added a temporary **GR117** validation, which reports duplicate AgentixAction and AgentixAgent IDs as a warning until the existing duplications are fixed.
+  type: feature
+pr_number: 5520

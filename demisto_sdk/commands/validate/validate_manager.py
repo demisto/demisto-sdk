@@ -219,7 +219,8 @@ class ValidateManager:
           ``.connector-ignore`` - so ignoring one handler does not suppress the
           others.
         * All other validations are filtered against the content object's main
-          ``ignored_errors`` list (the general case).
+          ``ignored_errors`` list AND the pack's ``pack_level_ignored_errors``
+          list (the general case).
 
         Returns:
         List[ValidationResult]: Filtered validation results excluding ignored error codes
@@ -236,12 +237,39 @@ class ValidateManager:
                 if not self._is_connector_handler_result_ignored(result)
             ]
 
-        # General case: filter against the content item's main ignored_errors.
+        # General case: filter against the content item's main ignored_errors
+        # AND the pack's pack_level_ignored_errors (from `[pack]` in
+        # `.pack-ignore`).
         return [
             result
             for result in validation_results
-            if result.validator.error_code not in result.content_object.ignored_errors
+            if not self._is_result_ignored_by_pack_or_file(result)
         ]
+
+    @staticmethod
+    def _is_result_ignored_by_pack_or_file(result: ValidationResult) -> bool:
+        """Whether a single validation result is ignored by the content item's own
+        ``ignored_errors`` (per-file ``[file:...]`` section) or by the pack's
+        ``pack_level_ignored_errors`` (the ``[pack]`` section of
+        ``.pack-ignore``).
+        """
+        err_code = result.validator.error_code
+        content_object = result.content_object
+
+        if err_code in getattr(content_object, "ignored_errors", []):
+            return True
+
+        pack = (
+            content_object
+            if hasattr(content_object, "pack_level_ignored_errors")
+            else getattr(content_object, "in_pack", None)
+        )
+        if pack is not None and err_code in getattr(
+            pack, "pack_level_ignored_errors", []
+        ):
+            return True
+
+        return False
 
     @staticmethod
     def _is_connector_handler_validation(result: ValidationResult) -> bool:

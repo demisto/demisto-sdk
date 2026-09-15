@@ -1,0 +1,4 @@
+changes:
+- description: Added a new validation for Agentix Actions, CO195_is_classifier_field_has_show_action, which verifies that a handler delivering a classifier field declares a properly-formatted show_classifier action (references the delivered classifier id with exactly one return_data entry).
+  type: feature
+pr_number: 5514

@@ -1,6 +1,0 @@
-changes:
-- description: Fixed an issue where the **validate** command reported spurious BA102
-    errors for pack-level files (README, .pack-ignore, .secrets-ignore, release notes)
-    when the pack name contained "ParsingRules" or "ModelingRules" as a substring.
-  type: fix
-pr_number: 5500

@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where re-running the **download** command with `--force` would duplicate the type prefix in file names (e.g. `indicatorfield-indicatorfield-<name>.json`) for incident fields, indicator fields, incident types, and layouts containers.
-  type: fix
-pr_number: '5493'

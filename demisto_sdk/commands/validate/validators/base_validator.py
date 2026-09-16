@@ -183,18 +183,38 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     ) -> FixResult:
         raise NotImplementedError
 
+    @classmethod
+    def ensure_graph_initialized(cls) -> ContentGraphInterface:
+        """Build/update the content graph once and wire it onto ``BaseValidator``.
+
+        This is the shared graph-initialization path used by the lazy ``graph``
+        property and by the connectors flow, which needs the graph *during*
+        object collection - before any validator runs. It runs the same
+        ``update_content_graph`` machinery as the standalone ``graph update``
+        command, so it: imports the existing graph, updates only what changed
+        (unless ``create_graph_from_scratch`` forces a rebuild), includes
+        private content via ``private_content_path``, and skips work entirely
+        when the graph is already up-to-date.
+
+        Idempotent: if the graph interface is already wired (e.g. connect-only
+        via ``--graph`` in CI, or a previous call), it is returned as-is without
+        rebuilding.
+        """
+        if BaseValidator.graph_interface:
+            return BaseValidator.graph_interface
+        logger.info("Graph validations were selected, will init graph")
+        BaseValidator.graph_interface = ContentGraphInterface()
+        update_content_graph(
+            BaseValidator.graph_interface,
+            use_git=True,
+            private_content_path=BaseValidator.private_content_path,
+            create_graph_from_scratch=BaseValidator.create_graph_from_scratch,
+        )
+        return BaseValidator.graph_interface
+
     @property
     def graph(self) -> ContentGraphInterface:
-        if not self.graph_interface:
-            logger.info("Graph validations were selected, will init graph")
-            BaseValidator.graph_interface = ContentGraphInterface()
-            update_content_graph(
-                BaseValidator.graph_interface,
-                use_git=True,
-                private_content_path=BaseValidator.private_content_path,
-                create_graph_from_scratch=BaseValidator.create_graph_from_scratch,
-            )
-        return self.graph_interface
+        return self.ensure_graph_initialized()
 
     @classmethod
     def set_private_content_path(cls, private_content_path: Optional[Path]) -> None:
@@ -289,17 +309,33 @@ class ConnectorsValidator(BaseValidator[ContentTypes], ABC):
     ) -> bool:
         """Check whether the given error code is ignored for the connector content item.
 
+        This is the ``should_run`` preflight — it decides whether to run the
+        validator on the connector at all. It is intentionally a **coarse,
+        universal** check; per-handler suppression of individual results is the
+        job of ``ValidateManager.filter_validation_results``, which drops one
+        result at a time keyed by ``result.path``.
+
         The ignore rules are read from the connector's ``.connector-ignore``
         file (parsed lazily by ``Connector.ignored_errors_dict``). Each section
         header maps to a connector sub-file:
 
         * Single sub-files (connection.yaml, capabilities.yaml,
           configurations.yaml, triggers.yaml, summary.yaml) are keyed by their
-          bare filename.
+          bare filename. They resolve to exactly one key, so a match on that
+          key is decisive.
         * Handler files are keyed by ``<handler_dir>/handler.yaml`` and
-          serializer files by ``<handler_dir>/serializer.yaml``. Because a
-          connector may have multiple handlers/serializers, it is sufficient for
-          **any** of them to ignore the error for this to return ``True``.
+          serializer files by ``<handler_dir>/serializer.yaml``. A connector
+          may have multiple handlers, so these types expand to **one key per
+          handler dir**. The validator is short-circuited here only when
+          **every** expanded key ignores the code — i.e. suppression is
+          universal across all handlers. When only some handlers ignore, the
+          validator still runs and ``filter_validation_results`` drops the
+          individual per-handler results whose ``path`` matches an ignored
+          handler; the others are kept and reported.
+
+          (The prior "any-match wins" behaviour silenced the whole validator
+          across every handler as soon as one handler ignored the code, which
+          hid legitimate defects on the others.)
 
         When ``related_file_type`` is not provided the check falls back to the
         connector's main file (``connector.yaml``).
@@ -330,13 +366,36 @@ class ConnectorsValidator(BaseValidator[ContentTypes], ABC):
             # No related file - check the connector's main file.
             return err_code in get_ignored_errors("connector.yaml")
 
+        # Handler/serializer types expand to one key per handler dir. Short-
+        # circuiting the whole validator when ANY single handler ignores the
+        # code would silence real defects on the other handlers; per-handler
+        # suppression is the job of ``filter_validation_results`` (per-result),
+        # not of this preflight. So for handler/serializer types we require
+        # that EVERY expanded key ignores the code. For single-file types the
+        # behaviour is unchanged (they expand to exactly one key, so all == any
+        # over one element).
+        per_handler_types = {
+            RelatedFileType.CONNECTOR_HANDLER,
+            RelatedFileType.CONNECTOR_SERIALIZER,
+        }
         for related_file in related_file_type:
             file_keys = self._resolve_ignore_file_keys(related_file, content_item)
-            # For handlers/serializers there may be several candidate keys; a
-            # single match is sufficient to consider the error ignored.
-            for file_key in file_keys:
-                if err_code in get_ignored_errors(file_key):
+            if not file_keys:
+                # No expanded keys for this type (e.g. a connector with no
+                # handlers for a handler/serializer type). Nothing to match —
+                # this type cannot contribute an ignore; move on.
+                continue
+            if related_file in per_handler_types:
+                # Universal suppression only: every handler dir must ignore.
+                if all(
+                    err_code in get_ignored_errors(file_key) for file_key in file_keys
+                ):
                     return True
+            else:
+                # Single-file types (one key): a match is decisive.
+                for file_key in file_keys:
+                    if err_code in get_ignored_errors(file_key):
+                        return True
         return False
 
     @staticmethod
@@ -453,10 +512,12 @@ def is_error_ignored(
         3. If ``err_code`` is listed under the new ``[pack]`` section of the
            pack's ``.pack-ignore`` file -> ignore for every item in the pack
            (and for related files of those items).
-        4. If a ``related_file_type`` is provided -> ignore only when the
-           code is listed under the related file's per-file section.
-        5. Otherwise -> ignore only when the code is listed under the
-           content item's per-file section.
+        4. If a ``related_file_type`` is provided -> ignore when the code is
+           listed under any of the related files' per-file sections. If none
+           of the related files match (e.g. the related file does not exist
+           for this content type), fall through to rule 5.
+        5. Ignore when the code is listed under the content item's own
+           per-file section.
 
     Args:
         err_code: The validation's error code.
@@ -496,10 +557,13 @@ def is_error_ignored(
                     return True
             except Exception:
                 continue
-        return False
-    else:
-        # If the validation should run on the main content, will check if the validation's error code is ignored by the file.
-        return err_code in content_item.ignored_errors
+        # None of the related files carried the ignore (e.g. the related file
+        # does not exist for this content type, such as an AgentixAction which
+        # has no SKILL_CONTENT). Fall through to the main content's per-file
+        # ignore so a `[file:...]` section on the item itself is still honored.
+
+    # If the validation should run on the main content, will check if the validation's error code is ignored by the file.
+    return err_code in content_item.ignored_errors
 
 
 class ValidationResult(BaseResult, BaseModel):

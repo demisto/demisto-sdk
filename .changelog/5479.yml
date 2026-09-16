@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where the **GR111** and **GR112** graph validations flagged Agentix Actions as duplicates when they shared a name or display name but had the same id. They now fail only when the duplicate name or display name belongs to an action with a different id.
-  type: fix
-pr_number: 5479

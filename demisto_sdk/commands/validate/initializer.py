@@ -1039,7 +1039,10 @@ class Initializer:
                     path = self.obtain_playbook_path(path)
                     if path not in statuses_dict and path.suffix == ".yml":
                         statuses_dict[path] = None
-            elif MODELING_RULES_DIR in path_str or PARSING_RULES_DIR in path_str:
+            elif (
+                f"/{MODELING_RULES_DIR}/" in path_str
+                or f"/{PARSING_RULES_DIR}/" in path_str
+            ):
                 # If it's a modeling rule or a parsing rule obtain the yml.
                 if path.suffix in [".json", ".xif"]:
                     # If it ends with a .json or a .xif replace the ending to the corresponding yml.
@@ -1227,7 +1230,10 @@ class Initializer:
                     paths_set.add(path)
                 else:
                     paths_set.add(self.obtain_playbook_path(path))
-            elif MODELING_RULES_DIR in path_str or PARSING_RULES_DIR in path_str:
+            elif (
+                f"/{MODELING_RULES_DIR}/" in path_str
+                or f"/{PARSING_RULES_DIR}/" in path_str
+            ):
                 path = Path(
                     path_str.replace(".xif", ".yml").replace("_schema.json", ".yml")
                 )
@@ -1456,12 +1462,80 @@ class ConnectorAwareInitializer(Initializer):
                         f"no XSOAR handlers."
                     )
 
-        # 3. Cross-match and expand with missing counterparts
-        filtered = self._cross_match_and_expand(
-            filtered_integrations, filtered_connectors
+        # 3. Cross-match and expand with missing counterparts.
+        # The expand phases below resolve handler<->integration links through
+        # the content graph, so the graph must be built/updated *before* they
+        # run - unlike validators, which build it lazily on first access. This
+        # is idempotent and a no-op when the graph is already wired (e.g.
+        # connect-only via --graph in CI).
+        from demisto_sdk.commands.validate.validators.base_validator import (
+            BaseValidator,
         )
 
+        # Only this call may close the graph on failure: when the interface was
+        # already wired by the caller (e.g. --graph in CI), the caller owns it.
+        graph_opened_here = BaseValidator.graph_interface is None
+        BaseValidator.ensure_graph_initialized()
+        try:
+            filtered = self._cross_match_and_expand(
+                filtered_integrations, filtered_connectors
+            )
+        except Exception:
+            # ValidateManager closes the graph in run_validations(), which never
+            # runs if collection raises. Close it here so a failure during
+            # cross-matching does not leak the Neo4j driver.
+            if graph_opened_here and BaseValidator.graph_interface:
+                logger.debug("Closing graph after connector cross-match failure.")
+                BaseValidator.graph_interface.close()
+                BaseValidator.graph_interface = None
+            raise
+
         return filtered, invalid_items
+
+    @staticmethod
+    def _hydrate_integration_params(integration: Any) -> None:
+        """Ensure ``integration.params`` is populated for connector-aware validators.
+
+        ``Integration.params`` is declared ``Field([], exclude=True)`` and is
+        therefore never persisted to Neo4j. An Integration hydrated from the
+        content graph (Phase 2a / 2b, ``_graph_search_integration``) comes back
+        with ``params == []``, and any connector-aware validator that reaches
+        into ``handler.related_integration.params`` -- e.g. CO116 (fetch-flag
+        matches), CO121 (interpolation_mapping RIGHT-side), CO190 (reserved
+        param names) -- false-positives on every param lookup.
+
+        Re-parse the on-disk YML and copy the fresh list onto the existing
+        object *in place*, so downstream code that already holds a reference
+        (``integration.related_content``, ``matched_ids``, the ``integrations``
+        set) keeps working. No-op when ``params`` is already populated, when
+        the integration has no known ``path``, or when the re-parse fails.
+        """
+        if integration is None:
+            return
+        existing = getattr(integration, "params", None) or []
+        if existing:
+            return
+        int_path = getattr(integration, "path", None)
+        if int_path is None:
+            return
+        # Lazy import to avoid tightening the module-load order.
+        from demisto_sdk.commands.content_graph.objects.integration import (
+            Integration as IntegrationModel,
+        )
+
+        try:
+            fresh = IntegrationModel.from_path(Path(int_path))
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.debug(
+                f"Failed to re-parse integration '{getattr(integration, 'object_id', '?')}' "
+                f"from '{int_path}' for params hydration: {exc}"
+            )
+            return
+        fresh_params = (
+            list(getattr(fresh, "params", None) or []) if fresh is not None else []
+        )
+        if fresh_params:
+            integration.params = fresh_params
 
     @staticmethod
     def _dedup_by_object_id(objects: Set[BaseContent]) -> Set[BaseContent]:
@@ -1626,6 +1700,10 @@ class ConnectorAwareInitializer(Initializer):
                     continue
                 match = integration_by_id.get(int_id)
                 if match:
+                    # Ensure `.params` is populated regardless of whether the
+                    # integration was loaded from disk or hydrated from the
+                    # graph (Field([], exclude=True) skips graph persistence).
+                    self._hydrate_integration_params(match)
                     handler.related_integration = match
                     match.related_content = handler
                     matched_integration_ids.add(match.object_id)
@@ -1666,18 +1744,37 @@ class ConnectorAwareInitializer(Initializer):
             f"Searching graph for connectors referencing unmatched "
             f"integrations: {[i.object_id for i in unmatched_integrations]}"
         )
+        # Fetch every connector once and build an in-memory index keyed by the
+        # integration ids their XSOAR handlers reference, instead of re-scanning
+        # the whole connector table for each unmatched integration.
+        connectors_by_integration_id: Dict[str, List[Connector]] = {}
+        for found_connector in self._all_graph_connectors():
+            if not isinstance(found_connector, Connector):
+                continue
+            if not found_connector.xsoar_handlers:
+                continue
+            # A connector may declare several handlers pointing at the same
+            # integration; index it once per integration id.
+            referenced_ids = {
+                handler.xsoar_integration_id
+                for handler in found_connector.xsoar_handlers
+                if handler.xsoar_integration_id
+            }
+            for int_id in referenced_ids:
+                connectors_by_integration_id.setdefault(int_id, []).append(
+                    found_connector
+                )
+
         existing_connector_ids = {c.object_id for c in connectors}
         for integration in list(unmatched_integrations):
-            found_connectors = self._graph_search_connectors(integration.object_id)
-            for found_connector in found_connectors:
-                if not isinstance(found_connector, Connector):
-                    continue
+            for found_connector in connectors_by_integration_id.get(
+                integration.object_id, []
+            ):
                 if found_connector.object_id in existing_connector_ids:
-                    continue
-                if not found_connector.xsoar_handlers:
                     continue
                 for handler in found_connector.xsoar_handlers:
                     if handler.xsoar_integration_id == integration.object_id:
+                        self._hydrate_integration_params(integration)
                         handler.related_integration = integration
                         integration.related_content = handler
                         matched_ids.add(integration.object_id)
@@ -1758,6 +1855,7 @@ class ConnectorAwareInitializer(Initializer):
                 # is populated, even for deprecated integrations. This lets
                 # connector validators (e.g. CO164) distinguish "exists" from
                 # "missing".
+                self._hydrate_integration_params(integration)
                 handler.related_integration = integration
                 if hasattr(integration, "related_content"):
                     integration.related_content = handler
@@ -1803,7 +1901,14 @@ class ConnectorAwareInitializer(Initializer):
 
     @staticmethod
     def _graph_search_integration(integration_id: str) -> List[Any]:
-        """Graph search for an integration by object_id or name."""
+        """Graph search for an integration by object_id or name.
+
+        Deliberately *not* batched into a single unfiltered fetch: these are
+        indexed point lookups, and the number of unmatched handlers in a run is
+        typically small. Fetching the whole integration table instead would
+        hydrate every integration node and its relationships, which costs far
+        more than the handful of lookups it would replace.
+        """
         from demisto_sdk.commands.content_graph.common import ContentType
         from demisto_sdk.commands.validate.validators.base_validator import (
             BaseValidator,
@@ -1825,11 +1930,14 @@ class ConnectorAwareInitializer(Initializer):
         return results
 
     @staticmethod
-    def _graph_search_connectors(integration_id: str) -> List[Any]:
-        """Graph search for connectors whose XSOAR handlers reference the given integration.
+    def _all_graph_connectors() -> List[Any]:
+        """Fetch every connector from the graph in a single query.
 
-        Searches all connectors in the graph and filters to those with at least
-        one XSOAR handler whose ``xsoar_integration_id`` matches.
+        Batched replacement for the previous per-integration
+        ``_graph_search_connectors`` scans: the whole connector table is
+        fetched once and callers build an in-memory
+        ``xsoar_integration_id -> connectors`` index instead of re-scanning the
+        connector table for every unmatched integration.
         """
         from demisto_sdk.commands.content_graph.common import ContentType
         from demisto_sdk.commands.validate.validators.base_validator import (
@@ -1840,10 +1948,4 @@ class ConnectorAwareInitializer(Initializer):
         if not graph:
             logger.debug("Graph interface not available, skipping connector search.")
             return []
-        all_connectors = graph.search(content_type=ContentType.CONNECTOR)
-        return [
-            c
-            for c in all_connectors
-            if hasattr(c, "xsoar_handlers")
-            and any(h.xsoar_integration_id == integration_id for h in c.xsoar_handlers)
-        ]
+        return graph.search(content_type=ContentType.CONNECTOR)

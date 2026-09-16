@@ -28,6 +28,7 @@ from demisto_sdk.commands.common.docker_helper import (
     docker_login,
     get_docker,
     get_pip_requirements_from_file,
+    get_python_version_or_default,
     init_global_docker_client,
 )
 from demisto_sdk.commands.common.files.errors import FileReadError
@@ -472,7 +473,15 @@ class DockerHook(Hook):
             hook = deepcopy(new_hook)
             if new_hook["name"].startswith("mypy-in-docker"):  # see CIAC-11832
                 for obj in objects_:
-                    python_version = Version(obj.python_version)
+                    python_version = (
+                        Version(obj.python_version)
+                        if obj.python_version
+                        else get_python_version_or_default(
+                            obj.docker_image,
+                            context="mypy-in-docker",
+                            identifier=str(obj.path),
+                        )
+                    )
                     hook["args"].append(
                         f"--python-version={python_version.major}.{python_version.minor}"
                     )  # mypy expects only the major and minor version (e.g., 3.10)

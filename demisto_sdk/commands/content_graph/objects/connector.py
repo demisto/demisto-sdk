@@ -101,6 +101,8 @@ class ActionTypeEnum(str, Enum):
     RESET_INCIDENTS_LAST_RUN = "reset_incidents_last_run"
     RESET_FEED_LAST_RUN = "reset_feed_last_run"
     RESET_EVENTS_LAST_RUN = "reset_events_last_run"
+    SHOW_CLASSIFIER = "show_classifier"
+    FETCH_HISTORY = "fetch_history"
 
 
 class RequiredLicenseEnum(str, Enum):
@@ -379,6 +381,21 @@ class ConnectorConnectionData(BaseModel):
 # ============================================================
 
 
+class ConnectorCapabilitiesData(BaseModel):
+    """Parsed metadata block from capabilities.yaml.
+
+    Mirrors ``ConnectorConnectionData`` but only carries the file-level
+    ``metadata`` block (title/description/help) and the file-level
+    ``general_configurations`` block. The individual capability items live on
+    ``Connector.capabilities`` (``List[CapabilityData]``).
+    """
+
+    title: Optional[str] = None
+    description: Optional[str] = None
+    help: Optional[str] = None
+    general_configurations: Optional[GeneralConfigurations] = None
+
+
 class LabelTooltip(BaseModel):
     """capabilities.schema.json Labels object-form tooltip."""
 
@@ -571,6 +588,12 @@ class HandlerAction(BaseModel):
     type: Optional[str] = None  # ActionTypeEnum
     display: Optional[str] = None
     description: Optional[str] = None
+    # Optional action payload fields. Kept permissive - the UCP handler schema
+    # owns strict validation. ``return_data`` lists the field id(s) an action
+    # surfaces (e.g. show_classifier references the delivered classifier field
+    # id); ``show_condition`` is a free-form predicate controlling visibility.
+    return_data: List[str] = []
+    show_condition: Optional[dict] = None
 
 
 class HandlerCapability(BaseModel):
@@ -647,7 +670,11 @@ class HandlerData(BaseModel):
     @property
     def is_xsoar(self) -> bool:
         """Identify if this handler is XSOAR-related."""
-        return self.module == "xsoar" and self.team == "xsoar"
+        return (
+            self.module == "xsoar"
+            or self.team == "xsoar"
+            or "@xsoar-content" in (self.metadata.ownership.maintainers or [])
+        )
 
     @property
     def xsoar_integration_id(self) -> Optional[str]:
@@ -799,6 +826,9 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
 
     # === Parsed sub-models (populated by parser, excluded from serialization) ===
     connection: Optional[ConnectorConnectionData] = Field(None, exclude=True)
+    capabilities_metadata: Optional[ConnectorCapabilitiesData] = Field(
+        None, exclude=True
+    )
     capabilities: List[CapabilityData] = Field(default_factory=list, exclude=True)
     handlers: List[HandlerData] = Field(default_factory=list, exclude=True)
     capability_handler_map: Dict[str, CapabilityHandlerMapping] = Field(

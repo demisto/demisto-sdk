@@ -3,7 +3,9 @@ import os
 import re
 import subprocess
 import sys
+import time
 from collections import defaultdict
+from datetime import timedelta
 from functools import partial
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
@@ -145,6 +147,7 @@ class PreCommitRunner:
         if json_output_path and json_output_path.is_dir():
             json_output_path = json_output_path / f"{hook_id}.json"
 
+        start_time = time.monotonic()
         process = PreCommitRunner._run_pre_commit_process(
             PRECOMMIT_CONFIG_MAIN_PATH,
             precommit_env,
@@ -153,11 +156,13 @@ class PreCommitRunner:
             command=["run", "-a", hook_id],
             json_output_path=json_output_path,
         )
+        duration = timedelta(seconds=round(time.monotonic() - start_time))
 
         if process.stdout:
             logger.info("{}", process.stdout)  # noqa: PLE1205 see https://github.com/astral-sh/ruff/issues/13390
         if process.stderr:
             logger.error("{}", process.stderr)  # noqa: PLE1205 see https://github.com/astral-sh/ruff/issues/13390
+        logger.info(f"<cyan>Hook {hook_id} finished in {duration}</cyan>")
         return process.returncode
 
     @staticmethod

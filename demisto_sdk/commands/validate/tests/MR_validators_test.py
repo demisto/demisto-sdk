@@ -3,11 +3,11 @@ from demisto_sdk.commands.common.constants import (
     MODELING_RULE_NAME_SUFFIX,
     GitStatuses,
 )
-from demisto_sdk.commands.validate.validators.base_validator import (
-    should_run_according_to_status,
-)
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_modeling_rule_object,
+)
+from demisto_sdk.commands.validate.validators.base_validator import (
+    should_run_according_to_status,
 )
 from demisto_sdk.commands.validate.validators.MR_validators.MR100_validate_schema_file_exists import (
     ValidateSchemaFileExistsValidator,
@@ -270,9 +270,7 @@ def test_UserFieldMissingIdentityValidator_skips_old_versioned_rule():
     Then: The validation should skip the old rule.
     """
     rules = (
-        '[MODEL: dataset="user_identity_raw"]\n'
-        "alter\n"
-        "    xdm.source.user.username = a;"
+        '[MODEL: dataset="user_identity_raw"]\nalter\n    xdm.source.user.username = a;'
     )
     modeling_rule = create_modeling_rule_object(
         paths=["toversion"], values=["8.8.0"], rules=rules
@@ -291,9 +289,7 @@ def test_UserFieldMissingIdentityValidator_ignores_non_listed_prefix():
         prefixes are checked.
     """
     rules = (
-        '[MODEL: dataset="user_identity_raw"]\n'
-        "alter\n"
-        "    xdm.observer.user.name = x;"
+        '[MODEL: dataset="user_identity_raw"]\nalter\n    xdm.observer.user.name = x;'
     )
     modeling_rule = create_modeling_rule_object(rules=rules)
     assert not UserFieldMissingIdentityValidator().obtain_invalid_content_items(

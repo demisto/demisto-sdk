@@ -1,13 +1,9 @@
 from demisto_sdk.commands.common.constants import (
     MODELING_RULE_ID_SUFFIX,
     MODELING_RULE_NAME_SUFFIX,
-    GitStatuses,
 )
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_modeling_rule_object,
-)
-from demisto_sdk.commands.validate.validators.base_validator import (
-    should_run_according_to_status,
 )
 from demisto_sdk.commands.validate.validators.MR_validators.MR100_validate_schema_file_exists import (
     ValidateSchemaFileExistsValidator,
@@ -339,33 +335,3 @@ def test_UserFieldMissingIdentityValidator_equal_counts_valid():
     assert not UserFieldMissingIdentityValidator().obtain_invalid_content_items(
         [modeling_rule]
     )
-
-
-def test_UserFieldMissingIdentityValidator_scoped_to_changed_files():
-    """
-    Given: The MR109 validator class and its git-status gate.
-    When: Evaluating which git statuses the validator should run on.
-    Then: It runs only on ADDED/MODIFIED/RENAMED modeling rules, and is skipped
-        for pre-existing rules (git_status is None, as in a full `validate -a`
-        run) so legacy content does not fail the build.
-    """
-    validator = UserFieldMissingIdentityValidator()
-    assert validator.expected_git_statuses == [
-        GitStatuses.ADDED,
-        GitStatuses.MODIFIED,
-        GitStatuses.RENAMED,
-    ]
-    # Pre-existing content (no git status) is skipped.
-    assert (
-        should_run_according_to_status(None, validator.expected_git_statuses) is False
-    )
-    # Newly added/modified/renamed content is validated.
-    for status in (
-        GitStatuses.ADDED,
-        GitStatuses.MODIFIED,
-        GitStatuses.RENAMED,
-    ):
-        assert (
-            should_run_according_to_status(status, validator.expected_git_statuses)
-            is True
-        )

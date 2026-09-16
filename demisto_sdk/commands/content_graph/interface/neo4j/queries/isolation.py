@@ -34,7 +34,7 @@ def _has_a_pack(node: str) -> str:
 
 
 def _share_a_pack(node_a: str, node_b: str) -> str:
-    """Cypher predicate quantified over all packs: sever only when no pack contains both endpoints."""
+    """Cypher predicate: both nodes belong to the same pack."""
     shared_pack = f"_shared_pack:{ContentType.PACK}"
     return (
         f"EXISTS {{ ({node_a}){_IN_PACK_HOPS}({shared_pack})"
@@ -43,7 +43,7 @@ def _share_a_pack(node_a: str, node_b: str) -> str:
 
 
 def _sever_managed_pack_dependencies(tx: Transaction) -> Set[Tuple[str, str]]:
-    """Delete pack-level DEPENDS_ON where either endpoint is managed, derived or a twin; returns the deleted pairs."""
+    """Delete pack DEPENDS_ON touching a managed/derived pack or inside one split-pack family; returns the deleted pairs."""
     query = f"""// Severs pack dependencies involving managed, derived or twin packs
 MATCH (pack_a:{ContentType.PACK})-[r:{RelationshipType.DEPENDS_ON}]->(pack_b:{ContentType.PACK})
 WHERE {is_managed_or_derived("pack_a")}
@@ -59,7 +59,7 @@ RETURN source, target"""
 
 
 def _sever_cross_pack_content_relationships(tx: Transaction) -> int:
-    """Delete non-structural relationships crossing a managed pack boundary; returns the deletion count."""
+    """Delete non-preserved relationships between a managed pack's content and outside content that has a pack; returns the count."""
     query = f"""// Severs cross-pack content relationships touching managed or derived packs
 MATCH (managed_pack:{ContentType.PACK})
 WHERE {is_managed_or_derived("managed_pack")}
@@ -82,7 +82,7 @@ RETURN count(*) AS severed"""
 
 
 def isolate_managed_packs(tx: Transaction) -> List[Tuple[str, str]]:
-    """Isolate every managed/derived pack (idempotent); the returned severed pairs must be pruned from the cached depends_on."""
+    """Isolate managed/derived packs (idempotent); returns the severed pack DEPENDS_ON pairs to prune from the cached depends_on."""
     severed_dependencies = _sever_managed_pack_dependencies(tx)
     severed_relationships = _sever_cross_pack_content_relationships(tx)
     logger.info(

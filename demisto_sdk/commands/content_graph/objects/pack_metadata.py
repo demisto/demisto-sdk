@@ -15,7 +15,11 @@ from demisto_sdk.commands.common.content_constant_paths import (
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_json, is_external_repository
-from demisto_sdk.commands.content_graph.common import ContentType, PackTags
+from demisto_sdk.commands.content_graph.common import (
+    ENABLE_SPLIT_PACKS,
+    ContentType,
+    PackTags,
+)
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import PackContentItems
@@ -70,6 +74,8 @@ class PackMetadata(BaseModel):
     hybrid: bool = Field(False, alias="hybrid")
     default_data_source_id: Optional[str] = Field("", alias="defaultDataSource")
     default_data_source_name: Optional[str] = Field("", exclude=True)
+    # Per-pack override of the derived twin's source; see ``resolve_derived_pack_source()``.
+    derived_source: Optional[str] = Field(None, alias="derivedSource")
 
     # For private packs
     premium: Optional[bool]
@@ -208,24 +214,36 @@ class PackMetadata(BaseModel):
         """
         collected_content_items: dict = {}
         content_displays: dict = {}
+        # Computed once per dump: ``is_managed_paired()`` scans every item, so evaluating it per item would be O(n^2).
+        pack_is_managed_paired: bool = (
+            bool(self.is_managed_paired())  # type: ignore[attr-defined]
+            if ENABLE_SPLIT_PACKS
+            else False
+        )
         for content_item in content_items:
             if should_ignore_item_in_metadata(
                 content_item, marketplace, strip_internal=strip_internal
             ):
                 continue
+            # Must be evaluated before the re-parse below: ``prepare_for_upload`` strips the opt-out key.
+            item_is_tightly_coupled: bool = ENABLE_SPLIT_PACKS and bool(
+                self._is_item_tightly_coupled(content_item)  # type: ignore[attr-defined]
+            )
             new_content_item = None
             try:
-                new_content_item = BaseContent.from_path(content_item.upload_path)  # type:ignore[assignment]
+                new_content_item = BaseContent.from_path(content_item.upload_path)  # type: ignore[assignment]
             except Exception as e:
                 logger.error(
                     f"Failed to generate content item for {content_item.upload_path}, will use original content item: {str(e)}"
                 )
             if new_content_item:
-                content_item = new_content_item  # type:ignore[assignment]
+                content_item = new_content_item  # type: ignore[assignment]
             self._add_item_to_metadata_list(
                 collected_content_items=collected_content_items,
                 content_item=content_item,
                 marketplace=marketplace,
+                pack_is_managed_paired=pack_is_managed_paired,
+                item_is_tightly_coupled=item_is_tightly_coupled,
             )
 
             content_displays[content_item.content_type.metadata_name] = (
@@ -276,13 +294,13 @@ class PackMetadata(BaseModel):
             r.content_item_to.object_id: {
                 "mandatory": r.mandatorily,
                 # Get the minVersion either from the pack_metadata if exists, or from graph calculation
-                "minVersion": r.target_min_version or r.content_item_to.current_version,  # type:ignore[attr-defined]
+                "minVersion": r.target_min_version or r.content_item_to.current_version,  # type: ignore[attr-defined]
                 "author": self._get_author(
-                    r.content_item_to.author,  # type:ignore[attr-defined]
+                    r.content_item_to.author,  # type: ignore[attr-defined]
                     marketplace,
                 ),
-                "name": r.content_item_to.name,  # type:ignore[attr-defined]
-                "certification": r.content_item_to.certification  # type:ignore[attr-defined]
+                "name": r.content_item_to.name,  # type: ignore[attr-defined]
+                "certification": r.content_item_to.certification  # type: ignore[attr-defined]
                 or "",
             }
             for r in dependencies
@@ -544,24 +562,19 @@ class PackMetadata(BaseModel):
         content_item: ContentItem,
         marketplace: MarketplaceVersions,
         incident_to_alert: bool = False,
+        pack_is_managed_paired: bool = False,
+        item_is_tightly_coupled: bool = False,
     ):
-        """
-        Adds the given content item to the metadata content items list.
-        - Checks if the given content item was already added to the metadata content items list
-        and replaces the object if its `toversion` is higher than the existing metadata object's `toversion`.
-        - If the content item name should be replaced from incident to alert, then the function will be called recursively
-        to replace also the item that its name was replaced from incident to alert.
-
-        Args:
-            collected_content_items (dict): The content items metadata list that were already collected.
-            content_item (ContentItem): The current content item to check.
-            marketplace (MarketplaceVersions): The marketplace to prepare the pack to upload.
-            incident_to_alert (bool, optional): Whether should replace incident to alert. Defaults to False.
-        """
+        """Add a content item to the metadata list, replacing a lower-``toversion`` duplicate and recursing for incident-to-alert."""
         collected_content_items.setdefault(content_item.content_type.metadata_name, [])
         content_item_summary = content_item.summary(
             marketplace, incident_to_alert=incident_to_alert
         )
+        # CIAC-16414: ``managedPaired == (pack splits) AND (item is tightly coupled)``; both operands come from the caller.
+        if ENABLE_SPLIT_PACKS:
+            content_item_summary["managedPaired"] = bool(
+                pack_is_managed_paired and item_is_tightly_coupled
+            )
 
         if content_item_metadata := self._search_content_item_metadata_object(
             collected_content_items=collected_content_items,
@@ -596,6 +609,8 @@ class PackMetadata(BaseModel):
                 content_item,
                 marketplace,
                 incident_to_alert=True,
+                pack_is_managed_paired=pack_is_managed_paired,
+                item_is_tightly_coupled=item_is_tightly_coupled,
             )
 
     def _replace_item_if_has_higher_toversion(

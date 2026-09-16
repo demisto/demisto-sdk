@@ -103,6 +103,8 @@ class StrictPackMetadata(BaseStrictModel):
     source: Optional[str] = Field("", alias="source")
     managed: Optional[bool] = Field(False, alias="managed")
     internal: Optional[bool] = Field(False, alias="internal")
+    # Per-pack override of the derived twin's source; falls back to DERIVED_PACK_SOURCE, then the default.
+    derived_source: Optional[str] = Field(None, alias="derivedSource")
 
     # Marketplace-suffixed managed/source fields (e.g. ``managed:platform``).
     # Resolved into the plain managed/source per-marketplace during dump.

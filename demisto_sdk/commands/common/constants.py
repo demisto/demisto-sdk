@@ -2338,7 +2338,7 @@ class PlaybookTaskType(StrEnum):
     TITLE = "title"
     SECTION = "section"
     STANDARD = "standard"
-    KNOWLEDGE = "knowledge"
+    COLLECTION = "collection"
     AI_TASK = "aiTask"
 
 

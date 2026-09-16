@@ -508,7 +508,7 @@ class PackTags:
     USE_CASE = "Use Case"
     TRANSFORMER = "Transformer"
     FILTER = "Filter"
-    KNOWLEDGE = "Knowledge"
+    COLLECTION = "Collection"
     DATA_SOURCE = "Data Source"
     MCP = "MCP"
 

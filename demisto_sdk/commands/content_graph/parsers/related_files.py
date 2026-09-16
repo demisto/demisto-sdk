@@ -211,11 +211,8 @@ class XifRelatedFile(TextFiles):
         content = self.file_content
         if not content:
             return Counter()
-        # drop comments
         content = re.sub(r"//[^\n]*", " ", content)
-        # drop backticks
         content = content.replace("`", "")
-        # count every user/identity xdm path that is an assignment target (followed by `=`)
         return Counter(
             re.findall(
                 r"(xdm\.(?:source|intermediate|target)(?:\.[a-zA-Z0-9_]+)*?\.(?:user|identity)(?:\.[a-zA-Z0-9_]+)+)\s*=",

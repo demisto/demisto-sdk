@@ -30,25 +30,15 @@ class UserFieldMissingIdentityValidator(BaseValidator[ContentTypes]):
     related_field = "XIF"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.XIF]
-    # No `expected_git_statuses` gate: in git mode the initializer already limits
-    # `objects_to_run` to the modeling rules touched by the change set. A modeling
-    # rule whose only meaningful change is in its `.xif` file is collected with a
-    # `git_status` of None (the `.xif`/`_schema.json` path is collapsed onto the
-    # `.yml`), so gating on git status would skip exactly the common case this
-    # validation targets. This mirrors the other XIF-based MR validators
-    # (e.g. MR107), which run on every collected modeling rule.
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
         results: List[ValidationResult] = []
         for content_item in content_items:
-            # only the latest modeling rule (no explicit toversion) is validated
             if content_item.toversion != DEFAULT_CONTENT_ITEM_TO_VERSION:
                 continue
             field_counts = content_item.xif_file.get_user_identity_fields()
-            # each xdm.*.user.* field must be mapped at least as many times as its
-            # matching xdm.*.identity.* field
             missing = sorted(
                 field
                 for field, user_count in field_counts.items()

@@ -1,0 +1,4 @@
+changes:
+- description: Added the MR109 validation, ensuring that every xdm.*.user.* field mapped in a modeling rule has a corresponding xdm.*.identity.* field. The validation runs in use-git mode on the latest modeling rule.
+  type: feature
+pr_number: 5519

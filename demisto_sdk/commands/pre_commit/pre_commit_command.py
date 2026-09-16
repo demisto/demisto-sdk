@@ -162,7 +162,7 @@ class PreCommitRunner:
             logger.info("{}", process.stdout)  # noqa: PLE1205 see https://github.com/astral-sh/ruff/issues/13390
         if process.stderr:
             logger.error("{}", process.stderr)  # noqa: PLE1205 see https://github.com/astral-sh/ruff/issues/13390
-        logger.info(f"<cyan>Hook {hook_id} finished in {duration}</cyan>")
+        logger.info(f"Hook {hook_id} finished in {duration}")
         return process.returncode
 
     @staticmethod

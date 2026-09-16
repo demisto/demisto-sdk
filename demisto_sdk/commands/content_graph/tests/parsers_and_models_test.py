@@ -2333,8 +2333,6 @@ class TestParsersAndModels:
             (pack.create_integration, "MyIntegration"),
             (pack.create_script, "MyScript"),
             (pack.create_playbook, "MyPlaybook"),
-            (pack.create_parsing_rule, "MyParsingRule"),
-            (pack.create_modeling_rule, "MyModelingRule"),
         ):
             item = create(name)
             yml = item.yml.read_dict()

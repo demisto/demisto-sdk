@@ -692,9 +692,8 @@ class PackMetadata(BaseModel):
         """
         Search a content item object in the content items metadata list by its ID and name.
 
-        Items sharing an ID (or a name, for modeling rules) but declaring disjoint
-        `supportedFeatures` are variants targeting different regions, and are not
-        considered the same item.
+        Items sharing an ID but declaring disjoint `supportedFeatures` are variants
+        targeting different regions, and are not considered the same item.
 
         Args:
             collected_content_items (dict): The content items metadata list that were already collected.
@@ -710,14 +709,14 @@ class PackMetadata(BaseModel):
             for content_item in collected_content_items[item_type_key]
             if (
                 content_item.get("id") == item_id
-                or (
-                    content_item.get("name") == item_name
-                    and item_type_key == ContentType.MODELING_RULE.metadata_name
-                )  # to avoid duplicate modeling rules with different versions and ids
+                and PackMetadata._is_same_item_despite_features(
+                    item_supported_features, content_item.get("supportedFeatures")
+                )
             )
-            and PackMetadata._is_same_item_despite_features(
-                item_supported_features, content_item.get("supportedFeatures")
-            )
+            or (
+                content_item.get("name") == item_name
+                and item_type_key == ContentType.MODELING_RULE.metadata_name
+            )  # to avoid duplicate modeling rules with different versions and ids
         ]
         return filtered_content_items[0] if filtered_content_items else None
 

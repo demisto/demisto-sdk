@@ -15,6 +15,7 @@ from demisto_sdk.commands.common.constants import (
     PACK_METADATA_SUPPORT,
     PACK_METADATA_TAGS,
     PACK_METADATA_USE_CASES,
+    ExecutionMode,
     GitStatuses,
     MarketplaceVersions,
 )
@@ -1804,14 +1805,46 @@ def test_PackMetadataVersionShouldBeRaisedValidator_metadata_change(mocker):
             )
 
 
-def test_PackMetadataVersionShouldBeRaisedValidator_pack_object_missing():
+def test_PackMetadataVersionShouldBeRaisedValidator_runs_on_deprecated_pack(mocker):
     """
-    Given: A modified content item whose pack metadata object was not collected
-           into the run (e.g. its pack_metadata.json failed to parse, so no Pack
-           object reached the validator).
+    Given: A deprecated pack whose content item was modified without a version bump.
+    When: Running PackMetadataVersionShouldBeRaisedValidator validator.
+    Then: Ensure the validator still runs on the deprecated pack (run_on_deprecated)
+          and fails it - changes to a deprecated pack must raise its version too.
+          This also keeps the Pack object in the validator's input, so its content
+          items never become bump candidates without a pack to compare against.
+    """
+    version = "1.0.0"
+    with ChangeCWD(REPO.path):
+        integration = create_integration_object(pack_info={"currentVersion": version})
+        pack = integration.in_pack
+        pack.deprecated = True
+        integration.git_status = GitStatuses.MODIFIED
+
+        old_pack = pack.copy(deep=True)
+        old_pack.current_version = version
+        pack.old_base_content_object = old_pack
+        mocker.patch.object(
+            BaseNode, "to_dict", return_value={"current_version": version}
+        )
+
+        validator = PackMetadataVersionShouldBeRaisedValidator()
+        # The deprecated pack must not be filtered out of the validator's input.
+        assert validator.should_run(
+            pack, [], {}, running_execution_mode=ExecutionMode.USE_GIT
+        )
+        results = validator.obtain_invalid_content_items([pack, integration])
+
+        assert len(results) == 1
+
+
+def test_PackMetadataVersionShouldBeRaisedValidator_unparsable_pack_metadata():
+    """
+    Given: A modified content item whose pack_metadata.json could not be parsed,
+           so no Pack object reached the validator.
     When: Running PackMetadataVersionShouldBeRaisedValidator validator.
     Then: Ensure the validator skips the pack instead of raising a KeyError,
-          so a single uncollected pack cannot abort the whole validate run.
+          so a single unparsable pack metadata cannot abort the whole validate run.
     """
     with ChangeCWD(REPO.path):
         modeling_rule = create_modeling_rule_object()

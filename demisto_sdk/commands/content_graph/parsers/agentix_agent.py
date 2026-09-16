@@ -81,9 +81,7 @@ class AgentixAgentParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AGE
         """Collects the knowledges used in the agent as optional dependencies."""
         if knowledge_ids := self.yml_data.get("knowledgeids"):
             for id in knowledge_ids:
-                self.add_dependency_by_id(
-                    id, ContentType.KNOWLEDGE, is_mandatory=False
-                )
+                self.add_dependency_by_id(id, ContentType.KNOWLEDGE, is_mandatory=False)
 
     @cached_property
     def field_mapping(self):

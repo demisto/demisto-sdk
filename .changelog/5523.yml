@@ -1,0 +1,4 @@
+changes:
+- description: Increased the timeout of the **Test New Validate Command** CI job from 60 to 90 minutes, as it was reaching the limit and getting cancelled.
+  type: internal
+pr_number: 5523

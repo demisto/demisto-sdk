@@ -1841,8 +1841,8 @@ def test_PackMetadataVersionShouldBeRaisedValidator_missing_pack_object():
     Given: A modified content item whose Pack object was not collected (e.g. a
            deleted pack_metadata.json, which the git collector skips).
     When: Running PackMetadataVersionShouldBeRaisedValidator validator.
-    Then: Ensure the validator skips the pack instead of raising a KeyError,
-          so a single missing pack metadata cannot abort the whole validate run.
+    Then: Ensure the validation fails with an explicit message instead of
+          raising a KeyError that aborts the whole validate run.
     """
     with ChangeCWD(REPO.path):
         modeling_rule = create_modeling_rule_object()
@@ -1852,7 +1852,13 @@ def test_PackMetadataVersionShouldBeRaisedValidator_missing_pack_object():
         validator = PackMetadataVersionShouldBeRaisedValidator()
         results = validator.obtain_invalid_content_items([modeling_rule])
 
-        assert results == []
+        assert len(results) == 1
+        assert (
+            "could not be verified because its pack_metadata.json was not collected"
+            in results[0].message
+        )
+        # Reported against a real file, so the error points somewhere actionable.
+        assert results[0].content_object == modeling_rule
 
 
 @pytest.fixture

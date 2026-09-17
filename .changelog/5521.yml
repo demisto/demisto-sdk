@@ -1,4 +1,4 @@
 changes:
-- description: Fixed an issue where the **PA114** validation skipped deprecated packs and could crash with a KeyError, aborting the entire validate run. Changes to a deprecated pack now correctly require a version bump.
+- description: Fixed an issue where the **PA114** validation skipped deprecated packs and could crash with a KeyError, aborting the entire validate run. Changes to a deprecated pack now correctly require a version bump, and a pack whose metadata was not collected is reported as a validation failure instead of crashing.
   type: fix
 pr_number: '5521'

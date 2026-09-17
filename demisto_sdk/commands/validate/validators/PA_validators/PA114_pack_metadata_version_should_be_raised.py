@@ -11,7 +11,6 @@ from demisto_sdk.commands.common.constants import (
     SKIP_RELEASE_NOTES_FOR_TYPES,
     GitStatuses,
 )
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import find_type
 from demisto_sdk.commands.content_graph.objects import (
     AssetsModelingRule,
@@ -115,6 +114,11 @@ class PackMetadataVersionShouldBeRaisedValidator(BaseValidator[ContentTypes]):
         "`demisto-sdk update-release-notes -i Packs/{pack} -u "
         "(major|minor|revision|documentation)` for a specific pack and version."
     )
+    missing_pack_error_message = (
+        "The pack version of '{pack_id}' could not be verified because its "
+        "pack_metadata.json was not collected. Make sure the pack metadata "
+        "exists and is valid, then rerun the validation."
+    )
     # Changing a deprecated pack still requires a version bump, so the Pack
     # object must not be dropped by the generic deprecated filter while its
     # content items are kept. Mirrors RN106.
@@ -176,6 +180,9 @@ class PackMetadataVersionShouldBeRaisedValidator(BaseValidator[ContentTypes]):
         validation_results = []
         content_packs = {}
         content_packs_ids_to_bump = set()
+        # Keeps the item that made each pack a bump candidate, so a pack that is
+        # missing its metadata object can still be reported against a real file.
+        bump_trigger_by_pack_id: typing.Dict[str, ContentTypes] = {}
         # Go over all the content items
         for content_item in content_items:
             is_metadata_item = (
@@ -190,20 +197,25 @@ class PackMetadataVersionShouldBeRaisedValidator(BaseValidator[ContentTypes]):
                 if should_bump:
                     # Collect content pack ids that should be bumped.
                     content_packs_ids_to_bump.add(content_item.pack_id)  # type: ignore[union-attr]
+                    bump_trigger_by_pack_id[content_item.pack_id] = content_item  # type: ignore[union-attr,index]
 
         # Go over all the pack ids that need to be bumped.
         for pack_id in content_packs_ids_to_bump:
             # Access them via the dict that was created earlier.
             pack = content_packs.get(pack_id)
             if pack is None or pack.old_base_content_object is None:
-                # A bump candidate can outlive its Pack object: a deleted
-                # pack_metadata.json is skipped by the git collector while the
-                # pack's modified items are still collected. Without a pack (or a
-                # master baseline) there is no version to compare, so warn and
-                # skip instead of failing the whole run with a KeyError.
-                logger.warning(
-                    f"Skipping {self.error_code} for pack '{pack_id}': its pack "
-                    "metadata was not collected, so the pack version cannot be compared."
+                # A bump candidate should always come with its pack metadata. If
+                # it does not (e.g. the metadata failed to be collected), fail the
+                # pack with an explicit message instead of crashing the whole
+                # validate run with a KeyError.
+                validation_results.append(
+                    ValidationResult(
+                        validator=self,
+                        message=self.missing_pack_error_message.format(
+                            pack_id=pack_id
+                        ),
+                        content_object=pack or bump_trigger_by_pack_id[pack_id],
+                    )
                 )
                 continue
             # Check if their old version >= current version

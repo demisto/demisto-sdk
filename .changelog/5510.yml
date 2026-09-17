@@ -1,0 +1,7 @@
+changes:
+- description: Added new connector validations covering fetch, feed, handler and parameter
+    conventions.
+  type: internal
+- description: Improved existing connector validations and their reported results.
+  type: internal
+pr_number: 5510

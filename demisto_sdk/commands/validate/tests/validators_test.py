@@ -2510,25 +2510,16 @@ class TestConnectorHandlerIgnoreFiltering:
         ``filter_validation_results`` only reads
         ``result.validator.error_code``, ``result.validator.related_file_type``,
         ``result.path``, ``result.content_object.ignored_errors`` and
-        ``result.content_object.is_handler_error_ignored(error_code, path,
-        ignorable_errors)``, so a SimpleNamespace fake avoids the cost of
-        constructing a full connector fixture. The fake reuses the real
-        ``Connector.resolve_handler_ignore_key`` logic to map paths to
-        ``.connector-ignore`` keys, and mirrors the real
-        ``Connector.is_handler_error_ignored`` gate on ``ignorable_errors`` /
-        ``ALWAYS_RUN_ON_ERROR_CODE`` so tests exercise the same contract as
-        production code.
+        ``result.content_object.is_handler_error_ignored(error_code, path)``, so
+        a SimpleNamespace fake avoids the cost of constructing a full connector
+        fixture. The fake reuses the real ``Connector.resolve_handler_ignore_key``
+        logic to map paths to ``.connector-ignore`` keys.
         """
         from types import SimpleNamespace
 
-        from demisto_sdk.commands.common.constants import ALWAYS_RUN_ON_ERROR_CODE
         from demisto_sdk.commands.content_graph.objects.connector import Connector
 
-        def is_handler_error_ignored(
-            code: str, file_path: Optional[Path], ignorable_errors: List[str]
-        ) -> bool:
-            if (code not in ignorable_errors) or (code in ALWAYS_RUN_ON_ERROR_CODE):
-                return False
+        def is_handler_error_ignored(code: str, file_path: Optional[Path]) -> bool:
             key = Connector.resolve_handler_ignore_key(file_path)
             if key is None:
                 return False
@@ -2766,8 +2757,7 @@ class TestConnectorHandlerIgnoreFiltering:
     def test_filter_keeps_non_ignored_handler_and_drops_ignored_one(self, mocker):
         """
         Given: Two per-handler results (handler_a and handler_b) for the same
-               error code, where only handler_a is ignored in .connector-ignore,
-               and the code IS part of the project's ignorable_errors allow-list.
+               error code, where only handler_a is ignored in .connector-ignore.
         When: filter_validation_results runs.
         Then: handler_a's result is dropped and handler_b's result is kept.
         """
@@ -2787,9 +2777,7 @@ class TestConnectorHandlerIgnoreFiltering:
             related_file_type=[RelatedFileType.CONNECTOR_HANDLER],
         )
 
-        filtered = manager.filter_validation_results(
-            [result_a, result_b], ["CO155"]
-        )
+        filtered = manager.filter_validation_results([result_a, result_b])
 
         assert result_a not in filtered
         assert result_b in filtered
@@ -2797,8 +2785,7 @@ class TestConnectorHandlerIgnoreFiltering:
     def test_filter_drops_ignored_serializer(self, mocker):
         """
         Given: A per-serializer result whose error code is ignored via the
-               '<folder>/serializer.yaml' key, and the code IS part of the
-               project's ignorable_errors allow-list.
+               '<folder>/serializer.yaml' key.
         When: filter_validation_results runs.
         Then: The serializer result is dropped.
         """
@@ -2812,74 +2799,9 @@ class TestConnectorHandlerIgnoreFiltering:
             related_file_type=[RelatedFileType.CONNECTOR_SERIALIZER],
         )
 
-        filtered = manager.filter_validation_results([result], ["CO155"])
+        filtered = manager.filter_validation_results([result])
 
         assert filtered == []
-
-    def test_filter_keeps_handler_result_ignored_in_file_but_not_in_ignorable_errors(
-        self, mocker
-    ):
-        """
-        Given: A per-handler result whose error code IS listed under the
-               connector's ``.connector-ignore`` for that handler, but the code
-               is NOT part of the project's ``ignorable_errors`` allow-list
-               (``sdk_validation_config.toml``'s top-level ``ignorable_errors``).
-        When: filter_validation_results runs.
-        Then: The result is KEPT - a per-handler ``.connector-ignore`` entry
-              must never be able to suppress a code that was never sanctioned
-              as ignorable for the whole project.
-
-        Regression: prior to this fix, ``Connector.is_handler_error_ignored``
-        had no ``ignorable_errors`` gate at all, so ANY error code could be
-        silently suppressed per-handler via ``.connector-ignore`` alone -
-        bypassing the ``ignorable_errors`` allow-list that every other ignore
-        path (``should_run`` preflight, main ``ignored_errors``, pack-level
-        ignore) is required to honor.
-        """
-        manager = get_validate_manager(mocker)
-
-        ignored_map = {"handler_a/handler.yaml": ["CO155"]}
-        result = self._make_result(
-            "CO155",
-            Path("/repo/connectors/foo/components/handlers/handler_a/handler.yaml"),
-            ignored_map,
-            related_file_type=[RelatedFileType.CONNECTOR_HANDLER],
-        )
-
-        # CO155 is NOT in the ignorable_errors allow-list passed here.
-        filtered = manager.filter_validation_results([result], ["CO999"])
-
-        assert result in filtered
-
-    def test_filter_keeps_handler_result_when_always_run_code_ignored_in_file(
-        self, mocker
-    ):
-        """
-        Given: A per-handler result whose error code is in
-               ``ALWAYS_RUN_ON_ERROR_CODE`` and is also listed under the
-               connector's ``.connector-ignore`` for that handler (and is even
-               present in ``ignorable_errors``).
-        When: filter_validation_results runs.
-        Then: The result is KEPT - ALWAYS_RUN_ON_ERROR_CODE codes can never be
-              suppressed, mirroring the ``should_run`` preflight's handling of
-              the same codes.
-        """
-        from demisto_sdk.commands.common.constants import ALWAYS_RUN_ON_ERROR_CODE
-
-        manager = get_validate_manager(mocker)
-        always_run_code = ALWAYS_RUN_ON_ERROR_CODE[0]
-
-        ignored_map = {"handler_a/handler.yaml": [always_run_code]}
-        result = self._make_result(
-            always_run_code,
-            Path("/repo/connectors/foo/components/handlers/handler_a/handler.yaml"),
-            ignored_map,
-            related_file_type=[RelatedFileType.CONNECTOR_HANDLER],
-        )
-
-        filtered = manager.filter_validation_results([result], [always_run_code])
-
-        assert result in filtered
 
     def test_filter_drops_result_ignored_via_main_ignored_errors(self, mocker):
         """
@@ -3041,9 +2963,6 @@ class TestConnectorHandlerIgnoreFiltering:
         which only an end-to-end ``run_validations`` drive can pin.
         """
         manager = get_validate_manager(mocker)
-        manager.configured_validations = ConfiguredValidations(
-            select=["CO130"], ignorable_errors=["CO130"]
-        )
 
         ignored_map = {"handler_a/serializer.yaml": ["CO130"]}
         result_a = self._make_result(

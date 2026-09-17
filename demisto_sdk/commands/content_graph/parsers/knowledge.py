@@ -7,12 +7,12 @@ from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
     YAMLContentItemParser,
 )
-from demisto_sdk.commands.content_graph.strict_objects.collection import (
-    StrictCollection,
+from demisto_sdk.commands.content_graph.strict_objects.knowledge import (
+    StrictKnowledge,
 )
 
 
-class CollectionParser(YAMLContentItemParser, content_type=ContentType.COLLECTION):
+class KnowledgeParser(YAMLContentItemParser, content_type=ContentType.KNOWLEDGE):
     def __init__(
         self,
         path: Path,
@@ -42,4 +42,4 @@ class CollectionParser(YAMLContentItemParser, content_type=ContentType.COLLECTIO
 
     @property
     def strict_object(self):
-        return StrictCollection
+        return StrictKnowledge

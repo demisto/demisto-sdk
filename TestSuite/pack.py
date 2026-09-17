@@ -9,9 +9,9 @@ from demisto_sdk.commands.common.constants import (
     CASE_FIELDS_DIR,
     CASE_LAYOUT_RULES_DIR,
     CASE_LAYOUTS_DIR,
-    COLLECTIONS_DIR,
     CORRELATION_RULES_DIR,
     DEFAULT_IMAGE_BASE64,
+    KNOWLEDGE_DIR,
     LAYOUT_RULES_DIR,
     MODELING_RULES_DIR,
     PARSING_RULES_DIR,
@@ -27,7 +27,6 @@ from TestSuite.case_field import CaseField
 from TestSuite.case_layout import CaseLayout
 from TestSuite.case_layout_rule import CaseLayoutRule
 from TestSuite.classifier import Classifier
-from TestSuite.collection import Collection
 from TestSuite.content_list import ContentList
 from TestSuite.correlation_rule import CorrelationRule
 from TestSuite.dashboard import Dashboard
@@ -43,6 +42,7 @@ from TestSuite.indicator_type import IndicatorType
 from TestSuite.integration import Integration
 from TestSuite.job import Job
 from TestSuite.json_based import JSONBased
+from TestSuite.knowledge import Knowledge
 from TestSuite.layout import Layout
 from TestSuite.layout_rule import LayoutRule
 from TestSuite.mapper import Mapper
@@ -129,7 +129,7 @@ class Pack(TestSuiteBase):
         self.agentix_actions: List[AgentixAction] = list()
         self.agentix_agents: List[AgentixAgent] = list()
         self.agentix_skills: List[AgentixSkill] = list()
-        self.collections: List[Collection] = list()
+        self.knowledges: List[Knowledge] = list()
 
         # Create base pack
         self._pack_path = packs_dir / self.name
@@ -279,8 +279,8 @@ class Pack(TestSuiteBase):
         self._agentix_skills_path = self._pack_path / AGENTIX_SKILLS_DIR
         self._agentix_skills_path.mkdir(exist_ok=True)
 
-        self._collections_path = self._pack_path / COLLECTIONS_DIR
-        self._collections_path.mkdir(exist_ok=True)
+        self._knowledges_path = self._pack_path / KNOWLEDGE_DIR
+        self._knowledges_path.mkdir(exist_ok=True)
 
         super().__init__(self._pack_path)
 
@@ -896,16 +896,16 @@ class Pack(TestSuiteBase):
         self.agentix_skills.append(agentix_skill)
         return agentix_skill
 
-    def create_collection(
+    def create_knowledge(
         self,
         name: Optional[str] = None,
         yml: Optional[dict] = None,
-    ) -> Collection:
+    ) -> Knowledge:
         if name is None:
-            name = f"collection-{len(self.collections)}"
-        collection = Collection(self._collections_path, name, self._repo)
-        collection.build(
+            name = f"knowledge-{len(self.knowledges)}"
+        knowledge = Knowledge(self._knowledges_path, name, self._repo)
+        knowledge.build(
             yml,
         )
-        self.collections.append(collection)
-        return collection
+        self.knowledges.append(knowledge)
+        return knowledge

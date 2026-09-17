@@ -56,7 +56,7 @@ mapping:
     type: seq
     sequence:
     - type: str
-  collectionids:
+  knowledgeids:
     type: seq
     sequence:
     - type: str

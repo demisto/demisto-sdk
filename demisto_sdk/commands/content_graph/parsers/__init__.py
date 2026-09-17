@@ -1,6 +1,6 @@
 __all__ = [
     "ClassifierParser",
-    "CollectionParser",
+    "KnowledgeParser",
     "CorrelationRuleParser",
     "DashboardParser",
     "GenericDefinitionParser",
@@ -63,7 +63,6 @@ from demisto_sdk.commands.content_graph.parsers.case_layout_rule import (
     CaseLayoutRuleParser,
 )
 from demisto_sdk.commands.content_graph.parsers.classifier import ClassifierParser
-from demisto_sdk.commands.content_graph.parsers.collection import CollectionParser
 from demisto_sdk.commands.content_graph.parsers.correlation_rule import (
     CorrelationRuleParser,
 )
@@ -88,6 +87,7 @@ from demisto_sdk.commands.content_graph.parsers.indicator_type import (
 )
 from demisto_sdk.commands.content_graph.parsers.integration import IntegrationParser
 from demisto_sdk.commands.content_graph.parsers.job import JobParser
+from demisto_sdk.commands.content_graph.parsers.knowledge import KnowledgeParser
 from demisto_sdk.commands.content_graph.parsers.layout import LayoutParser
 from demisto_sdk.commands.content_graph.parsers.layout_rule import LayoutRuleParser
 from demisto_sdk.commands.content_graph.parsers.list import ListParser

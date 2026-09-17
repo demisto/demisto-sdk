@@ -26,7 +26,10 @@ from typing import (
 
 from pydantic import BaseModel, Field, root_validator, validator
 
-from demisto_sdk.commands.common.constants import CONNECTOR_IGNORE_FILE_NAME
+from demisto_sdk.commands.common.constants import (
+    ALWAYS_RUN_ON_ERROR_CODE,
+    CONNECTOR_IGNORE_FILE_NAME,
+)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
@@ -1487,7 +1490,10 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
         return f"{parent.name}/{filename}"
 
     def is_handler_error_ignored(
-        self, error_code: str, file_path: Optional[Path]
+        self,
+        error_code: str,
+        file_path: Optional[Path],
+        ignorable_errors: List[str],
     ) -> bool:
         """Whether ``error_code`` is ignored for a specific handler/serializer file.
 
@@ -1496,7 +1502,25 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
         ``.connector-ignore``. Returns ``False`` when ``file_path`` is not a
         handler/serializer file. Missing ignore files are handled gracefully
         (``get_ignored_errors`` returns ``[]``).
+
+        Gated the same way as ``ConnectorsValidator.is_error_ignored`` (the
+        ``should_run`` preflight): an error code that is not part of the
+        project's ``ignorable_errors`` allow-list, or that is in
+        ``ALWAYS_RUN_ON_ERROR_CODE``, can never be ignored - regardless of what
+        ``.connector-ignore`` declares. Without this gate, any error code could
+        be silently suppressed per-handler even if it was never sanctioned as
+        ignorable for the whole project.
+
+        Args:
+            error_code: The validation's error code.
+            file_path: The handler/serializer file the result is attached to.
+            ignorable_errors: The project's ignorable-errors allow-list
+                (typically ``ConfiguredValidations.ignorable_errors``).
         """
+        if (error_code not in ignorable_errors) or (
+            error_code in ALWAYS_RUN_ON_ERROR_CODE
+        ):
+            return False
         ignore_key = self.resolve_handler_ignore_key(file_path)
         if ignore_key is None:
             return False

@@ -141,7 +141,8 @@ class ValidateManager:
                             )
                         ):
                             validation_results = self.filter_validation_results(
-                                validation_results
+                                validation_results,
+                                self.configured_validations.ignorable_errors,
                             )
 
                         if self.allow_autofix and validator.is_auto_fixable:
@@ -214,7 +215,9 @@ class ValidateManager:
         )
 
     def filter_validation_results(
-        self, validation_results: List[ValidationResult]
+        self,
+        validation_results: List[ValidationResult],
+        ignorable_errors: Optional[List[str]] = None,
     ) -> List[ValidationResult]:
         """
         Filters out validation results for error codes that are ignored by the content item.
@@ -227,10 +230,19 @@ class ValidateManager:
           (path ``<folder_name>/handler.yaml`` / ``<folder_name>/serializer.yaml``)
           and are filtered per-handler/serializer against the connector's
           ``.connector-ignore`` - so ignoring one handler does not suppress the
-          others.
+          others. This is additionally gated by ``ignorable_errors``: a code
+          that isn't part of the project's ignorable-errors allow-list can
+          never be suppressed this way, mirroring the ``should_run`` preflight.
         * All other validations are filtered against the content object's main
           ``ignored_errors`` list AND the pack's ``pack_level_ignored_errors``
           list (the general case).
+
+        Args:
+            validation_results: The results produced by a single validator run.
+            ignorable_errors: The project's ignorable-errors allow-list
+                (``ConfiguredValidations.ignorable_errors``). Only used for the
+                connector handler/serializer case; defaults to an empty list
+                when not provided.
 
         Returns:
         List[ValidationResult]: Filtered validation results excluding ignored error codes
@@ -244,7 +256,9 @@ class ValidateManager:
             return [
                 result
                 for result in validation_results
-                if not self._is_connector_handler_result_ignored(result)
+                if not self._is_connector_handler_result_ignored(
+                    result, ignorable_errors or []
+                )
             ]
 
         # General case: filter against the content item's main ignored_errors
@@ -296,18 +310,26 @@ class ValidateManager:
         )
 
     @staticmethod
-    def _is_connector_handler_result_ignored(result: ValidationResult) -> bool:
+    def _is_connector_handler_result_ignored(
+        result: ValidationResult, ignorable_errors: List[str]
+    ) -> bool:
         """Whether a single connector handler/serializer result is ignored.
 
         Delegates to ``Connector.is_handler_error_ignored``, which resolves the
         result's ``<folder_name>/handler.yaml`` / ``<folder_name>/serializer.yaml``
         key from ``result.path`` and checks it against the connector's
         ``.connector-ignore``. Missing ignore files are handled gracefully.
+
+        ``ignorable_errors`` is threaded through and enforced by
+        ``Connector.is_handler_error_ignored`` itself, so a per-handler ignore
+        entry can never suppress a code that isn't part of the project's
+        ignorable-errors allow-list - the same gate the ``should_run``
+        preflight (``ConnectorsValidator.is_error_ignored``) applies.
         """
         checker = getattr(result.content_object, "is_handler_error_ignored", None)
         if not callable(checker):
             return False
-        if checker(result.validator.error_code, result.path):
+        if checker(result.validator.error_code, result.path, ignorable_errors):
             logger.debug(
                 f"Filtering out {result.validator.error_code} for connector "
                 f"handler/serializer '{result.path}' - ignored via .connector-ignore."

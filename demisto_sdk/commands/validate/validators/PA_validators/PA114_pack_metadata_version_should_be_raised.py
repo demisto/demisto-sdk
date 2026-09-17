@@ -211,9 +211,7 @@ class PackMetadataVersionShouldBeRaisedValidator(BaseValidator[ContentTypes]):
                 validation_results.append(
                     ValidationResult(
                         validator=self,
-                        message=self.missing_pack_error_message.format(
-                            pack_id=pack_id
-                        ),
+                        message=self.missing_pack_error_message.format(pack_id=pack_id),
                         content_object=pack or bump_trigger_by_pack_id[pack_id],
                     )
                 )

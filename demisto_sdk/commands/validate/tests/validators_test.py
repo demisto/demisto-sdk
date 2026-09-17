@@ -1193,6 +1193,76 @@ def test_ignored_with_run_all(mocker):
     assert 0 == validate_manager.run_validations()
 
 
+def test_graph_results_are_remapped_to_the_item_the_message_describes(mocker):
+    """
+    Given:
+        A validator running with -a that reports two items sharing one object_id
+        but living in different files - the duplicate-ID case - returning one
+        ValidationResult per item whose content_object is a graph object (a
+        distinct Python object from the collected item, as the graph always
+        returns).
+    When:
+        Calling run_validations, which remaps each result's content_object onto
+        the collected item before the identity filter.
+    Then:
+        Ensure each result still points at its own file. Remapping by object_id
+        collapses every result of a duplicate-ID group onto whichever item
+        happens to be first, so the reported path stops matching the message and
+        sends the author to a file that is not part of the pair - sometimes the
+        very file the message names as the counterpart, making it read as if the
+        file duplicates itself.
+    """
+    validate_manager = get_validate_manager(mocker)
+    validate_manager.configured_validations = ConfiguredValidations(
+        select=["GR100"],
+        warning=[],
+        ignorable_errors=[],
+        support_level_dict={},
+    )
+    validate_manager.initializer.execution_mode = ExecutionMode.ALL_FILES
+    validator = MarketplacesFieldValidatorAllFiles()
+    validate_manager.validators = [validator]
+
+    first = create_integration_object()
+    second = create_integration_object()
+    second.object_id = first.object_id  # the duplicate-ID condition
+    assert first.path != second.path
+
+    # The graph returns freshly parsed objects, never the collected instances,
+    # so they never compare equal to the collected ones and always need remapping.
+    graph_objects = {
+        item.path: item.copy(update={"git_sha": f"graph-sha-{index}"})
+        for index, item in enumerate((first, second))
+    }
+    assert all(obj not in (first, second) for obj in graph_objects.values())
+    mocker.patch.object(
+        MarketplacesFieldValidatorAllFiles,
+        "obtain_invalid_content_items",
+        return_value=[
+            ValidationResult(
+                validator=validator,
+                message=f"Duplicate ID '{item.object_id}' also found in {other.path}.",
+                content_object=graph_objects[item.path],
+            )
+            for item, other in ((first, second), (second, first))
+        ],
+    )
+    validate_manager.objects_to_run = [first, second]
+
+    validate_manager.run_validations()
+
+    reported = validate_manager.validation_results.validation_results
+    assert len(reported) == 2
+    for result in reported:
+        # The message names the *other* file, so the result's own path must not
+        # appear there: a result that claims a file duplicates itself is wrong.
+        assert str(result.content_object.path) not in result.message
+    assert {str(result.content_object.path) for result in reported} == {
+        str(first.path),
+        str(second.path),
+    }
+
+
 def test_check_metadata_version_bump_on_content_changes(mocker, repo):
     """
     Given: pack with newly added integration.

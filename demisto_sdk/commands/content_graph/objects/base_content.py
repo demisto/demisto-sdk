@@ -240,6 +240,7 @@ class BaseContent(BaseNode):
     related_content_dict: dict = Field({}, exclude=True)
     structure_errors: List[StructureError] = Field(default_factory=list, exclude=True)
     supportedModules: Optional[List[str]] = None
+    supportedFeatures: Optional[List[str]] = None
 
     def _save(
         self,

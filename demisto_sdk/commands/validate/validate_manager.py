@@ -108,16 +108,27 @@ class ValidateManager:
                         # filtered_content_objects_for_validator.  The identity
                         # check below would therefore silently discard every result.
                         # To fix this, we remap each result's content_object to the
-                        # matching ContentDTO (by object_id) before filtering.
-                        id_to_dto = {
-                            item.object_id: item
+                        # matching ContentDTO before filtering.
+                        #
+                        # Keyed by path, not object_id: GR105 reports items that
+                        # deliberately *share* an object_id, so an object_id key
+                        # collapses every result of a duplicate-ID group onto
+                        # whichever item happens to be first. The reported path
+                        # then stops matching the message, pointing the author at
+                        # a file that is not part of the pair - often the very
+                        # file the message names as the counterpart, so the error
+                        # reads as if a file duplicates itself. A path uniquely
+                        # identifies a content item, so it maps each result back
+                        # to the item its message was actually built from.
+                        path_to_dto = {
+                            str(item.path): item
                             for item in filtered_content_objects_for_validator
                         }
                         for validation_result in validation_results:
                             graph_obj = validation_result.content_object
                             if graph_obj not in filtered_content_objects_for_validator:
-                                dto = id_to_dto.get(
-                                    getattr(graph_obj, "object_id", None) or ""
+                                dto = path_to_dto.get(
+                                    str(getattr(graph_obj, "path", "") or "")
                                 )
                                 if dto is not None:
                                     validation_result.content_object = dto

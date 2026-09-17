@@ -1,0 +1,4 @@
+changes:
+- description: Added a log line reporting the duration of each **pre-commit** hook run.
+  type: internal
+pr_number: 5522

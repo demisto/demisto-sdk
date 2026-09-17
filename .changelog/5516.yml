@@ -1,0 +1,4 @@
+changes:
+- description: Updated the hardcoded docker images in all init templates and in the postman codegen fallback to demisto/python3:3.12.13.10116658.
+  type: internal
+pr_number: '5516'

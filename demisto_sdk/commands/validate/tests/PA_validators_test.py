@@ -1809,10 +1809,8 @@ def test_PackMetadataVersionShouldBeRaisedValidator_runs_on_deprecated_pack(mock
     """
     Given: A deprecated pack whose content item was modified without a version bump.
     When: Running PackMetadataVersionShouldBeRaisedValidator validator.
-    Then: Ensure the validator still runs on the deprecated pack (run_on_deprecated)
-          and fails it - changes to a deprecated pack must raise its version too.
-          This also keeps the Pack object in the validator's input, so its content
-          items never become bump candidates without a pack to compare against.
+    Then: Ensure the validator runs on the deprecated pack and fails it - changes
+          to a deprecated pack must raise its version too.
     """
     version = "1.0.0"
     with ChangeCWD(REPO.path):
@@ -1838,20 +1836,19 @@ def test_PackMetadataVersionShouldBeRaisedValidator_runs_on_deprecated_pack(mock
         assert len(results) == 1
 
 
-def test_PackMetadataVersionShouldBeRaisedValidator_unparsable_pack_metadata():
+def test_PackMetadataVersionShouldBeRaisedValidator_missing_pack_object():
     """
-    Given: A modified content item whose pack_metadata.json could not be parsed,
-           so no Pack object reached the validator.
+    Given: A modified content item whose Pack object was not collected (e.g. a
+           deleted pack_metadata.json, which the git collector skips).
     When: Running PackMetadataVersionShouldBeRaisedValidator validator.
     Then: Ensure the validator skips the pack instead of raising a KeyError,
-          so a single unparsable pack metadata cannot abort the whole validate run.
+          so a single missing pack metadata cannot abort the whole validate run.
     """
     with ChangeCWD(REPO.path):
         modeling_rule = create_modeling_rule_object()
         modeling_rule.git_status = GitStatuses.MODIFIED
 
-        # The pack object is deliberately absent from the input, mimicking a
-        # pack whose metadata could not be parsed and was therefore dropped.
+        # The pack object is deliberately absent from the input.
         validator = PackMetadataVersionShouldBeRaisedValidator()
         results = validator.obtain_invalid_content_items([modeling_rule])
 

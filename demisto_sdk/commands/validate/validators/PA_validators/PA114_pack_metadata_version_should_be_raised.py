@@ -115,12 +115,9 @@ class PackMetadataVersionShouldBeRaisedValidator(BaseValidator[ContentTypes]):
         "`demisto-sdk update-release-notes -i Packs/{pack} -u "
         "(major|minor|revision|documentation)` for a specific pack and version."
     )
-    # Deprecated content is still maintained: changing a deprecated pack (or an
-    # item inside it) must raise the pack version, exactly like any other change.
-    # This also keeps the Pack (pack_metadata.json) object in this validator's
-    # input - the generic deprecated filter would otherwise drop it while keeping
-    # the pack's content items, leaving bump candidates with no pack to compare
-    # against. Mirrors RN106, which requires release notes for deprecated packs.
+    # Changing a deprecated pack still requires a version bump, so the Pack
+    # object must not be dropped by the generic deprecated filter while its
+    # content items are kept. Mirrors RN106.
     run_on_deprecated = True
 
     @staticmethod
@@ -199,14 +196,14 @@ class PackMetadataVersionShouldBeRaisedValidator(BaseValidator[ContentTypes]):
             # Access them via the dict that was created earlier.
             pack = content_packs.get(pack_id)
             if pack is None or pack.old_base_content_object is None:
-                # The only way to get here is a pack_metadata.json that could not
-                # be parsed, so no Pack object (or no master baseline) exists and
-                # there is no version to compare against. The unparsable metadata
-                # is reported separately as an invalid content item - warn and move
-                # on rather than aborting the whole validate run with a KeyError.
+                # A bump candidate can outlive its Pack object: a deleted
+                # pack_metadata.json is skipped by the git collector while the
+                # pack's modified items are still collected. Without a pack (or a
+                # master baseline) there is no version to compare, so warn and
+                # skip instead of failing the whole run with a KeyError.
                 logger.warning(
                     f"Skipping {self.error_code} for pack '{pack_id}': its pack "
-                    "metadata could not be collected, so the pack version cannot be compared."
+                    "metadata was not collected, so the pack version cannot be compared."
                 )
                 continue
             # Check if their old version >= current version

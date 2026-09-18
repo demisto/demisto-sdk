@@ -1861,6 +1861,27 @@ def test_PackMetadataVersionShouldBeRaisedValidator_missing_pack_object():
         assert results[0].content_object == modeling_rule
 
 
+def test_PackMetadataVersionShouldBeRaisedValidator_new_pack_without_old_object():
+    """
+    Given: A new pack (hence without an old_base_content_object) with an added content item.
+    When: Running PackMetadataVersionShouldBeRaisedValidator validator.
+    Then: Ensure no validation error is raised - new packs don't require release
+          notes, so they're excluded before the missing pack metadata check.
+    """
+    with ChangeCWD(REPO.path):
+        integration = create_integration_object(pack_info={"currentVersion": "1.0.0"})
+        pack = integration.in_pack
+        pack.git_status = GitStatuses.ADDED
+        integration.git_status = GitStatuses.ADDED
+        # A new pack has no counterpart on master.
+        assert pack.old_base_content_object is None  # sanity check
+
+        validator = PackMetadataVersionShouldBeRaisedValidator()
+        results = validator.obtain_invalid_content_items([pack, integration])
+
+        assert results == []
+
+
 @pytest.fixture
 def repo_for_test_pa_124(graph_repo: Repo, mocker: MockerFixture):
     """

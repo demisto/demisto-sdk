@@ -1,4 +1,32 @@
 # Changelog
+## 1.39.10 (2026-09-22)
+### Feature
+* Added the MR109 validation, ensuring that every xdm.*.user.* field mapped in a modeling rule has a corresponding xdm.*.identity.* field. The validation runs in use-git mode on the latest modeling rule. [#5519](https://github.com/demisto/demisto-sdk/pull/5519)
+* Added a new validation for Agentix Actions, CO195_is_classifier_field_has_show_action, which verifies that a handler delivering a classifier field declares a properly-formatted show_classifier action (references the delivered classifier id with exactly one return_data entry). [#5514](https://github.com/demisto/demisto-sdk/pull/5514)
+* Added a new optional **supportedFeatures** field (list of strings) to content item types and to pack_metadata.json. The field cannot be authored on connectors, modeling rules or parsing rules. A content item that does not declare the field inherits it from its pack. When neither declares it, the key is omitted entirely from the output and marketplace artifacts. When the field is declared it must hold real feature names - an empty list, or a list containing empty or whitespace-only values, is rejected. [#5508](https://github.com/demisto/demisto-sdk/pull/5508)
+* The **GR105** duplicate-ID validation is now region-aware - content items may share an ID when they are provably never active in the same region, according to **Config/regional_rules.json**. Duplicates whose regions cannot be resolved are still reported. When the **Config/regional_rules.json** file is not available, region-awareness is skipped and every duplicate ID is reported, as before. [#5508](https://github.com/demisto/demisto-sdk/pull/5508)
+* Added the **ST115** validation, ensuring a content item's **supportedFeatures** are a subset of its pack's. [#5508](https://github.com/demisto/demisto-sdk/pull/5508)
+* Added the **BA134** validation, ensuring every declared **supportedFeatures** value exists under **supported_features** in **Config/regional_rules.json**. The validation runs on packs as well as content items, so a typo in **pack_metadata.json** is reported once at its source rather than on every item inheriting it. [#5508](https://github.com/demisto/demisto-sdk/pull/5508)
+* The **supportedFeatures** field now rejects duplicate entries. [#5508](https://github.com/demisto/demisto-sdk/pull/5508)
+* Added a temporary **GR117** validation, which reports duplicate AgentixAction and AgentixAgent IDs as a warning until the existing duplications are fixed. [#5520](https://github.com/demisto/demisto-sdk/pull/5520)
+* Added a new `demisto-sdk upload-custom-integration` command that safely uploads a custom integration to the Cortex Platform. Before uploading, it verifies that both `commonfields.id` and `name` in the integration YAML end with the `_copy` suffix, preventing ID conflicts. [#5469](https://github.com/demisto/demisto-sdk/pull/5469)
+
+### Fix
+* Improved the **GR105** duplicate-ID error message. A duplicate reported because its regions could not be resolved no longer claims the items are active in "all regions" or that their features overlap. Which duplicates are reported is unchanged. [#5508](https://github.com/demisto/demisto-sdk/pull/5508)
+* Fixed a content item not inheriting its pack's **supportedFeatures** when the pack had not already been resolved. The item was treated as available everywhere, and **ST115** did not report an item declaring a feature its pack disallows. [#5508](https://github.com/demisto/demisto-sdk/pull/5508)
+* The **GR105** duplicate-ID validation now logs a warning, rather than an informational message, when **Config/regional_rules.json** is unavailable, since every duplicate ID is reported in that case regardless of the regions it is restricted to. [#5508](https://github.com/demisto/demisto-sdk/pull/5508)
+* Fixed content items sharing an ID but declaring disjoint **supportedFeatures** being collapsed into a single entry in the pack metadata content items, so only one of them was listed. Such items are variants targeting different regions and are now all listed. Items sharing an ID and at least one feature, or where either declares none, are collapsed as before. [#5508](https://github.com/demisto/demisto-sdk/pull/5508)
+* Fixed an issue where the **PA114** validation skipped deprecated packs and could crash with a KeyError, aborting the entire validate run. Changes to a deprecated pack now correctly require a version bump, and a pack whose metadata was not collected is reported as a validation failure instead of crashing. [#5521](https://github.com/demisto/demisto-sdk/pull/5521)
+
+### Internal
+* Added a shared resolver for a content item's effective **supportedFeatures**, and a reader for **Config/regional_rules.json**. [#5508](https://github.com/demisto/demisto-sdk/pull/5508)
+* Added new connector validations covering fetch, feed, handler and parameter conventions. [#5510](https://github.com/demisto/demisto-sdk/pull/5510)
+* Improved existing connector validations and their reported results. [#5510](https://github.com/demisto/demisto-sdk/pull/5510)
+* Excluded AgentixAction and AgentixAgent items from the **GR105** validation, so it can be enforced as an error for all other content types. [#5520](https://github.com/demisto/demisto-sdk/pull/5520)
+* Added a log line reporting the duration of each **pre-commit** hook run. [#5522](https://github.com/demisto/demisto-sdk/pull/5522)
+* Increased the timeout of the **Test New Validate Command** CI job from 60 to 90 minutes, as it was reaching the limit and getting cancelled. [#5523](https://github.com/demisto/demisto-sdk/pull/5523)
+
+
 ## 1.39.9 (2026-09-06)
 ### Feature
 * Added support for "data_security" license. [#5515](https://github.com/demisto/demisto-sdk/pull/5515)

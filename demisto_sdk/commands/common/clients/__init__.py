@@ -6,12 +6,16 @@ from _pytest.fixtures import SubRequest
 from urllib3.exceptions import MaxRetryError
 
 from demisto_sdk.commands.common.clients.configs import (
+    PlatformClientConfig,
     XsiamClientConfig,
     XsoarClientConfig,
     XsoarSaasClientConfig,
 )
 from demisto_sdk.commands.common.clients.errors import (
     InvalidServerType,
+)
+from demisto_sdk.commands.common.clients.platform.platform_api_client import (
+    PlatformClient,
 )
 from demisto_sdk.commands.common.clients.xsiam.xsiam_api_client import XsiamClient
 from demisto_sdk.commands.common.clients.xsoar.xsoar_api_client import (
@@ -49,7 +53,12 @@ def get_client_from_config(
     Returns:
         the correct api clients based on the clients config
     """
-    if isinstance(client_config, XsiamClientConfig):
+    if isinstance(client_config, PlatformClientConfig):
+        return PlatformClient(
+            client_config,
+            raise_if_server_not_healthy=raise_if_server_not_healthy,
+        )
+    elif isinstance(client_config, XsiamClientConfig):
         return XsiamClient(
             client_config,
             raise_if_server_not_healthy=raise_if_server_not_healthy,
@@ -110,6 +119,13 @@ def get_client_from_marketplace(
         )
     elif marketplace == MarketplaceVersions.XSOAR_SAAS:
         config = XsoarSaasClientConfig(
+            base_api_url=_base_url,
+            api_key=_api_key,
+            auth_id=_auth_id,
+            verify_ssl=_verify_ssl,
+        )
+    elif marketplace == MarketplaceVersions.PLATFORM:
+        config = PlatformClientConfig(
             base_api_url=_base_url,
             api_key=_api_key,
             auth_id=_auth_id,

@@ -125,6 +125,17 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA129_missing_compli
 from demisto_sdk.commands.validate.validators.BA_validators.BA130_marketplacev2_without_platform import (
     MarketplaceV2WithoutPlatformValidator,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA131_invalid_supported_modules import (
+    InvalidSupportedModulesValidator,
+)
+from demisto_sdk.commands.validate.validators.BA_validators.BA132_supported_modules_without_platform import (
+    SupportedModulesWithoutPlatformValidator,
+)
+from demisto_sdk.commands.validate.validators.BA_validators.BA133_invalid_supported_modules_for_fetch_type import (
+    FETCH_TYPES,
+    SERVER_LEVEL_PARAM_TEMPLATES,
+    InvalidSupportedModulesForFetchTypeValidator,
+)
 from TestSuite.repo import ChangeCWD
 
 VALUE_WITH_TRAILING_SPACE = "field_with_space_should_fail "
@@ -1644,34 +1655,34 @@ def test_ValidPackNameValidator_obtain_invalid_content_items(
         pytest.param(
             [create_integration_object(readme_content="test-module")],
             1,
-            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/Integrations/integration_0/README.md",
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/Integrations/integration_0/README.md. To ignore, add this file to the .pack-ignore of pack 'PACK_NAME'.",
             id="invalid: integration readme",
         ),
         pytest.param(
             [create_integration_object(description_content="test-module")],
             1,
-            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/Integrations/integration_0/integration_0_description.md",
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/Integrations/integration_0/integration_0_description.md. To ignore, add this file to the .pack-ignore of pack 'PACK_NAME'.",
             id="invalid: integration description",
         ),
         pytest.param([create_script_object()], 0, "", id="valid: script"),
         pytest.param(
             [create_script_object(readme_content="test-module ")],
             1,
-            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/Scripts/script0/README.md",
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/Scripts/script0/README.md. To ignore, add this file to the .pack-ignore of pack 'PACK_NAME'.",
             id="invalid: script readme",
         ),
         pytest.param([create_playbook_object()], 0, "", id="valid: playbook"),
         pytest.param(
             [create_playbook_object(readme_content="test-module ")],
             1,
-            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/Playbooks/playbook-0_README.md",
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/Playbooks/playbook-0_README.md. To ignore, add this file to the .pack-ignore of pack 'PACK_NAME'.",
             id="invalid: playbook readme",
         ),
         pytest.param([create_pack_object()], 0, "", id="valid: pack"),
         pytest.param(
             [create_pack_object(readme_text="test-module ")],
             1,
-            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/README.md",
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/README.md. To ignore, add this file to the .pack-ignore of pack 'PACK_NAME'.",
             id="invalid: pack readme",
         ),
         pytest.param(
@@ -1681,7 +1692,7 @@ def test_ValidPackNameValidator_obtain_invalid_content_items(
                 )
             ],
             1,
-            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/ReleaseNotes/1_0_1.md",
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/ReleaseNotes/1_0_1.md. To ignore, add this file to the .pack-ignore of pack 'PACK_NAME'.",
             id="invalid: pack release note",
         ),
     ],
@@ -3975,3 +3986,1091 @@ def test_MarketplaceV2WithoutPlatformValidator_fix_has_platform_none_supported_m
     MarketplaceV2WithoutPlatformValidator().fix(content_item)
 
     assert sorted(content_item.supportedModules) == ["edr", "xsiam"]
+
+
+def _platform_item(create_func, supported_modules):
+    """Helper to create a content item that is a platform item with the given
+    supportedModules set directly on the item.
+    """
+    item = create_func()
+    item.marketplaces = [MarketplaceVersions.PLATFORM]
+    item.supportedModules = supported_modules
+    return item
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures",
+    [
+        pytest.param(
+            [_platform_item(create_integration_object, ["xsiam", "edr", "cloud"])],
+            0,
+            id="integration_allows_all_modules_valid",
+        ),
+        pytest.param(
+            [_platform_item(create_incident_field_object, ["xsiam", "agentix"])],
+            0,
+            id="incident_field_xsiam_and_agentix_valid",
+        ),
+        pytest.param(
+            [_platform_item(create_incident_field_object, ["xsiam", "edr"])],
+            1,
+            id="incident_field_with_disallowed_module_invalid",
+        ),
+        pytest.param(
+            [_platform_item(create_modeling_rule_object, ["xsiam"])],
+            0,
+            id="modeling_rule_xsiam_only_valid",
+        ),
+        pytest.param(
+            [_platform_item(create_modeling_rule_object, ["xsiam", "agentix"])],
+            1,
+            id="modeling_rule_with_agentix_invalid",
+        ),
+        pytest.param(
+            [
+                _platform_item(create_integration_object, ["xsiam"]),
+                _platform_item(create_incident_field_object, ["edr"]),
+                _platform_item(create_modeling_rule_object, ["tim"]),
+            ],
+            2,
+            id="mixed_items_two_invalid",
+        ),
+    ],
+)
+def test_InvalidSupportedModulesValidator_obtain_invalid_content_items(
+    content_items, expected_number_of_failures
+):
+    """
+    Given
+    - content_items list with various content types and supportedModules.
+        - Case 1: Integration allows every module - valid.
+        - Case 2: IncidentField with xsiam + agentix (its allowed set) - valid.
+        - Case 3: IncidentField with edr (not in its allowed set) - invalid.
+        - Case 4: ModelingRule with xsiam only (its allowed set) - valid.
+        - Case 5: ModelingRule with agentix (not allowed) - invalid.
+        - Case 6: Mixed - one valid, two invalid.
+    When
+    - Calling the InvalidSupportedModulesValidator obtain_invalid_content_items function.
+    Then
+    - Make sure the right amount of failures return.
+    """
+    results = InvalidSupportedModulesValidator().obtain_invalid_content_items(
+        content_items
+    )
+    assert len(results) == expected_number_of_failures
+
+
+def test_InvalidSupportedModulesValidator_error_message():
+    """
+    Given
+    - An IncidentField (allowed: xsiam, agentix) declaring an invalid module 'edr'.
+    When
+    - Calling the InvalidSupportedModulesValidator obtain_invalid_content_items function.
+    Then
+    - A single failure is returned, and the message lists the invalid module and
+      the allowed modules for the content item type.
+    """
+    content_item = _platform_item(create_incident_field_object, ["xsiam", "edr"])
+    results = InvalidSupportedModulesValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == 1
+    assert "edr" in results[0].message
+    assert "agentix" in results[0].message
+    assert "xsiam" in results[0].message
+
+
+def test_InvalidSupportedModulesValidator_list_allows_all_modules():
+    """
+    Given
+    - A platform List content item declaring modules from the full supported set,
+      including 'edr' which is not part of the xsiam + agentix set that List was
+      previously restricted to.
+    When
+    - Calling the InvalidSupportedModulesValidator obtain_invalid_content_items function.
+    Then
+    - No failures are returned, because a List is now allowed to declare any of
+      the supported modules.
+    """
+    content_item = _platform_item(create_list_object, ["xsiam", "agentix", "edr"])
+    results = InvalidSupportedModulesValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == 0
+
+
+def test_InvalidSupportedModulesValidator_non_platform_item_is_skipped():
+    """
+    Given
+    - An IncidentField that is NOT a platform item (no 'platform' marketplace),
+      even though it declares a module that would otherwise be invalid.
+    When
+    - Calling the InvalidSupportedModulesValidator obtain_invalid_content_items function.
+    Then
+    - No failures are returned, because non-platform items are skipped.
+    """
+    content_item = create_incident_field_object()
+    content_item.marketplaces = [MarketplaceVersions.XSOAR]
+    content_item.supportedModules = ["edr"]
+    results = InvalidSupportedModulesValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == 0
+
+
+def test_InvalidSupportedModulesValidator_inherits_modules_from_pack():
+    """
+    Given
+    - An IncidentField that is a platform item with no supportedModules of its own,
+      but whose pack declares an invalid module ('edr').
+    When
+    - Calling the InvalidSupportedModulesValidator obtain_invalid_content_items function.
+    Then
+    - A single failure is returned, because the modules are resolved from the pack.
+    """
+    content_item = create_incident_field_object()
+    pack = create_pack_object()
+    pack.supportedModules = ["edr"]
+    content_item.pack = pack
+    content_item.marketplaces = [MarketplaceVersions.PLATFORM]
+    content_item.supportedModules = None
+    results = InvalidSupportedModulesValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == 1
+    assert "edr" in results[0].message
+
+
+def test_InvalidSupportedModulesValidator_pack_declares_only_valid_modules():
+    """
+    Given
+    - An IncidentField that is a platform item with no supportedModules of its own,
+      whose pack declares only modules allowed for an IncidentField ('xsiam', 'agentix').
+    When
+    - Calling the InvalidSupportedModulesValidator obtain_invalid_content_items function.
+    Then
+    - No failures are returned, because the inherited pack modules are all valid.
+    """
+    content_item = create_incident_field_object()
+    pack = create_pack_object()
+    pack.supportedModules = ["xsiam", "agentix"]
+    content_item.pack = pack
+    content_item.marketplaces = [MarketplaceVersions.PLATFORM]
+    content_item.supportedModules = None
+    results = InvalidSupportedModulesValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == 0
+
+
+def test_InvalidSupportedModulesValidator_unmapped_content_type_is_skipped():
+    """
+    Given
+    - A GenericField content item, whose type is not covered by the per-content-type
+      table, that is a platform item declaring an otherwise-invalid module.
+    When
+    - Calling the InvalidSupportedModulesValidator obtain_invalid_content_items function.
+    Then
+    - No failures are returned, because content types absent from the table are skipped.
+    """
+    content_item = create_generic_field_object()
+    content_item.marketplaces = [MarketplaceVersions.PLATFORM]
+    content_item.supportedModules = ["edr"]
+    results = InvalidSupportedModulesValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == 0
+
+
+def test_InvalidSupportedModulesValidator_playbook_invalid_module():
+    """
+    Given
+    - A platform Playbook (allows all modules) declaring a module that is not a
+      real PlatformSupportedModules value ('not_a_module').
+    When
+    - Calling the InvalidSupportedModulesValidator obtain_invalid_content_items function.
+    Then
+    - A single failure is returned for the non-existent module.
+    """
+    content_item = _platform_item(create_playbook_object, ["not_a_module"])
+    results = InvalidSupportedModulesValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == 1
+    assert "not_a_module" in results[0].message
+
+
+def test_InvalidSupportedModulesValidator_platform_item_with_empty_modules_is_valid():
+    """
+    Given
+    - A platform Playbook that explicitly declares no supported modules ([]).
+    When
+    - Calling the InvalidSupportedModulesValidator obtain_invalid_content_items function.
+    Then
+    - No failures are returned: an item with no modules has nothing that can be
+      invalid, and an explicit [] must NOT expand to the platform defaults.
+    """
+    content_item = _platform_item(create_playbook_object, [])
+    results = InvalidSupportedModulesValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == 0
+
+
+def _incident_field_with_modules(supported_modules):
+    """Build an incident field through the real parser path, injecting the given
+    supportedModules into the content (None to omit the field entirely).
+
+    The marketplaces are pinned to the xsoar family (which does NOT include
+    'platform')
+    """
+    if supported_modules is None:
+        content_item = create_incident_field_object()
+    else:
+        content_item = create_incident_field_object(
+            paths=["supportedModules"], values=[supported_modules]
+        )
+    content_item.marketplaces = [
+        MarketplaceVersions.XSOAR,
+        MarketplaceVersions.XSOAR_ON_PREM,
+        MarketplaceVersions.XSOAR_SAAS,
+    ]
+    return content_item
+
+
+@pytest.mark.parametrize(
+    "supported_modules, override_marketplaces, expected_number_of_failures",
+    [
+        pytest.param(
+            None,
+            None,
+            0,
+            id="resolved_xsoar_family_marketplaces_no_supported_modules_valid",
+        ),
+        pytest.param(
+            ["edr"],
+            None,
+            1,
+            id="resolved_xsoar_family_marketplaces_with_supported_modules_invalid",
+        ),
+        pytest.param(
+            [],
+            None,
+            0,
+            id="resolved_xsoar_family_marketplaces_empty_supported_modules_valid",
+        ),
+        pytest.param(
+            None,
+            [MarketplaceVersions.XSOAR],
+            0,
+            id="xsoar_only_no_supported_modules_valid",
+        ),
+        pytest.param(
+            ["edr"],
+            [MarketplaceVersions.XSOAR],
+            1,
+            id="xsoar_only_with_supported_modules_invalid",
+        ),
+        pytest.param(
+            None,
+            [MarketplaceVersions.PLATFORM],
+            0,
+            id="platform_only_no_supported_modules_valid",
+        ),
+        pytest.param(
+            ["xsiam"],
+            [MarketplaceVersions.PLATFORM],
+            0,
+            id="platform_only_with_supported_modules_valid",
+        ),
+        pytest.param(
+            ["edr"],
+            [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2],
+            1,
+            id="multiple_non_platform_marketplaces_with_supported_modules_invalid",
+        ),
+        pytest.param(
+            ["xsiam"],
+            [MarketplaceVersions.PLATFORM, MarketplaceVersions.XSOAR],
+            0,
+            id="platform_among_marketplaces_with_supported_modules_valid",
+        ),
+    ],
+)
+def test_SupportedModulesWithoutPlatformValidator_obtain_invalid_content_items(
+    supported_modules, override_marketplaces, expected_number_of_failures
+):
+    """
+    Given
+    - A content item built through the real parser path with various
+      combinations of marketplaces and supportedModules:
+        - Case 1: marketplaces resolved to the xsoar family (no platform), no
+          modules - valid.
+        - Case 2: marketplaces resolved to the xsoar family (no platform),
+          modules declared - invalid (the resolved marketplaces do not include
+          platform).
+        - Case 3: marketplaces resolved to the xsoar family (no platform), empty
+          modules list - valid (nothing declared).
+        - Case 4: xsoar only, no modules - valid.
+        - Case 5: xsoar only, modules declared - invalid (no platform).
+        - Case 6: platform only, no modules - valid.
+        - Case 7: platform only, modules declared - valid.
+        - Case 8: multiple non-platform marketplaces, modules declared - invalid.
+        - Case 9: platform among marketplaces, modules declared - valid.
+    When
+    - Calling the SupportedModulesWithoutPlatformValidator obtain_invalid_content_items function.
+    Then
+    - Make sure the right amount of failures return.
+    """
+    content_item = _incident_field_with_modules(supported_modules)
+    if override_marketplaces is not None:
+        content_item.marketplaces = override_marketplaces
+    results = SupportedModulesWithoutPlatformValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == expected_number_of_failures
+
+
+def test_SupportedModulesWithoutPlatformValidator_pack_modules_are_not_inherited():
+    """
+    Given
+    - A content item with no supportedModules of its own and only the xsoar
+      marketplace, but whose pack declares supportedModules.
+    When
+    - Calling the SupportedModulesWithoutPlatformValidator obtain_invalid_content_items function.
+    Then
+    - No failures are returned, because only the item's own supportedModules are
+      checked; values inherited from the pack are not considered.
+    """
+    content_item = create_incident_field_object()
+    pack = create_pack_object()
+    pack.supportedModules = ["edr"]
+    content_item.pack = pack
+    content_item.marketplaces = [MarketplaceVersions.XSOAR]
+    content_item.supportedModules = None
+    results = SupportedModulesWithoutPlatformValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == 0
+
+
+def test_SupportedModulesWithoutPlatformValidator_empty_modules_list_is_valid():
+    """
+    Given
+    - A content item with only the xsoar marketplace whose own supportedModules
+      is an explicit empty list, while its pack declares supportedModules.
+    When
+    - Calling the SupportedModulesWithoutPlatformValidator obtain_invalid_content_items function.
+    Then
+    - No failures are returned, because an explicit empty list means the item
+      declares no modules of its own, and pack values are not inherited.
+    """
+    content_item = create_incident_field_object()
+    pack = create_pack_object()
+    pack.supportedModules = ["edr"]
+    content_item.pack = pack
+    content_item.marketplaces = [MarketplaceVersions.XSOAR]
+    content_item.supportedModules = []
+    results = SupportedModulesWithoutPlatformValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == 0
+
+
+def test_SupportedModulesWithoutPlatformValidator_inherits_modules_from_pack_with_platform():
+    """
+    Given
+    - A content item with no supportedModules of its own that includes the
+      platform marketplace, whose pack declares supportedModules.
+    When
+    - Calling the SupportedModulesWithoutPlatformValidator obtain_invalid_content_items function.
+    Then
+    - No failures are returned, because 'platform' is present in the marketplaces.
+    """
+    content_item = create_incident_field_object()
+    pack = create_pack_object()
+    pack.supportedModules = ["xsiam"]
+    content_item.pack = pack
+    content_item.marketplaces = [MarketplaceVersions.PLATFORM]
+    content_item.supportedModules = None
+    results = SupportedModulesWithoutPlatformValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == 0
+
+
+def test_SupportedModulesWithoutPlatformValidator_error_message():
+    """
+    Given
+    - A content item with the xsoar marketplace declaring supportedModules.
+    When
+    - Calling the SupportedModulesWithoutPlatformValidator obtain_invalid_content_items function.
+    Then
+    - A single failure is returned, and the message mentions 'supportedModules'
+      and 'platform'.
+    """
+    content_item = _incident_field_with_modules(["edr"])
+    content_item.marketplaces = [MarketplaceVersions.XSOAR]
+    results = SupportedModulesWithoutPlatformValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == 1
+    assert "supportedModules" in results[0].message
+    assert "platform" in results[0].message
+
+
+def test_SupportedModulesWithoutPlatformValidator_multiple_items():
+    """
+    Given
+    - A list of content items: one invalid (xsoar + modules), one valid
+      (platform + modules), and one valid (xsoar + no modules).
+    When
+    - Calling the SupportedModulesWithoutPlatformValidator obtain_invalid_content_items function.
+    Then
+    - Exactly one failure is returned.
+    """
+    invalid_item = _incident_field_with_modules(["edr"])
+    invalid_item.marketplaces = [MarketplaceVersions.XSOAR]
+
+    valid_platform_item = _incident_field_with_modules(["xsiam"])
+    valid_platform_item.marketplaces = [MarketplaceVersions.PLATFORM]
+
+    valid_no_modules_item = create_incident_field_object()
+    valid_no_modules_item.marketplaces = [MarketplaceVersions.XSOAR]
+
+    content_items = [invalid_item, valid_platform_item, valid_no_modules_item]
+    results = SupportedModulesWithoutPlatformValidator().obtain_invalid_content_items(
+        content_items
+    )
+    assert len(results) == 1
+
+
+# Required parameters per fetch type, used to build complete (valid) integrations
+# in the BA133 tests so that the "missing required parameter" check does not fire
+# unless a test specifically targets it.
+_REQUIRED_PARAMS_BY_FLAG = {
+    "is_fetch": ["isFetch", "incidentFetchInterval", "incidentType"],
+    "is_fetch_events": ["isFetchEvents", "eventFetchInterval"],
+    "is_fetch_assets": ["isFetchAssets", "assetsFetchInterval"],
+    "is_feed": [
+        "feed",
+        "feedReliability",
+        "feedReputation",
+        "feedFetchInterval",
+        "feedExpirationPolicy",
+        "feedExpirationInterval",
+        "feedBypassExclusionList",
+        "feedTags",
+        "tlp_color",
+    ],
+}
+
+
+def _fetch_integration(
+    fetch_flags,
+    params,
+    marketplaces=None,
+    item_supported_modules=None,
+):
+    """Build a platform integration with the given fetch flags and parameters.
+
+    Args:
+        fetch_flags (dict): Mapping of integration fetch-flag attribute name to
+            value (e.g. {"is_fetch": True}).
+        params (list): A list of (name, supportedModules) tuples to build the
+            integration's configuration parameters with. Each tuple becomes a
+            separate configuration parameter, each with its own per-parameter
+            supportedModules field.
+        marketplaces (list | None): The marketplaces to set on the integration.
+            Defaults to [PLATFORM].
+        item_supported_modules (list | None): The integration-level
+            supportedModules (the per-param resolution falls back to this).
+
+    Returns:
+        Integration: The configured integration object.
+    """
+    from demisto_sdk.commands.content_graph.objects.integration import Parameter
+
+    integration = create_integration_object()
+    integration.marketplaces = marketplaces or [MarketplaceVersions.PLATFORM]
+    integration.supportedModules = item_supported_modules
+    # The default integration fixture enables 'isfetchassets'; reset all fetch
+    # flags first so each test controls exactly which fetch types are active.
+    for flag_name in (
+        "is_fetch",
+        "is_fetch_events",
+        "is_fetch_assets",
+        "is_feed",
+    ):
+        setattr(integration, flag_name, False)
+    for flag_name, value in fetch_flags.items():
+        setattr(integration, flag_name, value)
+    integration.params = [
+        Parameter(name=name, supportedModules=supported_modules)
+        for name, supported_modules in params
+    ]
+    return integration
+
+
+def _complete_fetch_integration(
+    fetch_flags,
+    param_modules,
+    extra_params=None,
+    marketplaces=None,
+    item_supported_modules=None,
+):
+    """Build a platform integration that includes ALL required parameters for the
+    enabled fetch types, so that only the module-subset check is exercised.
+
+    Args:
+        fetch_flags (dict): Mapping of fetch-flag attribute name to value.
+        param_modules (list): The supportedModules to assign to every required
+            parameter that is generated.
+        extra_params (list | None): Additional (name, supportedModules) tuples to
+            add (e.g. optional params like 'max_fetch' or 'first_fetch').
+        marketplaces (list | None): The marketplaces to set on the integration.
+        item_supported_modules (list | None): The integration-level
+            supportedModules.
+
+    Returns:
+        Integration: The configured integration object.
+    """
+    params = []
+    for flag_name, value in fetch_flags.items():
+        if value:
+            params.extend(
+                (name, param_modules) for name in _REQUIRED_PARAMS_BY_FLAG[flag_name]
+            )
+    params.extend(extra_params or [])
+    return _fetch_integration(
+        fetch_flags,
+        params,
+        marketplaces=marketplaces,
+        item_supported_modules=item_supported_modules,
+    )
+
+
+@pytest.mark.parametrize(
+    "fetch_flags, param_modules, extra_params, expected_number_of_failures",
+    [
+        pytest.param(
+            {"is_fetch": True},
+            ["agentix", "xsiam"],
+            [("first_fetch", ["xsiam"]), ("max_fetch", ["agentix"])],
+            0,
+            id="fetch_incidents_valid_params",
+        ),
+        pytest.param(
+            {"is_fetch": True},
+            ["agentix", "xsiam", "edr"],
+            None,
+            3,
+            id="fetch_incidents_required_params_with_disallowed_module",
+        ),
+        pytest.param(
+            {"is_fetch_events": True},
+            ["xsiam"],
+            None,
+            0,
+            id="fetch_events_valid_params",
+        ),
+        pytest.param(
+            {"is_fetch_events": True},
+            ["xsiam", "agentix"],
+            None,
+            2,
+            id="fetch_events_required_params_with_disallowed_agentix",
+        ),
+        pytest.param(
+            {"is_fetch_assets": True},
+            ["xsiam", "exposure_management"],
+            None,
+            0,
+            id="fetch_assets_valid_params",
+        ),
+        pytest.param(
+            {"is_fetch_assets": True},
+            ["xsiam", "agentix"],
+            None,
+            2,
+            id="fetch_assets_required_params_with_disallowed_agentix",
+        ),
+        pytest.param(
+            {"is_feed": True},
+            ["agentix", "xsiam"],
+            [("first_fetch", ["agentix"])],
+            0,
+            id="fetch_indicators_valid_params",
+        ),
+        pytest.param(
+            {"is_feed": True},
+            ["edr"],
+            None,
+            9,
+            id="fetch_indicators_required_params_with_disallowed_module",
+        ),
+    ],
+)
+def test_InvalidSupportedModulesForFetchTypeValidator_single_fetch_type(
+    fetch_flags, param_modules, extra_params, expected_number_of_failures
+):
+    """
+    Given
+    - A platform integration declaring a single fetch type, with all of its
+      required parameters present, and per-parameter supportedModules:
+        - fetch-incidents with valid params (+ optional first_fetch, max_fetch) - valid.
+        - fetch-incidents with all required params declaring a disallowed module - 3 failures.
+        - fetch-events with valid params - valid.
+        - fetch-events with required params declaring 'agentix' (not allowed) - 2 failures.
+        - fetch-assets with valid params - valid.
+        - fetch-assets with required params declaring 'agentix' (not allowed) - 2 failures.
+        - fetch-indicators with valid params (+ optional first_fetch) - valid.
+        - fetch-indicators with all 9 required params declaring a disallowed module - 9 failures.
+    When
+    - Calling the InvalidSupportedModulesForFetchTypeValidator
+      obtain_invalid_content_items function.
+    Then
+    - Make sure the right amount of failures return.
+    """
+    integration = _complete_fetch_integration(
+        fetch_flags, param_modules, extra_params=extra_params
+    )
+    results = (
+        InvalidSupportedModulesForFetchTypeValidator().obtain_invalid_content_items(
+            [integration]
+        )
+    )
+    assert len(results) == expected_number_of_failures
+
+
+def test_InvalidSupportedModulesForFetchTypeValidator_missing_required_param():
+    """
+    Given
+    - A platform fetch-incidents integration that is missing the required
+      'incidentType' parameter (the others are present and valid).
+    When
+    - Calling the InvalidSupportedModulesForFetchTypeValidator
+      obtain_invalid_content_items function.
+    Then
+    - A single failure is returned, mentioning the missing parameter and its
+      fetch type.
+    """
+    integration = _fetch_integration(
+        {"is_fetch": True},
+        [
+            ("isFetch", ["agentix", "xsiam"]),
+            ("incidentFetchInterval", ["agentix", "xsiam"]),
+        ],
+    )
+    results = (
+        InvalidSupportedModulesForFetchTypeValidator().obtain_invalid_content_items(
+            [integration]
+        )
+    )
+    assert len(results) == 1
+    assert "incidentType" in results[0].message
+    assert "Fetch Incidents" in results[0].message
+
+
+def test_InvalidSupportedModulesForFetchTypeValidator_multiple_missing_required_params():
+    """
+    Given
+    - A platform fetch-events integration that has none of its required
+      parameters.
+    When
+    - Calling the InvalidSupportedModulesForFetchTypeValidator
+      obtain_invalid_content_items function.
+    Then
+    - Two failures are returned, one per missing required parameter.
+    """
+    integration = _fetch_integration({"is_fetch_events": True}, [])
+    results = (
+        InvalidSupportedModulesForFetchTypeValidator().obtain_invalid_content_items(
+            [integration]
+        )
+    )
+    assert len(results) == 2
+    messages = " ".join(result.message for result in results)
+    assert "isFetchEvents" in messages
+    assert "eventFetchInterval" in messages
+
+
+def test_InvalidSupportedModulesForFetchTypeValidator_missing_field_inherits_from_integration():
+    """
+    Given
+    - A platform fetch-events integration whose required params omit
+      supportedModules, while the integration itself declares only 'xsiam'.
+    When
+    - Calling the InvalidSupportedModulesForFetchTypeValidator
+      obtain_invalid_content_items function.
+    Then
+    - No failures are returned, because the params inherit the integration's
+      valid ('xsiam') modules and all required params are present.
+    """
+    integration = _complete_fetch_integration(
+        {"is_fetch_events": True},
+        None,
+        item_supported_modules=["xsiam"],
+    )
+    results = (
+        InvalidSupportedModulesForFetchTypeValidator().obtain_invalid_content_items(
+            [integration]
+        )
+    )
+    assert len(results) == 0
+
+
+def test_InvalidSupportedModulesForFetchTypeValidator_missing_field_inherits_invalid_modules():
+    """
+    Given
+    - A platform fetch-events integration whose required params omit
+      supportedModules, while the integration declares an invalid module
+      ('agentix') for the fetch-events type.
+    When
+    - Calling the InvalidSupportedModulesForFetchTypeValidator
+      obtain_invalid_content_items function.
+    Then
+    - Two failures are returned (one per required param), because the inherited
+      module set is not a subset of the allowed modules for fetch-events.
+    """
+    integration = _complete_fetch_integration(
+        {"is_fetch_events": True},
+        None,
+        item_supported_modules=["xsiam", "agentix"],
+    )
+    results = (
+        InvalidSupportedModulesForFetchTypeValidator().obtain_invalid_content_items(
+            [integration]
+        )
+    )
+    assert len(results) == 2
+    messages = " ".join(result.message for result in results)
+    assert "agentix" in messages
+
+
+def test_InvalidSupportedModulesForFetchTypeValidator_multi_fetch_type():
+    """
+    Given
+    - A platform integration that is both fetch-incidents and fetch-events, with
+      all required params for both present and valid, where 'max_fetch' is shared
+      (allows agentix + xsiam) and 'eventFetchInterval' only allows xsiam.
+        - All required params declare valid modules.
+        - max_fetch declares 'agentix' (valid for the shared rule).
+        - eventFetchInterval is overridden to declare 'agentix' (invalid for fetch-events).
+    When
+    - Calling the InvalidSupportedModulesForFetchTypeValidator
+      obtain_invalid_content_items function.
+    Then
+    - Exactly one failure is returned (for eventFetchInterval only).
+    """
+    from demisto_sdk.commands.content_graph.objects.integration import Parameter
+
+    integration = _complete_fetch_integration(
+        {"is_fetch": True, "is_fetch_events": True},
+        ["xsiam"],
+        extra_params=[("max_fetch", ["agentix"])],
+    )
+    # Override eventFetchInterval to an invalid module for fetch-events.
+    integration.params = [
+        param for param in integration.params if param.name != "eventFetchInterval"
+    ]
+    integration.params.append(
+        Parameter(name="eventFetchInterval", supportedModules=["agentix"])
+    )
+    results = (
+        InvalidSupportedModulesForFetchTypeValidator().obtain_invalid_content_items(
+            [integration]
+        )
+    )
+    assert len(results) == 1
+    assert "eventFetchInterval" in results[0].message
+
+
+def test_InvalidSupportedModulesForFetchTypeValidator_non_fetch_params_are_skipped():
+    """
+    Given
+    - A platform fetch-incidents integration (all required params present and
+      valid) whose only param with a disallowed module ('edr') is NOT a
+      fetch-related parameter.
+    When
+    - Calling the InvalidSupportedModulesForFetchTypeValidator
+      obtain_invalid_content_items function.
+    Then
+    - No failures are returned, because non-fetch parameters are not validated.
+    """
+    integration = _complete_fetch_integration(
+        {"is_fetch": True},
+        ["agentix", "xsiam"],
+        extra_params=[("some_unrelated_param", ["edr"])],
+    )
+    results = (
+        InvalidSupportedModulesForFetchTypeValidator().obtain_invalid_content_items(
+            [integration]
+        )
+    )
+    assert len(results) == 0
+
+
+def test_InvalidSupportedModulesForFetchTypeValidator_non_platform_integration_is_skipped():
+    """
+    Given
+    - A non-platform (xsoar) fetch-incidents integration that BOTH declares a
+      disallowed module AND is missing required params.
+    When
+    - Calling the InvalidSupportedModulesForFetchTypeValidator
+      obtain_invalid_content_items function.
+    Then
+    - No failures are returned, because the entire validation is gated on the
+      platform marketplace (neither missing-required nor module checks run).
+    """
+    integration = _fetch_integration(
+        {"is_fetch": True},
+        [("isFetch", ["edr"])],
+        marketplaces=[MarketplaceVersions.XSOAR],
+    )
+    results = (
+        InvalidSupportedModulesForFetchTypeValidator().obtain_invalid_content_items(
+            [integration]
+        )
+    )
+    assert len(results) == 0
+
+
+def test_InvalidSupportedModulesForFetchTypeValidator_no_fetch_type_is_skipped():
+    """
+    Given
+    - A platform integration that declares no fetch type at all, but has a param
+      with a name matching a fetch parameter declaring a disallowed module.
+    When
+    - Calling the InvalidSupportedModulesForFetchTypeValidator
+      obtain_invalid_content_items function.
+    Then
+    - No failures are returned, because the integration declares no fetch type.
+    """
+    integration = _fetch_integration(
+        {},
+        [("isFetch", ["edr"])],
+    )
+    results = (
+        InvalidSupportedModulesForFetchTypeValidator().obtain_invalid_content_items(
+            [integration]
+        )
+    )
+    assert len(results) == 0
+
+
+def test_InvalidSupportedModulesForFetchTypeValidator_credentials_valid():
+    """
+    Given
+    - A platform integration that is "fetch credentials" (the 'isFetchCredentials'
+      param is present) with credential params declaring valid modules.
+    When
+    - Calling the InvalidSupportedModulesForFetchTypeValidator
+      obtain_invalid_content_items function.
+    Then
+    - No failures are returned (credential params are optional and valid).
+    """
+    integration = _fetch_integration(
+        {},
+        [
+            ("isFetchCredentials", ["agentix", "xsiam"]),
+            ("credential_names", ["xsiam"]),
+            ("secrets", ["agentix"]),
+        ],
+    )
+    results = (
+        InvalidSupportedModulesForFetchTypeValidator().obtain_invalid_content_items(
+            [integration]
+        )
+    )
+    assert len(results) == 0
+
+
+def test_InvalidSupportedModulesForFetchTypeValidator_credentials_invalid_module():
+    """
+    Given
+    - A platform "fetch credentials" integration whose 'secrets' param declares a
+      disallowed module ('edr').
+    When
+    - Calling the InvalidSupportedModulesForFetchTypeValidator
+      obtain_invalid_content_items function.
+    Then
+    - A single failure is returned for the 'secrets' param.
+    """
+    integration = _fetch_integration(
+        {},
+        [
+            ("isFetchCredentials", ["xsiam"]),
+            ("secrets", ["edr"]),
+        ],
+    )
+    results = (
+        InvalidSupportedModulesForFetchTypeValidator().obtain_invalid_content_items(
+            [integration]
+        )
+    )
+    assert len(results) == 1
+    assert "secrets" in results[0].message
+
+
+def test_InvalidSupportedModulesForFetchTypeValidator_credentials_no_missing_required():
+    """
+    Given
+    - A platform "fetch credentials" integration that only has the
+      'isFetchCredentials' param (no credential_names/credentialNames/secrets).
+    When
+    - Calling the InvalidSupportedModulesForFetchTypeValidator
+      obtain_invalid_content_items function.
+    Then
+    - No failures are returned (credential params are all optional - no
+      missing-required errors).
+    """
+    integration = _fetch_integration(
+        {},
+        [("isFetchCredentials", ["xsiam"])],
+    )
+    results = (
+        InvalidSupportedModulesForFetchTypeValidator().obtain_invalid_content_items(
+            [integration]
+        )
+    )
+    assert len(results) == 0
+
+
+def test_InvalidSupportedModulesForFetchTypeValidator_fix_cleans_invalid_modules():
+    """
+    Given
+    - A platform fetch-events integration whose required params declare an invalid
+      module ('agentix') alongside the valid 'xsiam'.
+    When
+    - Calling obtain_invalid_content_items and then fix.
+    Then
+    - The fix removes 'agentix' from each param, leaving only 'xsiam'.
+    """
+    validator = InvalidSupportedModulesForFetchTypeValidator()
+    integration = _complete_fetch_integration(
+        {"is_fetch_events": True},
+        ["xsiam", "agentix"],
+    )
+    validator.obtain_invalid_content_items([integration])
+    validator.fix(integration)
+
+    for param in integration.params:
+        if param.name in ("isFetchEvents", "eventFetchInterval"):
+            assert param.supportedModules == ["xsiam"]
+
+
+def test_InvalidSupportedModulesForFetchTypeValidator_fix_sets_empty_list_when_all_removed():
+    """
+    Given
+    - A platform fetch-events integration whose 'eventFetchInterval' param declares
+      only a disallowed module ('agentix').
+    When
+    - Calling obtain_invalid_content_items and then fix.
+    Then
+    - The param's supportedModules becomes an empty list (not None).
+    - Re-validating the fixed integration yields no error (an explicit [] is
+      honored as "no modules" and is not resolved to the platform defaults).
+    """
+    from demisto_sdk.commands.content_graph.objects.integration import Parameter
+
+    validator = InvalidSupportedModulesForFetchTypeValidator()
+    integration = _complete_fetch_integration(
+        {"is_fetch_events": True},
+        ["xsiam"],
+    )
+    integration.params = [
+        param for param in integration.params if param.name != "eventFetchInterval"
+    ]
+    integration.params.append(
+        Parameter(name="eventFetchInterval", supportedModules=["agentix"])
+    )
+    validator.obtain_invalid_content_items([integration])
+    validator.fix(integration)
+
+    fixed = next(
+        param for param in integration.params if param.name == "eventFetchInterval"
+    )
+    assert fixed.supportedModules == []
+
+    re_validation = validator.obtain_invalid_content_items([integration])
+    assert not re_validation
+
+
+def test_InvalidSupportedModulesForFetchTypeValidator_fix_adds_missing_required_param():
+    """
+    Given
+    - A platform fetch-incidents integration missing the required 'incidentType'
+      parameter.
+    When
+    - Calling obtain_invalid_content_items and then fix.
+    Then
+    - The 'incidentType' param is added with the fetch type's allowed modules.
+    """
+    validator = InvalidSupportedModulesForFetchTypeValidator()
+    integration = _fetch_integration(
+        {"is_fetch": True},
+        [
+            ("isFetch", ["agentix", "xsiam"]),
+            ("incidentFetchInterval", ["agentix", "xsiam"]),
+        ],
+    )
+    validator.obtain_invalid_content_items([integration])
+    validator.fix(integration)
+
+    param_names = {param.name for param in integration.params}
+    assert "incidentType" in param_names
+    added = next(param for param in integration.params if param.name == "incidentType")
+    assert sorted(added.supportedModules) == ["agentix", "xsiam"]
+
+
+def test_InvalidSupportedModulesForFetchTypeValidator_fix_added_param_intersects_item_modules():
+    """
+    Given
+    - A platform fetch-incidents integration whose integration-level
+      supportedModules is restricted to ['xsiam'], missing the required
+      'incidentType' parameter.
+    When
+    - Calling obtain_invalid_content_items and then fix.
+    Then
+    - The added 'incidentType' param's supportedModules is the fetch type's allowed
+      modules intersected with the integration-level modules (only 'xsiam'),
+      not the full allowed set.
+    """
+    validator = InvalidSupportedModulesForFetchTypeValidator()
+    integration = _fetch_integration(
+        {"is_fetch": True},
+        [
+            ("isFetch", ["xsiam"]),
+            ("incidentFetchInterval", ["xsiam"]),
+        ],
+        item_supported_modules=["xsiam"],
+    )
+    validator.obtain_invalid_content_items([integration])
+    validator.fix(integration)
+
+    added = next(param for param in integration.params if param.name == "incidentType")
+    assert added.supportedModules == ["xsiam"]
+
+
+def test_InvalidSupportedModulesForFetchTypeValidator_all_required_params_have_templates():
+    """
+    Given
+    - The BA133 fetch-type table (FETCH_TYPES) and the auto-fix field templates
+      (SERVER_LEVEL_PARAM_TEMPLATES).
+    When
+    - Collecting every required server-level parameter across all fetch types.
+    Then
+    - Each required parameter has a corresponding entry in
+      SERVER_LEVEL_PARAM_TEMPLATES, so the auto-fix can always add a missing
+      required parameter with sensible default fields.
+    """
+    required_params = set()
+    for fetch_type in FETCH_TYPES:
+        required_params |= fetch_type.required_params
+
+    missing_templates = required_params - set(SERVER_LEVEL_PARAM_TEMPLATES)
+    assert not missing_templates, (
+        f"Required params missing a SERVER_LEVEL_PARAM_TEMPLATES entry: "
+        f"{sorted(missing_templates)}"
+    )

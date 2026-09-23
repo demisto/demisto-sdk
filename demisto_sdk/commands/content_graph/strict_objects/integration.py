@@ -27,6 +27,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     NAME_DYNAMIC_MODEL,
     QUICK_ACTION_DYNAMIC_MODEL,
     REQUIRED_DYNAMIC_MODEL,
+    SupportedFeaturesList,
     create_dynamic_model,
     create_model,
 )
@@ -53,6 +54,7 @@ class SectionOrderValues(StrEnum):
 
 
 class _Configuration(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     display: Optional[str] = None
     section: Optional[str] = None
     advanced: Optional[str] = None
@@ -92,6 +94,7 @@ class IntegrationOutput(Output):  # type:ignore[misc,valid-type]
 
 
 class _Command(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     name: str
     execution: Optional[bool] = None
     description: str
@@ -104,6 +107,11 @@ class _Command(BaseStrictModel):
     polling: Optional[bool] = None
     prettyname: Optional[str] = None
     compliantpolicies: Optional[List[str]] = None
+    # `hidden` may be a bool, or a list of marketplace names where the command
+    # should be hidden. Mirrors the same shape allowed on integration parameters
+    # (see `_Configuration.hidden`). The explicit declaration here overrides the
+    # `hidden: Optional[bool]` that HIDDEN_DYNAMIC_MODEL would otherwise add.
+    hidden: Optional[Any] = None
     supportedModules: Optional[
         Annotated[
             List[PlatformSupportedModules],
@@ -134,6 +142,7 @@ class _Script(BaseStrictModel):
     is_fetch: Optional[bool] = Field(None, alias="isfetch")
     is_fetch_events: Optional[bool] = Field(None, alias="isfetchevents")
     is_fetch_assets: Optional[bool] = Field(None, alias="isfetchassets")
+    is_fetch_credentials: Optional[bool] = Field(None, alias="isfetchcredentials")
     mcp: Optional[bool] = Field(None, alias="mcp")
     long_running: Optional[bool] = Field(None, alias="longRunning")
     long_running_port: Optional[bool] = Field(None, alias="longRunningPort")
@@ -146,6 +155,7 @@ class _Script(BaseStrictModel):
     feed: Optional[bool] = None
     is_fetch_samples: Optional[bool] = Field(None, alias="isFetchSamples")
     reset_context: Optional[bool] = Field(None, alias="resetContext")
+    spec: Optional[str] = None
 
 
 Script = create_model(
@@ -196,6 +206,7 @@ class Trigger(BaseStrictModel):
 
 
 class _StrictIntegration(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     common_fields: CommonFieldsIntegration = Field(..., alias="commonfields")  # type:ignore[valid-type]
     display: str
     beta: Optional[bool] = None

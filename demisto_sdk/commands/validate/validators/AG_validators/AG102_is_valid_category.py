@@ -4,13 +4,17 @@ from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.tools import get_current_categories
-from demisto_sdk.commands.content_graph.objects import AgentixAction, AgentixAgent
+from demisto_sdk.commands.content_graph.objects import (
+    AgentixAction,
+    AgentixAgent,
+    AgentixSkill,
+)
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
 
-ContentTypes = Union[AgentixAction, AgentixAgent]
+ContentTypes = Union[AgentixAction, AgentixAgent, AgentixSkill]
 
 
 class IsValidCategoryValidator(BaseValidator[ContentTypes]):

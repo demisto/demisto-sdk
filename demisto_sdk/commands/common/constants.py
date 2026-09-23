@@ -45,6 +45,24 @@ DOCKER_REGISTRY_URL = os.getenv(
     "DEMISTO_SDK_CONTAINER_REGISTRY",
     os.getenv("DOCKER_IO", DEFAULT_DOCKER_REGISTRY_URL),
 )
+DEMISTO_REPOSITORY = "demisto"
+DEVTEST_DEMISTO_REPOSITORY = "devtestdemisto"
+DEMISTO_EXTENDED_REPOSITORY = "demistoextended"
+DEVTEST_DEMISTO_EXTENDED_REPOSITORY = "devtestdemistoextended"
+DEMISTO_SDK_EXTENDED_REGISTRY_ENV = "DEMISTO_SDK_EXTENDED_REGISTRY"
+DEFAULT_EXTENDED_REGISTRY = "gcr.io/xsoar-registry"
+# TEMPORARY (CIAC-17352): the raw host prefix content currently emits on images.
+# To be removed once content stops prefixing images with the gcr.io host.
+CR_REGISTRY_PREFIX = f"{DEFAULT_EXTENDED_REGISTRY}/"
+
+
+def strip_cr_registry_prefix(image: str) -> str:
+    """Strip the CR host prefix back to the canonical "demistoextended/" form.
+
+    TEMPORARY (CIAC-17352): remove once content stops prefixing images with the
+    gcr.io host.
+    """
+    return image.removeprefix(CR_REGISTRY_PREFIX)
 
 
 # Authentication
@@ -122,6 +140,8 @@ CASE_LAYOUTS_DIR = "CaseLayouts"
 CASE_FIELDS_DIR = "CaseFields"
 AGENTIX_ACTIONS_DIR = "AgentixActions"
 AGENTIX_AGENTS_DIR = "AgentixAgents"
+AGENTIX_SKILLS_DIR = "AgentixSkills"
+COLLECTIONS_DIR = "Collections"
 
 # NAMES OF ENTITIES
 
@@ -281,6 +301,8 @@ class FileType(StrEnum):
     VERSION_CONFIG = "version_config"
     AGENTIX_AGENT = "agentixagent"
     AGENTIX_ACTION = "agentixaction"
+    AGENTIX_SKILL = "agentixskill"
+    COLLECTION = "collection"
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -323,6 +345,8 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.CASE_LAYOUT: "Case Layouts",
     FileType.AGENTIX_AGENT: "Agents",
     FileType.AGENTIX_ACTION: "Actions",
+    FileType.AGENTIX_SKILL: "Skills",
+    FileType.COLLECTION: "Collections",
 }
 
 FILE_TYPE_BY_RN_HEADER = {
@@ -367,6 +391,7 @@ ENTITY_TYPE_TO_DIR = {
     FileType.CASE_FIELD.value: CASE_FIELDS_DIR,
     FileType.CASE_LAYOUT.value: CASE_LAYOUTS_DIR,
     FileType.CASE_LAYOUT_RULE.value: CASE_LAYOUT_RULES_DIR,
+    FileType.COLLECTION.value: COLLECTIONS_DIR,
 }
 
 SIEM_ONLY_ENTITIES = [
@@ -432,6 +457,8 @@ CONTENT_ENTITIES_DIRS = [
     CASE_LAYOUTS_DIR,
     AGENTIX_ACTIONS_DIR,
     AGENTIX_AGENTS_DIR,
+    AGENTIX_SKILLS_DIR,
+    COLLECTIONS_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -948,6 +975,7 @@ ASSETS_MODELING_RULE_ID_SUFFIX = "AssetsModelingRule"
 # Pack Unique Files
 PACKS_WHITELIST_FILE_NAME = ".secrets-ignore"
 PACKS_PACK_IGNORE_FILE_NAME = ".pack-ignore"
+CONNECTOR_IGNORE_FILE_NAME = ".connector-ignore"
 PACKS_PACK_META_FILE_NAME = "pack_metadata.json"
 PACKS_README_FILE_NAME = INTEGRATIONS_README_FILE_NAME = SCRIPTS_README_FILE_NAME = (
     "README.md"
@@ -958,6 +986,7 @@ AUTHOR_IMAGE_FILE_NAME = "Author_image.png"
 DEPLOYMENT_JSON_FILENAME = "deployment.json"
 PACKS_FOLDER = "Packs"
 PRIVATE_PACKS_FOLDER = "PrivatePacks"
+CONNECTORS_FOLDER = "connectors"
 GIT_IGNORE_FILE_NAME = ".gitignore"
 
 # Private Repository Status Files
@@ -1632,6 +1661,8 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.CASE_LAYOUT: "8.7.0",
     FileType.AGENTIX_ACTION: "8.12.0",
     FileType.AGENTIX_AGENT: "8.12.0",
+    FileType.AGENTIX_SKILL: "8.15.0",
+    FileType.COLLECTION: "8.15.0",
 }
 
 DEFAULT_PYTHON_VERSION = "3.11"
@@ -2041,6 +2072,27 @@ class PlatformSupportedModules(StrEnum):
     EXPOSURE_MANAGEMENT = "exposure_management"
     TIM = "tim"
     EMAIL_SECURITY = "email_security"
+    XTI = "xti"
+    DATA_SECURITY = "data_security"
+
+
+# The complete set of platform supported modules.
+ALL_SUPPORTED_MODULES: set = {module.value for module in PlatformSupportedModules}
+
+# The 'xsiam' and 'agentix' modules.
+XSIAM_AND_AGENTIX_MODULES: set = {
+    PlatformSupportedModules.XSIAM.value,
+    PlatformSupportedModules.AGENTIX.value,
+}
+
+# The 'xsiam' module only.
+XSIAM_ONLY_MODULES: set = {PlatformSupportedModules.XSIAM.value}
+
+# The 'xsiam' and 'exposure_management' modules.
+XSIAM_AND_EXPOSURE_MANAGEMENT_MODULES: set = {
+    PlatformSupportedModules.XSIAM.value,
+    PlatformSupportedModules.EXPOSURE_MANAGEMENT.value,
+}
 
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {

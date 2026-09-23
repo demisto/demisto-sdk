@@ -23,7 +23,9 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 class CommandParser:
     name: str
     deprecated: bool
-    hidden: bool
+    # `hidden` may be a bool, or a list of marketplace names where the command
+    # should be hidden. Mirrors the same shape allowed on integration parameters.
+    hidden: Any
     description: str
     args: List[dict]
     outputs: List[dict]
@@ -50,6 +52,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.is_fetch = self.script_info.get("isfetch", False)
         self.is_fetch_assets = self.script_info.get("isfetchassets", False)
         self.is_fetch_events = self.script_info.get("isfetchevents", False)
+        self.is_fetch_credentials = self.script_info.get("isfetchcredentials", False)
         self.is_fetch_events_and_assets = self.script_info.get(
             "isfetcheventsandassets", False
         )
@@ -65,6 +68,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         )
         self.internal: bool = self.yml_data.get("internal", False)
         self.source: str = self.yml_data.get("source", "")
+        self.spec: Optional[str] = self.script_info.get("spec")
 
         self.commands: List[CommandParser] = []
         self.connect_to_commands()

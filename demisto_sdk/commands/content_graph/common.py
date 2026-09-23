@@ -55,6 +55,8 @@ class RelationshipType(StrEnum):
     HAS_COMMAND = "HAS_COMMAND"
     IMPORTS = "IMPORTS"
     IN_PACK = "IN_PACK"
+    REFERENCES_INTEGRATION = "REFERENCES_INTEGRATION"
+    REFERENCES_PACK = "REFERENCES_PACK"
     TESTED_BY = "TESTED_BY"
     USES = "USES"
     USES_BY_ID = "USES_BY_ID"
@@ -110,6 +112,9 @@ class ContentType(StrEnum):
     AGENTIX_AGENT = "AgentixAgent"
     AGENTIX_ACTION = "AgentixAction"
     AGENTIX_ACTION_TEST = "AgentixActionTest"
+    AGENTIX_SKILL = "AgentixSkill"
+    COLLECTION = "Collection"
+    CONNECTOR = "Connector"
 
     @property
     def labels(self) -> List[str]:
@@ -147,6 +152,8 @@ class ContentType(StrEnum):
             return ContentType.PLAYBOOK.server_name
         elif self == ContentType.MAPPER:
             return "classifier-mapper"
+        elif self == ContentType.COLLECTION:
+            return "agentixknowledgecollection"
         return self.lower()
 
     # def __hash__(self) -> int:
@@ -164,6 +171,8 @@ class ContentType(StrEnum):
             return ContentType.PLAYBOOK.server_name
         elif self == ContentType.MAPPER:
             return "classifier"
+        elif self == ContentType.COLLECTION:
+            return "agentixknowledgecollection"
         return self.lower()
 
     @property
@@ -372,6 +381,14 @@ class ContentType(StrEnum):
             return "Modules"
         elif self == ContentType.CASE_LAYOUT:
             return "Layouts"
+        elif self == ContentType.AGENTIX_AGENT:
+            return "Agents"
+        elif self == ContentType.AGENTIX_ACTION:
+            return "Actions"
+        elif self == ContentType.AGENTIX_SKILL:
+            return "Skills"
+        elif self == ContentType.COLLECTION:
+            return "Collections"
         separated_str = pascalToSpace(self)
         return f"{separated_str}s"
 
@@ -394,6 +411,14 @@ class ContentType(StrEnum):
             return ContentType.GENERIC_TYPE
         elif header == "Object Fields":
             return ContentType.GENERIC_FIELD
+        elif header == "Agents":
+            return ContentType.AGENTIX_AGENT
+        elif header == "Actions":
+            return ContentType.AGENTIX_ACTION
+        elif header == "Skills":
+            return ContentType.AGENTIX_SKILL
+        elif header == "Collections":
+            return ContentType.COLLECTION
         normalized_header = header.rstrip("s").replace(" ", "_").upper()
         return ContentType[normalized_header]
 

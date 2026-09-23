@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Set
 
 import pytest
 from pydantic import DirectoryPath
+from pydantic import ValidationError as PydanticValidationError
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
@@ -778,6 +779,31 @@ class TestParsersAndModels:
         assert model.is_fetch_assets is True
         assert model.internal is False
 
+    def test_from_path_inherits_pack_marketplaces_when_not_declared(self, pack: Pack):
+        """
+        Given:
+            - A pack whose metadata declares marketplaces ['xsoar', 'platform']
+              and an integration whose YAML does NOT declare a marketplaces field.
+        When:
+            - Parsing the integration standalone via ContentItemParser.from_path
+              (i.e. without passing pack_marketplaces explicitly).
+        Then:
+            - The resolved marketplaces are inherited from the pack metadata and
+              do NOT include 'marketplacev2', so it is not falsely treated as a
+              marketplacev2 item (regression test for false BA130 failures).
+        """
+        from demisto_sdk.commands.content_graph.objects.integration import Integration
+
+        pack.set_data(marketplaces=["xsoar", "platform"])
+        integration = pack.create_integration(yml=load_yaml("integration.yml"))
+
+        model = BaseContent.from_path(Path(integration.path))
+
+        assert isinstance(model, Integration)
+        assert MarketplaceVersions.MarketplaceV2 not in model.marketplaces
+        assert MarketplaceVersions.PLATFORM in model.marketplaces
+        assert MarketplaceVersions.XSOAR in model.marketplaces
+
     def test_unified_integration_parser(self, pack: Pack):
         """
         Given:
@@ -1365,6 +1391,78 @@ class TestParsersAndModels:
         )
         model = Script.from_orm(parser)
         assert model.auto_update_docker_image is expected_value
+
+    def test_script_parser_prompt_config_model_tier(self, pack: Pack):
+        """
+        Given:
+            - An LLM script whose promptConfig pins a model tier.
+        When:
+            - Creating the content item's parser and model.
+        Then:
+            - Verify the modelTier is parsed onto the model's promptConfig.
+        """
+        from demisto_sdk.commands.content_graph.objects.script import Script
+        from demisto_sdk.commands.content_graph.parsers.script import ScriptParser
+
+        # given
+        script = pack.create_script()
+        script.create_default_script()
+        script.yml.update(
+            {
+                "promptConfig": {
+                    "temperature": 0.1,
+                    "maxOutputTokens": 12000,
+                    "webSearch": False,
+                    "modelTier": "Thinking",
+                }
+            }
+        )
+
+        # when
+        parser = ScriptParser(
+            Path(script.path), list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        model = Script.from_orm(parser)
+
+        # then
+        assert model.prompt_config is not None
+        assert model.prompt_config.model_tier == "Thinking"
+
+    def test_script_parser_prompt_config_without_model_tier(self, pack: Pack):
+        """
+        Given:
+            - An LLM script whose promptConfig omits the model tier.
+        When:
+            - Creating the content item's parser and model.
+        Then:
+            - Verify the model is parsed and the tier is None, since an absent
+              tier is valid and resolves to the hub-advertised default model.
+        """
+        from demisto_sdk.commands.content_graph.objects.script import Script
+        from demisto_sdk.commands.content_graph.parsers.script import ScriptParser
+
+        # given
+        script = pack.create_script()
+        script.create_default_script()
+        script.yml.update(
+            {
+                "promptConfig": {
+                    "temperature": 0.1,
+                    "maxOutputTokens": 12000,
+                    "webSearch": False,
+                }
+            }
+        )
+
+        # when
+        parser = ScriptParser(
+            Path(script.path), list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        model = Script.from_orm(parser)
+
+        # then
+        assert model.prompt_config is not None
+        assert model.prompt_config.model_tier is None
 
     def test_test_playbook_parser(self, pack: Pack):
         """
@@ -2057,6 +2155,227 @@ class TestParsersAndModels:
 
         assert script1_model.supportedModules == ["C1", "C3"]
         assert script2_model.supportedModules is None
+
+    @pytest.mark.parametrize(
+        "pack_features, item_features, expected_own, expected_effective",
+        [
+            pytest.param(None, None, None, None, id="neither authored"),
+            pytest.param(
+                ["feat_a"], None, None, {"feat_a"}, id="pack only, item inherits"
+            ),
+            pytest.param(
+                ["feat_a"],
+                ["feat_b"],
+                ["feat_b"],
+                {"feat_b"},
+                id="item overrides pack",
+            ),
+        ],
+    )
+    def test_supported_features_resolution(
+        self, repo: Repo, pack_features, item_features, expected_own, expected_effective
+    ):
+        """
+        Given:
+        - A pack and an integration authoring `supportedFeatures` in every
+          valid combination of absent / populated
+
+        When:
+        - Parsing the pack
+
+        Then:
+        - Ensure the parsed field holds only what the item itself authored, so
+          that it means the same thing on every parsing path
+        - Ensure the pack's value is applied by the shared resolver instead
+        """
+        pack = repo.create_pack("HelloWorld")
+        if pack_features is not None:
+            pack_metadata = load_json("pack_metadata.json")
+            pack_metadata.update({"supportedFeatures": pack_features})
+            pack.pack_metadata.write_json(pack_metadata)
+
+        integration = pack.create_integration("MyIntegration")
+        if item_features is not None:
+            yml = integration.yml.read_dict()
+            yml["supportedFeatures"] = item_features
+            integration.yml.write_dict(yml)
+
+        model = PackModel.from_orm(PackParser(Path(pack.path)))
+        item = model.content_items.integration[0]
+
+        assert item.supportedFeatures == expected_own
+        item.pack = model
+        assert tools.get_content_item_supported_features(item) == (
+            frozenset(expected_effective) if expected_effective else None
+        )
+
+    def test_supported_features_absent_from_output_when_unauthored(self, repo: Repo):
+        """
+        Given:
+        - A pack and an integration that do not author `supportedFeatures`
+
+        When:
+        - Dumping the pack metadata and generating the content item summary
+
+        Then:
+        - Ensure the key is absent entirely from both outputs, rather than
+          being emitted as null or as an empty list
+        """
+        pack = repo.create_pack("HelloWorld")
+        pack.create_integration("MyIntegration")
+
+        model = PackModel.from_orm(PackParser(Path(pack.path)))
+        metadata_path = Path(pack.path) / "metadata.json"
+        model.dump_metadata(metadata_path, MarketplaceVersions.XSOAR)
+
+        assert "supportedFeatures" not in tools.get_json(metadata_path)
+        assert "supportedFeatures" not in model.content_items.integration[0].summary()
+
+    @pytest.mark.parametrize(
+        "invalid_value",
+        [
+            pytest.param([], id="empty list"),
+            pytest.param([""], id="empty string"),
+            pytest.param([" "], id="whitespace-only string"),
+            pytest.param(["\t\n"], id="tab and newline only"),
+            pytest.param(["valid_feature", ""], id="one blank among valid values"),
+            pytest.param([1], id="non-string value"),
+            pytest.param(["feat_a", "feat_a"], id="duplicate entry"),
+            pytest.param(
+                ["feat_a", "feat_b", "feat_a"],
+                id="duplicate entry among distinct values",
+            ),
+        ],
+    )
+    def test_supported_features_rejects_invalid_values(self, repo: Repo, invalid_value):
+        """
+        Given:
+        - An integration authoring `supportedFeatures` with a value that carries
+          no real feature name: an empty list, a list containing blank or
+          non-string entries, or a list repeating the same feature
+
+        When:
+        - Parsing the pack
+
+        Then:
+        - Ensure a structure error is raised for the field. The field is
+          optional, so "no required features" is expressed by omitting the key
+          entirely rather than by authoring an empty or blank value, and a
+          feature declared twice conveys nothing beyond declaring it once.
+        """
+        pack = repo.create_pack("HelloWorld")
+        integration = pack.create_integration("MyIntegration")
+        yml = integration.yml.read_dict()
+        yml["supportedFeatures"] = invalid_value
+        integration.yml.write_dict(yml)
+
+        model = PackModel.from_orm(PackParser(Path(pack.path)))
+
+        assert [
+            error
+            for error in model.content_items.integration[0].structure_errors
+            if "supportedFeatures" in str(error)
+        ], f"{invalid_value!r} should have been rejected"
+
+    def test_supported_features_rejects_blank_values_in_pack_metadata(self, repo: Repo):
+        """
+        Given:
+        - A pack whose `pack_metadata.json` authors `supportedFeatures` as an
+          empty list
+
+        When:
+        - Validating the pack metadata against its strict model
+
+        Then:
+        - Ensure the value is rejected, so the rule is enforced on
+          pack_metadata.json and not only on content items.
+        """
+        from demisto_sdk.commands.content_graph.strict_objects.pack_meta_data import (
+            StrictPackMetadata,
+        )
+
+        with pytest.raises(PydanticValidationError) as exc_info:
+            StrictPackMetadata.parse_obj(
+                {
+                    "name": "HelloWorld",
+                    "support": "xsoar",
+                    "author": "Cortex XSOAR",
+                    "currentVersion": "1.0.0",
+                    "serverMinVersion": "6.10.0",
+                    "supportedFeatures": [],
+                }
+            )
+
+        assert [
+            error
+            for error in exc_info.value.errors()
+            if error["loc"][:1] == ("supportedFeatures",)
+        ]
+
+    def test_supported_features_is_valid_on_all_content_types(self, repo: Repo):
+        """
+        Given:
+        - A pack whose content items of every supported type all author
+          `supportedFeatures`
+
+        When:
+        - Parsing the pack
+
+        Then:
+        - Ensure no structure errors are raised for the field on any type,
+          i.e. the schemas and strict models accept it everywhere. This covers
+          types that never had `supportedModules`, which would otherwise reject
+          the new field as an extra key.
+        """
+        pack = repo.create_pack("HelloWorld")
+
+        for create, name in (
+            (pack.create_integration, "MyIntegration"),
+            (pack.create_script, "MyScript"),
+            (pack.create_playbook, "MyPlaybook"),
+        ):
+            item = create(name)
+            yml = item.yml.read_dict()
+            yml["supportedFeatures"] = ["feat_a"]
+            item.yml.write_dict(yml)
+
+        for create, name in (
+            (pack.create_incident_field, "MyIncidentField"),
+            (pack.create_incident_type, "MyIncidentType"),
+            (pack.create_indicator_field, "MyIndicatorField"),
+            (pack.create_indicator_type, "MyIndicatorType"),
+            (pack.create_classifier, "MyClassifier"),
+            (pack.create_mapper, "MyMapper"),
+            (pack.create_widget, "MyWidget"),
+            (pack.create_dashboard, "MyDashboard"),
+            (pack.create_report, "MyReport"),
+            (pack.create_generic_field, "MyGenericField"),
+            (pack.create_generic_type, "MyGenericType"),
+            (pack.create_generic_module, "MyGenericModule"),
+            (pack.create_generic_definition, "MyGenericDefinition"),
+            (pack.create_list, "MyList"),
+            (pack.create_wizard, "MyWizard"),
+            (pack.create_xsiam_dashboard, "MyXSIAMDashboard"),
+            (pack.create_case_field, "MyCaseField"),
+        ):
+            item = create(name)
+            data = item.read_json_as_dict()
+            data["supportedFeatures"] = ["feat_a"]
+            item.write_json(data)
+
+        model = PackModel.from_orm(PackParser(Path(pack.path)))
+
+        content_items = list(model.content_items)
+        assert content_items, "expected the pack to contain content items"
+        for content_item in content_items:
+            assert content_item.supportedFeatures == [
+                "feat_a"
+            ], f"{content_item.content_type} did not resolve supportedFeatures"
+            assert not [
+                error
+                for error in content_item.structure_errors
+                if "supportedFeatures" in str(error)
+            ], f"{content_item.content_type} rejected supportedFeatures"
 
 
 class TestFindContentType:
@@ -3438,3 +3757,66 @@ class TestAgentixBaseParser:
             agentix_action_path, list(MarketplaceVersions), pack_supported_modules=[]
         )
         assert parser.toversion == DEFAULT_CONTENT_ITEM_TO_VERSION
+
+    def test_agentix_action_parser_long_running_fields(self, pack: Pack):
+        """
+        Given:
+            - An agentix action with islongrunning and longrunningtimeoutseconds set.
+        When:
+            - Creating the content item's parser.
+        Then:
+            - Verify the long-running fields are parsed from the yml.
+        """
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        # given
+        agentix_action_data = load_yaml("agentix_action.yml")
+        agentix_action_data["islongrunning"] = True
+        agentix_action_data["longrunningtimeoutseconds"] = 120
+        agentix_action = pack.create_agentix_action(
+            "TestAgentixActionLongRunning", agentix_action_data
+        )
+        agentix_action_path = Path(agentix_action.path)
+
+        # when
+        parser = AgentixActionParser(
+            agentix_action_path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+
+        # then
+        assert parser.is_long_running is True
+        assert parser.long_running_timeout_seconds == 120
+
+    def test_agentix_action_parser_long_running_defaults(self, pack: Pack):
+        """
+        Given:
+            - An agentix action without the long-running fields.
+        When:
+            - Creating the content item's parser.
+        Then:
+            - Verify is_long_running defaults to False and
+              long_running_timeout_seconds defaults to None.
+        """
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        # given
+        agentix_action_data = load_yaml("agentix_action.yml")
+        agentix_action_data.pop("islongrunning", None)
+        agentix_action_data.pop("longrunningtimeoutseconds", None)
+        agentix_action = pack.create_agentix_action(
+            "TestAgentixActionNoLongRunning", agentix_action_data
+        )
+        agentix_action_path = Path(agentix_action.path)
+
+        # when
+        parser = AgentixActionParser(
+            agentix_action_path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+
+        # then
+        assert parser.is_long_running is False
+        assert parser.long_running_timeout_seconds is None

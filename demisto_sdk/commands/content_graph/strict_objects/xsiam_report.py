@@ -9,6 +9,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
     SUFFIXED_ID_DYNAMIC_MODEL,
     BaseStrictModel,
+    SupportedFeaturesList,
     create_model,
 )
 
@@ -38,8 +39,10 @@ class TimeFrame(BaseStrictModel):
 
 class TemplatesData(BaseStrictModel):
     metadata: Optional[str] = None
-    global_id: str
-    report_name: str
+    global_id: Optional[str] = None
+    id: str
+    report_name: Optional[str] = None
+    name: str
     report_description: Optional[str] = None
     default_template_id: Optional[int] = None
     time_frame: Optional[TimeFrame] = None
@@ -67,6 +70,7 @@ WidgetsData = create_model(
 
 
 class _StrictXSIAMReport(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     templates_data: List[TemplatesData]
     widgets_data: Optional[List[WidgetsData]] = None  # type:ignore[valid-type]
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")

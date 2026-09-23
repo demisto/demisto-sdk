@@ -3,7 +3,9 @@ import os
 import re
 import subprocess
 import sys
+import time
 from collections import defaultdict
+from datetime import timedelta
 from functools import partial
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
@@ -22,6 +24,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.common.cpu_count import cpu_count
+from demisto_sdk.commands.common.docker_helper import get_python_version_or_default
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
@@ -144,6 +147,7 @@ class PreCommitRunner:
         if json_output_path and json_output_path.is_dir():
             json_output_path = json_output_path / f"{hook_id}.json"
 
+        start_time = time.monotonic()
         process = PreCommitRunner._run_pre_commit_process(
             PRECOMMIT_CONFIG_MAIN_PATH,
             precommit_env,
@@ -152,11 +156,13 @@ class PreCommitRunner:
             command=["run", "-a", hook_id],
             json_output_path=json_output_path,
         )
+        duration = timedelta(seconds=round(time.monotonic() - start_time))
 
         if process.stdout:
             logger.info("{}", process.stdout)  # noqa: PLE1205 see https://github.com/astral-sh/ruff/issues/13390
         if process.stderr:
             logger.error("{}", process.stderr)  # noqa: PLE1205 see https://github.com/astral-sh/ruff/issues/13390
+        logger.info(f"Hook {hook_id} finished in {duration}")
         return process.returncode
 
     @staticmethod
@@ -481,6 +487,30 @@ def group_by_language(
             )
         for api_module in api_modules:
             assert isinstance(api_module, Script)
+
+            # Rescue non-code files (e.g. README.md, description.md, images,
+            # json) that the user explicitly passed inside the ApiModule folder.
+            # The API-module-expansion block below only copies .py/.yml/.ps1
+            # files (via `add_related_files`) into the per-integration mapping,
+            # and the second loop in `group_by_language` skips the ApiModules
+            # pack entirely - so without this rescue, anything that isn't
+            # source code would be silently dropped before reaching pre-commit.
+            # Keys in `integrations_scripts_mapping` are `CONTENT_PATH /
+            # <relative path>` (see code_file_path above), so prefer that
+            # absolute form; also try the relative form as a fallback.
+            if api_module.path.is_absolute():
+                absolute_api_folder = api_module.path.parent
+                relative_api_folder = api_module.path.parent.relative_to(CONTENT_PATH)
+            else:
+                relative_api_folder = api_module.path.parent
+                absolute_api_folder = CONTENT_PATH / relative_api_folder
+            api_module_files: Set[Path] = integrations_scripts_mapping.get(
+                absolute_api_folder, set()
+            ) or integrations_scripts_mapping.get(relative_api_folder, set())
+            for f in api_module_files:
+                if f.suffix.lower() not in {".py", ".yml", ".ps1"}:
+                    infra_files.append(f)
+
             for imported_by in api_module.imported_by:
                 # we need to add the api module for each integration that uses it, so it will execute the api module check
                 integrations_scripts.add(imported_by)
@@ -517,6 +547,13 @@ def group_by_language(
         code_file_path = integration_script.path.parent
         if python_version := integration_script.python_version:
             version = Version(python_version)
+            language = f"{version.major}.{version.minor}"
+        elif integration_script.type == "python":
+            version = get_python_version_or_default(
+                integration_script.docker_image,
+                context="pre-commit",
+                identifier=str(integration_script.path),
+            )
             language = f"{version.major}.{version.minor}"
         else:
             language = integration_script.type
@@ -709,6 +746,13 @@ def add_related_files(file: Path) -> Set[Path]:
             files_to_run.add(py_file_path)
         elif ps1_file_path.exists():
             files_to_run.add(ps1_file_path)
+
+        # Pull in the sibling README.md so README-targeting hooks
+        # (e.g. markdownlint-cli2 with `files: "^(.*/)?README\\.md$"`)
+        # fire whenever the integration/script manifest is touched.
+        readme_path = file.with_name("README.md")
+        if readme_path.exists():
+            files_to_run.add(readme_path)
 
     # Identifying test files
 

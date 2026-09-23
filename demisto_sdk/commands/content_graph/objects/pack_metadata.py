@@ -36,6 +36,10 @@ class PackMetadata(BaseModel):
     description: Optional[str]
     source: Optional[str] = Field("")
     managed: Optional[bool] = Field(False)
+    # Marketplace-suffixed managed/source fields (e.g. ``managed:platform``).
+    # Resolved into the plain managed/source per-marketplace during dump.
+    managed_platform: Optional[bool] = Field(None, alias="managed:platform")
+    source_platform: Optional[str] = Field(None, alias="source:platform")
     internal: Optional[bool] = Field(False)
     created: Optional[str] = Field(alias="firstCreated")
     updated: Optional[str] = Field("")
@@ -564,6 +568,7 @@ class PackMetadata(BaseModel):
             item_id=content_item_summary["id"],
             item_name=content_item_summary["name"],
             item_type_key=content_item.content_type.metadata_name,
+            item_supported_features=content_item_summary.get("supportedFeatures"),
         ):
             logger.debug(
                 f'Found content item with name "{content_item.name}" that was already appended to the list'
@@ -648,19 +653,53 @@ class PackMetadata(BaseModel):
         )
 
     @staticmethod
+    def _is_same_item_despite_features(
+        item_supported_features: Optional[List[str]],
+        collected_supported_features: Optional[List[str]],
+    ) -> bool:
+        """
+        Whether two items sharing an ID are the same item, judging by their `supportedFeatures`.
+
+        An ID may legitimately be reused for variants targeting different regions.
+        Disjoint features mean the variants are never active together, so they are
+        distinct items and must both be listed in the metadata.
+
+        No attempt is made to resolve features to regions: GR105 already fails the
+        build when items sharing an ID are active in the same region, so requiring
+        the feature sets to be disjoint is enough here.
+
+        Args:
+            item_supported_features: The `supportedFeatures` of the item being added.
+            collected_supported_features: The `supportedFeatures` of the already collected item.
+
+        Returns:
+            bool: False only when both declare features and share none of them.
+        """
+        if not item_supported_features or not collected_supported_features:
+            # An absent or empty value carries no restriction, meaning the item is
+            # supported everywhere and therefore overlaps every other variant.
+            return True
+        return bool(set(item_supported_features) & set(collected_supported_features))
+
+    @staticmethod
     def _search_content_item_metadata_object(
         collected_content_items: dict,
         item_id: Optional[str],
         item_name: Optional[str],
         item_type_key: Optional[str],
+        item_supported_features: Optional[List[str]] = None,
     ) -> Optional[dict]:
         """
         Search a content item object in the content items metadata list by its ID and name.
+
+        Items sharing an ID but declaring disjoint `supportedFeatures` are variants
+        targeting different regions, and are not considered the same item.
 
         Args:
             collected_content_items (dict): The content items metadata list that were already collected.
             item_id (Optional[str]): The content item ID to search.
             item_type_key (Optional[str]): The content item type key to search in its list value that exists in the collected_content_items dict.
+            item_supported_features (Optional[List[str]]): The `supportedFeatures` of the content item to search.
 
         Returns:
             Optional[dict]: The object of the found content item.
@@ -668,7 +707,12 @@ class PackMetadata(BaseModel):
         filtered_content_items = [
             content_item
             for content_item in collected_content_items[item_type_key]
-            if content_item.get("id") == item_id
+            if (
+                content_item.get("id") == item_id
+                and PackMetadata._is_same_item_despite_features(
+                    item_supported_features, content_item.get("supportedFeatures")
+                )
+            )
             or (
                 content_item.get("name") == item_name
                 and item_type_key == ContentType.MODELING_RULE.metadata_name

@@ -110,6 +110,8 @@ class PackContentItems:
             content_type=ContentType.AGENTIX_ACTION_TEST
         )
         self.agentix_agent = ContentItemsList(content_type=ContentType.AGENTIX_AGENT)
+        self.agentix_skill = ContentItemsList(content_type=ContentType.AGENTIX_SKILL)
+        self.collection = ContentItemsList(content_type=ContentType.COLLECTION)
 
     def iter_lists(self) -> Iterator[ContentItemsList]:
         yield from vars(self).values()
@@ -200,9 +202,17 @@ class PackMetadataParser:
         self.hybrid: bool = metadata.get("hybrid") or False
         self.pack_metadata_dict: dict = metadata
         self.supportedModules: Optional[List[str]] = metadata.get("supportedModules")
+        self.supportedFeatures: Optional[List[str]] = metadata.get("supportedFeatures")
         self.source: str = metadata.get("source", "")
         self.managed: bool = metadata.get("managed", False)
         self.internal: bool = metadata.get("internal", False)
+
+        # Marketplace-suffixed managed/source fields (not private-pack specific).
+        # Kept as-is here; they are resolved into the plain managed/source
+        # per-marketplace during dump
+        # (see MarketplaceSuffixPreparer.prepare_managed_and_source).
+        self.managed_platform: Optional[bool] = metadata.get("managed:platform")
+        self.source_platform: Optional[str] = metadata.get("source:platform")
 
     @property
     def url(self) -> str:
@@ -235,15 +245,23 @@ class PackMetadataParser:
     def use_cases(self):
         return [capital_case(c) for c in self.pack_metadata_dict.get("useCases", [])]
 
-    @property
-    def marketplaces(self) -> List[MarketplaceVersions]:
-        marketplaces = self._metadata.get("marketplaces") or PACK_DEFAULT_MARKETPLACES
+    @staticmethod
+    def resolve_marketplaces(
+        metadata: Dict[str, Any],
+    ) -> List[MarketplaceVersions]:
+        """Resolve the pack's marketplaces from a metadata dict, applying the
+        default marketplaces and the xsoar value normalization."""
+        marketplaces = metadata.get("marketplaces") or PACK_DEFAULT_MARKETPLACES
         marketplace_set: Set[MarketplaceVersions] = (
             BaseContentParser.update_marketplaces_set_with_xsoar_values(
                 {MarketplaceVersions(mp) for mp in marketplaces}
             )
         )
         return sorted(list(marketplace_set))
+
+    @property
+    def marketplaces(self) -> List[MarketplaceVersions]:
+        return self.resolve_marketplaces(self._metadata)
 
     def get_author_image_filepath(self, path: Path) -> str:
         if (path / "Author_image.png").is_file():
@@ -446,6 +464,8 @@ class PackParser(BaseContentParser, PackMetadataParser):
             "preview_only": "previewOnly",
             "excluded_dependencies": "excludedDependencies",
             "modules": "modules",
+            "supportedModules": "supportedModules",
+            "supportedFeatures": "supportedFeatures",
             "disable_monthly": "disableMonthly",
             "content_commit_hash": "contentCommitHash",
             "default_data_source_id": "defaultDataSource",

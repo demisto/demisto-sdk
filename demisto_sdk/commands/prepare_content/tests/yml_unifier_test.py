@@ -992,6 +992,120 @@ class TestMergeScriptPackageToYMLIntegration:
                     marketplace == MarketplaceVersions.XSOAR
                 )
 
+    @pytest.mark.parametrize(
+        "marketplace, expected_hidden",
+        [
+            (
+                MarketplaceVersions.XSOAR,
+                {
+                    "cmd-always-visible": None,
+                    "cmd-bool-true": True,
+                    "cmd-bool-false": False,
+                    "cmd-hidden-on-xsiam": False,
+                    "cmd-hidden-on-xsoar-family": True,
+                    "cmd-hidden-on-xsoar-and-xsiam": True,
+                    "cmd-hidden-on-platform": False,
+                },
+            ),
+            (
+                MarketplaceVersions.MarketplaceV2,
+                {
+                    "cmd-always-visible": None,
+                    "cmd-bool-true": True,
+                    "cmd-bool-false": False,
+                    "cmd-hidden-on-xsiam": True,
+                    "cmd-hidden-on-xsoar-family": False,
+                    "cmd-hidden-on-xsoar-and-xsiam": True,
+                    "cmd-hidden-on-platform": False,
+                },
+            ),
+            # PLATFORM marketplace is intentionally not exercised here:
+            # `prepare_for_upload` for PLATFORM accesses self.pack.supportedModules,
+            # but the lightweight `create_test_package` fixture used by this test
+            # class does not set up a parent pack object - this is an existing
+            # limitation of the fixture, not of the per-marketplace hidden feature.
+            # The PLATFORM resolution path is covered by the direct unit tests
+            # for `update_hidden_commands_value` further down in this module.
+            (
+                MarketplaceVersions.XSOAR_SAAS,
+                {
+                    "cmd-always-visible": None,
+                    "cmd-bool-true": True,
+                    "cmd-bool-false": False,
+                    "cmd-hidden-on-xsiam": False,
+                    "cmd-hidden-on-xsoar-family": True,
+                    "cmd-hidden-on-xsoar-and-xsiam": True,
+                    "cmd-hidden-on-platform": False,
+                },
+            ),
+        ],
+    )
+    def test_unify_integration__hidden_command(
+        self,
+        marketplace: MarketplaceVersions,
+        expected_hidden: dict,
+        mocker,
+        monkeypatch,
+    ):
+        """
+        Given:
+            - An integration YAML whose `script.commands` contains a mix of:
+                * a command with no `hidden` attribute,
+                * a command with `hidden: true`,
+                * a command with `hidden: false`,
+                * commands with `hidden: [<marketplace>]` lists.
+
+        When:
+            - Running the full prepare-content (unify) pipeline for a specific
+              marketplace.
+
+        Then:
+            - The list-typed `hidden` values are resolved to a boolean reflecting
+              whether the current marketplace appears in the list.
+            - The `xsoar` alias expands to also cover `xsoar_saas` and
+              `xsoar_on_prem` (mirroring the parameter-level behavior).
+            - Pre-existing boolean values are preserved.
+            - This is the end-to-end gate proving the feature works through the
+              YAML schema validation, the strict pydantic model, the parser, and
+              the unifier - not just the unifier helper in isolation.
+        """
+        create_test_package(
+            test_dir=self.test_dir_path,
+            package_name=self.package_name,
+            base_yml=(
+                "demisto_sdk/tests/test_files/Unifier/SampleIntegPackage/"
+                "SampleIntegPackageHiddenCommands.yml"
+            ),
+            script_code=TEST_VALID_CODE,
+            detailed_description=TEST_VALID_DETAILED_DESCRIPTION,
+            image_file=(
+                "demisto_sdk/tests/test_files/Unifier/SampleIntegPackage/"
+                "SampleIntegPackage_image.png"
+            ),
+        )
+
+        mocker.patch.object(
+            IntegrationScript, "get_supported_native_images", return_value=[]
+        )
+        with TemporaryDirectory() as artifact_dir:
+            monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", artifact_dir)
+            monkeypatch.setenv("ARTIFACTS_FOLDER", artifact_dir)
+            unified_yml = PrepareUploadManager.prepare_for_upload(
+                input=Path(self.export_dir_path),
+                output=Path(self.test_dir_path),
+                marketplace=marketplace,
+            )
+
+        unified_commands = {
+            cmd["name"]: cmd.get("hidden")
+            for cmd in get_yaml(unified_yml)["script"]["commands"]
+        }
+        for cmd_name, expected in expected_hidden.items():
+            assert unified_commands[cmd_name] is expected, (
+                f"command {cmd_name!r} expected hidden={expected} for "
+                f"marketplace {marketplace.value!r}, got {unified_commands[cmd_name]!r}"
+            )
+
     def test_unify_integration__detailed_description_with_special_char(
         self, mocker, monkeypatch
     ):
@@ -1773,6 +1887,166 @@ def test_update_hidden_parameters_value():
     assert yml_data["configuration"][0]["hidden"] is True
     assert yml_data["configuration"][1]["hidden"] is True
     assert yml_data["configuration"][2]["hidden"] is False
+
+
+@pytest.mark.parametrize(
+    "marketplace, expected_hidden",
+    [
+        # cmd-bool-true: bool stays bool regardless of marketplace
+        # cmd-platform-only: hidden on platform marketplace only
+        # cmd-xsoar-family: hidden across all XSOAR-flavored marketplaces
+        # cmd-xsoar-and-xsiam: hidden on xsoar family + marketplacev2
+        (
+            MarketplaceVersions.XSOAR,
+            {
+                "cmd-bool-true": True,
+                "cmd-platform-only": False,
+                "cmd-xsoar-family": True,
+                "cmd-xsoar-and-xsiam": True,
+            },
+        ),
+        (
+            MarketplaceVersions.XSOAR_SAAS,
+            {
+                "cmd-bool-true": True,
+                "cmd-platform-only": False,
+                "cmd-xsoar-family": True,
+                "cmd-xsoar-and-xsiam": True,
+            },
+        ),
+        (
+            MarketplaceVersions.XSOAR_ON_PREM,
+            {
+                "cmd-bool-true": True,
+                "cmd-platform-only": False,
+                "cmd-xsoar-family": True,
+                "cmd-xsoar-and-xsiam": True,
+            },
+        ),
+        (
+            MarketplaceVersions.MarketplaceV2,
+            {
+                "cmd-bool-true": True,
+                "cmd-platform-only": False,
+                "cmd-xsoar-family": False,
+                "cmd-xsoar-and-xsiam": True,
+            },
+        ),
+        (
+            MarketplaceVersions.PLATFORM,
+            {
+                "cmd-bool-true": True,
+                "cmd-platform-only": True,
+                "cmd-xsoar-family": False,
+                "cmd-xsoar-and-xsiam": False,
+            },
+        ),
+        (
+            MarketplaceVersions.XPANSE,
+            {
+                "cmd-bool-true": True,
+                "cmd-platform-only": False,
+                "cmd-xsoar-family": False,
+                "cmd-xsoar-and-xsiam": False,
+            },
+        ),
+    ],
+)
+def test_update_hidden_commands_value(
+    marketplace: MarketplaceVersions, expected_hidden: dict
+):
+    """
+    Given:
+        - An integration yml dict whose commands have a mix of:
+            * `hidden: true` (always-hidden)
+            * `hidden: [<marketplace>]` for various marketplaces
+            * `hidden: [xsoar, marketplacev2]` listing several marketplaces
+
+    When:
+        - Calling IntegrationScriptUnifier.update_hidden_commands_value for a specific
+          marketplace.
+
+    Then:
+        - List-typed `hidden` values are converted to a boolean reflecting whether the
+          current marketplace appears in the list.
+        - The `xsoar` entry expands to also cover xsoar_saas and xsoar_on_prem
+          (and xsoar_on_prem expands to also cover xsoar) - matching the existing
+          parameter-level behavior.
+        - Pre-existing boolean values are left untouched.
+    """
+    yml_data = {
+        "script": {
+            "commands": [
+                {"name": "cmd-bool-true", "hidden": True},
+                {"name": "cmd-platform-only", "hidden": ["platform"]},
+                {"name": "cmd-xsoar-family", "hidden": ["xsoar"]},
+                {
+                    "name": "cmd-xsoar-and-xsiam",
+                    "hidden": ["xsoar", "marketplacev2"],
+                },
+                {"name": "cmd-no-hidden"},
+            ]
+        }
+    }
+
+    IntegrationScriptUnifier.update_hidden_commands_value(yml_data, marketplace)
+
+    resolved = {
+        cmd["name"]: cmd.get("hidden") for cmd in yml_data["script"]["commands"]
+    }
+    for cmd_name, expected in expected_hidden.items():
+        assert resolved[cmd_name] is expected, (
+            f"command {cmd_name!r} expected hidden={expected} for "
+            f"marketplace {marketplace.value!r}, got {resolved[cmd_name]!r}"
+        )
+    # commands without a `hidden` attribute are left untouched
+    assert "hidden" not in yml_data["script"]["commands"][-1]
+
+
+def test_update_hidden_commands_value__no_marketplace_is_noop():
+    """
+    Given:
+        - An integration yml dict whose first command has `hidden: [platform]`.
+
+    When:
+        - Calling update_hidden_commands_value without a marketplace argument
+          (e.g. during a non-marketplace-aware prepare).
+
+    Then:
+        - The data is left untouched (list-typed hidden values are preserved),
+          mirroring the no-op behavior of update_hidden_parameters_value.
+    """
+    yml_data = {
+        "script": {
+            "commands": [
+                {"name": "cmd-platform-only", "hidden": ["platform"]},
+            ]
+        }
+    }
+
+    IntegrationScriptUnifier.update_hidden_commands_value(yml_data, None)
+
+    assert yml_data["script"]["commands"][0]["hidden"] == ["platform"]
+
+
+def test_update_hidden_commands_value__missing_commands_is_safe():
+    """
+    Given:
+        - An integration yml dict whose `script` block has no `commands` key.
+
+    When:
+        - Calling update_hidden_commands_value for any marketplace.
+
+    Then:
+        - No exception is raised and the data is left untouched.
+    """
+    yml_data = {"script": {}}
+
+    IntegrationScriptUnifier.update_hidden_commands_value(
+        yml_data, MarketplaceVersions.PLATFORM
+    )
+
+    assert yml_data == {"script": {}}
 
 
 @pytest.mark.parametrize(

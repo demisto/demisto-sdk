@@ -166,6 +166,10 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
+    def get_agent_budget_dependencies(self, changed_ids: List[str]) -> List[dict]:
+        pass
+
+    @abstractmethod
     def get_duplicate_pack_display_name(
         self, file_paths: List[str]
     ) -> List[Tuple[str, List[str]]]:
@@ -335,7 +339,7 @@ class ContentGraphInterface(ABC):
     @abstractmethod
     def find_content_items_with_module_mismatch_content_items(
         self, content_item_ids: List[str], mandatory: bool = True
-    ) -> List[BaseNode]:
+    ) -> List[Tuple[BaseNode, List[str]]]:
         pass
 
     @abstractmethod

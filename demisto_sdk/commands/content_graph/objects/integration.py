@@ -72,7 +72,10 @@ class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-
     outputs: List[IntegrationOutput] = Field([], exclude=True)
 
     deprecated: bool = Field(False)
-    hidden: bool = Field(False)
+    # `hidden` may be a bool, or a list of marketplace names where the command
+    # should be hidden. Mirrors the same shape allowed on integration parameters
+    # (see `Parameter.hidden`).
+    hidden: Any = Field(False)
     description: Optional[str] = Field("")
     supportedModules: Optional[List[str]] = Field([])
 
@@ -114,6 +117,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     is_fetch: bool = Field(False, alias="isfetch")
     is_fetch_events: bool = Field(False, alias="isfetchevents")
     is_fetch_assets: bool = Field(False, alias="isfetchassets")
+    is_fetch_credentials: bool = Field(False, alias="isfetchcredentials")
     mcp: Optional[bool] = Field(None, alias="mcp")
     supports_quick_actions: bool = Field(False, alias="supportsquickactions")
     is_fetch_events_and_assets: bool = False
@@ -126,12 +130,16 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     category: str
     internal: bool = Field(False)
     source: str = Field("")
+    spec: Optional[str] = None
     provider: Optional[str] = None
     commands: List[Command] = []
     params: List[Parameter] = Field([], exclude=True)
     is_cloud_provider_integration: bool = Field(
         False, alias="isCloudProviderIntegration"
     )
+
+    # === Cross-link to matched handler (set by ConnectorAwareInitializer) ===
+    related_content: Optional[Any] = Field(None, exclude=True)
 
     @property
     def imports(self) -> List["Script"]:
@@ -170,7 +178,36 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         ):
             summary["isfetchassets"] = False
         summary["name"] = self.display_name
+        if fetch_tags := self._build_fetch_tags(summary):
+            summary["tags"] = fetch_tags
         return summary
+
+    def _build_fetch_tags(self, summary: dict) -> List[str]:
+        """Builds the list of fetch-capability tags the integration supports,
+        intended for the pack's marketplace metadata so consumers can know
+        which kinds of fetching an integration provides before installation.
+
+        Emitted under the `tags` key on the integration summary, matching the
+        `tags` convention already used elsewhere in the metadata (e.g. the
+        classifier/mapper `tags: ["feed"]` indicator).
+
+        `is_feed` is intentionally read from the model rather than the
+        serialized summary, so the integration entry does not gain a new
+        `feed` / `is_feed` key - the feed signal is conveyed only via the
+        `"feed"` string in `tags`.
+        """
+        tags: List[str] = []
+        if self.is_feed:
+            tags.append("feed")
+        if summary.get("isfetch"):
+            tags.append("fetch-incidents")
+        if summary.get("isfetchevents"):
+            tags.append("fetch-events")
+        if summary.get("isfetchassets"):
+            tags.append("fetch-assets")
+        if summary.get("isfetchcredentials"):
+            tags.append("fetch-credentials")
+        return tags
 
     def metadata_fields(self):
         return (
@@ -185,6 +222,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
                     "is_fetch": True,
                     "is_fetch_events": True,
                     "is_fetch_assets": True,
+                    "is_fetch_credentials": True,
                     "is_beta": True,
                     "internal": True,
                 }

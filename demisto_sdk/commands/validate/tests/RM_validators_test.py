@@ -482,6 +482,28 @@ def test_IsReadmeExistsValidator_obtain_invalid_content_items(
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+    for result in results:
+        assert result.path == result.content_object.readme.file_path
+
+
+def test_IsReadmeExistsValidator_excludes_autonomous_playbooks():
+    """
+    Given:
+        - An autonomous playbook without a README file
+    When:
+        - run obtain_invalid_content_items method from IsReadmeExistsValidator
+    Then:
+        - Ensure that no ValidationResult is returned (autonomous playbooks are excluded)
+    """
+    pack = create_pack_object(
+        paths=["managed", "source"],
+        values=[True, "autonomous"],
+    )
+    playbook = create_playbook_object()
+    playbook.pack = pack
+    playbook.readme.exist = False
+    results = IsReadmeExistsValidator().obtain_invalid_content_items([playbook])
+    assert len(results) == 0
 
 
 def test_ImagePathIntegrationValidator_obtain_invalid_content_items_valid_case():

@@ -16,8 +16,6 @@ ContentTypes = AgentixAction
 
 args_valid_types = [
     "unknown",
-    "keyValue",
-    "textArea",
     "string",
     "number",
     "date",
@@ -82,7 +80,7 @@ class IsTypeValid(BaseValidator[ContentTypes]):
             return invalid_element_names
 
         for element in elements:
-            if element.type.lower() not in valid_types:
+            if element.type not in valid_types:
                 invalid_element_names.add(element.name)
 
         return invalid_element_names
@@ -97,7 +95,7 @@ class IsTypeValid(BaseValidator[ContentTypes]):
             return invalid_element_names
 
         for element in elements:
-            if element.type.lower() not in valid_types:
+            if element.type not in valid_types:
                 invalid_element_names.add(element.name)
 
         return invalid_element_names

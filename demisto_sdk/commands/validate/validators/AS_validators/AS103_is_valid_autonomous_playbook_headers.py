@@ -11,6 +11,7 @@ from demisto_sdk.commands.common.constants import (
     PlaybookTaskType,
 )
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
+from demisto_sdk.commands.validate.tools import is_autonomous_pack
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -58,13 +59,7 @@ def validate_autonomous_playbook_headers(content_item: ContentTypes) -> List[str
     Returns a list of error strings, empty if valid.
     """
     # 1. Check if autonomous pack
-    pack_metadata = content_item.in_pack.pack_metadata_dict  # type: ignore[union-attr]
-    if not pack_metadata:
-        return []
-    if not (
-        pack_metadata.get("managed") is True
-        and pack_metadata.get("source") == "autonomous"
-    ):
+    if not is_autonomous_pack(content_item.in_pack):
         return []
 
     # 2. BFS traversal to collect title tasks in order

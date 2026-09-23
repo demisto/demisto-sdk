@@ -32,7 +32,7 @@ class XDRCTemplate(JSONBased):
     def create_default(self):
         self.write_json(
             {
-                "content_global_id": self.id,
+                "id": self.id,
                 "name": self.id,
                 "os_type": "os_type_test",
                 "profile_type": "profile_type_test",

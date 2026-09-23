@@ -20,6 +20,10 @@ mapping:
     type: seq
     sequence:
     - type: str
+  skillids:
+    type: seq
+    sequence:
+    - type: str
   tags:
     type: seq
     sequence:
@@ -52,6 +56,18 @@ mapping:
     type: seq
     sequence:
     - type: str
+  collectionids:
+    type: seq
+    sequence:
+    - type: str
+  mcps:
+    type: seq
+    sequence:
+    - type: map
+      mapping:
+        server_url:
+          type: str
+          required: true
   fromversion:
     type: str
   toversion:
@@ -61,6 +77,10 @@ mapping:
     sequence:
     - type: str
   supportedModules:
+    type: seq
+    sequence:
+    - type: str
+  supportedFeatures:
     type: seq
     sequence:
     - type: str

@@ -1,13 +1,15 @@
 from collections import defaultdict
+from typing import Optional
 from unittest.mock import MagicMock
 
 import pytest
 from pytest_mock import MockerFixture
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import RelationshipType
+from demisto_sdk.commands.common.constants import GitStatuses, MarketplaceVersions
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import UnknownContent
 from demisto_sdk.commands.content_graph.objects.conf_json import ConfJSON
+from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 from demisto_sdk.commands.validate.tests.test_tools import (
@@ -89,6 +91,15 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR114_is_non_mandato
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR114_is_non_mandatory_supported_modules_compatibility_list_files import (
     IsNonMandatorySupportedModulesCompatibilityListFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR115_action_name_changed_requires_skill_rn_list_files import (
+    IsActionNameChangedRequiresSkillRNValidatorListFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR117_duplicate_agentix_action_id_all_files import (
+    DuplicateAgentixActionIdValidatorAllFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR117_duplicate_agentix_action_id_list_files import (
+    DuplicateAgentixActionIdValidatorListFiles,
 )
 from TestSuite.repo import Repo
 
@@ -498,6 +509,170 @@ def test_DuplicateContentIdValidatorAllFiles_is_invalid(prepared_graph_repo: Rep
     assert len(validation_results) == 4
 
 
+def _repo_with_duplicate_agentix_action_ids(graph_repo: Repo) -> Repo:
+    """Create a repo with two AgentixActions, in different packs, sharing the same ID."""
+    for pack_name in ("ActionPack1", "ActionPack2"):
+        pack = graph_repo.create_pack(pack_name)
+        action = pack.create_agentix_action(f"{pack_name}Action")
+        action.create_default_agentix_action(
+            name=f"{pack_name}Action",
+            action_id="DuplicateActionId",
+            display=f"{pack_name} Action",
+        )
+        action.set_data(**{"commonfields.id": "DuplicateActionId"})
+    return graph_repo
+
+
+def test_DuplicateContentIdValidatorAllFiles_skips_agentix_actions(graph_repo: Repo):
+    """
+    Given:
+        - Two AgentixActions in different packs sharing the same ID.
+    When:
+        - Running the GR105 validation across the entire repository.
+    Then:
+        - No validation results are returned, since AgentixActions are temporarily
+          handled by GR117 instead.
+    """
+    repo = _repo_with_duplicate_agentix_action_ids(graph_repo)
+    BaseValidator.graph_interface = repo.create_graph()
+
+    validation_results = (
+        DuplicateContentIdValidatorAllFiles().obtain_invalid_content_items([])
+    )
+
+    assert validation_results == []
+
+
+def test_DuplicateAgentixActionIdValidatorAllFiles_is_invalid(graph_repo: Repo):
+    """
+    Given:
+        - Two AgentixActions in different packs sharing the same ID.
+    When:
+        - Running the GR117 validation across the entire repository.
+    Then:
+        - Both AgentixActions are reported as duplicates.
+    """
+    repo = _repo_with_duplicate_agentix_action_ids(graph_repo)
+    BaseValidator.graph_interface = repo.create_graph()
+
+    validation_results = (
+        DuplicateAgentixActionIdValidatorAllFiles().obtain_invalid_content_items([])
+    )
+
+    assert len(validation_results) == 2
+    assert all(
+        "Duplicate ID 'DuplicateActionId' found in" in result.message
+        for result in validation_results
+    )
+
+
+def test_DuplicateAgentixActionIdValidatorListFiles_is_invalid(graph_repo: Repo):
+    """
+    Given:
+        - Two AgentixActions in different packs sharing the same ID.
+    When:
+        - Running the GR117 validation on one of the duplicated actions.
+    Then:
+        - Only the given action is reported as a duplicate.
+    """
+    repo = _repo_with_duplicate_agentix_action_ids(graph_repo)
+    graph_interface = repo.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    action = repo.packs[0].agentix_actions[0].get_graph_object(graph_interface)
+    validation_results = (
+        DuplicateAgentixActionIdValidatorListFiles().obtain_invalid_content_items(
+            [action]
+        )
+    )
+
+    assert len(validation_results) == 1
+    assert "Duplicate ID 'DuplicateActionId' found in" in validation_results[0].message
+
+
+def test_DuplicateAgentixActionIdValidator_is_valid(graph_repo: Repo):
+    """
+    Given:
+        - Two AgentixActions in different packs with different IDs.
+    When:
+        - Running the GR117 validation across the entire repository.
+    Then:
+        - No validation results are returned.
+    """
+    for pack_name in ("ActionPack1", "ActionPack2"):
+        pack = graph_repo.create_pack(pack_name)
+        action = pack.create_agentix_action(f"{pack_name}Action")
+        action.create_default_agentix_action(
+            name=f"{pack_name}Action",
+            action_id=f"{pack_name}ActionId",
+            display=f"{pack_name} Action",
+        )
+        action.set_data(**{"commonfields.id": f"{pack_name}ActionId"})
+    BaseValidator.graph_interface = graph_repo.create_graph()
+
+    validation_results = (
+        DuplicateAgentixActionIdValidatorAllFiles().obtain_invalid_content_items([])
+    )
+
+    assert validation_results == []
+
+
+def _repo_with_duplicate_agentix_agent_ids(graph_repo: Repo) -> Repo:
+    """Create a repo with two AgentixAgents, in different packs, sharing the same ID."""
+    for pack_name in ("AgentPack1", "AgentPack2"):
+        pack = graph_repo.create_pack(pack_name)
+        agent = pack.create_agentix_agent(f"{pack_name}Agent")
+        agent.create_default_agentix_agent(
+            name=f"{pack_name}Agent",
+            agent_id="DuplicateAgentId",
+        )
+        agent.set_data(**{"commonfields.id": "DuplicateAgentId"})
+    return graph_repo
+
+
+def test_DuplicateContentIdValidatorAllFiles_skips_agentix_agents(graph_repo: Repo):
+    """
+    Given:
+        - Two AgentixAgents in different packs sharing the same ID.
+    When:
+        - Running the GR105 validation across the entire repository.
+    Then:
+        - No validation results are returned, since AgentixAgents are temporarily
+          handled by GR117 instead.
+    """
+    repo = _repo_with_duplicate_agentix_agent_ids(graph_repo)
+    BaseValidator.graph_interface = repo.create_graph()
+
+    validation_results = (
+        DuplicateContentIdValidatorAllFiles().obtain_invalid_content_items([])
+    )
+
+    assert validation_results == []
+
+
+def test_DuplicateAgentixActionIdValidatorAllFiles_agents_is_invalid(graph_repo: Repo):
+    """
+    Given:
+        - Two AgentixAgents in different packs sharing the same ID.
+    When:
+        - Running the GR117 validation across the entire repository.
+    Then:
+        - Both AgentixAgents are reported as duplicates.
+    """
+    repo = _repo_with_duplicate_agentix_agent_ids(graph_repo)
+    BaseValidator.graph_interface = repo.create_graph()
+
+    validation_results = (
+        DuplicateAgentixActionIdValidatorAllFiles().obtain_invalid_content_items([])
+    )
+
+    assert len(validation_results) == 2
+    assert all(
+        "Duplicate ID 'DuplicateAgentId' found in" in result.message
+        for result in validation_results
+    )
+
+
 @pytest.fixture
 def repo_for_test(graph_repo):
     # A repository with 3 packs:
@@ -622,6 +797,77 @@ def test_IsUsingUnknownContentValidator__different_dependency_type__list_files(
         [content_items[item_index].get_graph_object(graph_interface)]
     )
     assert len(results) == expected_len_results
+
+
+@pytest.fixture
+def repo_for_test_agentix_skill_unknown_action(graph_repo):
+    """A repository with a single pack containing an AgentixSkill whose body
+    references an action id that does not exist in the repository."""
+    pack = graph_repo.create_pack("SkillPack")
+    skill = pack.create_agentix_skill("MySkill")
+    skill.create_default_agentix_skill(
+        name="My Skill",
+        skill_id="my-skill-id",
+        skill_content="Use <action=does-not-exist-action> to do the thing.",
+    )
+    return graph_repo
+
+
+def test_IsUsingUnknownContentValidator__agentix_skill_missing_action__all_files(
+    repo_for_test_agentix_skill_unknown_action: Repo,
+):
+    """
+    Given:
+        - A content graph with an AgentixSkill whose body references an action id
+          ('does-not-exist-action') that is not present in the repository.
+    When:
+        - The GR103 validation runs across the entire repository (-a).
+    Then:
+        - GR103 reports the skill as using unknown content (the missing action).
+    """
+    graph_interface = repo_for_test_agentix_skill_unknown_action.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsUsingUnknownContentValidatorAllFiles().obtain_invalid_content_items(
+        content_items=[]
+    )
+    assert len(results) == 1
+    assert "does-not-exist-action" in results[0].message
+
+
+def test_IsUsingUnknownContentValidator__agentix_skill_existing_action__all_files(
+    graph_repo,
+):
+    """
+    Given:
+        - A content graph with an AgentixSkill whose body references an action id
+          that DOES exist in the repository (an AgentixAction with that id).
+    When:
+        - The GR103 validation runs across the entire repository (-a).
+    Then:
+        - GR103 reports no unknown-content usage for the skill.
+    """
+    pack = graph_repo.create_pack("SkillPack")
+    action = pack.create_agentix_action("MyAction")
+    action.create_default_agentix_action()
+    # The default action's id comes from its YAML 'commonfields.id'.
+    action_id = action.yml.read_dict()["commonfields"]["id"]
+
+    skill = pack.create_agentix_skill("MySkill")
+    skill.create_default_agentix_skill(
+        name="My Skill",
+        skill_id="my-skill-id",
+        skill_content=f"Use <action={action_id}> to do the thing.",
+    )
+
+    graph_interface = graph_repo.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsUsingUnknownContentValidatorAllFiles().obtain_invalid_content_items(
+        content_items=[]
+    )
+    # The skill's action reference is resolved, so the skill itself must not be
+    # reported as using unknown content. (The default action may have its own
+    # unrelated unknown 'underlyingcontentitem' dependency, which is not our concern here.)
+    assert not any("My Skill" in result.message for result in results)
 
 
 @pytest.fixture
@@ -1565,6 +1811,91 @@ def test_SupportedModulesCompatibility_supported_module_none_in_content_item_a(
 
 
 @pytest.fixture
+def repo_for_test_gr_109_no_supported_modules_in_pack_a_metadata(graph_repo: Repo):
+    """
+    Creates a test repository for testing GR109 when the caller's pack metadata
+    has no supportedModules key.
+
+    Structure:
+    - Pack A (PLATFORM): no supportedModules in pack metadata.
+                         Script1 has no supportedModules on the item itself either,
+                         so it falls back to ALL platform modules.
+    - Pack B (PLATFORM): supportedModules: ["module_x"] in pack metadata.
+                         SearchIncidents script has no supportedModules on the item,
+                         so it inherits ["module_x"] from its pack.
+
+    Script1 calls demisto.executeCommand("SearchIncidents", {}) creating a dependency.
+    Because Script1 effectively supports ALL platform modules but SearchIncidents only
+    supports ["module_x"], Script1 is invalid.
+    """
+    pack_a = graph_repo.create_pack("Pack A")
+    pack_a.pack_metadata.update(
+        {
+            "marketplaces": [
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.PLATFORM.value,
+            ]
+            # No supportedModules - falls back to all platform modules
+        }
+    )
+    pack_a.create_script(
+        "Script1", code='demisto.executeCommand("SearchIncidents", {})'
+    )
+
+    pack_b = graph_repo.create_pack("Pack B")
+    pack_b.pack_metadata.update(
+        {
+            "marketplaces": [
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.PLATFORM.value,
+            ],
+            "supportedModules": ["module_x"],
+        }
+    )
+    yml_search_incidents = {
+        "commonfields": {"id": "SearchIncidents", "version": -1},
+        "name": "SearchIncidents",
+        "comment": "this is script SearchIncidents",
+        "type": "python",
+        "subtype": "python3",
+        "script": "-",
+        "skipprepare": [],
+    }
+    pack_b.create_script(
+        "SearchIncidents",
+        code='demisto.executeCommand("SearchIncidents", {})',
+        yml=yml_search_incidents,
+    )
+
+    return graph_repo
+
+
+def test_SupportedModulesCompatibility_no_supported_modules_in_pack_a_metadata(
+    repo_for_test_gr_109_no_supported_modules_in_pack_a_metadata: Repo,
+):
+    """
+    Given:
+        Pack A has no supportedModules in its pack metadata (falls back to all platform
+        modules). Script1 in Pack A depends on SearchIncidents in Pack B, which only
+        supports ["module_x"] (inherited from its pack metadata).
+    When:
+        Running the IsSupportedModulesCompatibility validator on all files.
+    Then:
+        Script1 is invalid because it effectively requires all platform modules but
+        SearchIncidents only supports ["module_x"].
+    """
+    graph_interface = (
+        repo_for_test_gr_109_no_supported_modules_in_pack_a_metadata.create_graph()
+    )
+    BaseValidator.graph_interface = graph_interface
+    results = IsSupportedModulesCompatibilityAllFiles().obtain_invalid_content_items([])
+
+    assert len(results) == 1
+    assert results[0].content_object.object_id == "Script1"
+    assert "SearchIncidents is missing:" in results[0].message
+
+
+@pytest.fixture
 def repo_for_test_gr_109_mismatch_command(graph_repo: Repo):
     """
     Creates a test repository with a single pack to test the command mismatch part of GR109 validation.
@@ -1786,6 +2117,138 @@ def test_SupportedModulesCompatibility_invalid_list_files_mismatch_playbook(
         == "Module compatibility issue detected for mandatory dependency: Content item 'playbook1' has incompatible commands: [command_x]. Make sure the commands used are supported by the same modules as the content item."
     )
     assert results[0].content_object.object_id == "playbook1"
+
+
+@pytest.fixture
+def repo_for_test_gr_109_cache_pollution(graph_repo: Repo):
+    """
+    Creates a test repository to reproduce the GR109 shared-cache pollution bug.
+
+    Structure:
+    - Pack A (platform marketplace), one integration with two commands:
+        - command_x: supportedModules ["module_x"]  -> genuine mismatch with playbook1
+        - safe_command: no supportedModules         -> supports all, can never mismatch
+    - playbook1: supportedModules ["module_x", "module_y"], using BOTH commands on the
+      mandatory execution path.
+    """
+    pack_a = graph_repo.create_pack("Pack A")
+    pack_a.set_data(marketplaces=[MarketplaceVersions.PLATFORM.value])
+    integration1 = pack_a.create_integration(name="integration1")
+    integration1.set_data(
+        script={
+            "type": "python",
+            "subtype": "python3",
+            "script": "-",
+            "commands": [
+                {
+                    "name": "command_x",
+                    "description": "description",
+                    "arguments": [],
+                    "supportedModules": ["module_x"],
+                },
+                {
+                    "name": "safe_command",
+                    "description": "description",
+                    "arguments": [],
+                },
+            ],
+            "dockerimage": None,
+        }
+    )
+
+    playbook_yml = {
+        "id": "playbook1",
+        "name": "playbook1",
+        "starttaskid": "0",
+        "supportedModules": ["module_x", "module_y"],
+        "tasks": {
+            "0": {
+                "id": "0",
+                "taskid": "0",
+                "type": "regular",
+                "nexttasks": {"#none#": ["1"]},
+                "task": {
+                    "id": "0",
+                    "name": "run command_x",
+                    "description": "Uses command_x",
+                    "script": "command_x",
+                    "type": "regular",
+                    "iscommand": True,
+                    "brand": "Integration1",
+                },
+            },
+            "1": {
+                "id": "1",
+                "taskid": "1",
+                "type": "regular",
+                "nexttasks": {"#none#": ["2"]},
+                "task": {
+                    "id": "1",
+                    "name": "run safe_command",
+                    "description": "Uses safe_command",
+                    "script": "safe_command",
+                    "type": "regular",
+                    "iscommand": True,
+                    "brand": "Integration1",
+                },
+            },
+            "2": {
+                "id": "2",
+                "taskid": "2",
+                "type": "title",
+                "task": {
+                    "id": "2",
+                    "name": "Done",
+                    "type": "title",
+                    "iscommand": False,
+                    "brand": "",
+                },
+            },
+        },
+    }
+    pack_a.create_playbook("playbook1", yml=playbook_yml)
+
+    return graph_repo
+
+
+def test_GR109_ignores_safe_commands_after_cache_pollution(
+    repo_for_test_gr_109_cache_pollution: Repo,
+):
+    """
+    Given:
+        A platform playbook ("playbook1", supportedModules ['module_x', 'module_y'])
+        that uses both "command_x" (supportedModules ['module_x'] -> genuine mismatch)
+        and "safe_command" (no supportedModules -> supports all, never a mismatch).
+    When:
+        Another validator first loads ALL of the playbook's USES relationships into the
+        shared graph cache (simulated via graph.search), and then the
+        IsSupportedModulesCompatibility validator runs on all files.
+    Then:
+        Only "command_x" is reported as incompatible; "safe_command" must NOT appear.
+    """
+    graph_interface = repo_for_test_gr_109_cache_pollution.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    # Simulate a prior validator (e.g. PB131) loading the playbook's full USES set into
+    # the shared, append-only cache.
+    graph_interface.search(content_type=ContentType.PLAYBOOK, object_id="playbook1")
+
+    # Sanity-check that the cache is actually polluted with BOTH commands, so this test
+    # would fail on the pre-fix (unguarded) handler.
+    playbook_obj = next(
+        obj
+        for obj in graph_interface._id_to_obj.values()
+        if getattr(obj, "object_id", None) == "playbook1"
+    )
+    used_command_ids = {rel.content_item_to.object_id for rel in playbook_obj.uses}
+    assert {"command_x", "safe_command"} <= used_command_ids
+
+    results = IsSupportedModulesCompatibilityAllFiles().obtain_invalid_content_items([])
+
+    assert len(results) == 1
+    assert results[0].content_object.object_id == "playbook1"
+    assert "command_x" in results[0].message
+    assert "safe_command" not in results[0].message
 
 
 @pytest.fixture
@@ -2643,3 +3106,897 @@ def test_IsAgentixActionDisplayNameAlreadyExistsValidator_non_overlapping_versio
     )
 
     assert len(results) == 0
+
+
+def _build_repo_with_skill_using_action(graph_repo: Repo):
+    """Create a repo with an AgentixAction and an AgentixSkill that references it.
+
+    Returns the (graph_interface, action_object, action_id) tuple, where
+    ``action_object`` is the graph-resolved AgentixAction whose ``used_by``
+    relationship points to the skill. The skill references the action by its id
+    (``commonfields.id``), which is what GR115 uses to resolve dependents.
+    """
+    pack = graph_repo.create_pack("SkillPack")
+    action = pack.create_agentix_action("MyAction")
+    action.create_default_agentix_action()
+    action_id = action.yml.read_dict()["commonfields"]["id"]
+
+    skill = pack.create_agentix_skill("MySkill")
+    skill.create_default_agentix_skill(
+        name="My Skill",
+        skill_id="my-skill-id",
+        skill_content=f"Use <action={action_id}> to do the thing.",
+    )
+
+    graph_interface = graph_repo.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    action_objects = graph_interface.search(
+        content_type=ContentType.AGENTIX_ACTION, object_id=action_id
+    )
+    assert action_objects, "expected the action to exist in the graph"
+    return graph_interface, action_objects[0], action_id
+
+
+def _make_skill_with_pack_versions(
+    mocker,
+    *,
+    old_version: Optional[str],
+    current_version: Optional[str],
+    has_old_baseline: bool = True,
+    pack: object = "__unset__",
+):
+    """Build a mock dependent AgentixSkill whose pack exposes versions.
+
+    ``was_pack_version_bumped`` reads ``pack.current_version`` and
+    ``pack.old_base_content_object.current_version``, where ``pack`` is the
+    skill's ``in_pack`` property. This helper lets tests control those two
+    values directly (repo-agnostic), simulate a brand-new pack (no master
+    baseline) or a missing pack.
+    """
+    skill = mocker.Mock()
+    skill.object_id = "my-skill-id"
+    skill.pack_id = "SkillPack"
+
+    if pack != "__unset__":
+        skill.in_pack = pack
+        return skill
+
+    pack_mock = mocker.Mock()
+    pack_mock.current_version = current_version
+    if has_old_baseline:
+        # ``was_pack_version_bumped`` requires the master baseline to be a real
+        # ``Pack`` (it guards with ``isinstance(old_obj, Pack)``), so spec the
+        # mock to that class for the isinstance check to pass.
+        old_baseline = mocker.Mock(spec=Pack)
+        old_baseline.current_version = old_version
+        pack_mock.old_base_content_object = old_baseline
+    else:
+        pack_mock.old_base_content_object = None
+    skill.in_pack = pack_mock
+    return skill
+
+
+def _renamed_action(mocker, graph_repo: Repo):
+    """Build a graph-resolved action whose 'name' changed vs. its old version."""
+    _, action, _ = _build_repo_with_skill_using_action(graph_repo)
+    old_action = mocker.Mock()
+    old_action.name = "Old Action Name"  # name changed
+    action.git_status = GitStatuses.MODIFIED
+    action.old_base_content_object = old_action
+    return action
+
+
+def test_GR115_action_renamed_skill_missing_rn(mocker, graph_repo: Repo):
+    """
+    Given:
+        - An AgentixAction whose 'name' field changed and whose dependent skill's
+          pack version was NOT bumped (same version on branch and master).
+    When:
+        - Running the GR115 validator on the renamed action.
+    Then:
+        - A single validation error is returned for the dependent skill.
+    """
+    action = _renamed_action(mocker, graph_repo)
+
+    skill = _make_skill_with_pack_versions(
+        mocker, old_version="1.0.0", current_version="1.0.0"
+    )
+    mocker.patch.object(
+        IsActionNameChangedRequiresSkillRNValidatorListFiles,
+        "get_dependent_skills",
+        return_value=[skill],
+    )
+
+    results = IsActionNameChangedRequiresSkillRNValidatorListFiles().obtain_invalid_content_items(
+        [action]
+    )
+
+    assert len(results) == 1
+    assert "Old Action Name" in results[0].message
+    assert "my-skill-id" in results[0].message
+
+
+def test_GR115_action_renamed_skill_has_rn(mocker, graph_repo: Repo):
+    """
+    Given:
+        - An AgentixAction whose 'name' field changed and whose dependent skill's
+          pack version WAS bumped (branch version > master version).
+    When:
+        - Running the GR115 validator on the renamed action.
+    Then:
+        - No validation error is returned.
+    """
+    action = _renamed_action(mocker, graph_repo)
+
+    skill = _make_skill_with_pack_versions(
+        mocker, old_version="1.0.0", current_version="1.0.1"
+    )
+    mocker.patch.object(
+        IsActionNameChangedRequiresSkillRNValidatorListFiles,
+        "get_dependent_skills",
+        return_value=[skill],
+    )
+
+    results = IsActionNameChangedRequiresSkillRNValidatorListFiles().obtain_invalid_content_items(
+        [action]
+    )
+
+    assert len(results) == 0
+
+
+def test_GR115_cross_repo_skill_with_bump_passes(mocker, graph_repo: Repo):
+    """
+    Given:
+        - A renamed AgentixAction (e.g. in `content`) and a dependent skill that
+          lives in a different repo (e.g. `content-private`). The skill is a graph
+          node with NO git-status (None), but its pack version WAS bumped vs.
+          master.
+    When:
+        - Running the GR115 validator on the renamed action.
+    Then:
+        - No validation error is returned, because the version-bump check is
+          repo-agnostic and recognizes the bump despite missing git-status.
+    """
+    action = _renamed_action(mocker, graph_repo)
+
+    skill = _make_skill_with_pack_versions(
+        mocker, old_version="2.3.0", current_version="2.3.1"
+    )
+    skill.git_status = None  # cross-repo / graph node: no local git status
+    skill.in_pack.git_status = None
+    mocker.patch.object(
+        IsActionNameChangedRequiresSkillRNValidatorListFiles,
+        "get_dependent_skills",
+        return_value=[skill],
+    )
+
+    results = IsActionNameChangedRequiresSkillRNValidatorListFiles().obtain_invalid_content_items(
+        [action]
+    )
+
+    assert len(results) == 0
+
+
+def test_GR115_cross_repo_skill_without_bump_fails(mocker, graph_repo: Repo):
+    """
+    Given:
+        - A renamed AgentixAction and a cross-repo dependent skill (no git-status)
+          whose pack version was NOT bumped vs. master.
+    When:
+        - Running the GR115 validator on the renamed action.
+    Then:
+        - A validation error is returned, since no version bump is detected.
+    """
+    action = _renamed_action(mocker, graph_repo)
+
+    skill = _make_skill_with_pack_versions(
+        mocker, old_version="2.3.0", current_version="2.3.0"
+    )
+    skill.git_status = None
+    skill.in_pack.git_status = None
+    mocker.patch.object(
+        IsActionNameChangedRequiresSkillRNValidatorListFiles,
+        "get_dependent_skills",
+        return_value=[skill],
+    )
+
+    results = IsActionNameChangedRequiresSkillRNValidatorListFiles().obtain_invalid_content_items(
+        [action]
+    )
+
+    assert len(results) == 1
+    assert "my-skill-id" in results[0].message
+
+
+def test_GR115_brand_new_pack_skill_passes(mocker, graph_repo: Repo):
+    """
+    Given:
+        - A renamed AgentixAction and a dependent skill whose pack is brand new
+          (no master baseline / ``old_base_content_object is None``).
+    When:
+        - Running the GR115 validator on the renamed action.
+    Then:
+        - No validation error is returned (a newly introduced skill needs no RN
+          for the action rename).
+    """
+    action = _renamed_action(mocker, graph_repo)
+
+    skill = _make_skill_with_pack_versions(
+        mocker,
+        old_version=None,
+        current_version="1.0.0",
+        has_old_baseline=False,
+    )
+    mocker.patch.object(
+        IsActionNameChangedRequiresSkillRNValidatorListFiles,
+        "get_dependent_skills",
+        return_value=[skill],
+    )
+
+    results = IsActionNameChangedRequiresSkillRNValidatorListFiles().obtain_invalid_content_items(
+        [action]
+    )
+
+    assert len(results) == 0
+
+
+def test_GR115_unresolvable_pack_passes(mocker, graph_repo: Repo):
+    """
+    Given:
+        - A renamed AgentixAction and a dependent skill whose pack cannot be
+          resolved (``pack is None``).
+    When:
+        - Running the GR115 validator on the renamed action.
+    Then:
+        - No validation error is returned (missing data must not cause a false
+          failure).
+    """
+    action = _renamed_action(mocker, graph_repo)
+
+    skill = _make_skill_with_pack_versions(
+        mocker, old_version=None, current_version=None, pack=None
+    )
+    mocker.patch.object(
+        IsActionNameChangedRequiresSkillRNValidatorListFiles,
+        "get_dependent_skills",
+        return_value=[skill],
+    )
+
+    results = IsActionNameChangedRequiresSkillRNValidatorListFiles().obtain_invalid_content_items(
+        [action]
+    )
+
+    assert len(results) == 0
+
+
+def test_GR115_action_not_renamed(mocker, graph_repo: Repo):
+    """
+    Given:
+        - A modified AgentixAction whose 'name' field did NOT change (only its id
+          would be irrelevant here).
+    When:
+        - Running the GR115 validator on the action.
+    Then:
+        - No validation error is returned (no name change means nothing to validate).
+    """
+    _, action, _ = _build_repo_with_skill_using_action(graph_repo)
+
+    old_action = mocker.Mock()
+    old_action.name = action.name  # same name => no rename
+    action.git_status = GitStatuses.MODIFIED
+    action.old_base_content_object = old_action
+
+    dependents_mock = mocker.patch.object(
+        IsActionNameChangedRequiresSkillRNValidatorListFiles,
+        "get_dependent_skills",
+    )
+
+    results = IsActionNameChangedRequiresSkillRNValidatorListFiles().obtain_invalid_content_items(
+        [action]
+    )
+
+    assert len(results) == 0
+    dependents_mock.assert_not_called()
+
+
+def test_GR115_action_added(mocker, graph_repo: Repo):
+    """
+    Given:
+        - A newly added AgentixAction (no previous version exists).
+    When:
+        - Running the GR115 validator on the action.
+    Then:
+        - No validation error is returned (a rename requires a previous version).
+    """
+    _, action, _ = _build_repo_with_skill_using_action(graph_repo)
+
+    action.git_status = GitStatuses.ADDED
+    action.old_base_content_object = None
+
+    results = IsActionNameChangedRequiresSkillRNValidatorListFiles().obtain_invalid_content_items(
+        [action]
+    )
+
+    assert len(results) == 0
+
+
+def test_GR115_action_renamed_no_dependent_skills(mocker, graph_repo: Repo):
+    """
+    Given:
+        - A renamed AgentixAction with NO dependent skills.
+    When:
+        - Running the GR115 validator on the action.
+    Then:
+        - No validation error is returned.
+    """
+    pack = graph_repo.create_pack("LonelyActionPack")
+    action_ts = pack.create_agentix_action("LonelyAction")
+    action_ts.create_default_agentix_action()
+    action_id = action_ts.yml.read_dict()["commonfields"]["id"]
+
+    graph_interface = graph_repo.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    action_objects = graph_interface.search(
+        content_type=ContentType.AGENTIX_ACTION, object_id=action_id
+    )
+    action = action_objects[0]
+
+    old_action = mocker.Mock()
+    old_action.name = "Old Action Name"  # name changed, but no skills depend on it
+    action.git_status = GitStatuses.MODIFIED
+    action.old_base_content_object = old_action
+
+    # The action has no dependent skills, so GR115 must return no results
+    # regardless of any Release Note / pack-version-bump check.
+    results = IsActionNameChangedRequiresSkillRNValidatorListFiles().obtain_invalid_content_items(
+        [action]
+    )
+
+    assert len(results) == 0
+
+
+def _build_agent_with_dependencies(
+    graph_repo: Repo, *, system_instructions: str
+) -> Repo:
+    """Build a repo with an agent that registers one skill and one action.
+
+    The agent's system instructions size is controlled by the caller so a test
+    can push the agent's total char budget over or under the GR116 limit.
+    """
+    pack = graph_repo.create_pack("AgentPack")
+
+    action = pack.create_agentix_action("MyAction")
+    action.create_default_agentix_action()
+    action.set_data(**{"commonfields.id": "action-a"})
+
+    skill = pack.create_agentix_skill("MySkill")
+    skill.create_default_agentix_skill(
+        name="MySkill",
+        skill_id="my-skill-id",
+        skill_content="Use <action=action-a> to do the thing.",
+    )
+
+    agent = pack.create_agentix_agent("MyAgent")
+    agent.create_default_agentix_agent(name="MyAgent", agent_id="my-agent-id")
+    agent.update(
+        {
+            "skillids": ["my-skill-id"],
+            "actionids": ["action-a"],
+            "systeminstructions": system_instructions,
+            # GR116 only budget-checks agents at or above MIN_AGENT_FROMVERSION
+            # (8.15.0); the default sample agent has no fromversion, so it would
+            # be filtered out of the query without this.
+            "fromversion": "8.15.0",
+        }
+    )
+    return graph_repo
+
+
+def test_GR116_agent_within_char_budget_is_valid(graph_repo: Repo):
+    """
+    Given
+    - An agent with small system instructions and small dependencies.
+
+    When
+    - Running the GR116 validation across the entire repository.
+
+    Then
+    - The agent is not flagged.
+    """
+    from demisto_sdk.commands.validate.validators.GR_validators.GR116_is_agent_total_token_budget import (
+        AGENT_CHAR_LIMIT,
+    )
+    from demisto_sdk.commands.validate.validators.GR_validators.GR116_is_agent_total_token_budget_all_files import (
+        IsAgentTotalTokenBudgetValidatorAllFiles,
+    )
+
+    _build_agent_with_dependencies(
+        graph_repo, system_instructions="You are a helpful agent."
+    )
+    BaseValidator.graph_interface = graph_repo.create_graph()
+
+    results = IsAgentTotalTokenBudgetValidatorAllFiles().obtain_invalid_content_items(
+        []
+    )
+
+    assert not results
+    assert AGENT_CHAR_LIMIT == 200000  # guards the documented limit
+
+
+def test_GR116_agent_exceeds_char_budget_is_invalid(graph_repo: Repo):
+    """
+    Given
+    - An agent whose system instructions alone far exceed the char limit.
+
+    When
+    - Running the GR116 validation across the entire repository.
+
+    Then
+    - The agent is flagged, and the message states the limit.
+    """
+    from demisto_sdk.commands.validate.validators.GR_validators.GR116_is_agent_total_token_budget import (
+        AGENT_CHAR_LIMIT,
+    )
+    from demisto_sdk.commands.validate.validators.GR_validators.GR116_is_agent_total_token_budget_all_files import (
+        IsAgentTotalTokenBudgetValidatorAllFiles,
+    )
+
+    oversized_instructions = "a" * (AGENT_CHAR_LIMIT + 1)
+    _build_agent_with_dependencies(
+        graph_repo, system_instructions=oversized_instructions
+    )
+    BaseValidator.graph_interface = graph_repo.create_graph()
+
+    results = IsAgentTotalTokenBudgetValidatorAllFiles().obtain_invalid_content_items(
+        []
+    )
+
+    assert len(results) == 1
+    assert str(AGENT_CHAR_LIMIT) in results[0].message
+
+
+def _gr116_agent_row(mocker, agent_id: str, deps: list, **agent_fields) -> dict:
+    """A structure-query row: the (mocked) full agent node plus its deps.
+
+    The row carries the whole agent node, which GR116 reconstructs into an
+    ``AgentixAgent`` object supplying both the token-bearing fields
+    (name/description/systeminstructions/conversationstarters) and the
+    ``content_object`` for a flagged result - so GR116 never issues a second
+    graph query for the agent. The node is a Mock stamped with the same
+    ``object_id`` so ``_parse_agent`` (patched in the fixture) can map it back.
+    """
+    from demisto_sdk.commands.content_graph.objects.agentix_agent import (
+        AgentixAgent,
+    )
+
+    agent = mocker.Mock(spec=AgentixAgent)
+    agent.object_id = agent_id
+    agent.name = agent_fields.get("name")
+    agent.description = agent_fields.get("description")
+    agent.systeminstructions = agent_fields.get("systeminstructions")
+    agent.conversationstarters = agent_fields.get("conversationstarters")
+    # No related instructions file: agent_text_fragments then reads the model's
+    # systeminstructions field (a Mock file_content would poison the char count).
+    agent.system_instructions_file = None
+    return {"agent": agent, "deps": deps}
+
+
+def _gr116_validator_with_query(mocker, query_rows):
+    """Return a GR116 list-files validator whose graph is fully mocked.
+
+    ``graph.get_agent_budget_dependencies`` returns ``query_rows`` (the single
+    structure query result: ``[{"agent": <node>, "deps": [{"object_id","name",
+    "description","path","content_type"}, ...]}, ...]``). The mocked graph is
+    reachable via ``validator.graph`` so tests can assert on the single
+    ``get_agent_budget_dependencies`` call.
+    """
+    from demisto_sdk.commands.validate.validators.GR_validators.GR116_is_agent_total_token_budget_list_files import (
+        IsAgentTotalTokenBudgetValidatorListFiles,
+    )
+
+    validator = IsAgentTotalTokenBudgetValidatorListFiles()
+    graph = mocker.Mock()
+    graph.get_agent_budget_dependencies.return_value = query_rows
+    graph.search.return_value = []
+    mocker.patch.object(
+        type(validator),
+        "graph",
+        new_callable=mocker.PropertyMock,
+        return_value=graph,
+    )
+    return validator
+
+
+def _gr116_action_dep(object_id: str, path: str = "", **fields) -> dict:
+    """A structure-query dep node for an action (path drives the YAML re-parse).
+
+    The structure query returns each dependency as its full graph node, so the
+    dep uses the node property names (``object_id``/``content_type``).
+    """
+    return {
+        "object_id": object_id,
+        "name": fields.get("name"),
+        "description": fields.get("description"),
+        "path": path or f"Packs/P/AgentixActions/{object_id}/{object_id}.yml",
+        "content_type": ContentType.AGENTIX_ACTION.value,
+        "fromversion": fields.get("fromversion"),
+    }
+
+
+def _gr116_skill_dep(
+    object_id: str, name=None, description=None, fromversion=None
+) -> dict:
+    """A structure-query dep node for a skill (scored from name+description)."""
+    return {
+        "object_id": object_id,
+        "name": name,
+        "description": description,
+        "path": f"Packs/P/AgentixSkills/{object_id}/{object_id}.yml",
+        "content_type": ContentType.AGENTIX_SKILL.value,
+        "fromversion": fromversion,
+    }
+
+
+def _gr116_collection_dep(
+    object_id: str, name=None, description=None, fromversion=None
+) -> dict:
+    """A structure-query dep node for a collection (scored from name+desc)."""
+    return {
+        "object_id": object_id,
+        "name": name,
+        "description": description,
+        "path": f"Packs/P/Collections/{object_id}/{object_id}.json",
+        "content_type": ContentType.COLLECTION.value,
+        "fromversion": fromversion,
+    }
+
+
+def test_GR116_single_structure_query_for_all_modified_dependencies(mocker):
+    """
+    Given
+    - Several modified actions and skills belonging to two agents.
+
+    When
+    - Resolving the affected agents and their dependencies for GR116.
+
+    Then
+    - Exactly ONE graph query (get_agent_budget_dependencies) is issued for the whole
+      structure, and it receives every changed id.
+    - The result maps each agent to its action source paths and its skill/
+      collection (name, description) summaries.
+    """
+    # given
+    query_rows = [
+        _gr116_agent_row(
+            mocker,
+            "agent-1",
+            [
+                _gr116_action_dep("action-1", path="p/action-1.yml"),
+                _gr116_skill_dep("skill-1", name="Skill 1", description="s1 desc"),
+                _gr116_collection_dep(
+                    "collection-1", name="Coll 1", description="c1 desc"
+                ),
+            ],
+            name="Agent 1",
+        ),
+        _gr116_agent_row(
+            mocker,
+            "agent-2",
+            [_gr116_action_dep("action-2", path="p/action-2.yml")],
+            name="Agent 2",
+        ),
+    ]
+    validator = _gr116_validator_with_query(mocker, query_rows)
+    changed_ids = ["action-1", "action-2", "skill-1", "collection-1"]
+
+    # when: fold the query rows into the per-agent (agent, grouped deps) list
+    affected = validator._affected_agents_with_dependencies(changed_ids)
+    by_id = {agent.object_id: (agent, dep_nodes) for agent, dep_nodes in affected}
+
+    # then: a single structure query, receiving every changed id
+    assert validator.graph.get_agent_budget_dependencies.call_count == 1
+    args, _ = validator.graph.get_agent_budget_dependencies.call_args
+    assert sorted(args[0]) == sorted(changed_ids)
+    # and the per-agent (agent object + deduped {dep_id: full dep node})
+    assert set(by_id) == {"agent-1", "agent-2"}
+    agent_1, dep_nodes_1 = by_id["agent-1"]
+    assert agent_1.object_id == "agent-1"
+    assert agent_1.name == "Agent 1"
+    assert set(dep_nodes_1) == {"action-1", "skill-1", "collection-1"}
+    assert dep_nodes_1["action-1"]["path"] == "p/action-1.yml"
+    assert dep_nodes_1["action-1"]["content_type"] == ContentType.AGENTIX_ACTION.value
+    assert dep_nodes_1["skill-1"]["name"] == "Skill 1"
+    assert dep_nodes_1["skill-1"]["description"] == "s1 desc"
+    assert dep_nodes_1["collection-1"]["name"] == "Coll 1"
+    assert dep_nodes_1["collection-1"]["description"] == "c1 desc"
+    _, dep_nodes_2 = by_id["agent-2"]
+    assert set(dep_nodes_2) == {"action-2"}
+    assert dep_nodes_2["action-2"]["path"] == "p/action-2.yml"
+
+
+def test_GR116_validate_all_files_passes_empty_changed_ids(mocker):
+    """
+    Given
+    - validate-all-files mode (no specific content items).
+
+    When
+    - Obtaining invalid items.
+
+    Then
+    - The single structure query is called with an empty ``changed_ids`` list,
+      which the Cypher treats as "every agent".
+    """
+    # given: no agents returned so the run short-circuits after the one query
+    validator = _gr116_validator_with_query(mocker, [])
+
+    # when
+    results = validator.obtain_invalid_content_items_using_graph(
+        [], validate_all_files=True
+    )
+
+    # then
+    assert results == []
+    assert validator.graph.get_agent_budget_dependencies.call_count == 1
+    args, _ = validator.graph.get_agent_budget_dependencies.call_args
+    assert args[0] == []
+
+
+def test_GR116_modified_agent_itself_is_included(mocker):
+    """
+    Given
+    - An agent that was modified directly (no dependency changes).
+
+    When
+    - Resolving the affected agents.
+
+    Then
+    - The agent id is passed as a changed id, and the agent appears in the
+      resulting dependency table (Cypher includes agents modified themselves).
+    """
+    from demisto_sdk.commands.content_graph.objects.agentix_agent import (
+        AgentixAgent,
+    )
+
+    # given: the query returns the modified agent (Cypher matched it by its id)
+    query_rows = [
+        _gr116_agent_row(
+            mocker,
+            "agent-1",
+            [_gr116_action_dep("action-1", path="p/action-1.yml")],
+            name="Agent 1",
+        )
+    ]
+    validator = _gr116_validator_with_query(mocker, query_rows)
+    modified_agent = mocker.Mock(spec=AgentixAgent, object_id="agent-1")
+
+    # when: mirror production, which passes a list of changed ids to the query
+    changed_ids = [
+        ci.object_id for ci in [modified_agent] if isinstance(ci, AgentixAgent)
+    ]
+    affected = validator._affected_agents_with_dependencies(changed_ids)
+    by_id = {agent.object_id: (agent, dep_nodes) for agent, dep_nodes in affected}
+
+    # then
+    args, _ = validator.graph.get_agent_budget_dependencies.call_args
+    assert args[0] == ["agent-1"]
+    assert set(by_id) == {"agent-1"}
+    _, dep_nodes = by_id["agent-1"]
+    assert set(dep_nodes) == {"action-1"}
+    assert dep_nodes["action-1"]["path"] == "p/action-1.yml"
+
+
+def test_GR116_agent_without_dependencies_has_empty_dep_groups(mocker):
+    """
+    Given
+    - An affected agent with no action/skill dependencies (OPTIONAL MATCH yields
+      a single null dep row).
+
+    When
+    - Resolving the affected agents.
+
+    Then
+    - The agent is present with no dependencies (the null dep is ignored,
+      not counted as a dependency).
+    """
+    # given: a null dep node, as OPTIONAL MATCH returns for a depless agent
+    query_rows = [
+        _gr116_agent_row(
+            mocker,
+            "agent-1",
+            [
+                {
+                    "object_id": None,
+                    "name": None,
+                    "description": None,
+                    "path": None,
+                    "content_type": None,
+                }
+            ],
+            name="Agent 1",
+        )
+    ]
+    validator = _gr116_validator_with_query(mocker, query_rows)
+
+    # when
+    affected = validator._affected_agents_with_dependencies(["agent-1"])
+    by_id = {agent.object_id: (agent, dep_nodes) for agent, dep_nodes in affected}
+
+    # then
+    assert set(by_id) == {"agent-1"}
+    _, dep_nodes = by_id["agent-1"]
+    assert dep_nodes == {}
+
+
+def test_GR116_no_affected_agents_returns_no_results(mocker):
+    """
+    Given
+    - A changed dependency that no agent uses (empty structure query result).
+
+    When
+    - Obtaining invalid items.
+
+    Then
+    - No results and no agent fetch reads are performed.
+    """
+    from demisto_sdk.commands.content_graph.objects.agentix_action import (
+        AgentixAction,
+    )
+
+    # given
+    validator = _gr116_validator_with_query(mocker, [])
+    modified = [mocker.Mock(spec=AgentixAction, object_id="orphan-action")]
+
+    # when
+    results = validator.obtain_invalid_content_items_using_graph(
+        modified, validate_all_files=False
+    )
+
+    # then
+    assert results == []
+    assert validator.graph.get_agent_budget_dependencies.call_count == 1
+    validator.graph.search.assert_not_called()
+
+    from demisto_sdk.commands.content_graph.objects.integration import (
+        Integration,
+    )
+
+    # given: a changed integration, which no agent uses
+    validator = _gr116_validator_with_query(mocker, [])
+    unrelated = [mocker.Mock(spec=Integration, object_id="some-integration")]
+
+    # when
+    results = validator.obtain_invalid_content_items_using_graph(
+        unrelated, validate_all_files=False
+    )
+
+    # then: the structure query runs with the changed id but matches no agent,
+    # so nothing is validated and no agent object is fetched.
+    assert results == []
+    assert validator.graph.get_agent_budget_dependencies.call_count == 1
+    args, _ = validator.graph.get_agent_budget_dependencies.call_args
+    assert args[0] == ["some-integration"]
+    validator.graph.search.assert_not_called()
+
+
+def test_GR116_actions_reparsed_from_path_skills_collections_from_graph(mocker):
+    """
+    Given
+    - An affected agent depending on an action (whose args/outputs live only in
+      its YAML, not the graph) plus a skill and a collection carrying their
+      name+description on the graph node.
+
+    When
+    - Building the agent's token fragments.
+
+    Then
+    - The action is re-parsed from its path (so its args/outputs count), while
+      the skill and collection contribute their graph name+description directly
+      without any per-object graph fetch.
+    """
+    from demisto_sdk.commands.content_graph.objects.agentix_action import (
+        AgentixAction,
+    )
+
+    # given: a parsed action carrying an arg + output (only present via YAML)
+    parsed_action = mocker.Mock(spec=AgentixAction)
+    parsed_action.object_id = "action-1"
+    parsed_action.name = "Action 1"
+    parsed_action.description = "action desc"
+    arg = mocker.Mock()
+    arg.name, arg.type, arg.description = "arg1", "string", "arg desc"
+    arg.default_value = "arg default"
+    out = mocker.Mock()
+    out.name, out.type, out.description = "out1", "string", "out desc"
+    parsed_action.args = [arg]
+    parsed_action.outputs = [out]
+    from_path = mocker.patch(
+        "demisto_sdk.commands.validate.tools.BaseContent.from_path",
+        return_value=parsed_action,
+    )
+
+    query_rows = [
+        _gr116_agent_row(
+            mocker,
+            "agent-1",
+            [
+                _gr116_action_dep("action-1", path="p/action-1.yml"),
+                _gr116_skill_dep("skill-1", name="Skill 1", description="s1 desc"),
+                _gr116_collection_dep(
+                    "collection-1", name="Coll 1", description="c1 desc"
+                ),
+            ],
+            name="Agent 1",
+            description="agent desc",
+            systeminstructions="agent instructions",
+            conversationstarters=["starter one", "starter two"],
+        )
+    ]
+    validator = _gr116_validator_with_query(mocker, query_rows)
+    agent, deps = validator._affected_agents_with_dependencies(["action-1"])[0]
+
+    # when
+    fragments = validator._agent_fragments(agent, deps)
+
+    # then: the action was re-parsed from its path (not fetched via graph.search).
+    # Skills/collections are read straight from their node (no parse_obj), so the
+    # action is the only dependency that hits from_path.
+    from_path.assert_called_once()
+    validator.graph.search.assert_not_called()
+    # the action's args/outputs (YAML-only) are present in the fragments
+    assert "arg1" in fragments and "out1" in fragments
+    # the skill and collection contribute their graph name+description directly
+    assert "Skill 1" in fragments and "s1 desc" in fragments
+    assert "Coll 1" in fragments and "c1 desc" in fragments
+    # the agent's conversation starters count toward its token budget
+    assert "starter one" in fragments and "starter two" in fragments
+
+
+def test_GR116_unparseable_action_path_falls_back_to_name_description(mocker):
+    """
+    Given
+    - An affected agent depending on an action whose YAML cannot be parsed.
+
+    When
+    - Building the agent's token fragments.
+
+    Then
+    - The unparseable action contributes no args/outputs (it is not re-parsed)
+      and falls back to the graph node's name + description rather than failing
+      the whole validation.
+    """
+    # given: from_path returns None (unparseable / not an action)
+    mocker.patch(
+        "demisto_sdk.commands.validate.tools.BaseContent.from_path",
+        return_value=None,
+    )
+    query_rows = [
+        _gr116_agent_row(
+            mocker,
+            "agent-1",
+            [
+                _gr116_action_dep(
+                    "action-1",
+                    path="p/broken.yml",
+                    name="Action 1",
+                    description="action desc",
+                )
+            ],
+            name="Agent 1",
+            description="agent desc",
+            systeminstructions="agent instructions",
+        )
+    ]
+    validator = _gr116_validator_with_query(mocker, query_rows)
+    agent, dep_nodes = validator._affected_agents_with_dependencies(["action-1"])[0]
+
+    # when
+    fragments = validator._agent_fragments(agent, dep_nodes)
+
+    # then: no args/outputs (not re-parsed); falls back to node name+description
+    assert "arg1" not in fragments
+    assert "Action 1" in fragments and "action desc" in fragments
+    # the agent's own fields are still present
+    assert "Agent 1" in fragments and "agent desc" in fragments
+    assert "agent instructions" in fragments

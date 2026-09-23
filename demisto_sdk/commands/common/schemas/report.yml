@@ -191,6 +191,10 @@ mapping:
     type: str
   id:xsoar_on_prem:
     type: str
+  supportedFeatures:
+    type: seq
+    sequence:
+    - type: str
 schema;layout_schema:
   type: map
   mapping:

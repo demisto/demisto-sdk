@@ -1,5 +1,6 @@
 __all__ = [
     "ClassifierParser",
+    "CollectionParser",
     "CorrelationRuleParser",
     "DashboardParser",
     "GenericDefinitionParser",
@@ -40,6 +41,7 @@ __all__ = [
     "AgentixActionParser",
     "AgentixAgentParser",
     "AgentixActionTestParser",
+    "AgentixSkillParser",
 ]
 
 from demisto_sdk.commands.content_graph.parsers.agentix_action import (
@@ -49,6 +51,7 @@ from demisto_sdk.commands.content_graph.parsers.agentix_action_test import (
     AgentixActionTestParser,
 )
 from demisto_sdk.commands.content_graph.parsers.agentix_agent import AgentixAgentParser
+from demisto_sdk.commands.content_graph.parsers.agentix_skill import AgentixSkillParser
 from demisto_sdk.commands.content_graph.parsers.assets_modeling_rule import (
     AssetsModelingRuleParser,
 )
@@ -60,6 +63,7 @@ from demisto_sdk.commands.content_graph.parsers.case_layout_rule import (
     CaseLayoutRuleParser,
 )
 from demisto_sdk.commands.content_graph.parsers.classifier import ClassifierParser
+from demisto_sdk.commands.content_graph.parsers.collection import CollectionParser
 from demisto_sdk.commands.content_graph.parsers.correlation_rule import (
     CorrelationRuleParser,
 )

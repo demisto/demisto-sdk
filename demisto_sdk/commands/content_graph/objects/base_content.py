@@ -22,6 +22,7 @@ from pydantic import BaseModel, DirectoryPath, Field
 from pydantic.main import ModelMetaclass
 
 from demisto_sdk.commands.common.constants import (
+    CONNECTORS_FOLDER,
     MARKETPLACE_MIN_VERSION,
     PACKS_FOLDER,
     PACKS_PACK_META_FILE_NAME,
@@ -179,13 +180,46 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
         )
         content_item_path = json_dct.get("path")
         if content_item_path and isinstance(content_item_path, Path):
-            json_dct["path"] = (
-                content_item_path.relative_to(CONTENT_PATH).as_posix()
-                if content_item_path.is_absolute()
-                else str(content_item_path)
-            )
+            if content_item_path.is_absolute():
+                try:
+                    json_dct["path"] = content_item_path.relative_to(
+                        CONTENT_PATH
+                    ).as_posix()
+                except ValueError:
+                    # The path is absolute but not under CONTENT_PATH - this
+                    # happens for content that lives in a *separate* repo (e.g.
+                    # connectors in unified-connectors-content). Relativize
+                    # against the item's own repo root instead of crashing.
+                    if CONNECTORS_FOLDER in content_item_path.parts:
+                        json_dct["path"] = self._relativize_external_path(
+                            content_item_path
+                        )
+                    else:
+                        raise
+            else:
+                json_dct["path"] = str(content_item_path)
         json_dct["content_type"] = self.content_type
         return json_dct
+
+    def _relativize_external_path(self, absolute_path: Path) -> str:
+        """Relativize an absolute path that is not under ``CONTENT_PATH``.
+
+        Content that lives in a separate repository (e.g. connectors in
+        unified-connectors-content) has an absolute ``path`` that is not a
+        subpath of the content repo, so ``relative_to(CONTENT_PATH)`` raises.
+
+        The default implementation relativizes against the parent of the repo
+        root (i.e. keeps the ``<repo-name>/...`` tail) so the stored value is
+        stable and repo-qualified. Subclasses may override for more specific
+        behavior.
+        """
+        # Best-effort: keep the path relative to its own repo's parent so the
+        # leading component identifies the source repo. Falls back to the raw
+        # posix string if that is not possible.
+        try:
+            return absolute_path.relative_to(absolute_path.anchor).as_posix()
+        except ValueError:
+            return absolute_path.as_posix()
 
     def add_relationship(
         self, relationship_type: RelationshipType, relationship: "RelationshipData"
@@ -206,6 +240,7 @@ class BaseContent(BaseNode):
     related_content_dict: dict = Field({}, exclude=True)
     structure_errors: List[StructureError] = Field(default_factory=list, exclude=True)
     supportedModules: Optional[List[str]] = None
+    supportedFeatures: Optional[List[str]] = None
 
     def _save(
         self,
@@ -292,6 +327,23 @@ class BaseContent(BaseNode):
     ) -> Optional["BaseContent"]:
         logger.debug(f"Loading content item from {path}")
 
+        # Detect connector paths (unified-connectors-content)
+        if _is_connector_path(path):
+            try:
+                from demisto_sdk.commands.content_graph.parsers.connector import (
+                    ConnectorParser,
+                )
+
+                connector_dir = _get_connector_dir(path)
+                return CONTENT_TYPE_TO_MODEL[ContentType.CONNECTOR].from_orm(
+                    ConnectorParser(connector_dir, git_sha=git_sha)
+                )
+            except Exception:
+                logger.exception(f"Could not parse connector from {path}")
+                if raise_on_exception:
+                    raise
+                return None
+
         if (
             path.is_dir()
             and path.parent.name == PACKS_FOLDER
@@ -355,3 +407,31 @@ class UnknownContent(BaseNode):
     @property
     def identifier(self):
         return self.object_id or self.name
+
+
+def _is_connector_path(path: Path) -> bool:
+    """Check if a path belongs to a connector directory in unified-connectors-content."""
+    if path.name == "connector.yaml":
+        return True
+    if path.is_dir() and (path / "connector.yaml").exists():
+        return True
+    # Check if any parent is a connector directory
+    if "connectors" in path.parts:
+        idx = path.parts.index("connectors")
+        if len(path.parts) > idx + 1:
+            connector_dir = Path(*path.parts[: idx + 2])
+            return (connector_dir / "connector.yaml").exists()
+    return False
+
+
+def _get_connector_dir(path: Path) -> Path:
+    """Get the connector root directory from any sub-path within it."""
+    if path.name == "connector.yaml":
+        return path.parent
+    if path.is_dir() and (path / "connector.yaml").exists():
+        return path
+    if "connectors" in path.parts:
+        idx = path.parts.index("connectors")
+        if len(path.parts) > idx + 1:
+            return Path(*path.parts[: idx + 2])
+    return path

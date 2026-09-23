@@ -7,7 +7,10 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.StrEnum import StrEnum
-from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel
+from demisto_sdk.commands.content_graph.strict_objects.common import (
+    BaseStrictModel,
+    SupportedFeaturesList,
+)
 
 
 class PackSupportOption(StrEnum):
@@ -18,6 +21,8 @@ class PackSupportOption(StrEnum):
 
 
 class StrictPackMetadata(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
+
     @validator("current_version")
     def is_valid_current_version(cls, value: str) -> str:
         """
@@ -103,3 +108,8 @@ class StrictPackMetadata(BaseStrictModel):
     source: Optional[str] = Field("", alias="source")
     managed: Optional[bool] = Field(False, alias="managed")
     internal: Optional[bool] = Field(False, alias="internal")
+
+    # Marketplace-suffixed managed/source fields (e.g. ``managed:platform``).
+    # Resolved into the plain managed/source per-marketplace during dump.
+    managed_platform: Optional[bool] = Field(None, alias="managed:platform")
+    source_platform: Optional[str] = Field(None, alias="source:platform")

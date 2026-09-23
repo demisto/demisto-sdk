@@ -15,6 +15,7 @@ from demisto_sdk.commands.common.constants import (
     PACK_METADATA_SUPPORT,
     PACK_METADATA_TAGS,
     PACK_METADATA_USE_CASES,
+    ExecutionMode,
     GitStatuses,
     MarketplaceVersions,
 )
@@ -28,6 +29,7 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_pack_object,
     create_playbook_object,
     create_script_object,
+    create_test_playbook_object,
 )
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 from demisto_sdk.commands.validate.validators.PA_validators.PA100_valid_tags_prefixes import (
@@ -113,6 +115,12 @@ from demisto_sdk.commands.validate.validators.PA_validators.PA133_is_base_pack_h
 )
 from demisto_sdk.commands.validate.validators.PA_validators.PA133_is_base_pack_has_no_new_dependencies_list_files import (
     IsBasePackHasNoNewDependenciesValidatorListFiles,
+)
+from demisto_sdk.commands.validate.validators.PA_validators.PA134_supported_modules_coverage import (
+    PackSupportedModulesCoverageValidator,
+)
+from demisto_sdk.commands.validate.validators.PA_validators.PA135_pack_level_ignore_added import (
+    PackLevelIgnoreAddedValidator,
 )
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
@@ -1797,6 +1805,83 @@ def test_PackMetadataVersionShouldBeRaisedValidator_metadata_change(mocker):
             )
 
 
+def test_PackMetadataVersionShouldBeRaisedValidator_runs_on_deprecated_pack(mocker):
+    """
+    Given: A deprecated pack whose content item was modified without a version bump.
+    When: Running PackMetadataVersionShouldBeRaisedValidator validator.
+    Then: Ensure the validator runs on the deprecated pack and fails it - changes
+          to a deprecated pack must raise its version too.
+    """
+    version = "1.0.0"
+    with ChangeCWD(REPO.path):
+        integration = create_integration_object(pack_info={"currentVersion": version})
+        pack = integration.in_pack
+        pack.deprecated = True
+        integration.git_status = GitStatuses.MODIFIED
+
+        old_pack = pack.copy(deep=True)
+        old_pack.current_version = version
+        pack.old_base_content_object = old_pack
+        mocker.patch.object(
+            BaseNode, "to_dict", return_value={"current_version": version}
+        )
+
+        validator = PackMetadataVersionShouldBeRaisedValidator()
+        # The deprecated pack must not be filtered out of the validator's input.
+        assert validator.should_run(
+            pack, [], {}, running_execution_mode=ExecutionMode.USE_GIT
+        )
+        results = validator.obtain_invalid_content_items([pack, integration])
+
+        assert len(results) == 1
+
+
+def test_PackMetadataVersionShouldBeRaisedValidator_missing_pack_object():
+    """
+    Given: A modified content item whose Pack object was not collected (e.g. a
+           deleted pack_metadata.json, which the git collector skips).
+    When: Running PackMetadataVersionShouldBeRaisedValidator validator.
+    Then: Ensure the validation fails with an explicit message instead of
+          raising a KeyError that aborts the whole validate run.
+    """
+    with ChangeCWD(REPO.path):
+        modeling_rule = create_modeling_rule_object()
+        modeling_rule.git_status = GitStatuses.MODIFIED
+
+        # The pack object is deliberately absent from the input.
+        validator = PackMetadataVersionShouldBeRaisedValidator()
+        results = validator.obtain_invalid_content_items([modeling_rule])
+
+        assert len(results) == 1
+        assert (
+            "could not be verified because its pack_metadata.json was not collected"
+            in results[0].message
+        )
+        # Reported against a real file, so the error points somewhere actionable.
+        assert results[0].content_object == modeling_rule
+
+
+def test_PackMetadataVersionShouldBeRaisedValidator_new_pack_without_old_object():
+    """
+    Given: A new pack (hence without an old_base_content_object) with an added content item.
+    When: Running PackMetadataVersionShouldBeRaisedValidator validator.
+    Then: Ensure no validation error is raised - new packs don't require release
+          notes, so they're excluded before the missing pack metadata check.
+    """
+    with ChangeCWD(REPO.path):
+        integration = create_integration_object(pack_info={"currentVersion": "1.0.0"})
+        pack = integration.in_pack
+        pack.git_status = GitStatuses.ADDED
+        integration.git_status = GitStatuses.ADDED
+        # A new pack has no counterpart on master.
+        assert pack.old_base_content_object is None  # sanity check
+
+        validator = PackMetadataVersionShouldBeRaisedValidator()
+        results = validator.obtain_invalid_content_items([pack, integration])
+
+        assert results == []
+
+
 @pytest.fixture
 def repo_for_test_pa_124(graph_repo: Repo, mocker: MockerFixture):
     """
@@ -2338,3 +2423,554 @@ def test_IsBasePackHasNoNewDependenciesValidatorListFiles_mixed_deps_flags_only_
     assert len(results) == 1
     assert "RealDepPack" in results[0].message
     assert "TestOnlyPack" not in results[0].message
+
+
+# ---------------------------------------------------------------------------
+# PA134 – PackSupportedModulesCoverageValidator
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "pack_marketplaces, pack_supported_modules, integration_marketplaces, integration_supported_modules, expected_failures",
+    [
+        pytest.param(
+            ["xsoar"],
+            ["edr", "xsiam"],
+            None,
+            None,
+            0,
+            id="non_platform_pack_no_validation",
+        ),
+        pytest.param(
+            ["platform"],
+            ["edr", "xsiam"],
+            [MarketplaceVersions.PLATFORM],
+            ["edr", "xsiam"],
+            0,
+            id="all_modules_covered_by_single_item",
+        ),
+        pytest.param(
+            ["platform"],
+            ["edr"],
+            [MarketplaceVersions.PLATFORM],
+            ["edr"],
+            0,
+            id="single_module_covered",
+        ),
+        pytest.param(
+            ["platform"],
+            ["edr", "xsiam"],
+            None,
+            None,
+            1,
+            id="no_content_items_all_modules_uncovered",
+        ),
+        pytest.param(
+            ["platform"],
+            ["edr", "xsiam", "asm"],
+            [MarketplaceVersions.PLATFORM],
+            ["edr", "xsiam"],
+            1,
+            id="one_module_uncovered",
+        ),
+        pytest.param(
+            ["platform"],
+            ["edr"],
+            [MarketplaceVersions.XSOAR],
+            ["edr"],
+            1,
+            id="content_item_not_in_platform_marketplace",
+        ),
+    ],
+)
+def test_PackSupportedModulesCoverageValidator_obtain_invalid_content_items(
+    pack_marketplaces,
+    pack_supported_modules,
+    integration_marketplaces,
+    integration_supported_modules,
+    expected_failures,
+):
+    """
+    Given
+    content_items.
+        - Case 1: A pack not in the platform marketplace with supportedModules declared.
+        - Case 2: A platform pack with supportedModules ["edr", "xsiam"] and a content item covering both.
+        - Case 3: A platform pack with supportedModules ["edr"] and a content item covering it.
+        - Case 4: A platform pack with supportedModules ["edr", "xsiam"] and no content items.
+        - Case 5: A platform pack with supportedModules ["edr", "xsiam", "asm"] and a content item covering only "edr" and "xsiam".
+        - Case 6: A platform pack with supportedModules ["edr"] and a content item only in xsoar marketplace.
+
+    When
+        - Calling the PackSupportedModulesCoverageValidator obtain_invalid_content_items function.
+
+    Then
+        - Make sure the right amount of pack metadatas failed.
+        - Case 1: Shouldn't fail (non-platform pack).
+        - Case 2: Shouldn't fail (all modules covered).
+        - Case 3: Shouldn't fail (module covered).
+        - Case 4: Should fail (no content items to cover modules).
+        - Case 5: Should fail (asm not covered).
+        - Case 6: Should fail (content item not in platform marketplace).
+    """
+    pack = create_pack_object(
+        paths=["marketplaces", "supportedModules"],
+        values=[pack_marketplaces, pack_supported_modules],
+    )
+
+    if integration_marketplaces is not None:
+        integration = create_integration_object()
+        integration.marketplaces = integration_marketplaces
+        integration.supportedModules = integration_supported_modules
+        pack.content_items.integration.append(integration)
+
+    results = PackSupportedModulesCoverageValidator().obtain_invalid_content_items(
+        [pack]
+    )
+    assert len(results) == expected_failures
+
+
+def test_PackSupportedModulesCoverageValidator_uncovered_module_in_message():
+    """
+    Given
+        - A platform pack declaring supportedModules ["xsiam", "edr", "asm"].
+        - No content items covering any module.
+
+    When
+        - Calling the PackSupportedModulesCoverageValidator obtain_invalid_content_items function.
+
+    Then
+        - The error message lists the uncovered modules in sorted order.
+    """
+    pack = create_pack_object(
+        paths=["marketplaces", "supportedModules"],
+        values=[["platform"], ["xsiam", "edr", "asm"]],
+    )
+
+    results = PackSupportedModulesCoverageValidator().obtain_invalid_content_items(
+        [pack]
+    )
+    assert len(results) == 1
+    assert "asm, edr, xsiam" in results[0].message
+
+
+def test_PackSupportedModulesCoverageValidator_multiple_items_cover_all_modules():
+    """
+    Given
+        - A platform pack declaring supportedModules ["edr", "xsiam"].
+        - Two content items, each covering one of the modules.
+
+    When
+        - Calling the PackSupportedModulesCoverageValidator obtain_invalid_content_items function.
+
+    Then
+        - No validation results are returned (all modules are covered across items).
+    """
+    pack = create_pack_object(
+        paths=["marketplaces", "supportedModules"],
+        values=[["platform"], ["edr", "xsiam"]],
+    )
+    integration1 = create_integration_object()
+    integration1.marketplaces = [MarketplaceVersions.PLATFORM]
+    integration1.supportedModules = ["edr"]
+
+    integration2 = create_integration_object()
+    integration2.marketplaces = [MarketplaceVersions.PLATFORM]
+    integration2.supportedModules = ["xsiam"]
+
+    pack.content_items.integration.extend([integration1, integration2])
+
+    results = PackSupportedModulesCoverageValidator().obtain_invalid_content_items(
+        [pack]
+    )
+    assert len(results) == 0
+
+
+def test_PackSupportedModulesCoverageValidator_content_item_inherits_pack_modules():
+    """
+    Given
+        - A platform pack declaring supportedModules ["edr", "xsiam"].
+        - A content item with no explicit supportedModules (None), which should
+          inherit the pack's modules via get_content_item_supported_modules.
+
+    When
+        - Calling the PackSupportedModulesCoverageValidator obtain_invalid_content_items function.
+
+    Then
+        - No validation results are returned because the content item inherits
+          the pack's modules, covering all declared modules.
+    """
+    pack = create_pack_object(
+        paths=["marketplaces", "supportedModules"],
+        values=[["platform"], ["edr", "xsiam"]],
+    )
+    integration = create_integration_object()
+    integration.marketplaces = [MarketplaceVersions.PLATFORM]
+    integration.supportedModules = None
+    integration.pack = pack
+    pack.content_items.integration.append(integration)
+
+    results = PackSupportedModulesCoverageValidator().obtain_invalid_content_items(
+        [pack]
+    )
+    assert len(results) == 0
+
+
+def test_PackSupportedModulesCoverageValidator_skips_test_playbook():
+    """
+    Given
+        - A platform pack declaring supportedModules ["edr"].
+        - A test playbook (excluded from upload) that covers "edr".
+        - No other uploadable content items.
+
+    When
+        - Calling the PackSupportedModulesCoverageValidator obtain_invalid_content_items function.
+
+    Then
+        - One validation result is returned because test playbooks are excluded
+          from upload and should not count toward module coverage.
+    """
+    pack = create_pack_object(
+        paths=["marketplaces", "supportedModules"],
+        values=[["platform"], ["edr"]],
+    )
+    test_pb = create_test_playbook_object()
+    test_pb.marketplaces = [MarketplaceVersions.PLATFORM]
+    test_pb.supportedModules = ["edr"]
+    pack.content_items.test_playbook.append(test_pb)
+
+    results = PackSupportedModulesCoverageValidator().obtain_invalid_content_items(
+        [pack]
+    )
+    assert len(results) == 1
+    assert "edr" in results[0].message
+
+
+def test_PackSupportedModulesCoverageValidator_multiple_packs_mixed_results():
+    """
+    Given
+        - Two platform packs:
+          - Pack 1: declares ["edr", "xsiam"], has a content item covering both → valid.
+          - Pack 2: declares ["edr", "asm"], has a content item covering only "edr" → invalid.
+
+    When
+        - Calling the PackSupportedModulesCoverageValidator obtain_invalid_content_items function.
+
+    Then
+        - Exactly one validation result is returned (for Pack 2), mentioning "asm".
+    """
+    pack1 = create_pack_object(
+        paths=["marketplaces", "supportedModules"],
+        values=[["platform"], ["edr", "xsiam"]],
+    )
+    integration1 = create_integration_object()
+    integration1.marketplaces = [MarketplaceVersions.PLATFORM]
+    integration1.supportedModules = ["edr", "xsiam"]
+    pack1.content_items.integration.append(integration1)
+
+    pack2 = create_pack_object(
+        paths=["marketplaces", "supportedModules"],
+        values=[["platform"], ["edr", "asm"]],
+    )
+    integration2 = create_integration_object()
+    integration2.marketplaces = [MarketplaceVersions.PLATFORM]
+    integration2.supportedModules = ["edr"]
+    pack2.content_items.integration.append(integration2)
+
+    results = PackSupportedModulesCoverageValidator().obtain_invalid_content_items(
+        [pack1, pack2]
+    )
+    assert len(results) == 1
+    assert "asm" in results[0].message
+
+
+def test_PackSupportedModulesCoverageValidator_fix_removes_uncovered_modules():
+    """
+    Given
+        - A platform pack declaring supportedModules ["edr", "xsiam", "asm"].
+        - Content items covering only "edr" and "xsiam" (not "asm").
+
+    When
+        - Calling obtain_invalid_content_items followed by fix.
+
+    Then
+        - The fix removes "asm" from the pack's supportedModules.
+        - The fix message mentions the removed module.
+    """
+    pack = create_pack_object(
+        paths=["marketplaces", "supportedModules"],
+        values=[["platform"], ["edr", "xsiam", "asm"]],
+    )
+    integration = create_integration_object()
+    integration.marketplaces = [MarketplaceVersions.PLATFORM]
+    integration.supportedModules = ["edr", "xsiam"]
+    pack.content_items.integration.append(integration)
+
+    validator = PackSupportedModulesCoverageValidator()
+    results = validator.obtain_invalid_content_items([pack])
+    assert len(results) == 1
+
+    fix_result = validator.fix(pack)
+    assert "asm" in fix_result.message
+    assert set(pack.supportedModules) == {"edr", "xsiam"}
+
+
+def test_PackSupportedModulesCoverageValidator_fix_removes_all_uncovered_modules():
+    """
+    Given
+        - A platform pack declaring supportedModules ["edr", "xsiam"].
+        - No content items covering any module.
+
+    When
+        - Calling obtain_invalid_content_items followed by fix.
+
+    Then
+        - The fix removes all modules from the pack's supportedModules.
+        - The fix message mentions both removed modules.
+    """
+    pack = create_pack_object(
+        paths=["marketplaces", "supportedModules"],
+        values=[["platform"], ["edr", "xsiam"]],
+    )
+
+    validator = PackSupportedModulesCoverageValidator()
+    results = validator.obtain_invalid_content_items([pack])
+    assert len(results) == 1
+
+    fix_result = validator.fix(pack)
+    assert "edr" in fix_result.message
+    assert "xsiam" in fix_result.message
+    assert pack.supportedModules == []
+
+
+def test_PackSupportedModulesCoverageValidator_fix_preserves_covered_modules():
+    """
+    Given
+        - A platform pack declaring supportedModules ["edr", "xsiam", "asm", "tim"].
+        - Content items covering "edr" and "tim" but NOT "xsiam" or "asm".
+
+    When
+        - Calling obtain_invalid_content_items followed by fix.
+
+    Then
+        - The fix removes only "xsiam" and "asm", preserving "edr" and "tim".
+    """
+    pack = create_pack_object(
+        paths=["marketplaces", "supportedModules"],
+        values=[["platform"], ["edr", "xsiam", "asm", "tim"]],
+    )
+    integration1 = create_integration_object()
+    integration1.marketplaces = [MarketplaceVersions.PLATFORM]
+    integration1.supportedModules = ["edr"]
+
+    integration2 = create_integration_object()
+    integration2.marketplaces = [MarketplaceVersions.PLATFORM]
+    integration2.supportedModules = ["tim"]
+
+    pack.content_items.integration.extend([integration1, integration2])
+
+    validator = PackSupportedModulesCoverageValidator()
+    results = validator.obtain_invalid_content_items([pack])
+    assert len(results) == 1
+
+    fix_result = validator.fix(pack)
+    assert "asm" in fix_result.message
+    assert "xsiam" in fix_result.message
+    assert set(pack.supportedModules) == {"edr", "tim"}
+
+
+def test_PackSupportedModulesCoverageValidator_fix_creates_supported_modules_when_absent():
+    """
+    Given
+        - A platform pack with NO supportedModules field (None), which implicitly
+          means all default platform modules are supported.
+        - A content item covering only "xsiam".
+
+    When
+        - Calling obtain_invalid_content_items followed by fix.
+
+    Then
+        - The fix creates the supportedModules field with only the covered module ("xsiam").
+        - The fix message mentions the uncovered modules.
+    """
+    pack = create_pack_object(
+        paths=["marketplaces"],
+        values=[["platform"]],
+    )
+    pack.supportedModules = None
+
+    integration = create_integration_object()
+    integration.marketplaces = [MarketplaceVersions.PLATFORM]
+    integration.supportedModules = ["xsiam"]
+    pack.content_items.integration.append(integration)
+
+    validator = PackSupportedModulesCoverageValidator()
+    results = validator.obtain_invalid_content_items([pack])
+    assert len(results) == 1
+
+    fix_result = validator.fix(pack)
+    assert pack.supportedModules == ["xsiam"]
+    # All other default modules should be mentioned as removed
+    assert "edr" in fix_result.message
+    assert "asm" in fix_result.message
+
+
+# ---------------------------------------------------------------------------
+# PA135 – PackLevelIgnoreAddedValidator
+# ---------------------------------------------------------------------------
+
+
+def _make_pack_with_ignores(mocker, new_codes, old_codes, has_old=True):
+    """Build a pack whose current/old [pack] codes are mocked.
+
+    `pack_level_ignored_errors` (current, a cached_property) and
+    `old_pack_level_ignored_errors` (old, reads git) are patched so the test is
+    deterministic and does not touch the filesystem or git. Both are patched at
+    the class level because `Pack` is a Pydantic model that rejects setting
+    arbitrary instance attributes.
+    """
+    pack = create_pack_object()
+    # current [pack] codes (cached_property stored in __dict__)
+    pack.__dict__["pack_level_ignored_errors"] = list(new_codes)
+    # old [pack] codes (the method ignores its prev_ver arg here)
+    mocker.patch.object(
+        type(pack),
+        "old_pack_level_ignored_errors",
+        return_value=list(old_codes),
+    )
+    if has_old:
+        old_pack = create_pack_object()
+        old_pack.git_sha = "old_sha"
+        pack.old_base_content_object = old_pack
+    else:
+        pack.old_base_content_object = None
+    return pack
+
+
+def test_PA135_pack_section_newly_added_fails(mocker):
+    """
+    Given a pack whose [pack] section is new (old had no codes),
+    When PA135 runs,
+    Then it fails and lists the added codes.
+    """
+    pack = _make_pack_with_ignores(mocker, new_codes=["BA101"], old_codes=[])
+    results = PackLevelIgnoreAddedValidator().obtain_invalid_content_items([pack])
+    assert len(results) == 1
+    assert "BA101" in results[0].message
+
+
+def test_PA135_new_code_added_to_existing_section_fails(mocker):
+    """
+    Given a pack with an existing [pack] section that gained a new code,
+    When PA135 runs,
+    Then it fails listing only the newly added code.
+    """
+    pack = _make_pack_with_ignores(
+        mocker, new_codes=["BA101", "RM104"], old_codes=["BA101"]
+    )
+    results = PackLevelIgnoreAddedValidator().obtain_invalid_content_items([pack])
+    assert len(results) == 1
+    assert "RM104" in results[0].message
+    assert "BA101" not in results[0].message
+
+
+def test_PA135_runs_on_pack_with_no_git_status(mocker):
+    """
+    Given a pack-ignore-only change: the .pack-ignore maps to pack_metadata.json,
+    which is itself unchanged, so the collected Pack has git_status None,
+    When PA135's status gate is evaluated,
+    Then PA135 still runs (it is not restricted by expected_git_statuses).
+
+    Regression: previously PA135 declared
+    expected_git_statuses=[ADDED, MODIFIED, RENAMED], so a None-status pack
+    (the pack-ignore-only case) was skipped and additions went undetected.
+    """
+    from demisto_sdk.commands.validate.validators.base_validator import (
+        should_run_according_to_status,
+    )
+
+    validator = PackLevelIgnoreAddedValidator()
+    assert validator.expected_git_statuses is None
+    assert should_run_according_to_status(None, validator.expected_git_statuses) is True
+
+
+def test_PA135_brand_new_pack_with_pack_section_fails(mocker):
+    """
+    Given a brand-new pack (no old_base_content_object) shipping a [pack] section,
+    When PA135 runs,
+    Then it fails (all current codes count as added).
+    """
+    pack = _make_pack_with_ignores(
+        mocker, new_codes=["BA101"], old_codes=[], has_old=False
+    )
+    results = PackLevelIgnoreAddedValidator().obtain_invalid_content_items([pack])
+    assert len(results) == 1
+
+
+def test_PA135_only_removed_codes_passes(mocker):
+    """
+    Given a pack where codes were only removed from [pack],
+    When PA135 runs,
+    Then it passes (removals are allowed).
+    """
+    pack = _make_pack_with_ignores(
+        mocker, new_codes=["BA101"], old_codes=["BA101", "RM104"]
+    )
+    results = PackLevelIgnoreAddedValidator().obtain_invalid_content_items([pack])
+    assert results == []
+
+
+def test_PA135_no_pack_section_passes(mocker):
+    """
+    Given a pack with no [pack] section now,
+    When PA135 runs,
+    Then it passes.
+    """
+    pack = _make_pack_with_ignores(mocker, new_codes=[], old_codes=[])
+    results = PackLevelIgnoreAddedValidator().obtain_invalid_content_items([pack])
+    assert results == []
+
+
+def test_PA135_unchanged_pack_section_passes(mocker):
+    """
+    Given a pack whose [pack] section is unchanged,
+    When PA135 runs,
+    Then it passes.
+    """
+    pack = _make_pack_with_ignores(mocker, new_codes=["BA101"], old_codes=["BA101"])
+    results = PackLevelIgnoreAddedValidator().obtain_invalid_content_items([pack])
+    assert results == []
+
+
+def test_PA135_uses_old_object_git_sha_as_prev_ver(mocker):
+    """
+    Given a modified pack whose old_base_content_object carries the run's prev_ver,
+    When PA135 computes the added codes,
+    Then it reads the old [pack] codes at that exact ref.
+    """
+    pack = _make_pack_with_ignores(
+        mocker, new_codes=["BA101", "RM104"], old_codes=["BA101"]
+    )
+    pack.old_base_content_object.git_sha = "origin/master"
+    PackLevelIgnoreAddedValidator().obtain_invalid_content_items([pack])
+    pack.old_pack_level_ignored_errors.assert_called_once_with("origin/master")
+
+
+def test_PA135_pack_ignore_only_change_uses_old_object_prev_ver(mocker):
+    """
+    Given a pack-ignore-only change: the pack is collected via its unchanged
+    pack_metadata.json, but the initializer still builds old_base_content_object
+    from prev_ver and sets its git_sha accordingly,
+    When PA135 computes the added codes,
+    Then it diffs against that prev_ver (origin/master) and flags the added code.
+
+    This is the fork/pack-ignore-only regression that previously produced a
+    false negative.
+    """
+    pack = _make_pack_with_ignores(
+        mocker, new_codes=["BA101", "RM104"], old_codes=["BA101"]
+    )
+    pack.old_base_content_object.git_sha = "origin/master"
+    results = PackLevelIgnoreAddedValidator().obtain_invalid_content_items([pack])
+    pack.old_pack_level_ignored_errors.assert_called_once_with("origin/master")
+    assert len(results) == 1
+    assert "RM104" in results[0].message

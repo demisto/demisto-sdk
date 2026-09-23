@@ -156,8 +156,17 @@ mapping:
         type: int
       webSearch:
         type: bool
+      modelTier:
+        type: str
+        enum: ['Flash', 'Thinking', 'Pro']
 
   compliantpolicies:
+    type: seq
+    sequence:
+    - type: str
+  spec:
+    type: str
+  supportedFeatures:
     type: seq
     sequence:
     - type: str

@@ -279,7 +279,7 @@ AND {is_target_available('a', 'b')}
     if file_paths:
         query += f"AND a.path in {file_paths}"
     query += """
-AND elementId(a) <> elementId(b)
+AND a.object_id <> b.object_id
 RETURN a.object_id AS a_object_id, collect(b.object_id) AS b_object_ids
 """
     return [
@@ -559,7 +559,10 @@ def get_supported_modules_mismatch_content_items(
                           Defaults to True.
 
     Returns:
-        Dict[str, Neo4jRelationshipResult]: Dictionary mapping content item IDs to relationship results.
+        Tuple[Dict[str, Neo4jRelationshipResult], Dict[str, List[str]]]:
+            - Dictionary mapping content item element IDs to relationship results.
+            - Dictionary mapping content item element IDs to the list of object IDs of
+              the commands that genuinely have a module mismatch.
     """
     mandatorily_value = str(mandatory).lower()
     query = f"""
@@ -578,10 +581,12 @@ def get_supported_modules_mismatch_content_items(
             // supported modules is NOT in the command's supported module list.
             (any(module IN content_item.supportedModules WHERE NOT module IN r.supportedModules))
         )
-    RETURN content_item, collect(u) AS relationships, collect(c) AS nodes_to"""
+    RETURN content_item, collect(u) AS relationships, collect(c) AS nodes_to,
+        collect(DISTINCT c.object_id) AS mismatched_command_ids"""
 
     items = run_query(tx, query)
     results = {}
+    mismatched_commands_by_item: Dict[str, List[str]] = {}
     for item in items:
         node_from = item.get("content_item")
         relationships = item.get("relationships")
@@ -591,8 +596,10 @@ def get_supported_modules_mismatch_content_items(
             relationships,
             nodes_to,
         )
-        results[item.get("content_item").element_id] = neo_res
-    return results
+        element_id = item.get("content_item").element_id
+        results[element_id] = neo_res
+        mismatched_commands_by_item[element_id] = item.get("mismatched_command_ids")
+    return results, mismatched_commands_by_item
 
 
 def get_agentix_actions_using_content_items(
@@ -693,3 +700,51 @@ RETURN playbook AS content_item_from, pack.source AS source, collect(r) AS relat
         )
         sources[element_id] = item.get("source", "")
     return results, sources
+
+
+def get_agent_budget_dependencies(
+    tx: Transaction, changed_ids: List[str]
+) -> List[dict]:
+    """Return, for GR116, each affected AgentixAgent with its dependency nodes.
+
+    Step 1: select affected agents - an empty ``changed_ids`` means every agent
+    (validate-all-files), otherwise only those in ``changed_ids`` or using a
+    changed action/skill.
+    Step 2: return each agent's full node plus its action/skill/collection
+    dependency nodes, so GR116 reconstructs and scores them in one query.
+
+    Args:
+        tx: The Transaction to contact the graph with.
+        changed_ids: object_ids of the modified content items. An empty list
+            selects every agent (validate-all-files mode).
+
+    Returns:
+        Raw rows ``[{"agent": <node>, "deps": [<node>, ...]}, ...]``. Nodes are
+        returned as-is (not reconstructed) because GR116 needs each dependency's
+        ``path`` (to re-parse action args/outputs), ``fromversion`` (to dedupe to
+        the newest), and ``content_type``, and re-parses the agent node itself.
+    """
+    # Only agents from this platform version onward are budget-checked (GR116);
+    # earlier agents predate the char-budget contract.
+    _MIN_AGENT_FROMVERSION = "8.15.0"
+    query = f"""
+MATCH (a:{ContentType.AGENTIX_AGENT})
+WHERE {versioned("a.fromversion")} >= {versioned(_MIN_AGENT_FROMVERSION)}
+OPTIONAL MATCH (a)-[:{RelationshipType.USES}]->(changed)
+WITH a,
+    size($changed_ids) = 0
+    OR (a.object_id IN $changed_ids)
+    OR (changed IS NOT NULL AND changed.object_id IN $changed_ids) AS is_affected
+WITH a WHERE is_affected
+WITH DISTINCT a
+OPTIONAL MATCH (a)-[:{RelationshipType.USES}]->(dep)
+WHERE dep.content_type IN [
+    '{ContentType.AGENTIX_ACTION}', '{ContentType.AGENTIX_SKILL}',
+    '{ContentType.COLLECTION}'
+]
+RETURN a AS agent, collect(DISTINCT dep) AS deps
+"""
+    return [
+        {"agent": item.get("agent"), "deps": item.get("deps") or []}
+        for item in run_query(tx, query, changed_ids=changed_ids)
+    ]

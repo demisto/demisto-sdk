@@ -64,6 +64,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships im
     get_targets_by_path,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations import (
+    get_agent_budget_dependencies,
     get_agentix_actions_using_content_items,
     get_items_using_deprecated,
     get_supported_modules_mismatch_commands,
@@ -305,7 +306,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             logger.debug(
                 "No nodes to parse packs because all of them in mapping",
             )
-            logger.debug("{}", f"{self._id_to_obj=}")  # noqa: PLE1205
+            # Log only the cache size; a full repr of _id_to_obj recurses
+            # forever on circular relationships (e.g. Connector -> Pack -> ...).
+            logger.debug(f"_id_to_obj cache size: {len(self._id_to_obj)}")
             return
         with Pool(processes=cpu_count()) as pool:
             results = pool.starmap(
@@ -463,6 +466,29 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             )
             self._add_nodes_to_mapping(agentix_action_nodes)
             return [self._id_to_obj[node.element_id] for node in agentix_action_nodes]
+
+    def get_agent_budget_dependencies(self, changed_ids: List[str]) -> List[dict]:
+        """Return ``[{"agent": <AgentixAgent>, "deps": [<node>, ...]}, ...]`` rows
+        for GR116. An empty ``changed_ids`` selects every agent (validate-all-files).
+
+        The agent node is reconstructed into a real ``AgentixAgent`` object (same
+        interface convention as ``get_agentix_actions_using_content_items``), so the
+        validator can score the agent's own fields and attach it to a
+        ValidationResult. Dependency nodes stay raw so the validator can read each
+        one's path/fromversion/content_type and re-parse them itself.
+        """
+        with self.driver.session() as session:
+            rows = session.execute_read(get_agent_budget_dependencies, changed_ids)
+        agent_nodes = [row["agent"] for row in rows if row.get("agent") is not None]
+        self._add_nodes_to_mapping(agent_nodes)
+        return [
+            {
+                "agent": self._id_to_obj[row["agent"].element_id],
+                "deps": row.get("deps") or [],
+            }
+            for row in rows
+            if row.get("agent") is not None
+        ]
 
     def get_duplicate_pack_display_name(
         self, file_paths: List[str]
@@ -725,12 +751,15 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def find_content_items_with_module_mismatch_content_items(
         self, content_item_ids: List[str], mandatory: bool = True
-    ) -> List[BaseNode]:
+    ) -> List[Tuple[BaseNode, List[str]]]:
         """
         Retrieves content items with invalid command relationships based on supported modules.
 
         This method identifies content items where a command's `supportedModules`
         are not fully included in the `supportedModules` of the parent content item.
+
+        The list of mismatched command object IDs is computed directly by the Cypher
+        query (per command).
 
         Args:
             content_item_ids (List[str]): List of content item IDs to check for invalid commands.
@@ -739,17 +768,24 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                               If False, checks non-mandatory (mandatorily:false) USES relationships.
                               Defaults to True.
         Returns:
-            List[BaseNode]: Content items that have invalid supported module commands, if any exist.
+            List[Tuple[BaseNode, List[str]]]: Tuples of (content item, mismatched command
+            object IDs) for content items that have invalid supported module commands.
         """
         with self.driver.session() as session:
-            results = session.execute_read(
+            results, mismatched_commands_by_item = session.execute_read(
                 get_supported_modules_mismatch_content_items,
                 content_item_ids,
                 mandatory,
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)
-            return [self._id_to_obj[result] for result in results]
+            return [
+                (
+                    self._id_to_obj[element_id],
+                    mismatched_commands_by_item.get(element_id, []),
+                )
+                for element_id in results
+            ]
 
     def find_unused_test_playbook(
         self, test_playbook_ids: List[str], test_playbooks_ids_to_skip: List[str]

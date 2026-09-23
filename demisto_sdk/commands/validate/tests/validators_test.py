@@ -1193,6 +1193,76 @@ def test_ignored_with_run_all(mocker):
     assert 0 == validate_manager.run_validations()
 
 
+def test_graph_results_are_remapped_to_the_item_the_message_describes(mocker):
+    """
+    Given:
+        A validator running with -a that reports two items sharing one object_id
+        but living in different files - the duplicate-ID case - returning one
+        ValidationResult per item whose content_object is a graph object (a
+        distinct Python object from the collected item, as the graph always
+        returns).
+    When:
+        Calling run_validations, which remaps each result's content_object onto
+        the collected item before the identity filter.
+    Then:
+        Ensure each result still points at its own file. Remapping by object_id
+        collapses every result of a duplicate-ID group onto whichever item
+        happens to be first, so the reported path stops matching the message and
+        sends the author to a file that is not part of the pair - sometimes the
+        very file the message names as the counterpart, making it read as if the
+        file duplicates itself.
+    """
+    validate_manager = get_validate_manager(mocker)
+    validate_manager.configured_validations = ConfiguredValidations(
+        select=["GR100"],
+        warning=[],
+        ignorable_errors=[],
+        support_level_dict={},
+    )
+    validate_manager.initializer.execution_mode = ExecutionMode.ALL_FILES
+    validator = MarketplacesFieldValidatorAllFiles()
+    validate_manager.validators = [validator]
+
+    first = create_integration_object()
+    second = create_integration_object()
+    second.object_id = first.object_id  # the duplicate-ID condition
+    assert first.path != second.path
+
+    # The graph returns freshly parsed objects, never the collected instances,
+    # so they never compare equal to the collected ones and always need remapping.
+    graph_objects = {
+        item.path: item.copy(update={"git_sha": f"graph-sha-{index}"})
+        for index, item in enumerate((first, second))
+    }
+    assert all(obj not in (first, second) for obj in graph_objects.values())
+    mocker.patch.object(
+        MarketplacesFieldValidatorAllFiles,
+        "obtain_invalid_content_items",
+        return_value=[
+            ValidationResult(
+                validator=validator,
+                message=f"Duplicate ID '{item.object_id}' also found in {other.path}.",
+                content_object=graph_objects[item.path],
+            )
+            for item, other in ((first, second), (second, first))
+        ],
+    )
+    validate_manager.objects_to_run = [first, second]
+
+    validate_manager.run_validations()
+
+    reported = validate_manager.validation_results.validation_results
+    assert len(reported) == 2
+    for result in reported:
+        # The message names the *other* file, so the result's own path must not
+        # appear there: a result that claims a file duplicates itself is wrong.
+        assert str(result.content_object.path) not in result.message
+    assert {str(result.content_object.path) for result in reported} == {
+        str(first.path),
+        str(second.path),
+    }
+
+
 def test_check_metadata_version_bump_on_content_changes(mocker, repo):
     """
     Given: pack with newly added integration.
@@ -1661,6 +1731,170 @@ class TestConnectorAwareInitializerCrossMatch:
 
         assert connector_a.xsoar_handlers[0].related_integration is graph_int_a
         assert connector_b.xsoar_handlers[0].related_integration is graph_int_b
+
+
+class TestConnectorAwareInitializerStash:
+    """Tests for the CO192 stash populated by
+    ``ConnectorAwareInitializer._remove_unmatched_integrations`` and read
+    through ``get_integrations_without_connector_handler``.
+
+    Focus:
+
+    * Unmatched integrations are stashed BEFORE eviction (so CO192 sees
+      what the initializer just dropped).
+    * The stash is a frozen set (validators must not mutate the
+      initializer's view).
+    * Every ``gather_objects_to_run_on`` call resets/re-assigns the stash,
+      so a run with everything covered does not inherit a previous run's
+      value.
+    * The gather post-filter drops partner/community-supported integrations
+      (they are out of scope for the connector flow, so they must not
+      appear in the CO192 stash as false positives).
+    """
+
+    @pytest.fixture(autouse=True)
+    def _reset_stash(self):
+        # Isolate every test from a prior test's stash. The stash is a
+        # class attribute, so leakage across cases is easy to miss.
+        ConnectorAwareInitializer._integrations_without_connector_handler = frozenset()
+        yield
+        ConnectorAwareInitializer._integrations_without_connector_handler = frozenset()
+
+    def test_unmatched_integration_populates_stash(self):
+        """
+        Given: An integration in the working set with no connector handler
+               referencing it (Phase 1 fails, Phase 2a graph returns no
+               connectors).
+        When: ``_cross_match_and_expand`` runs to completion.
+        Then: The integration is dropped from the returned set AND is
+              stashed on ``_integrations_without_connector_handler``. CO192
+              reads this stash instead of ``content_items``.
+        """
+        integration = create_integration_object(
+            paths=["commonfields.id", "name"],
+            values=["UnrelatedInt", "UnrelatedInt"],
+        )
+
+        initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
+
+        with patch.object(
+            ConnectorAwareInitializer, "_all_graph_connectors", return_value=[]
+        ):
+            result = initializer._cross_match_and_expand({integration}, set())
+
+        assert integration not in result  # matches existing cleanup behaviour
+        stash = ConnectorAwareInitializer.get_integrations_without_connector_handler()
+        assert isinstance(stash, frozenset)
+        # Compare by object_id -- pydantic models may go through
+        # copy/hash-round-trip when placed into a frozenset in some code
+        # paths, so identity assertions can be flaky across pydantic
+        # versions. object_id captures the behavioural contract ("the same
+        # integration ended up in the stash").
+        assert integration.object_id in {i.object_id for i in stash}
+
+    def test_covered_integration_is_not_stashed(self):
+        """
+        Given: An integration and a connector whose handler references it
+               (Phase 1 pairs them).
+        When: ``_cross_match_and_expand`` runs to completion.
+        Then: The stash is emptied (assigned an empty frozenset) - the
+              integration must not appear in the CO192 report.
+        """
+        connector = create_connector_object()
+        integration = create_integration_object()
+
+        initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
+
+        # Seed the stash with a stale value from a hypothetical previous run
+        # so the assertion below actually proves the cleanup step overwrites
+        # it rather than accidentally leaving the fixture's reset in place.
+        ConnectorAwareInitializer._integrations_without_connector_handler = frozenset(
+            {create_integration_object()}
+        )
+
+        with patch.object(
+            ConnectorAwareInitializer, "_all_graph_connectors", return_value=[]
+        ):
+            initializer._cross_match_and_expand({integration}, {connector})
+
+        assert (
+            ConnectorAwareInitializer.get_integrations_without_connector_handler()
+            == frozenset()
+        )
+
+    def test_stash_is_frozen(self):
+        """
+        Given: The stash's default (empty frozenset).
+        When: A caller tries to mutate it.
+        Then: An AttributeError is raised. This is what stops a buggy
+              validator from corrupting the initializer's view by
+              ``got.add(...)``-ing on the returned set.
+        """
+        stash = ConnectorAwareInitializer.get_integrations_without_connector_handler()
+
+        assert isinstance(stash, frozenset)
+        with pytest.raises(AttributeError):
+            stash.add(create_integration_object())  # type: ignore[attr-defined]
+
+    def test_stash_reset_across_runs(self):
+        """
+        Given: A first run that stashes an uncovered integration.
+        When: A second run that has nothing uncovered goes through
+              ``_remove_unmatched_integrations``.
+        Then: The stash is reset to an empty frozenset - the second run
+              does not inherit the first run's value.
+        """
+        first_uncovered = create_integration_object(
+            paths=["commonfields.id", "name"], values=["Uncov1", "Uncov1"]
+        )
+        initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
+
+        with patch.object(
+            ConnectorAwareInitializer, "_all_graph_connectors", return_value=[]
+        ):
+            initializer._cross_match_and_expand({first_uncovered}, set())
+
+        assert first_uncovered.object_id in {
+            i.object_id
+            for i in ConnectorAwareInitializer.get_integrations_without_connector_handler()
+        }
+
+        # Second run: everything covered.
+        integration = create_integration_object()
+        connector = create_connector_object()
+        with patch.object(
+            ConnectorAwareInitializer, "_all_graph_connectors", return_value=[]
+        ):
+            initializer._cross_match_and_expand({integration}, {connector})
+
+        assert (
+            ConnectorAwareInitializer.get_integrations_without_connector_handler()
+            == frozenset()
+        )
+
+    def test_multiple_unmatched_all_stashed(self):
+        """
+        Given: Several unmatched integrations in one run.
+        When: ``_cross_match_and_expand`` runs to completion.
+        Then: All of them appear in the stash (CO192 emits one result per
+              offender rather than aggregating).
+        """
+        int_a = create_integration_object(
+            paths=["commonfields.id", "name"], values=["OrphA", "OrphA"]
+        )
+        int_b = create_integration_object(
+            paths=["commonfields.id", "name"], values=["OrphB", "OrphB"]
+        )
+        initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
+
+        with patch.object(
+            ConnectorAwareInitializer, "_all_graph_connectors", return_value=[]
+        ):
+            initializer._cross_match_and_expand({int_a, int_b}, set())
+
+        stash = ConnectorAwareInitializer.get_integrations_without_connector_handler()
+        stash_ids = {i.object_id for i in stash}
+        assert {"OrphA", "OrphB"}.issubset(stash_ids)
 
 
 class TestConnectorAwareInitializerGatherObjects:
@@ -2705,6 +2939,76 @@ class TestConnectorHandlerIgnoreFiltering:
         filtered = manager.filter_validation_results([result])
 
         assert result in filtered
+
+    def test_run_validations_applies_per_handler_filter_for_non_always_run_code(
+        self, mocker
+    ):
+        """
+        Given: A connector serializer validator whose error code is NOT in
+               ``ALWAYS_RUN_ON_ERROR_CODE`` (e.g. CO130) that emits two
+               per-handler results - ``handler_a`` (ignored via
+               ``handler_a/serializer.yaml`` in ``.connector-ignore``) and
+               ``handler_b`` (not ignored).
+        When: ``ValidateManager.run_validations`` executes the batch.
+        Then: The per-handler filter runs, so ``handler_a``'s result is dropped
+              while ``handler_b``'s is kept (still enforced).
+
+        Regression: previously ``filter_validation_results`` was only invoked
+        from ``run_validations`` when the code was in
+        ``ALWAYS_RUN_ON_ERROR_CODE`` (``GR107``/``GR109``). Every other
+        connector handler/serializer code - including CO130/CO171 - skipped the
+        per-result filter entirely, silently dropping per-handler
+        ``.connector-ignore`` scoping. ``filter_validation_results`` itself was
+        correct and covered above; the gap was the *gating* at the call site,
+        which only an end-to-end ``run_validations`` drive can pin.
+        """
+        manager = get_validate_manager(mocker)
+
+        ignored_map = {"handler_a/serializer.yaml": ["CO130"]}
+        result_a = self._make_result(
+            "CO130",
+            Path("/repo/connectors/foo/components/handlers/handler_a/serializer.yaml"),
+            ignored_map,
+            related_file_type=[RelatedFileType.CONNECTOR_SERIALIZER],
+        )
+        result_b = self._make_result(
+            "CO130",
+            Path("/repo/connectors/foo/components/handlers/handler_b/serializer.yaml"),
+            ignored_map,
+            related_file_type=[RelatedFileType.CONNECTOR_SERIALIZER],
+        )
+
+        # A single fake validator that produces both per-handler results, so the
+        # batch flows through the real ``run_validations`` gating -> filter path.
+        validator = mocker.Mock()
+        validator.error_code = "CO130"
+        validator.expected_execution_mode = None
+        validator.is_auto_fixable = False
+        validator.should_run.return_value = True
+        validator.obtain_invalid_content_items.return_value = [result_a, result_b]
+
+        manager.validators = [validator]
+        manager.objects_to_run = {mocker.Mock()}
+        manager.allow_autofix = False
+
+        extend_spy = mocker.patch.object(
+            manager.validation_results, "extend_validation_results"
+        )
+        mocker.patch.object(manager, "add_invalid_content_items")
+        mocker.patch.object(manager.validation_results, "post_results", return_value=0)
+
+        manager.run_validations()
+
+        extend_spy.assert_called_once()
+        extended_results = extend_spy.call_args[0][0]
+        assert result_a not in extended_results, (
+            "handler_a's ignored CO130 result should be filtered out by "
+            "run_validations for a non-always-run connector serializer code"
+        )
+        assert result_b in extended_results, (
+            "handler_b's CO130 result should remain enforced (sibling handler "
+            "does not ignore the code)"
+        )
 
 
 class TestImplicitGraphInitialization:

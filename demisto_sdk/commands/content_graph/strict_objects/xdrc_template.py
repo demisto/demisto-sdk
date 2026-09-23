@@ -8,11 +8,13 @@ from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import 
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     NAME_DYNAMIC_MODEL,
     BaseStrictModel,
+    SupportedFeaturesList,
     create_model,
 )
 
 
 class _StrictXDRCTemplate(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     os_type: str
     profile_type: str
     name: str

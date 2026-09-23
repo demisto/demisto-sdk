@@ -11,8 +11,8 @@ class StrictAgentixSkill(AgentixBase):
     Inherits the ``AgentixBase`` schema (which requires ``commonfields`` with
     ``id`` and ``version``, plus the common fields ``name``, ``description``,
     ``tags``, ``category``, ``disabled``, ``internal``, ``fromversion``,
-    ``toversion``, ``marketplaces``, ``supportedModules``). Adds the
-    skill-specific ``content`` field.
+    ``toversion``, ``marketplaces``, ``supportedModules``,
+    ``supportedFeatures``). Adds the skill-specific ``content`` field.
     """
 
     content: Optional[str] = None

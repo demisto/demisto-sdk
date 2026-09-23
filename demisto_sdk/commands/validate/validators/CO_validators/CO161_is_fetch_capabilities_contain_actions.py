@@ -14,17 +14,24 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = Connector
 
-# Mapping of fetch base capability id -> required action.type.
+# Mapping of fetch base capability id -> list of required action.type values.
 # Only the four stateful fetch families are required to declare their
 # reset action. ``fetch-secrets`` is stateless so it's intentionally
 # omitted, and ``automation-and-remediation`` is NOT a fetch capability
 # so it is NOT required to declare any action (handlers may still
 # declare optional actions on it — CO161 only enforces required ones).
+#
+# A base capability may require MULTIPLE actions. ``fetch-issues`` (the
+# incident-fetch family) requires BOTH its reset action
+# (``reset_incidents_last_run``) and ``fetch_history``. ``fetch_history`` is a
+# bare action that lets users backfill/replay historical incidents; every
+# incident-fetch capability must expose it. The other three families each
+# require only their single reset action.
 REQUIRED_ACTION_BY_BASE_CAP: dict = {
-    "fetch-issues": "reset_incidents_last_run",
-    "log-collection": "reset_events_last_run",
-    "fetch-assets-and-vulnerabilities": "reset_assets_last_run",
-    "threat-intelligence-and-enrichment": "reset_feed_last_run",
+    "fetch-issues": ["reset_incidents_last_run", "fetch_history"],
+    "log-collection": ["reset_events_last_run"],
+    "fetch-assets-and-vulnerabilities": ["reset_assets_last_run"],
+    "threat-intelligence-and-enrichment": ["reset_feed_last_run"],
 }
 
 
@@ -43,16 +50,22 @@ class IsFetchCapabilitiesContainActionsValidator(ConnectorsValidator[ContentType
     error_code = "CO161"
     description = (
         "Validates that every fetch-family capability the handler "
-        "subscribes to declares its required reset-state action."
+        "subscribes to declares all of its required actions. The "
+        "incident-fetch family (fetch-issues) requires TWO actions: "
+        "reset_incidents_last_run and fetch_history; the other stateful "
+        "fetch families each require their single reset-state action."
     )
     rationale = (
         "Fetch-type sub-capabilities are stateful (last-run cursors, event "
         "watermarks, feed offsets, incident IDs). The platform exposes a "
         "reset action per stateful capability so users can recover from "
-        "bad state. A subscribed fetch capability that omits its required "
-        "action leaves users without a recovery path. Base id -> required "
-        "action mapping: "
-        "fetch-issues -> reset_incidents_last_run; "
+        "bad state. A subscribed fetch capability that omits a required "
+        "action leaves users without a recovery path. The incident-fetch "
+        "family additionally requires the fetch_history action, a bare "
+        "action that lets users backfill/replay historical incidents; every "
+        "incident-fetch capability must expose it. Base id -> required "
+        "action(s) mapping: "
+        "fetch-issues -> reset_incidents_last_run + fetch_history; "
         "log-collection -> reset_events_last_run; "
         "fetch-assets-and-vulnerabilities -> reset_assets_last_run; "
         "threat-intelligence-and-enrichment -> reset_feed_last_run. "
@@ -111,19 +124,27 @@ class IsFetchCapabilitiesContainActionsValidator(ConnectorsValidator[ContentType
     @staticmethod
     def _check_capability(cap: HandlerCapability) -> Optional[str]:
         """Return a per-capability problem string, or ``None`` if the
-        capability passes (either because its base id has no required action
-        or because the required action is present).
+        capability passes (either because its base id has no required actions
+        or because all required actions are present).
+
+        A base capability may require multiple actions (e.g. fetch-issues
+        requires both ``reset_incidents_last_run`` and ``fetch_history``).
+        The returned message lists EACH missing required action, so a
+        fetch-issues capability missing only ``fetch_history`` is flagged for
+        ``fetch_history``, and one missing both lists both.
         """
         base = _capability_base_id(cap.id)
         required = REQUIRED_ACTION_BY_BASE_CAP.get(base)
-        if required is None:
+        if not required:
             return None
 
         action_types = {a.type for a in cap.actions if a and a.type}
-        if required in action_types:
+        missing = [action for action in required if action not in action_types]
+        if not missing:
             return None
 
+        missing_str = ", ".join(f"'{action}'" for action in missing)
         return (
-            f"capability '{cap.id}' is missing action type "
-            f"'{required}' (found {sorted(action_types) if action_types else '[]'})"
+            f"capability '{cap.id}' is missing required action type(s) "
+            f"{missing_str} (found {sorted(action_types) if action_types else '[]'})"
         )

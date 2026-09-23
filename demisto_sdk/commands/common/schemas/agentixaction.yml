@@ -51,6 +51,10 @@ mapping:
         required: false
   requiresuserapproval:
     type: bool
+  islongrunning:
+    type: bool
+  longrunningtimeoutseconds:
+    type: int
   internal:
     type: bool # Hidden from UI and API
   fromversion:
@@ -66,6 +70,10 @@ mapping:
     sequence:
     - type: str
   fewshots:
+    type: seq
+    sequence:
+    - type: str
+  supportedFeatures:
     type: seq
     sequence:
     - type: str

@@ -27,6 +27,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     NAME_DYNAMIC_MODEL,
     QUICK_ACTION_DYNAMIC_MODEL,
     REQUIRED_DYNAMIC_MODEL,
+    SupportedFeaturesList,
     create_dynamic_model,
     create_model,
 )
@@ -53,6 +54,7 @@ class SectionOrderValues(StrEnum):
 
 
 class _Configuration(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     display: Optional[str] = None
     section: Optional[str] = None
     advanced: Optional[str] = None
@@ -92,6 +94,7 @@ class IntegrationOutput(Output):  # type:ignore[misc,valid-type]
 
 
 class _Command(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     name: str
     execution: Optional[bool] = None
     description: str
@@ -203,6 +206,7 @@ class Trigger(BaseStrictModel):
 
 
 class _StrictIntegration(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     common_fields: CommonFieldsIntegration = Field(..., alias="commonfields")  # type:ignore[valid-type]
     display: str
     beta: Optional[bool] = None

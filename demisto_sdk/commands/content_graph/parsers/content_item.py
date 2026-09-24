@@ -200,6 +200,16 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         return parser
 
     @property
+    def supportedFeatures(self) -> Optional[List[str]]:
+        """The item's own authored `supportedFeatures`, or None if it declares none.
+
+        Deliberately not resolved against the pack: use
+        `get_content_item_supported_features` when you need the effective value.
+        """
+        raw_data = self.raw_data if isinstance(self.raw_data, dict) else {}
+        return raw_data.get("supportedFeatures")
+
+    @property
     @abstractmethod
     def name(self) -> Optional[str]:
         pass

@@ -166,6 +166,10 @@ mapping:
     - type: str
   spec:
     type: str
+  supportedFeatures:
+    type: seq
+    sequence:
+    - type: str
 
 # script->args
   name:xsoar:

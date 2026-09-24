@@ -30,34 +30,43 @@ class IsProxyAndInsecureExistsValidator(ConnectorsValidator[ContentTypes]):
     """CO120 - the connector must expose ``proxy`` / ``insecure`` when the
     backing integration does.
 
-    Uses ``handler.resolved_params`` (built by the connector parser) as the
-    single source of truth for "which params does this handler expose". Each
-    ``ResolvedParamMapping`` already accounts for:
+    Uses the handler-visible-fields walker
+    (:meth:`Connector.visible_fields_for_handler`) as the single source
+    of truth for "which fields does this handler expose". Each
+    :class:`HandlerVisibleField` carries the post-serializer
+    ``runtime_name`` — that's exactly what the backing integration will
+    see as a param name at runtime. The walker already accounts for:
 
-    - top-level ``general_configurations`` in ``connection.yaml`` (standard
-      connectors),
+    - top-level ``general_configurations`` in ``connection.yaml``
+      (standard connectors),
     - per-profile ``configurations[]`` under ``profiles[]`` in
-      ``connection.yaml`` (grouped connectors, where field ids are
+      ``connection.yaml`` (grouped connectors, where raw ids are
       namespaced e.g. ``plain_jira_v3_proxy``),
-    - serializer.yaml ``field_mappings[]`` that rename a namespaced connector
-      id back to its runtime name (``proxy`` / ``insecure``).
+    - ``capabilities.yaml`` / ``configurations.yaml`` (including grouped
+      sub-cap ``configurations[]`` entries the legacy parser walker
+      silently dropped — Bug 3 in
+      ``plans/handler-visible-fields-walker.md`` §1),
+    - ``serializer.yaml`` ``field_mappings[]`` renames that rewrite a
+      namespaced connector id back to its runtime name (``proxy`` /
+      ``insecure``),
+    - ``view_group`` / ``required_for_capabilities`` scoping on
+      ``general_configurations`` groups (Bug 1).
 
-    So the rule collapses to: for each XSOAR handler whose backing
-    integration declares a ``proxy`` / ``insecure`` param, some entry in
-    ``handler.resolved_params`` must have a ``content_param_name`` in the
-    corresponding alias set.
+    Rule: for each XSOAR handler whose backing integration declares a
+    ``proxy`` / ``insecure`` param, some visible field for that handler
+    must have a ``runtime_name`` in the corresponding alias set.
 
     Skip / error policy:
 
     - Non-XSOAR handlers: skipped (mirrors CO114 / CO194).
-    - XSOAR handler with ``related_integration is None``: **flagged** as an
-      error. An XSOAR handler with no resolvable integration is a real
-      migration bug, not something to silently pass. (CO114 flags the same
-      situation from a licensing angle; here we flag it from the
-      general-params angle so the message tells the author which specific
-      family the connector cannot be verified for.)
-    - Connector with no ``connection.yaml``: skipped defensively (CO118 /
-      other validators catch missing connection.yaml).
+    - XSOAR handler with ``related_integration is None``: **flagged** as
+      an error. An XSOAR handler with no resolvable integration is a
+      real migration bug, not something to silently pass. (CO114 flags
+      the same situation from a licensing angle; here we flag it from
+      the general-params angle so the message tells the author which
+      specific family the connector cannot be verified for.)
+    - Connector with no ``connection.yaml``: skipped defensively (CO118
+      / other validators catch missing connection.yaml).
     """
 
     error_code = "CO120"
@@ -65,7 +74,7 @@ class IsProxyAndInsecureExistsValidator(ConnectorsValidator[ContentTypes]):
         "Validates that when the backing integration declares a 'proxy' or "
         "'insecure' parameter, the connector exposes a corresponding field "
         "for each XSOAR handler - either directly (id in the alias set) or "
-        "via a serializer.yaml field_mappings rename whose content_param_name "
+        "via a serializer.yaml field_mappings rename whose runtime name "
         "resolves to the alias set."
     )
     rationale = (
@@ -78,7 +87,10 @@ class IsProxyAndInsecureExistsValidator(ConnectorsValidator[ContentTypes]):
         "Connector '{connector_id}' handler '{handler_id}' (integration "
         "'{integration_id}'): {details}."
     )
-    related_field = "resolved_params"
+    # Concrete descriptor of the physical files the walker aggregates from
+    # (per plans/handler-visible-fields-walker.md §Section 7 Q6). Points
+    # authors at the YAMLs they can edit rather than a runtime concept.
+    related_field = "connection.yaml / capabilities.yaml / configurations.yaml"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.CONNECTOR_CONNECTION]
 
@@ -107,17 +119,22 @@ class IsProxyAndInsecureExistsValidator(ConnectorsValidator[ContentTypes]):
         return found
 
     @staticmethod
-    def _resolved_content_names(handler: HandlerData) -> Set[str]:
+    def _exposed_runtime_names(
+        connector: ContentTypes, handler: HandlerData
+    ) -> Set[str]:
         """Set of runtime (post-serializer) parameter names this handler
-        actually exposes to the integration. Combines all fields collected
-        by the connector parser (connection general_configurations, profile
-        configurations for this handler, capabilities/configurations
-        sections) with any serializer-driven renames.
+        actually exposes to the integration.
+
+        Reads from
+        :meth:`Connector.visible_fields_for_handler`; the walker already
+        applies ``view_group`` / ``required_for_capabilities`` scoping,
+        grouped sub-cap entry-id matching, and per-handler serializer
+        renames. See the class docstring for the full origin list.
         """
         names: Set[str] = set()
-        for rp in handler.resolved_params:
-            if rp.content_param_name:
-                names.add(rp.content_param_name)
+        for vf in connector.visible_fields_for_handler(handler):
+            if vf.runtime_name:
+                names.add(vf.runtime_name)
         return names
 
     # ------------------------------------------------------------------
@@ -177,7 +194,7 @@ class IsProxyAndInsecureExistsValidator(ConnectorsValidator[ContentTypes]):
         if not required_families:
             return results  # Integration declares no proxy/insecure param.
 
-        exposed_content_names = self._resolved_content_names(handler)
+        exposed_content_names = self._exposed_runtime_names(connector, handler)
 
         for family in sorted(required_families):
             aliases = PROXY_ALIASES if family == "proxy" else INSECURE_ALIASES

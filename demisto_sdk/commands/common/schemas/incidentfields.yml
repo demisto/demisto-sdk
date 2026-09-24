@@ -8,6 +8,10 @@ mapping:
     type: seq
     sequence:
     - include: field_schema
+  supportedFeatures:
+    type: seq
+    sequence:
+    - type: str
 
 schema;field_schema:
   type: map

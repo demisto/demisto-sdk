@@ -1043,6 +1043,7 @@ def create_connector_object(
     capabilities_data: Optional[Dict[str, Any]] = None,
     connector_overrides: Optional[Dict[str, Any]] = None,
     connection_data: Optional[Dict[str, Any]] = None,
+    configurations_data: Optional[Dict[str, Any]] = None,
 ) -> Connector:
     """Create a Connector object from template YAMLs for testing.
 
@@ -1055,9 +1056,17 @@ def create_connector_object(
         connector_id: The connector ID (used as directory name and in connector.yaml).
         handlers: List of handler YAML dicts. Each dict is merged on top of the
             default handler template. If None, a single default XSOAR handler is created.
+            A handler dict may carry a special ``serializer`` key (a dict shaped like
+            serializer.yaml, e.g. ``{"field_mappings": [{"id": ..., "field_name": ...}]}``).
+            When present, it is popped from the handler dict and written to that handler's
+            ``serializer.yaml`` instead of the handler.yaml.
         capabilities_data: Dict to merge on top of the default capabilities template.
         connector_overrides: Dict to merge on top of the default connector.yaml template.
         connection_data: Dict to merge on top of the default connection.yaml template.
+        configurations_data: Optional dict written verbatim to ``configurations.yaml``
+            at the connector root (e.g. ``{"configurations": [{"id": <cap>,
+            "configurations": [{"fields": [{"id": "mappingId", ...}]}]}]}``). When None,
+            no configurations.yaml file is written.
 
     Returns:
         A fully parsed Connector object.
@@ -1083,15 +1092,18 @@ def create_connector_object(
     if connection_data:
         _deep_merge(connection_yml, connection_data)
 
-    # Prepare handler configs
+    # Prepare handler configs. A handler dict may carry a special ``serializer``
+    # key which is popped out and written as serializer.yaml (not handler.yaml).
     if handlers is None:
-        handler_configs = [copy.deepcopy(handler_template)]
+        handler_configs = [(copy.deepcopy(handler_template), None)]
     else:
         handler_configs = []
         for h_overrides in handlers:
+            h_overrides = copy.deepcopy(h_overrides)
+            serializer = h_overrides.pop("serializer", None)
             h = copy.deepcopy(handler_template)
             _deep_merge(h, h_overrides)
-            handler_configs.append(h)
+            handler_configs.append((h, serializer))
 
     # Create temporary directory structure
     import tempfile
@@ -1112,14 +1124,22 @@ def create_connector_object(
     with open(connector_dir / "connection.yaml", "w") as f:
         yaml.dump(connection_yml, f)
 
+    # Write configurations.yaml (optional)
+    if configurations_data is not None:
+        with open(connector_dir / "configurations.yaml", "w") as f:
+            yaml.dump(configurations_data, f)
+
     # Write handler directories
     handlers_dir = connector_dir / "components" / "handlers"
-    for h_config in handler_configs:
+    for h_config, serializer in handler_configs:
         handler_name = h_config.get("id", "xsoar-test").replace("-", "_")
         handler_dir = handlers_dir / handler_name
         handler_dir.mkdir(parents=True)
         with open(handler_dir / "handler.yaml", "w") as f:
             yaml.dump(h_config, f)
+        if serializer is not None:
+            with open(handler_dir / "serializer.yaml", "w") as f:
+                yaml.dump(serializer, f)
 
     # Parse and return
     parser = ConnectorParser(

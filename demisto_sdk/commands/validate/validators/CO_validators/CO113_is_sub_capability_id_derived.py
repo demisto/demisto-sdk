@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import Iterable, List, Optional
+from typing import FrozenSet, Iterable, List, Optional, cast
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.connector import (
@@ -50,8 +50,9 @@ def normalize_integration_id(integration_id: str) -> str:
     substitutes for the letter ``A``) is NOT reproducible by this
     mechanical rule; the mechanical form is ``mitre-att-ck-v2``. Since
     sub-capability ids are immutable after publish, this validator only
-    runs on newly ADDED connectors (see :pyattr:`expected_git_statuses`),
-    so any existing non-mechanical ids are grandfathered in.
+    checks sub-capability ids that did not exist in the connector's prior
+    version (diffed against ``old_base_content_object``); any existing
+    non-mechanical ids are grandfathered in.
     """
     return re.sub(r"[^a-z0-9]+", "-", integration_id.lower()).strip("-")
 
@@ -69,20 +70,28 @@ class IsSubCapabilityIdDerivedValidator(ConnectorsValidator[ContentTypes]):
         "indicates the capabilities.yaml drifted from the handler/integration. "
         "Because sub-capability ids are immutable after publish (renaming one "
         "breaks existing customer instances), this rule is only enforced on "
-        "newly added connectors. Sub-capability titles — which are safe to "
-        "change any time — are separately governed by CO194 on every grouped "
-        "connector, regardless of git status."
+        "sub-capability ids that did not exist in the connector's prior "
+        "version — a NEW sub-capability, whether the connector itself is newly "
+        "added or an existing one gaining a capability. Sub-capability titles "
+        "— which are safe to change any time — are separately governed by "
+        "CO194 on every grouped connector, regardless of git status."
     )
     error_message = (
         "Grouped connector '{connector_id}' has invalid sub-capabilities: " "{details}."
     )
     related_field = "capabilities"
     is_auto_fixable = False
-    # Only run on brand-new connectors: an existing sub-capability id cannot
-    # be changed without breaking upgrades of existing customer instances,
-    # so drift on already-published connectors is intentionally grandfathered.
-    # Title drift is caught separately by CO194.
-    expected_git_statuses = [GitStatuses.ADDED]
+    # Runs on ADDED (brand-new connector), MODIFIED and RENAMED (existing
+    # connector gaining a sub-capability). The per-sub-capability diff against
+    # the prior version (below) restricts the id check to genuinely-new
+    # sub-capabilities; existing ids are immutable and grandfathered. Title
+    # drift is caught separately by CO194. The explicit status list also keeps
+    # this validator OUT of the path-based flow (no prior version there).
+    expected_git_statuses = [
+        GitStatuses.ADDED,
+        GitStatuses.MODIFIED,
+        GitStatuses.RENAMED,
+    ]
     related_file_type = [RelatedFileType.CONNECTOR_CAPABILITIES]
 
     def obtain_invalid_content_items(
@@ -96,10 +105,15 @@ class IsSubCapabilityIdDerivedValidator(ConnectorsValidator[ContentTypes]):
             if not (connector.settings and connector.settings.grouped):
                 continue
 
+            prior_ids = self._prior_sub_capability_ids(connector)
             details: List[str] = []
 
             for capability in connector.capabilities:
                 for sub_capability in capability.sub_capabilities:
+                    # Frozen id — existed in the prior version, immutable after
+                    # publish. Only genuinely-new sub-capability ids are checked.
+                    if sub_capability.id in prior_ids:
+                        continue
                     details.extend(
                         self._check_sub_capability(
                             connector, capability.id, sub_capability
@@ -120,6 +134,29 @@ class IsSubCapabilityIdDerivedValidator(ConnectorsValidator[ContentTypes]):
                 )
 
         return results
+
+    @staticmethod
+    def _prior_sub_capability_ids(connector: ContentTypes) -> FrozenSet[str]:
+        """Sub-capability ids present in the connector's previous version.
+
+        Empty when there is no prior version (brand-new connector, or a run
+        with no git base), so every sub-capability id is treated as new.
+        """
+        old = cast(Optional[ContentTypes], connector.old_base_content_object)
+        if old is None:
+            return frozenset()
+        ids: set = set()
+        # ``old`` may be a partially-materialized baseline (parsed from the
+        # prior git ref, or a deep copy for ADDED items) that does not expose
+        # ``capabilities``; guard defensively so a missing attribute reads as
+        # "no prior sub-capabilities" rather than raising.
+        for cap in getattr(old, "capabilities", None) or []:
+            if not cap:
+                continue
+            for sub in getattr(cap, "sub_capabilities", None) or []:
+                if sub and sub.id:
+                    ids.add(sub.id)
+        return frozenset(ids)
 
     def _check_sub_capability(
         self,

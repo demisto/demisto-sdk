@@ -322,6 +322,10 @@ class ContentItem(BaseContent):
         # partner marketplace) and whenever the item has no supported modules.
         if not self.supportedModules or not is_platform_marketplace(marketplace):  # type: ignore[arg-type]
             exclude_fields["supportedModules"] = True
+        # Authored values are never empty (validation rejects []), so only an
+        # absent value is excluded.
+        if self.supportedFeatures is None:
+            exclude_fields["supportedFeatures"] = True
 
         summary_res = self.dict(
             include=self.metadata_fields(), by_alias=True, exclude=exclude_fields
@@ -358,6 +362,7 @@ class ContentItem(BaseContent):
             "toversion",
             "deprecated",
             "supportedModules",
+            "supportedFeatures",
         }
 
     @property

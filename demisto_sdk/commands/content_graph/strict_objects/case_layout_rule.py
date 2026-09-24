@@ -6,10 +6,14 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     AlertsFilter,
 )
-from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel
+from demisto_sdk.commands.content_graph.strict_objects.common import (
+    BaseStrictModel,
+    SupportedFeaturesList,
+)
 
 
 class StrictCaseLayoutRule(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     rule_id: str
     rule_name: str
     layout_id: str

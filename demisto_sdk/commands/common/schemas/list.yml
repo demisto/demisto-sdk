@@ -97,6 +97,10 @@ mapping:
     type: str
   id:xsoar_on_prem:
     type: str
+  supportedFeatures:
+    type: seq
+    sequence:
+    - type: str
 schema;previousRoles_schema:
   type: any
 

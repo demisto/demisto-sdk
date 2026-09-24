@@ -22,6 +22,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     NAME_DYNAMIC_MODEL,
     REQUIRED_DYNAMIC_MODEL,
     BaseStrictModel,
+    SupportedFeaturesList,
     create_dynamic_model,
     create_model,
 )
@@ -141,6 +142,7 @@ class StructureError(BaseStrictModel):
 
 
 class _BaseIntegrationScript(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     name: str
     deprecated: Optional[bool] = None
     system: Optional[bool] = None
@@ -176,6 +178,7 @@ class ExtractSettings(BaseStrictModel):
 
 
 class _StrictGenericIncidentType(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     vc_should_ignore: Optional[bool] = Field(None, alias="vcShouldIgnore")
     sort_values: Optional[Any] = Field(None, alias="sortValues")
     locked: Optional[bool] = None
@@ -245,6 +248,7 @@ class AlertsFilter(BaseStrictModel):
 
 
 class AgentixBase(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     common_fields: CommonFields = Field(..., alias="commonfields")  # type:ignore[valid-type]
     tags: Optional[list[str]] = None
     category: Optional[str] = None

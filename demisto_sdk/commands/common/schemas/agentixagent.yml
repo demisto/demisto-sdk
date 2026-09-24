@@ -82,3 +82,7 @@ mapping:
     - type: str
   excludefromtightlycoupled:
     type: bool
+  supportedFeatures:
+    type: seq
+    sequence:
+    - type: str

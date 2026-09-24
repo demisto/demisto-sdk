@@ -238,6 +238,10 @@ mapping:
 
   isCloudProviderIntegration:
     type: bool
+  supportedFeatures:
+    type: seq
+    sequence:
+    - type: str
 
 # integration->configuration
   name:xsoar:

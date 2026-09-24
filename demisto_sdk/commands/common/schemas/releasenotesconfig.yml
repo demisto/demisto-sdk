@@ -27,3 +27,7 @@ mapping:
       breakingChangesNotesTightly:
         type: str
         required: false
+  supportedFeatures:
+    type: seq
+    sequence:
+    - type: str

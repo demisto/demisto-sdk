@@ -37,12 +37,18 @@ from demisto_sdk.commands.common.tools import (
     write_dict,
 )
 from demisto_sdk.commands.content_graph.common import (
+    DERIVED_PACK_ALLOWED_SUPPORT_LEVELS,
+    ENABLE_SPLIT_PACKS,
     PACK_METADATA_FILENAME,
     VERSION_CONFIG_FILENAME,
     ContentType,
     Nodes,
+    PackDestination,
     Relationships,
     RelationshipType,
+    derived_pack_exclusions,
+    is_deprecated_content_item,
+    is_deprecated_pack,
     replace_marketplace_references,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
@@ -150,6 +156,12 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     )
     pack_metadata_dict: Optional[dict] = Field({}, exclude=True)
 
+    # Split-pack / derived-pack fields
+    is_derived: bool = False
+    derived_from: Optional[str] = None
+    # All source-pack items tightly coupled; propagated to the twin and dumped only as ``exclusivelyManagedPaired``.
+    exclusively_managed_paired: bool = Field(False, exclude=True)
+
     @classmethod
     def from_orm(cls, obj) -> "Pack":
         pack = super().from_orm(obj)
@@ -172,6 +184,77 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     @property
     def pack_id(self) -> str:
         return self.object_id
+
+    @property
+    def destination(self) -> PackDestination:
+        """Where this pack's artifacts are routed."""
+        if self.managed:
+            return PackDestination.MANAGED_CONTENT
+        return PackDestination.MARKETPLACE
+
+    def _is_item_tightly_coupled(self, content_item: ContentItem) -> bool:
+        """True when the item is tightly coupled: not deprecated and not opted out. Mirrors ``PackParser._is_item_tightly_coupled``."""
+        if content_item.exclude_from_tightly_coupled:
+            return False
+        if is_deprecated_content_item(content_item):
+            return False
+        return content_item.content_type.is_tightly_coupled
+
+    def _is_derived_pack_eligible(self) -> bool:
+        """True when the pack may yield a derived pack. Mirrors ``PackParser._is_derived_pack_eligible`` - keep in sync."""
+        pack_id = self.object_id or ""
+        if self.managed:
+            return False
+        if (self.support or "").casefold() not in DERIVED_PACK_ALLOWED_SUPPORT_LEVELS:
+            logger.debug(
+                f"Pack '{pack_id}' is not derived-pack eligible: support level "
+                f"'{self.support}' is not one of {sorted(DERIVED_PACK_ALLOWED_SUPPORT_LEVELS)}"
+            )
+            return False
+        if is_deprecated_pack(self):
+            logger.debug(
+                f"Pack '{pack_id}' is not derived-pack eligible: the pack is deprecated"
+            )
+            return False
+        if self.hidden:
+            logger.debug(
+                f"Pack '{pack_id}' is not derived-pack eligible: the pack is hidden"
+            )
+            return False
+        if pack_id.casefold() in derived_pack_exclusions():
+            logger.debug(
+                f"Pack '{pack_id}' is not derived-pack eligible: it is listed in the exclusion list"
+            )
+            return False
+        return True
+
+    def is_managed_paired(self) -> bool:
+        """True when the pack is one half of a marketplace/managed pair. Mirrors ``PackParser._generate_derived_pack``."""
+        if self.is_derived:
+            return True
+        if not self._is_derived_pack_eligible():
+            return False
+        return any(
+            self._is_item_tightly_coupled(content_item)
+            for content_item in self.content_items
+        )
+
+    def is_exclusively_managed_paired(self) -> bool:
+        """``all`` sibling of ``is_managed_paired``; a derived twin returns the value propagated from its source pack."""
+        if self.is_derived:
+            return self.exclusively_managed_paired
+        if not self.is_managed_paired():
+            return False
+        considered = [
+            content_item
+            for content_item in self.content_items
+            if content_item.content_type not in CONTENT_TYPES_EXCLUDED_FROM_UPLOAD
+        ]
+        if not considered:
+            return False
+        return all(
+            self._is_item_tightly_coupled(content_item) for content_item in considered
+        )
 
     @property
     def ignored_errors(self) -> List[str]:
@@ -469,6 +552,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 "disable_monthly",
             }
 
+        if self.derived_source is None:
+            # Omit the `derivedSource` key entirely instead of emitting it as `null`.
+            excluded_fields_from_metadata.add("derived_source")
+
         metadata = self.dict(exclude=excluded_fields_from_metadata, by_alias=True)
         # Resolve marketplace-suffixed managed/source fields into the plain
         # managed/source fields for the current marketplace.
@@ -483,6 +570,11 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 strip_internal=strip_internal,
             )
         )
+        # CIAC-16414: emit ``managedPaired``; omitted entirely while ENABLE_SPLIT_PACKS is off.
+        if ENABLE_SPLIT_PACKS:
+            metadata["managedPaired"] = self.is_managed_paired()
+            # Pack level only: True when every non-test item is tightly coupled.
+            metadata["exclusivelyManagedPaired"] = self.is_exclusively_managed_paired()
         self._clean_empty_supportedModuels_from_commands(
             metadata.get("contentItems", {})
         )
@@ -593,6 +685,14 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                         f"SKIPPING dump {content_item.content_type} {content_item.normalize_name}"
                         f"to destination {marketplace=}"
                         f" - content item has marketplaces {content_item.marketplaces}"
+                    )
+                    continue
+
+                # Derived packs only include tightly coupled items
+                if self.is_derived and not self._is_item_tightly_coupled(content_item):
+                    logger.debug(
+                        f"SKIPPING dump {content_item.content_type} {content_item.normalize_name}"
+                        f" — derived pack only includes tightly coupled items"
                     )
                     continue
 
@@ -848,12 +948,19 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             )
 
     def to_nodes(self) -> Nodes:
+        # The twin shares the source pack's item objects, so only the source emits item nodes (CREATE, no constraint).
+        if self.is_derived:
+            return Nodes(self.to_dict())
         return Nodes(
             self.to_dict(),
             *[content_item.to_dict() for content_item in self.content_items],
         )
 
     def save(self):
+        # A derived pack is virtual: ``self.path`` is the source pack's dir, so saving would overwrite its metadata.
+        if self.is_derived:
+            logger.debug(f"Skipping save for derived pack {self.object_id}")
+            return
         file_path = self.path / PACK_METADATA_FILENAME
         data = get_file(file_path)
         # Never inject ``firstCreated`` if it was not already in the original

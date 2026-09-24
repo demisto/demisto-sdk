@@ -98,6 +98,8 @@ mapping:
     type: seq
     sequence:
     - type: str
+  excludefromtightlycoupled:
+    type: bool
   Aliases:
     type: seq
     sequence:

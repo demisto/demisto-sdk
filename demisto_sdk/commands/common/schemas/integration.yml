@@ -32,6 +32,8 @@ mapping:
     required: true
   deprecated:
     type: bool
+  excludefromtightlycoupled:
+    type: bool
   beta:
     type: bool
   category:

@@ -32,6 +32,7 @@ from demisto_sdk.commands.common.tools import (
     write_dict,
 )
 from demisto_sdk.commands.content_graph.common import (
+    EXCLUDE_FROM_TIGHTLY_COUPLED_KEY,
     ContentType,
     RelationshipType,
     append_supported_modules,
@@ -58,6 +59,7 @@ class ContentItem(BaseContent):
     pack: Any = Field(None, exclude=True, repr=False)
     support: str = ""
     is_silent: bool = False
+    exclude_from_tightly_coupled: bool = False
     upload_path: Optional[Path] = None
 
     @validator("path", always=True)
@@ -298,6 +300,8 @@ class ContentItem(BaseContent):
         else:
             if "supportedModules" in data:
                 del data["supportedModules"]
+        # SDK-only build-time flag - must never be uploaded to the server.
+        data.pop(EXCLUDE_FROM_TIGHTLY_COUPLED_KEY, None)
         return MarketplaceSuffixPreparer.prepare(data, current_marketplace)
 
     def summary(

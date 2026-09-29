@@ -156,13 +156,16 @@ def connector_is_appendix_h(connector: Connector) -> bool:
 # Grouped connectors namespace their connection.yaml field ids per
 # profile (e.g. ``plain_qualys_fim_engine_mode``). Each XSOAR handler
 # owns a ``serializer.yaml`` that rewrites those namespaced ids back to
-# the canonical integration param name (e.g. ``engine_mode``). The
-# parser already exposes those rewrites on
-# ``handler.resolved_params[*]`` (same source CO120 uses).
+# the canonical integration param name (e.g. ``engine_mode``).
 #
 # CO125/CO126/CO128 MUST look up engine fields by CANONICAL id after
 # serializer rewrite, not by the raw connection.yaml id, otherwise every
-# grouped connector with namespaced ids will false-positive.
+# grouped connector with namespaced ids will false-positive. The
+# canonical id mapping is obtained from the handler-visible-fields
+# walker (:meth:`Connector.visible_fields_for_handler`), which knows
+# every field's ``raw_id`` (as authored) and ``runtime_name`` (after
+# serializer rewrite) — that's exactly the ``{raw -> canonical}``
+# resolver we need.
 
 
 def xsoar_handlers_for_profile(
@@ -186,6 +189,28 @@ def xsoar_handlers_for_profile(
             break
 
 
+def _serializer_resolver_for_profile(
+    connector: Connector, profile_id: str
+) -> Dict[str, str]:
+    """Return the ``{raw_id -> runtime_name}`` map for every field
+    visible to any XSOAR handler on ``connector`` that binds to
+    ``profile_id``.
+
+    Reads from :meth:`Connector.visible_fields_for_handler` — the
+    walker already computes per-field ``raw_id`` / ``runtime_name`` /
+    ``is_serialized``, so this is a two-line collect. First-wins per
+    ``raw_id`` if the same id appears in multiple handlers on the
+    profile (matches CO125's previous behaviour).
+    """
+    resolver: Dict[str, str] = {}
+    for handler in xsoar_handlers_for_profile(connector, profile_id):
+        for vf in connector.visible_fields_for_handler(handler):
+            if vf.raw_id in resolver:
+                continue
+            resolver[vf.raw_id] = vf.runtime_name
+    return resolver
+
+
 def profile_serialized_field_ids(
     connector: Connector, profile: ConnectionProfile
 ) -> Set[str]:
@@ -194,18 +219,12 @@ def profile_serialized_field_ids(
 
     A grouped connector's raw connection.yaml id
     ``plain_qualys_fim_engine_mode`` is resolved to its canonical name
-    ``engine_mode`` via the owning XSOAR handler's ``resolved_params``
-    (built from ``serializer.yaml`` at parse time). Raw ids that have no
-    resolver entry map to themselves.
+    ``engine_mode`` via the owning XSOAR handler's serializer
+    field_mappings, exposed on the walker as
+    ``HandlerVisibleField.runtime_name``. Raw ids with no rename map
+    to themselves.
     """
-    resolver: Dict[str, str] = {}
-    for handler in xsoar_handlers_for_profile(connector, profile.id):
-        for rp in handler.resolved_params:
-            # If the same raw id resolves in multiple handlers, keep the
-            # first mapping we see.
-            if rp.connector_param_name in resolver:
-                continue
-            resolver[rp.connector_param_name] = rp.content_param_name
+    resolver = _serializer_resolver_for_profile(connector, profile.id)
 
     canonical: Set[str] = set()
     for fg in profile.configurations:

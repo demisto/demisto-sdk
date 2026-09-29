@@ -36,12 +36,13 @@ class NoParamRequiredTightenedValidator(ConnectorsValidator[ContentTypes]):
         "to True across versions. **Exemption:** if the new version declares "
         "an explicit `options.default_value`, the tightening is allowed - "
         "the platform substitutes the default for existing instances so the "
-        "next save does not fail. The XSOAR-visible field surface is built "
-        "per XSOAR handler from: connection.yaml general_configurations, the "
-        "connection.yaml profiles this handler authenticates against, "
-        "capabilities.yaml general_configurations, and the "
-        "configurations.yaml entries unified into the handler's declared "
-        "capabilities."
+        "next save does not fail. The XSOAR-visible field surface is produced "
+        "per XSOAR handler by "
+        "`Connector.visible_fields_for_handler(handler)` — a unified walker "
+        "over ``connection.yaml`` (general_configurations + the profiles the "
+        "handler auth-binds to), ``capabilities.yaml`` "
+        "(general_configurations), and ``configurations.yaml`` (parent-cap "
+        "and grouped sub-cap entries)."
     )
     rationale = (
         "Making a previously-optional field required is a breaking change: "
@@ -116,7 +117,7 @@ class NoParamRequiredTightenedValidator(ConnectorsValidator[ContentTypes]):
         return results
 
     # ------------------------------------------------------------------
-    # Field-walk helpers
+    # Field-walk helpers (walker-based)
     # ------------------------------------------------------------------
 
     @staticmethod
@@ -148,68 +149,28 @@ class NoParamRequiredTightenedValidator(ConnectorsValidator[ContentTypes]):
         connector: ContentTypes,
         handler: HandlerData,
     ) -> Dict[str, FieldRequiredState]:
-        """Build ``{field_id: (create_required, edit_required)}`` for the
-        XSOAR-visible field surface of a single handler.
+        """Build ``{raw_field_id: (create_required, edit_required, has_default)}``
+        for the XSOAR-visible field surface of a single handler.
 
-        Sources (mirrors ``ConnectorParser._collect_handler_fields``):
-          1. connection.yaml general_configurations
-          2. connection.yaml profiles used by handler.capabilities[].auth_options[].id
-          3. capabilities.yaml general_configurations
-             (from ``connector.capabilities_metadata.general_configurations``)
-          4. per-capability configurations unified onto ``CapabilityData.configurations``
-             for capabilities this handler declares
-             (note: this ALSO includes the source-3 general block after parser
-             unification, so it is naturally deduplicated by the dict.)
+        Delegates the field-walk to
+        :meth:`Connector.visible_fields_for_handler` — the unified walker
+        that aggregates ``connection.yaml`` (general_configurations +
+        profiles), ``capabilities.yaml`` (general_configurations), and
+        ``configurations.yaml`` (parent-capability and grouped sub-cap
+        entries). Uses ``vf.raw_id`` (the field id as authored in the
+        YAML, pre-serializer) because the diff invariant is on the
+        author-owned identifier that survives across versions.
 
-        Duplicate field ids across sources are collapsed by later-wins,
-        which is fine for CO179: if the same id carries different modifiers
-        across yamls, at least one place must satisfy the invariant. The
-        source-4 (per-capability) view mirrors the effective runtime shape.
+        Duplicate raw ids across origins are collapsed by later-wins
+        (dict assignment order), which is fine for CO179: if the same
+        id carries different modifiers across yamls, at least one place
+        must satisfy the invariant, and the walker's ordering is
+        deterministic across both snapshots.
         """
         out: Dict[str, FieldRequiredState] = {}
-
-        # 1. connection.yaml general_configurations
-        conn = connector.connection
-        if conn is not None and conn.general_configurations is not None:
-            for group in conn.general_configurations.configurations:
-                for f in group.fields:
-                    if f and f.id:
-                        out[f.id] = cls._required_pair(f)
-
-        # 2. connection.yaml profiles used by this handler
-        auth_profile_ids: Set[str] = {
-            ao.id
-            for hc in handler.capabilities
-            for ao in hc.auth_options
-            if ao and ao.id
-        }
-        if conn is not None:
-            for profile in conn.profiles:
-                if profile.id in auth_profile_ids:
-                    for group in profile.configurations:
-                        for f in group.fields:
-                            if f and f.id:
-                                out[f.id] = cls._required_pair(f)
-
-        # 3. capabilities.yaml general_configurations
-        cap_meta = connector.capabilities_metadata
-        if cap_meta is not None and cap_meta.general_configurations is not None:
-            for group in cap_meta.general_configurations.configurations:
-                for f in group.fields:
-                    if f and f.id:
-                        out[f.id] = cls._required_pair(f)
-
-        # 4. per-capability configurations (already unified by the parser)
-        handler_cap_ids: Set[str] = {
-            hc.id for hc in handler.capabilities if hc and hc.id
-        }
-        for cap in connector.capabilities:
-            if cap.id in handler_cap_ids:
-                for group in cap.configurations:
-                    for f in group.fields:
-                        if f and f.id:
-                            out[f.id] = cls._required_pair(f)
-
+        for vf in connector.visible_fields_for_handler(handler):
+            if vf.raw_id:
+                out[vf.raw_id] = cls._required_pair(vf.field)
         return out
 
     # ------------------------------------------------------------------

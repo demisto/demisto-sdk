@@ -15,6 +15,7 @@ from demisto_sdk.commands.common.constants import (
     PACK_METADATA_SUPPORT,
     PACK_METADATA_TAGS,
     PACK_METADATA_USE_CASES,
+    ExecutionMode,
     GitStatuses,
     MarketplaceVersions,
 )
@@ -1802,6 +1803,83 @@ def test_PackMetadataVersionShouldBeRaisedValidator_metadata_change(mocker):
                 error_message.format(old_version=old_version, pack=pack.name)
                 in result.message
             )
+
+
+def test_PackMetadataVersionShouldBeRaisedValidator_runs_on_deprecated_pack(mocker):
+    """
+    Given: A deprecated pack whose content item was modified without a version bump.
+    When: Running PackMetadataVersionShouldBeRaisedValidator validator.
+    Then: Ensure the validator runs on the deprecated pack and fails it - changes
+          to a deprecated pack must raise its version too.
+    """
+    version = "1.0.0"
+    with ChangeCWD(REPO.path):
+        integration = create_integration_object(pack_info={"currentVersion": version})
+        pack = integration.in_pack
+        pack.deprecated = True
+        integration.git_status = GitStatuses.MODIFIED
+
+        old_pack = pack.copy(deep=True)
+        old_pack.current_version = version
+        pack.old_base_content_object = old_pack
+        mocker.patch.object(
+            BaseNode, "to_dict", return_value={"current_version": version}
+        )
+
+        validator = PackMetadataVersionShouldBeRaisedValidator()
+        # The deprecated pack must not be filtered out of the validator's input.
+        assert validator.should_run(
+            pack, [], {}, running_execution_mode=ExecutionMode.USE_GIT
+        )
+        results = validator.obtain_invalid_content_items([pack, integration])
+
+        assert len(results) == 1
+
+
+def test_PackMetadataVersionShouldBeRaisedValidator_missing_pack_object():
+    """
+    Given: A modified content item whose Pack object was not collected (e.g. a
+           deleted pack_metadata.json, which the git collector skips).
+    When: Running PackMetadataVersionShouldBeRaisedValidator validator.
+    Then: Ensure the validation fails with an explicit message instead of
+          raising a KeyError that aborts the whole validate run.
+    """
+    with ChangeCWD(REPO.path):
+        modeling_rule = create_modeling_rule_object()
+        modeling_rule.git_status = GitStatuses.MODIFIED
+
+        # The pack object is deliberately absent from the input.
+        validator = PackMetadataVersionShouldBeRaisedValidator()
+        results = validator.obtain_invalid_content_items([modeling_rule])
+
+        assert len(results) == 1
+        assert (
+            "could not be verified because its pack_metadata.json was not collected"
+            in results[0].message
+        )
+        # Reported against a real file, so the error points somewhere actionable.
+        assert results[0].content_object == modeling_rule
+
+
+def test_PackMetadataVersionShouldBeRaisedValidator_new_pack_without_old_object():
+    """
+    Given: A new pack (hence without an old_base_content_object) with an added content item.
+    When: Running PackMetadataVersionShouldBeRaisedValidator validator.
+    Then: Ensure no validation error is raised - new packs don't require release
+          notes, so they're excluded before the missing pack metadata check.
+    """
+    with ChangeCWD(REPO.path):
+        integration = create_integration_object(pack_info={"currentVersion": "1.0.0"})
+        pack = integration.in_pack
+        pack.git_status = GitStatuses.ADDED
+        integration.git_status = GitStatuses.ADDED
+        # A new pack has no counterpart on master.
+        assert pack.old_base_content_object is None  # sanity check
+
+        validator = PackMetadataVersionShouldBeRaisedValidator()
+        results = validator.obtain_invalid_content_items([pack, integration])
+
+        assert results == []
 
 
 @pytest.fixture

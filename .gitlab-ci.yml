@@ -1,6 +1,7 @@
 variables:
   CURRENT_BRANCH_NAME: sk_ds_scan
 
+
 include:
   - file: "/.gitlab/ci/demisto-sdk/.gitlab-ci.yml"
     ref: sk_ds_scan

@@ -6,3 +6,4 @@ include:
   - file: "/.gitlab/ci/demisto-sdk/.gitlab-ci.yml"
     ref: sk_ds_scan
     project: "${CI_PROJECT_NAMESPACE}/infra"
+

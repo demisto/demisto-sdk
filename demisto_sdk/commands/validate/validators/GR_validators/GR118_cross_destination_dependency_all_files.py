@@ -7,7 +7,7 @@ from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
-from demisto_sdk.commands.validate.validators.GR_validators.GR116_cross_destination_dependency import (
+from demisto_sdk.commands.validate.validators.GR_validators.GR118_cross_destination_dependency import (
     CrossDestinationDependencyValidator,
 )
 

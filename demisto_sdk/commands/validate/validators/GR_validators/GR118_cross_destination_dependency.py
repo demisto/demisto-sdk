@@ -14,7 +14,7 @@ ContentTypes = Pack
 
 
 class CrossDestinationDependencyValidator(BaseValidator[ContentTypes], ABC):
-    error_code = "GR116"
+    error_code = "GR118"
     description = (
         "Validate that Marketplace-only packs do not depend on "
         "Managed-Content-only packs."

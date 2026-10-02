@@ -16,6 +16,17 @@ mapping:
     type: seq
     sequence:
     - type: str
+  # Optional coupling-aware breaking-change notes for ConnectUS; omitting it is backward compatible (CIAC-17085 / CIAC-17086).
+  forceUpdate:
+    type: map
+    required: false
+    mapping:
+      breakingChangesNotesLoosely:
+        type: str
+        required: false
+      breakingChangesNotesTightly:
+        type: str
+        required: false
   supportedFeatures:
     type: seq
     sequence:

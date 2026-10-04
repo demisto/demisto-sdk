@@ -197,12 +197,16 @@ class ValidateManager:
         Returns:
             List[BaseValidator]: the list of the filtered validators
         """
-        return [
+        validators = [
             validator
             for validator in get_all_validators()
             if validator.error_code
             in self.configured_validations.select + self.configured_validations.warning
         ]
+        # TEMPORARY TEST ONLY - DO NOT MERGE: run GR103 last, so that it cannot load
+        # USES relationships to unknown content into the shared graph cache before
+        # GR109/GR114 run.
+        return sorted(validators, key=lambda validator: validator.error_code == "GR103")
 
     def add_invalid_content_items(self):
         """Create results for all the invalid_content_items.

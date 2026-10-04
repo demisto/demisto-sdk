@@ -24,6 +24,99 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     get_all_validators,
 )
 
+# ---------------------------------------------------------------------------
+# TEMPORARY DEBUG - DO NOT MERGE
+# Diagnoses why GR114 crashes with AttributeError on UnknownContent on some
+# runners: logs the filesystem order of the validator files, the resulting
+# validator execution order, and the shared graph cache state before each
+# GR103/GR109/GR114 run.
+# ---------------------------------------------------------------------------
+_DEBUG_TRACKED_CODES = ("GR103", "GR109", "GR114")
+
+
+def _debug_log_validators_order(validators: List[BaseValidator]) -> None:
+    import os
+
+    gr_dir = Path(__file__).parent / "validators" / "GR_validators"
+    try:
+        listing = [
+            name
+            for name in os.listdir(gr_dir)
+            if name.startswith(_DEBUG_TRACKED_CODES) and name.endswith(".py")
+        ]
+    except OSError as error:
+        listing = [f"<failed to list {gr_dir}: {error}>"]
+    logger.info(
+        f"[GR-ORDER-DEBUG] os.listdir order of GR103/GR109/GR114 files: {listing}"
+    )
+
+    tracked = [
+        f"{validator.error_code}:{type(validator).__name__}"
+        for validator in validators
+        if validator.error_code in _DEBUG_TRACKED_CODES
+    ]
+    logger.info(f"[GR-ORDER-DEBUG] execution order of GR103/GR109/GR114: {tracked}")
+
+    gr_order = [
+        validator.error_code
+        for validator in validators
+        if validator.error_code.startswith("GR")
+    ]
+    logger.info(f"[GR-ORDER-DEBUG] execution order of all GR validators: {gr_order}")
+
+    first_gr103 = next(
+        (i for i, v in enumerate(validators) if v.error_code == "GR103"), None
+    )
+    first_gr109_family = next(
+        (i for i, v in enumerate(validators) if v.error_code in ("GR109", "GR114")),
+        None,
+    )
+    if first_gr103 is not None and first_gr109_family is not None:
+        verdict = (
+            "GR103 runs BEFORE GR109/GR114 -> GR114 will see cached UnknownContent and crash"
+            if first_gr103 < first_gr109_family
+            else "GR109/GR114 run BEFORE GR103 -> no crash expected"
+        )
+        logger.info(f"[GR-ORDER-DEBUG] verdict: {verdict}")
+
+
+def _debug_log_cache_before(validator: BaseValidator) -> None:
+    try:
+        graph = BaseValidator.graph_interface
+        cache = getattr(graph, "_id_to_obj", None) if graph else None
+        if cache is None:
+            logger.info(
+                f"[GR-ORDER-DEBUG] before {validator.error_code}:{type(validator).__name__}: "
+                "graph not initialized yet (cache empty)"
+            )
+            return
+        unknown_users = []
+        for obj in list(cache.values()):
+            uses = getattr(obj, "uses", None)
+            if not uses:
+                continue
+            missing = [
+                getattr(rel.content_item_to, "object_id", "")
+                or getattr(rel.content_item_to, "name", "")
+                for rel in uses
+                if getattr(rel.content_item_to, "not_in_repository", False)
+            ]
+            if missing:
+                unknown_users.append((getattr(obj, "object_id", "?"), missing))
+        darkmon = [entry for entry in unknown_users if "Darkmon" in str(entry[0])]
+        logger.info(
+            f"[GR-ORDER-DEBUG] before {validator.error_code}:{type(validator).__name__}: "
+            f"cache size={len(cache)}, cached items holding USES to UnknownContent="
+            f"{len(unknown_users)}, Darkmon examples={darkmon[:3]}"
+        )
+    except Exception as error:  # never let the debug logging break validate
+        logger.info(f"[GR-ORDER-DEBUG] cache inspection failed: {error!r}")
+
+
+# ---------------------------------------------------------------------------
+# END TEMPORARY DEBUG
+# ---------------------------------------------------------------------------
+
 
 class ValidateManager:
     def __init__(
@@ -81,6 +174,9 @@ class ValidateManager:
                 logger.debug(
                     f"Starting execution for {validator.error_code} validator."
                 )
+                # TEMPORARY DEBUG - DO NOT MERGE
+                if validator.error_code in _DEBUG_TRACKED_CODES:
+                    _debug_log_cache_before(validator)
                 if filtered_content_objects_for_validator := list(
                     filter(
                         lambda content_object: validator.should_run(
@@ -203,10 +299,8 @@ class ValidateManager:
             if validator.error_code
             in self.configured_validations.select + self.configured_validations.warning
         ]
-        # TEMPORARY TEST ONLY - DO NOT MERGE: run GR103 last, so that it cannot load
-        # USES relationships to unknown content into the shared graph cache before
-        # GR109/GR114 run.
-        return sorted(validators, key=lambda validator: validator.error_code == "GR103")
+        _debug_log_validators_order(validators)  # TEMPORARY DEBUG - DO NOT MERGE
+        return validators
 
     def add_invalid_content_items(self):
         """Create results for all the invalid_content_items.

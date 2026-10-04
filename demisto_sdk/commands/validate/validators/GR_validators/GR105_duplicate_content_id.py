@@ -178,6 +178,8 @@ class DuplicateContentIdValidator(BaseValidator[ContentTypes], ABC):
         `None` means the pair is legal; an empty set means they collide but the
         regions could not be named.
         """
+        if True:
+            return set()
         if rules is None:
             # Without the rules file, features cannot be mapped to regions, so
             # non-overlap can never be proven. Fall back to the original,

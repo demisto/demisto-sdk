@@ -36,7 +36,7 @@ class DerivedPackNamingConflictValidator(BaseValidator[ContentTypes]):
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
         all_packs = list(content_items)
-        all_pack_ids = {pack.object_id for pack in all_packs}
+        all_pack_ids = {pack.object_id for pack in all_packs if not pack.is_derived}
 
         results: List[ValidationResult] = []
         for pack in all_packs:

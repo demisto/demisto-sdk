@@ -702,12 +702,16 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def find_content_items_with_module_mismatch_dependencies(
         self, content_item_ids: List[str], mandatory: bool = True
-    ) -> List[BaseNode]:
+    ) -> List[Tuple[BaseNode, List[BaseNode]]]:
         """
         Retrieves content items with invalid dependency relationships based on supported modules.
 
         This method identifies content items where a dependent item's `supportedModules`
         are not fully included in the `supportedModules` of the item it depends on.
+
+        The mismatched dependencies are the ones returned by the Cypher query, not the
+        content item's cached USES relationships, which may hold relationships loaded by
+        other validators (including ones to content items missing from the repository).
 
         Args:
             content_item_ids (List[str]): List of content item IDs to check for invalid dependencies.
@@ -715,8 +719,8 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             mandatory (bool): If True, checks mandatory USES relationships (default).
                               If False, checks non-mandatory (optional) USES relationships.
         Returns:
-            List[BaseNode]: Content items that have invalid supported module dependencies, if any exist.
-
+            List[Tuple[BaseNode, List[BaseNode]]]: Tuples of (content item, mismatched
+            dependencies) for content items that have invalid supported module dependencies.
         """
         with self.driver.session() as session:
             results = session.execute_read(
@@ -724,7 +728,13 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)
-            return [self._id_to_obj[result] for result in results]
+            return [
+                (
+                    self._id_to_obj[element_id],
+                    [self._id_to_obj[node.element_id] for node in result.nodes_to],
+                )
+                for element_id, result in results.items()
+            ]
 
     def find_content_items_with_module_mismatch_commands(
         self, content_item_ids: List[str]

@@ -98,30 +98,33 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
     # Subclasses can override this to change the dependency type being validated.
     mandatory_dependency: bool = True
 
-    def get_missing_modules_by_dependency(self, content_item) -> dict[str, list[str]]:
-        """Get missing modules for each dependency of a content item.
+    def get_missing_modules_by_dependency(
+        self, content_item, mismatched_dependencies: list
+    ) -> dict[str, list[str]]:
+        """Get missing modules for each mismatched dependency of a content item.
+
+        The mismatched dependencies are computed by the graph query
+        (``get_supported_modules_mismatch_dependencies``) rather than read from the
+        content item's cached ``uses``, which may hold relationships loaded by other
+        validators, including ones to content items missing from the repository.
 
         Args:
-            content_item: The content item to check dependencies for
+            content_item: The content item to check dependencies for.
+            mismatched_dependencies: The dependencies the graph query found to mismatch.
 
         Returns:
             dict: A dictionary mapping dependency IDs to lists of missing modules
         """
         missing_modules_by_dependency: dict[str, list[str]] = {}
         item_modules = get_content_item_supported_modules(content_item)
-        for dependency in content_item.uses:
-            # Filter by mandatory/non-mandatory based on the class member
-            if dependency.mandatorily != self.mandatory_dependency:
-                continue
-            dep_modules = get_content_item_supported_modules(dependency.content_item_to)
+        for dependency in mismatched_dependencies:
+            dep_modules = get_content_item_supported_modules(dependency)
             # Get modules supported by the content item but not by its dependency
             missing_modules = [
                 module for module in item_modules if module not in dep_modules
             ]
             if missing_modules:
-                missing_modules_by_dependency[dependency.content_item_to.object_id] = (
-                    missing_modules
-                )
+                missing_modules_by_dependency[dependency.object_id] = missing_modules
 
         return missing_modules_by_dependency
 
@@ -239,9 +242,9 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
         results: List[ValidationResult] = []
 
         # Process items with mismatched dependencies
-        for invalid_item in mismatched_dependencies:
+        for invalid_item, mismatched_targets in mismatched_dependencies:
             missing_modules_by_dependency = self.get_missing_modules_by_dependency(
-                invalid_item
+                invalid_item, mismatched_targets
             )
             if missing_modules_by_dependency:
                 formatted_messages = self.format_error_messages(

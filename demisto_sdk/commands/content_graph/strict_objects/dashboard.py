@@ -14,6 +14,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     NAME_DYNAMIC_MODEL,
     SUFFIXED_ID_DYNAMIC_MODEL,
     BaseStrictModel,
+    SupportedFeaturesList,
     create_model,
 )
 
@@ -85,6 +86,7 @@ DashboardLayout = create_model(
 
 
 class _StrictDashboard(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     id: str
     version: int
     name: str

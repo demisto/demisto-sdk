@@ -14,11 +14,13 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     NAME_DYNAMIC_MODEL,
     REQUIRED_DYNAMIC_MODEL,
     BaseStrictModel,
+    SupportedFeaturesList,
     create_model,
 )
 
 
 class _StrictIndicatorField(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     modified: Optional[str] = None
     name: str
     owner_only: Optional[bool] = Field(None, alias="ownerOnly")

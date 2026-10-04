@@ -11,11 +11,13 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
     NAME_DYNAMIC_MODEL,
     BaseStrictModel,
+    SupportedFeaturesList,
     create_model,
 )
 
 
 class _StrictCollection(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     common_fields: CommonFields = Field(..., alias="commonfields")  # type:ignore[valid-type]
     name: str
     description: Optional[str] = None

@@ -26,6 +26,7 @@ from demisto_sdk.commands.common.tools import (
     get_pack_latest_rn_version,
 )
 from demisto_sdk.commands.content_graph.common import (
+    DEFAULT_DERIVED_PACK_SOURCE,
     DERIVED_PACK_ALLOWED_SUPPORT_LEVELS,
     DERIVED_PACK_SUFFIX,
     ENABLE_SPLIT_PACKS,
@@ -697,7 +698,11 @@ class DerivedPackParser:
         self.source = resolve_derived_pack_source(
             getattr(original_parser, "derived_source", None)
         )
-        self.internal = original_parser.internal
+        # An already-internal pack stays internal; additionally, twins published under the
+        # default (connectus) feature are internal by definition.
+        self.internal = (
+            original_parser.internal or self.source == DEFAULT_DERIVED_PACK_SOURCE
+        )
         self.is_derived = True
         self.derived_from = original_parser.object_id
         # Copied, never recomputed: the twin holds only the tightly coupled subset.

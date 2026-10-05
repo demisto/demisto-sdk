@@ -419,6 +419,29 @@ class TestDerivedPackParser:
         )
         assert derived.name == "Test Pack Managed"
 
+    @pytest.mark.parametrize(
+        "original_internal, derived_source, expected_internal",
+        [
+            (False, None, True),  # default (connectus) source -> internal
+            (False, "my_feature", False),  # non-default source -> not internal
+            (True, "my_feature", True),  # already internal -> stays internal
+        ],
+    )
+    def test_derived_pack_internal(
+        self, original_internal, derived_source, expected_internal
+    ):
+        """``internal`` is inherited, and forced on for the default derived source."""
+        from demisto_sdk.commands.content_graph.parsers.pack import DerivedPackParser
+
+        original = self._make_mock_original_parser()
+        original.internal = original_internal
+        original.derived_source = derived_source
+        derived = DerivedPackParser(
+            original_parser=original,
+            derived_id="TestPackManaged",
+        )
+        assert derived.internal is expected_internal
+
     def test_derived_pack_content_type(self):
         from demisto_sdk.commands.content_graph.parsers.pack import DerivedPackParser
 

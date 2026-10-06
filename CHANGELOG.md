@@ -2,21 +2,15 @@
 ## 1.39.11 (2026-10-06)
 ### Feature
 * Added a **managed_pack_id** field to every entry written by **ContentDTO.write_pack_destinations**. The value is taken from the pack in the content graph, falls back to an optional caller-supplied pack id to managed pack id mapping, and is null when the pack has no managed counterpart. [#5483](https://github.com/demisto/demisto-sdk/pull/5483)
-* Added a **current_version** field to every pack entry in **pack_destinations.json**, carrying the pack version as recorded on the content graph. Consumers of the artifact can now determine a pack's version without opening the dumped pack. An empty value is written as null. [#5484](https://github.com/demisto/demisto-sdk/pull/5484)
 * Updated the python3 dev-requirements used by the `pre-commit` command, most notably vcrpy 4.3.1 to 8.3.0 for httpx support. [#5516](https://github.com/demisto/demisto-sdk/pull/5516)
 
 ### Fix
 * Fixed an issue where the **GR109** and **GR114** validations crashed with an AttributeError, aborting the entire validate run, when a content item with a supported modules mismatch also used a content item that is missing from the repository. Missing dependencies are now skipped by these validations, as they are already reported by **GR103**. [#5527](https://github.com/demisto/demisto-sdk/pull/5527)
 * Fixed an issue where **pack_destinations.json** recorded an incorrect **artifact_path**, derived from the location of the JSON file rather than from the directory the packs are actually dumped into. [#5483](https://github.com/demisto/demisto-sdk/pull/5483)
-* Fixed an issue where a derived (managed) pack and the pack it was derived from were calculated as depending on each other. Their shared tightly coupled content items belong to both packs, which made the dependency calculation infer a **DEPENDS_ON** relationship between the two, sometimes in both directions. All three queries that produce pack dependencies now exclude packs belonging to the same split-pack family. [#5484](https://github.com/demisto/demisto-sdk/pull/5484)
-* Fixed an issue where managed and derived packs were assigned pack-level dependencies. Such packs ship to the Managed Content bucket as self-contained units, so they now carry no **DEPENDS_ON** relationship in either direction, and a derived pack no longer inherits the dependencies declared in the originating pack's metadata. [#5484](https://github.com/demisto/demisto-sdk/pull/5484)
-* Fixed an issue where the all-level pack dependencies query produced invalid cypher when mandatory-only filtering was disabled. [#5484](https://github.com/demisto/demisto-sdk/pull/5484)
-* Fixed an issue where a **DEPENDS_ON** relationship between a pack and its derived (managed) twin survived a graph rebuild. The relationships preserved while pack nodes are recreated were captured for every relationship type, which restored such a dependency after the queries that create them had already excluded it. [#5484](https://github.com/demisto/demisto-sdk/pull/5484)
-* Fixed an issue where a **DEPENDS_ON** relationship involving a managed or derived pack was never removed when it originated from pack metadata. Only calculated relationships were cleared before recalculation, so in a graph that is reused between builds such a relationship remained indefinitely. [#5484](https://github.com/demisto/demisto-sdk/pull/5484)
-* Fixed an issue where a **DEPENDS_ON** relationship involving a managed or derived pack could still reach the graph through a path that did not consult the dependency queries. Pack dependencies are now swept once after they are calculated, so no managed or derived pack depends on another pack, and no pack depends on one, regardless of how the relationship was created. [#5484](https://github.com/demisto/demisto-sdk/pull/5484)
 
 ### Internal
 * Updated the hardcoded docker images in all init templates and in the postman codegen fallback to demisto/python3:3.12.13.10116658. [#5516](https://github.com/demisto/demisto-sdk/pull/5516)
+* Added support for the force update feature, centered on uploading marketplace packs to the Managed Content bucket. Managed packs are now handled as a separate marketplace and ship as self-contained units with no pack dependencies. [#5484](https://github.com/demisto/demisto-sdk/pull/5484)
 
 
 ## 1.39.10 (2026-09-22)

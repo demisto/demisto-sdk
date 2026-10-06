@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where the **GR109** and **GR114** validations crashed with an AttributeError, aborting the entire validate run, when a content item with a supported modules mismatch also used a content item that is missing from the repository. Missing dependencies are now skipped by these validations, as they are already reported by **GR103**.
+  type: fix
+pr_number: '5527'

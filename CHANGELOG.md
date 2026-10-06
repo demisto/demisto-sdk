@@ -10,7 +10,7 @@
 
 ### Internal
 * Updated the hardcoded docker images in all init templates and in the postman codegen fallback to demisto/python3:3.12.13.10116658. [#5516](https://github.com/demisto/demisto-sdk/pull/5516)
-* Added support for the force update feature, centered on uploading marketplace packs to the Managed Content bucket. Managed packs are now handled as a separate marketplace and ship as self-contained units with no pack dependencies. [#5484](https://github.com/demisto/demisto-sdk/pull/5484)
+* Added support for the force update feature, centered on uploading marketplace packs also to the Managed Content bucket. Managed packs are now handled as a separate marketplace and ship as self-contained units with no pack dependencies. [#5484](https://github.com/demisto/demisto-sdk/pull/5484)
 
 
 ## 1.39.10 (2026-09-22)

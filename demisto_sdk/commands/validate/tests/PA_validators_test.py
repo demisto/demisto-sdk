@@ -2602,6 +2602,26 @@ def test_PackSupportedModulesCoverageValidator_fix_creates_supported_modules_whe
     assert "asm" in fix_result.message
 
 
+def test_PackSupportedModulesCoverageValidator_skips_derived_pack():
+    """PA134: an uncovered ``supportedModule`` is reported for a normal pack, not for a derived one."""
+    pack = create_pack_object(
+        paths=["marketplaces", "supportedModules"],
+        values=[["platform"], ["edr", "xsiam"]],
+    )
+    integration = create_integration_object()
+    integration.marketplaces = [MarketplaceVersions.PLATFORM]
+    integration.supportedModules = ["edr"]
+    pack.content_items.integration.append(integration)
+
+    validator = PackSupportedModulesCoverageValidator()
+
+    assert pack.is_derived is False
+    assert len(validator.obtain_invalid_content_items([pack])) == 1
+
+    pack.is_derived = True
+    assert validator.obtain_invalid_content_items([pack]) == []
+
+
 # ---------------------------------------------------------------------------
 # PA135 – PackLevelIgnoreAddedValidator
 # ---------------------------------------------------------------------------

@@ -22,6 +22,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     NAME_DYNAMIC_MODEL,
     REQUIRED_DYNAMIC_MODEL,
     BaseStrictModel,
+    SupportedFeaturesList,
     create_dynamic_model,
     create_model,
 )
@@ -141,9 +142,13 @@ class StructureError(BaseStrictModel):
 
 
 class _BaseIntegrationScript(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     name: str
     deprecated: Optional[bool] = None
     system: Optional[bool] = None
+    exclude_from_tightly_coupled: Optional[bool] = Field(
+        None, alias="excludefromtightlycoupled"
+    )
     tests: Optional[List[str]] = None
     auto_update_docker_image: Optional[bool] = Field(
         None, alias="autoUpdateDockerImage"
@@ -173,6 +178,7 @@ class ExtractSettings(BaseStrictModel):
 
 
 class _StrictGenericIncidentType(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     vc_should_ignore: Optional[bool] = Field(None, alias="vcShouldIgnore")
     sort_values: Optional[Any] = Field(None, alias="sortValues")
     locked: Optional[bool] = None
@@ -242,6 +248,7 @@ class AlertsFilter(BaseStrictModel):
 
 
 class AgentixBase(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     common_fields: CommonFields = Field(..., alias="commonfields")  # type:ignore[valid-type]
     tags: Optional[list[str]] = None
     category: Optional[str] = None
@@ -249,6 +256,9 @@ class AgentixBase(BaseStrictModel):
     description: str
     disabled: bool = False
     internal: Optional[bool] = None
+    exclude_from_tightly_coupled: Optional[bool] = Field(
+        None, alias="excludefromtightlycoupled"
+    )
     from_version: Optional[str] = Field(None, alias="fromversion")
     to_version: Optional[str] = Field(None, alias="toversion")
     marketplaces: Optional[Union[MarketplaceVersions, List[MarketplaceVersions]]] = None

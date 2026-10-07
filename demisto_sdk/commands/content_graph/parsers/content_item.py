@@ -11,7 +11,9 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import (
+    EXCLUDE_FROM_TIGHTLY_COUPLED_KEY,
     UNIFIED_FILES_SUFFIXES,
     ContentType,
     Relationships,
@@ -200,6 +202,16 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         return parser
 
     @property
+    def supportedFeatures(self) -> Optional[List[str]]:
+        """The item's own authored `supportedFeatures`, or None if it declares none.
+
+        Deliberately not resolved against the pack: use
+        `get_content_item_supported_features` when you need the effective value.
+        """
+        raw_data = self.raw_data if isinstance(self.raw_data, dict) else {}
+        return raw_data.get("supportedFeatures")
+
+    @property
     @abstractmethod
     def name(self) -> Optional[str]:
         pass
@@ -240,6 +252,11 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     @abstractmethod
     def is_silent(self) -> bool:
         pass
+
+    @property
+    def exclude_from_tightly_coupled(self) -> bool:
+        """True when the item opts out of tight coupling; read generically from the raw data."""
+        return bool(get_value(self.raw_data, EXCLUDE_FROM_TIGHTLY_COUPLED_KEY, False))
 
     def get_marketplaces(self, data: dict) -> List[MarketplaceVersions]:
         if file_marketplaces := [

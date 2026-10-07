@@ -13,11 +13,13 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     NAME_DYNAMIC_MODEL,
     SUFFIXED_ID_DYNAMIC_MODEL,
     BaseStrictModel,
+    SupportedFeaturesList,
     create_model,
 )
 
 
 class _StrictMapper(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     id_: str = Field(alias="id")
     name: str
     type_: str = Field(alias="type")
@@ -28,6 +30,9 @@ class _StrictMapper(BaseStrictModel):
     feed: Optional[bool] = None
     definition_id: Optional[str] = Field(None, alias="definitionId")
     marketplaces: Optional[List[MarketplaceVersions]] = None
+    exclude_from_tightly_coupled: Optional[bool] = Field(
+        None, alias="excludefromtightlycoupled"
+    )
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 
 

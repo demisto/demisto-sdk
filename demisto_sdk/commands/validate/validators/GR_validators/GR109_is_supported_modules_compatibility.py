@@ -113,6 +113,11 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
             # Filter by mandatory/non-mandatory based on the class member
             if dependency.mandatorily != self.mandatory_dependency:
                 continue
+            # Skip dependencies missing from the repository (reported by GR103).
+            # They may be present in the shared graph cache when another validator
+            # loaded the item's full USES set, and they have no supportedModules.
+            if getattr(dependency.content_item_to, "not_in_repository", False):
+                continue
             dep_modules = get_content_item_supported_modules(dependency.content_item_to)
             # Get modules supported by the content item but not by its dependency
             missing_modules = [

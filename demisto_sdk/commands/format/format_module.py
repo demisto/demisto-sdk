@@ -108,7 +108,7 @@ FILE_TYPE_AND_LINKED_CLASS = {
     "agentixaction": GenericAgentixFormat,
     "agentixagent": GenericAgentixFormat,
     "agentixskill": GenericAgentixFormat,
-    "collection": GenericAgentixFormat,
+    "knowledge": GenericAgentixFormat,
 }
 
 UNFORMATTED_FILES = [

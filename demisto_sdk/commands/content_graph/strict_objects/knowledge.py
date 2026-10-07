@@ -16,7 +16,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
 )
 
 
-class _StrictCollection(BaseStrictModel):
+class _StrictKnowledge(BaseStrictModel):
     supportedFeatures: Optional[SupportedFeaturesList] = None
     common_fields: CommonFields = Field(..., alias="commonfields")  # type:ignore[valid-type]
     name: str
@@ -25,10 +25,10 @@ class _StrictCollection(BaseStrictModel):
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 
 
-StrictCollection = create_model(
-    model_name="StrictCollection",
+StrictKnowledge = create_model(
+    model_name="StrictKnowledge",
     base_models=(
-        _StrictCollection,
+        _StrictKnowledge,
         BaseOptionalVersionYaml,
         NAME_DYNAMIC_MODEL,
         DESCRIPTION_DYNAMIC_MODEL,

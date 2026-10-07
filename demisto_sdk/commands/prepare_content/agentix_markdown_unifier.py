@@ -129,9 +129,9 @@ class AgentixMarkdownUnifier(Unifier):
         else:
             logger.debug(f"No Markdown file found in '{package_path}'")
 
-        # Rename 'collectionids' (source field) to 'systemknowledgecollectionids' (server field)
-        if target_field == AGENTIX_AGENT_TARGET_FIELD and "collectionids" in unified:
-            unified["systemknowledgecollectionids"] = unified.pop("collectionids")
+        # Rename 'knowledgeids' (source field) to 'systemknowledgecollectionids' (server field)
+        if target_field == AGENTIX_AGENT_TARGET_FIELD and "knowledgeids" in unified:
+            unified["systemknowledgecollectionids"] = unified.pop("knowledgeids")
 
         logger.debug(f"<green>Created unified Agentix item: {path.name}</green>")
         return unified

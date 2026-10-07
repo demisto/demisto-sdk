@@ -1,0 +1,4 @@
+changes:
+- description: Renamed the Collection content item type to Knowledge.
+  type: internal
+pr_number: 5494

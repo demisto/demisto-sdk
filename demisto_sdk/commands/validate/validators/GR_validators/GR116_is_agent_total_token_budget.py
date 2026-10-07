@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
-from demisto_sdk.commands.content_graph.objects.collection import Collection
+from demisto_sdk.commands.content_graph.objects.knowledge import Knowledge
 from demisto_sdk.commands.validate.tools import (
     agent_text_fragments,
     count_chars_for_texts,
@@ -20,7 +20,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = Union[AgentixAgent, AgentixAction, AgentixSkill, Collection]
+ContentTypes = Union[AgentixAgent, AgentixAction, AgentixSkill, Knowledge]
 
 AGENT_CHAR_LIMIT = 200000
 

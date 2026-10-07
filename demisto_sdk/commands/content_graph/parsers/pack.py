@@ -190,7 +190,6 @@ class PackMetadataParser:
             self.commit = ""
         self.downloads: int = 0
         self.tags: List[str] = metadata.get("tags") or []
-        self.default_data_source_id: str = metadata.get("defaultDataSource") or ""
         self.keywords: List[str] = metadata.get("keywords", [])
         self.search_rank: int = 0
         self.videos: List[str] = metadata.get("videos", [])
@@ -588,7 +587,6 @@ class PackParser(BaseContentParser, PackMetadataParser):
             "supportedFeatures": "supportedFeatures",
             "disable_monthly": "disableMonthly",
             "content_commit_hash": "contentCommitHash",
-            "default_data_source_id": "defaultDataSource",
             "source": "source",
             "managed": "managed",
             "internal": "internal",
@@ -674,7 +672,6 @@ class DerivedPackParser:
         self.commit = original_parser.commit
         self.downloads = original_parser.downloads
         self.tags = original_parser.tags
-        self.default_data_source_id = original_parser.default_data_source_id
         self.keywords = original_parser.keywords
         self.search_rank = original_parser.search_rank
         self.videos = original_parser.videos

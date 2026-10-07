@@ -672,7 +672,6 @@ class DerivedPackParser:
         self.commit = original_parser.commit
         self.downloads = original_parser.downloads
         self.tags = original_parser.tags
-        self.default_data_source_id = original_parser.default_data_source_id
         self.keywords = original_parser.keywords
         self.search_rank = original_parser.search_rank
         self.videos = original_parser.videos

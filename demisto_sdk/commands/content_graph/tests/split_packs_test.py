@@ -299,7 +299,6 @@ class TestDerivedPackParser:
         mock.commit = "abc123"
         mock.downloads = 0
         mock.tags = ["tag1"]
-        mock.default_data_source_id = ""
         mock.keywords = []
         mock.search_rank = 0
         mock.videos = []
@@ -3079,7 +3078,6 @@ def _make_pack_parser(
     parser.commit = "abc123"
     parser.downloads = 0
     parser.tags = []
-    parser.default_data_source_id = ""
     parser.keywords = []
     parser.search_rank = 0
     parser.videos = []

@@ -3522,7 +3522,9 @@ class TestManagedPairedInPreparedContentItem:
 
         pack = MagicMock(spec=Pack)
         pack.is_managed_paired.return_value = True
-        pack._is_item_tightly_coupled = Pack._is_item_tightly_coupled.__get__(pack, Pack)
+        pack._is_item_tightly_coupled = Pack._is_item_tightly_coupled.__get__(
+            pack, Pack
+        )
         integration.pack = pack
         return integration
 

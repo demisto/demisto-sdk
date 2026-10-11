@@ -39,6 +39,7 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.content_graph.common import (
     DERIVED_PACK_ALLOWED_SUPPORT_LEVELS,
     ENABLE_SPLIT_PACKS,
+    MANAGED_PAIRED_KEY,
     PACK_METADATA_FILENAME,
     VERSION_CONFIG_FILENAME,
     ContentType,
@@ -572,7 +573,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         )
         # CIAC-16414: emit ``managedPaired``; omitted entirely while ENABLE_SPLIT_PACKS is off.
         if ENABLE_SPLIT_PACKS:
-            metadata["managedPaired"] = self.is_managed_paired()
+            metadata[MANAGED_PAIRED_KEY] = self.is_managed_paired()
             # Pack level only: True when every non-test item is tightly coupled.
             metadata["exclusivelyManagedPaired"] = self.is_exclusively_managed_paired()
         self._clean_empty_supportedModuels_from_commands(

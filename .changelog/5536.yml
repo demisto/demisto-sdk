@@ -1,0 +1,4 @@
+changes:
+- description: Enforced `supportedModules` against `PlatformSupportedModules` in pack metadata, and unified the field's declaration across the strict schemas.
+  type: fix
+pr_number: 5536

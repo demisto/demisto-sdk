@@ -285,7 +285,7 @@ def get_docker_image():
         logger.debug(f"docker image set to: {docker_image}")
     except Exception as e:
         # set default docker image
-        docker_image = "demisto/python3:3.9.1.14969"
+        docker_image = "demisto/python3:3.12.13.10116658"
         logger.warning(f"Failed getting latest docker image for demisto/python3: {e}")
     return docker_image
 

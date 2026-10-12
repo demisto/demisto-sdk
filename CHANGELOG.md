@@ -1,4 +1,16 @@
 # Changelog
+## 1.39.11 (2026-10-06)
+### Feature
+* Updated the python3 dev-requirements used by the `pre-commit` command, most notably vcrpy 4.3.1 to 8.3.0 for httpx support. [#5516](https://github.com/demisto/demisto-sdk/pull/5516)
+
+### Fix
+* Fixed an issue where the **GR109** and **GR114** validations crashed with an AttributeError, aborting the entire validate run, when a content item with a supported modules mismatch also used a content item that is missing from the repository. Missing dependencies are now skipped by these validations, as they are already reported by **GR103**. [#5527](https://github.com/demisto/demisto-sdk/pull/5527)
+
+### Internal
+* Updated the hardcoded docker images in all init templates and in the postman codegen fallback to demisto/python3:3.12.13.10116658. [#5516](https://github.com/demisto/demisto-sdk/pull/5516)
+* Added support for the force update feature, centered on uploading marketplace packs also to the Managed Content bucket. Managed packs are now handled as a separate marketplace and ship as self-contained units with no pack dependencies. [#5483](https://github.com/demisto/demisto-sdk/pull/5483)
+
+
 ## 1.39.10 (2026-09-22)
 ### Feature
 * Added the MR109 validation, ensuring that every xdm.*.user.* field mapped in a modeling rule has a corresponding xdm.*.identity.* field. The validation runs in use-git mode on the latest modeling rule. [#5519](https://github.com/demisto/demisto-sdk/pull/5519)

@@ -52,6 +52,9 @@ def parser(mocker):
     mocker.patch.object(p, "iter_connectors", return_value=iter(()))
 
     fake_pack_parser = MagicMock(name="PackParser_instance")
+    # ``PackParser.derived_pack`` defaults to None; an unconfigured MagicMock would fabricate a phantom twin.
+    fake_pack_parser.derived_pack = None
+
     fake_connector_parser = MagicMock(name="ConnectorParser_instance")
 
     mocker.patch.object(RepositoryParser, "parse_pack", return_value=fake_pack_parser)

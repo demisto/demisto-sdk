@@ -1,7 +1,7 @@
 import multiprocessing
 import traceback
 from pathlib import Path
-from typing import Iterator, List, Optional, Tuple
+from typing import Iterator, List, Optional, Tuple, Union
 
 from tqdm import tqdm
 
@@ -12,7 +12,10 @@ from demisto_sdk.commands.content_graph.parsers.connector import ConnectorParser
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     NotAContentItemException,
 )
-from demisto_sdk.commands.content_graph.parsers.pack import PackParser
+from demisto_sdk.commands.content_graph.parsers.pack import (
+    DerivedPackParser,
+    PackParser,
+)
 
 IGNORED_PACKS_FOR_PARSING = ["NonSupported"]
 
@@ -35,7 +38,7 @@ class RepositoryParser:
             packs_to_parse (Optional[List[str]]): A list of packs to parse. If not provided, parses all packs.
         """
         self.path: Path = path
-        self.packs: List[PackParser] = []
+        self.packs: List[Union[PackParser, DerivedPackParser]] = []
         self.connectors: List[ConnectorParser] = []
 
     def parse(
@@ -58,6 +61,9 @@ class RepositoryParser:
                 ):
                     if pack:
                         self.packs.append(pack)
+                        # Collect derived pack if the pack generated one
+                        if hasattr(pack, "derived_pack") and pack.derived_pack:
+                            self.packs.append(pack.derived_pack)
                         if progress_bar:
                             progress_bar.update(1)
         except Exception as e:

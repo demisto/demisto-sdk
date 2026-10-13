@@ -2252,6 +2252,132 @@ def test_GR109_ignores_safe_commands_after_cache_pollution(
 
 
 @pytest.fixture
+def repo_for_test_gr_109_unknown_dependency(graph_repo: Repo):
+    """
+    Creates a test repository where a content item with a genuine mandatory module
+    mismatch also uses a content item that is missing from the repository.
+
+    Structure:
+    - Pack A (platform marketplace):
+        - script_x: supportedModules ["module_x"] -> genuine mismatch with playbook1
+        - playbook1: supportedModules ["module_x", "module_y"], using on the mandatory
+          execution path both "script_x" and "MissingScript" (not in the repository).
+    """
+    pack_a = graph_repo.create_pack("Pack A")
+    pack_a.set_data(marketplaces=[MarketplaceVersions.PLATFORM.value])
+    pack_a.create_script(
+        "script_x",
+        yml={
+            "commonfields": {"id": "script_x", "version": -1},
+            "name": "script_x",
+            "comment": "script_x",
+            "type": "python",
+            "subtype": "python3",
+            "script": "-",
+            "skipprepare": [],
+            "supportedModules": ["module_x"],
+        },
+    )
+
+    playbook_yml = {
+        "id": "playbook1",
+        "name": "playbook1",
+        "starttaskid": "0",
+        "supportedModules": ["module_x", "module_y"],
+        "tasks": {
+            "0": {
+                "id": "0",
+                "taskid": "0",
+                "type": "regular",
+                "nexttasks": {"#none#": ["1"]},
+                "task": {
+                    "id": "0",
+                    "name": "run script_x",
+                    "description": "Uses script_x",
+                    "scriptName": "script_x",
+                    "type": "regular",
+                    "iscommand": False,
+                    "brand": "",
+                },
+            },
+            "1": {
+                "id": "1",
+                "taskid": "1",
+                "type": "regular",
+                "nexttasks": {"#none#": ["2"]},
+                "task": {
+                    "id": "1",
+                    "name": "run MissingScript",
+                    "description": "Uses a script that is not in the repository",
+                    "scriptName": "MissingScript",
+                    "type": "regular",
+                    "iscommand": False,
+                    "brand": "",
+                },
+            },
+            "2": {
+                "id": "2",
+                "taskid": "2",
+                "type": "title",
+                "task": {
+                    "id": "2",
+                    "name": "Done",
+                    "type": "title",
+                    "iscommand": False,
+                    "brand": "",
+                },
+            },
+        },
+    }
+    pack_a.create_playbook("playbook1", yml=playbook_yml)
+
+    return graph_repo
+
+
+def test_GR109_ignores_unknown_dependency_after_cache_pollution(
+    repo_for_test_gr_109_unknown_dependency: Repo,
+):
+    """
+    Given:
+        A platform playbook ("playbook1", supportedModules ['module_x', 'module_y'])
+        that mandatorily uses "script_x" (supportedModules ['module_x'] -> genuine
+        mismatch) and "MissingScript", which is not in the repository.
+    When:
+        Another validator first loads ALL of the playbook's USES relationships into the
+        shared graph cache (simulated via graph.search), and then the
+        IsSupportedModulesCompatibility validator runs on all files.
+    Then:
+        The validator does not crash on the missing dependency (which has no
+        supportedModules), and only "script_x" is reported.
+    """
+    graph_interface = repo_for_test_gr_109_unknown_dependency.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    graph_interface.search(content_type=ContentType.PLAYBOOK, object_id="playbook1")
+
+    # Sanity-check that the cache holds the missing dependency, so this test would
+    # fail on the pre-fix handler.
+    playbook_obj = next(
+        obj
+        for obj in graph_interface._id_to_obj.values()
+        if getattr(obj, "object_id", None) == "playbook1"
+    )
+    assert any(
+        getattr(rel.content_item_to, "not_in_repository", False)
+        for rel in playbook_obj.uses
+    )
+
+    results = IsSupportedModulesCompatibilityAllFiles().obtain_invalid_content_items([])
+
+    assert len(results) == 1
+    assert results[0].content_object.object_id == "playbook1"
+    assert (
+        results[0].message
+        == "The following mandatory dependencies missing required modules: script_x is missing: [module_y]"
+    )
+
+
+@pytest.fixture
 def repo_for_test_gr_114(graph_repo: Repo):
     """
     Creates a test repository for testing GR114 validator (non-mandatory dependencies).
@@ -2325,6 +2451,56 @@ def test_NonMandatorySupportedModulesCompatibility_invalid_all_files(
     """
     graph_interface = repo_for_test_gr_114.create_graph()
     BaseValidator.graph_interface = graph_interface
+    results = IsNonMandatorySupportedModulesCompatibilityAllFiles().obtain_invalid_content_items(
+        []
+    )
+
+    assert len(results) == 1
+    assert (
+        results[0].message
+        == "The following non-mandatory dependencies have missing required modules: ReputationScript is missing: [module_x]"
+    )
+    assert results[0].content_object.object_id == "MyIndicatorType"
+
+
+def test_NonMandatorySupportedModulesCompatibility_ignores_unknown_dependency_after_cache_pollution(
+    repo_for_test_gr_114: Repo,
+):
+    """
+    Given:
+        A repository where "MyIndicatorType" (with `supportedModules: ['module_x']`)
+        has a non-mandatory dependency on "ReputationScript" (genuine mismatch), and
+        also a non-mandatory dependency on "MissingLayout", which is not in the repository.
+    When:
+        Another validator first loads ALL of the indicator type's USES relationships into
+        the shared graph cache (simulated via graph.search), and then the
+        IsNonMandatorySupportedModulesCompatibility validator runs on all files.
+    Then:
+        The validator does not crash on the missing dependency (which has no
+        supportedModules), and only "ReputationScript" is reported.
+    """
+    indicator_type = repo_for_test_gr_114.packs[0].indicator_types[0]
+    indicator_type.update({"layout": "MissingLayout"})
+
+    graph_interface = repo_for_test_gr_114.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    graph_interface.search(
+        content_type=ContentType.INDICATOR_TYPE, object_id="MyIndicatorType"
+    )
+
+    # Sanity-check that the cache holds the missing dependency, so this test would
+    # fail on the pre-fix handler.
+    indicator_type_obj = next(
+        obj
+        for obj in graph_interface._id_to_obj.values()
+        if getattr(obj, "object_id", None) == "MyIndicatorType"
+    )
+    assert any(
+        getattr(rel.content_item_to, "not_in_repository", False)
+        for rel in indicator_type_obj.uses
+    )
+
     results = IsNonMandatorySupportedModulesCompatibilityAllFiles().obtain_invalid_content_items(
         []
     )

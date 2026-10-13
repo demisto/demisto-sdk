@@ -34,6 +34,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints impo
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
     create_pack_dependencies,
     get_all_level_packs_relationships,
+    prune_severed_dependencies,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.import_export import (
     export_graphml,
@@ -43,6 +44,9 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.import_export im
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import (
     create_indexes,
+)
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.isolation import (
+    isolate_managed_packs,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
     _match,
@@ -963,6 +967,19 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         logger.info("Creating pack dependencies...")
         with self.driver.session() as session:
             self._depends_on = session.execute_write(create_pack_dependencies)
+
+    def isolate_managed_packs(self) -> List[Tuple[str, str]]:
+        """Sever managed-pack boundary relationships and prune the cached ``depends_on``; returns the deleted pack id pairs."""
+        logger.info("Isolating managed packs...")
+        with self.driver.session() as session:
+            severed_dependencies: List[Tuple[str, str]] = session.execute_write(
+                isolate_managed_packs
+            )
+        if severed_dependencies and self._depends_on:
+            self._depends_on = prune_severed_dependencies(
+                self._depends_on, set(severed_dependencies)
+            )
+        return severed_dependencies
 
     def is_alive(self):
         return neo4j_service.is_alive()

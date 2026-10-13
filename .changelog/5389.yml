@@ -1,4 +1,4 @@
 changes:
-- description: 'fix: register all commands before attempting to dump the API'
+- description: Fixed an issue where the ***export-api*** command produced an almost empty output file containing only the `export-api` command itself. The output now includes the full API of all demisto-sdk commands.
   type: fix
 pr_number: 5389

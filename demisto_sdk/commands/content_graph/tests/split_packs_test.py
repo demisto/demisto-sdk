@@ -3580,6 +3580,62 @@ class TestManagedPairedInPreparedContentItem:
             f"prepared data; got {prepared.get(MANAGED_PAIRED_KEY)!r}"
         )
 
+    def test_item_linked_to_its_pack_by_set_content_items_gets_the_key(
+        self, mocker, repo
+    ):
+        from demisto_sdk.commands.common.constants import MarketplaceVersions
+        from demisto_sdk.commands.content_graph.common import RelationshipType
+        from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+        from demisto_sdk.commands.content_graph.objects.integration import Integration
+        from demisto_sdk.commands.content_graph.objects.pack import Pack
+        from demisto_sdk.commands.content_graph.objects.relationship import (
+            RelationshipData,
+        )
+        from demisto_sdk.commands.content_graph.parsers.integration import (
+            IntegrationParser,
+        )
+        from demisto_sdk.commands.content_graph.parsers.pack import PackParser
+
+        mocker.patch(
+            "demisto_sdk.commands.content_graph.objects.content_item.ENABLE_SPLIT_PACKS",
+            True,
+        )
+
+        pack = repo.create_pack("TestPack")
+        integration = pack.create_integration("MyIntegration")
+
+        pack_model = Pack.from_orm(PackParser(Path(pack.path), metadata_only=True))
+        integration_model = Integration.from_orm(
+            IntegrationParser(
+                Path(integration.path),
+                list(MarketplaceVersions),
+                pack_supported_modules=[],
+            )
+        )
+        integration_model.database_id = "integration-node"
+        pack_model.relationships_data[RelationshipType.IN_PACK].add(
+            RelationshipData(
+                relationship_type=RelationshipType.IN_PACK,
+                source_id="integration-node",
+                target_id="pack-node",
+                content_item_to=integration_model,
+            )
+        )
+
+        pack_model.set_content_items()
+
+        prepared = ContentItem.prepare_for_upload(integration_model)
+
+        assert prepared.get(MANAGED_PAIRED_KEY) is True, (
+            f"a tightly coupled item reached through the graph flow must carry "
+            f"`{MANAGED_PAIRED_KEY}: true`; got keys {sorted(prepared)}"
+        )
+        assert integration_model.in_pack is pack_model, (
+            "`set_content_items` is the graph flow's only linking point, so it must back-link "
+            "the item to its pack; otherwise the item keeps the stale metadata-only pack "
+            "resolved at construction time"
+        )
+
 
 # `.pack-ignore` inheritance by the derived pack
 

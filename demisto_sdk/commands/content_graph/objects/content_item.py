@@ -295,7 +295,7 @@ class ContentItem(BaseContent):
             if pack.is_managed_paired() and pack._is_item_tightly_coupled(self):
                 data[MANAGED_PAIRED_KEY] = True
         except Exception as error:
-            logger.debug(
+            logger.warning(
                 f"Could not resolve {MANAGED_PAIRED_KEY} for {self.path}: {error}"
             )
         return data

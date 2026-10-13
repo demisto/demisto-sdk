@@ -446,6 +446,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             )
         self.server_min_version = self.server_min_version or min_content_items_version
         self.content_items = PackContentItems(**content_item_dct)
+        for content_item in content_items:
+            content_item.pack = self
 
     def _clean_empty_supportedModuels_from_commands(self, content_items: dict):
         if not content_items:

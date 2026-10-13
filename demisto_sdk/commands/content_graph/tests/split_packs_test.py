@@ -15,6 +15,7 @@ from demisto_sdk.commands.content_graph.common import (
     DERIVED_PACK_SUFFIX,
     DERIVED_PACKS_EXCLUDE_ENV,
     EXCLUDE_FROM_TIGHTLY_COUPLED_KEY,
+    MANAGED_PAIRED_KEY,
     TIGHTLY_COUPLED_TYPES,
     ContentType,
     PackDestination,
@@ -3499,6 +3500,141 @@ class TestExcludeFromTightlyCoupledOptOut:
         assert (
             prepared["name"] == "MyIntegration"
         ), "stripping the flag must not disturb the rest of the item"
+
+
+# Per item `managedPaired` key inside the prepared content item data
+
+
+class TestManagedPairedInPreparedContentItem:
+    """``managedPaired`` is injected into the prepared data of a tightly coupled item, and only then."""
+
+    @staticmethod
+    def _make_integration(tmp_path, exclude_from_tightly_coupled: bool = False):
+        from demisto_sdk.commands.content_graph.objects.integration import Integration
+        from demisto_sdk.commands.content_graph.objects.pack import Pack
+
+        path = tmp_path / "MyIntegration.yml"
+        path.write_text(
+            "commonfields:\n  id: MyIntegration\nname: MyIntegration\n",
+        )
+        integration = Integration.construct(path=path)  # type: ignore[call-arg]
+        integration.exclude_from_tightly_coupled = exclude_from_tightly_coupled
+
+        pack = MagicMock(spec=Pack)
+        pack.is_managed_paired.return_value = True
+        pack._is_item_tightly_coupled = Pack._is_item_tightly_coupled.__get__(
+            pack, Pack
+        )
+        integration.pack = pack
+        return integration
+
+    def test_tightly_coupled_item_in_a_managed_paired_pack_gets_the_key(
+        self, mocker, tmp_path
+    ):
+        from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+
+        mocker.patch(
+            "demisto_sdk.commands.content_graph.objects.content_item.ENABLE_SPLIT_PACKS",
+            True,
+        )
+        integration = self._make_integration(tmp_path)
+
+        prepared = ContentItem.prepare_for_upload(integration)
+
+        assert prepared.get(MANAGED_PAIRED_KEY) is True, (
+            f"a tightly coupled item in a managed paired pack must carry "
+            f"`{MANAGED_PAIRED_KEY}: true` in its own prepared data; got keys {sorted(prepared)}"
+        )
+
+    def test_opted_out_item_does_not_get_the_key(self, mocker, tmp_path):
+        from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+
+        mocker.patch(
+            "demisto_sdk.commands.content_graph.objects.content_item.ENABLE_SPLIT_PACKS",
+            True,
+        )
+        integration = self._make_integration(
+            tmp_path, exclude_from_tightly_coupled=True
+        )
+
+        prepared = ContentItem.prepare_for_upload(integration)
+
+        assert MANAGED_PAIRED_KEY not in prepared, (
+            f"the item opted out of tight coupling, so `{MANAGED_PAIRED_KEY}` must be absent "
+            f"entirely (not False); got {prepared.get(MANAGED_PAIRED_KEY)!r}"
+        )
+
+    def test_the_key_is_never_added_while_the_flag_is_off(self, mocker, tmp_path):
+        from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+
+        mocker.patch(
+            "demisto_sdk.commands.content_graph.objects.content_item.ENABLE_SPLIT_PACKS",
+            False,
+        )
+        integration = self._make_integration(tmp_path)
+
+        prepared = ContentItem.prepare_for_upload(integration)
+
+        assert MANAGED_PAIRED_KEY not in prepared, (
+            f"while ENABLE_SPLIT_PACKS is off `{MANAGED_PAIRED_KEY}` must never be added to the "
+            f"prepared data; got {prepared.get(MANAGED_PAIRED_KEY)!r}"
+        )
+
+    def test_item_linked_to_its_pack_by_set_content_items_gets_the_key(
+        self, mocker, repo
+    ):
+        from demisto_sdk.commands.common.constants import MarketplaceVersions
+        from demisto_sdk.commands.content_graph.common import RelationshipType
+        from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+        from demisto_sdk.commands.content_graph.objects.integration import Integration
+        from demisto_sdk.commands.content_graph.objects.pack import Pack
+        from demisto_sdk.commands.content_graph.objects.relationship import (
+            RelationshipData,
+        )
+        from demisto_sdk.commands.content_graph.parsers.integration import (
+            IntegrationParser,
+        )
+        from demisto_sdk.commands.content_graph.parsers.pack import PackParser
+
+        mocker.patch(
+            "demisto_sdk.commands.content_graph.objects.content_item.ENABLE_SPLIT_PACKS",
+            True,
+        )
+
+        pack = repo.create_pack("TestPack")
+        integration = pack.create_integration("MyIntegration")
+
+        pack_model = Pack.from_orm(PackParser(Path(pack.path), metadata_only=True))
+        integration_model = Integration.from_orm(
+            IntegrationParser(
+                Path(integration.path),
+                list(MarketplaceVersions),
+                pack_supported_modules=[],
+            )
+        )
+        integration_model.database_id = "integration-node"
+        pack_model.relationships_data[RelationshipType.IN_PACK].add(
+            RelationshipData(
+                relationship_type=RelationshipType.IN_PACK,
+                source_id="integration-node",
+                target_id="pack-node",
+                content_item_to=integration_model,
+            )
+        )
+
+        pack_model.set_content_items()
+
+        prepared = ContentItem.prepare_for_upload(integration_model)
+
+        assert prepared.get(MANAGED_PAIRED_KEY) is True, (
+            f"a tightly coupled item reached through the graph flow must carry "
+            f"`{MANAGED_PAIRED_KEY}: true`; got keys {sorted(prepared)}"
+        )
+        assert integration_model.in_pack is pack_model, (
+            "`set_content_items` is the graph flow's only linking point, so it must back-link "
+            "the item to its pack; otherwise the item keeps the stale metadata-only pack "
+            "resolved at construction time"
+        )
 
 
 # `.pack-ignore` inheritance by the derived pack

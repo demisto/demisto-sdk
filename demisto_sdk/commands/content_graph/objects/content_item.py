@@ -32,7 +32,9 @@ from demisto_sdk.commands.common.tools import (
     write_dict,
 )
 from demisto_sdk.commands.content_graph.common import (
+    ENABLE_SPLIT_PACKS,
     EXCLUDE_FROM_TIGHTLY_COUPLED_KEY,
+    MANAGED_PAIRED_KEY,
     ContentType,
     RelationshipType,
     append_supported_modules,
@@ -283,6 +285,21 @@ class ContentItem(BaseContent):
             fields_to_exclude=fields_to_exclude,
         )
 
+    def _add_managed_paired(self, data: dict) -> dict:
+        if not ENABLE_SPLIT_PACKS:
+            return data
+        try:
+            pack = self.in_pack
+            if pack is None:
+                return data
+            if pack.is_managed_paired() and pack._is_item_tightly_coupled(self):
+                data[MANAGED_PAIRED_KEY] = True
+        except Exception as error:
+            logger.warning(
+                f"Could not resolve {MANAGED_PAIRED_KEY} for {self.path}: {error}"
+            )
+        return data
+
     def prepare_for_upload(
         self,
         current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
@@ -302,6 +319,7 @@ class ContentItem(BaseContent):
                 del data["supportedModules"]
         # SDK-only build-time flag - must never be uploaded to the server.
         data.pop(EXCLUDE_FROM_TIGHTLY_COUPLED_KEY, None)
+        data = self._add_managed_paired(data)
         return MarketplaceSuffixPreparer.prepare(data, current_marketplace)
 
     def summary(

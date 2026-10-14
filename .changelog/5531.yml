@@ -1,4 +1,0 @@
-changes:
-- description: Added the **managedPaired** field to tightly coupled content items during prepare.
-  type: internal
-pr_number: '5531'

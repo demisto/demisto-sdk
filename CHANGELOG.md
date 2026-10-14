@@ -1,4 +1,9 @@
 # Changelog
+## 1.39.12 (2026-10-14)
+### Internal
+* Added the **managedPaired** field to tightly coupled content items during prepare. [#5531](https://github.com/demisto/demisto-sdk/pull/5531)
+
+
 ## 1.39.11 (2026-10-06)
 ### Feature
 * Updated the python3 dev-requirements used by the `pre-commit` command, most notably vcrpy 4.3.1 to 8.3.0 for httpx support. [#5516](https://github.com/demisto/demisto-sdk/pull/5516)

@@ -16,7 +16,6 @@ from demisto_sdk.commands.common.constants import (
     CASE_FIELDS_DIR,
     CASE_LAYOUTS_DIR,
     CLASSIFIERS_DIR,
-    COLLECTIONS_DIR,
     CORRELATION_RULES_DIR,
     DASHBOARDS_DIR,
     DEPLOYMENT_JSON_FILENAME,
@@ -30,6 +29,7 @@ from demisto_sdk.commands.common.constants import (
     INDICATOR_FIELDS_DIR,
     INDICATOR_TYPES_DIR,
     JOBS_DIR,
+    KNOWLEDGE_DIR,
     LAYOUT_RULES_DIR,
     LAYOUTS_DIR,
     LISTS_DIR,
@@ -252,10 +252,10 @@ class InvalidAgentixSkillFileName(InvalidPathException):
     )
 
 
-class InvalidCollectionFileName(InvalidPathException):
+class InvalidKnowledgeFileName(InvalidPathException):
     message = (
-        "Collection files must be placed in a subfolder under Collections, "
-        "e.g. `Collections/{CollectionName}/{CollectionName}.yml`"
+        "Knowledge files must be placed in a subfolder under Knowledge, "
+        "e.g. `Knowledge/{KnowledgeName}/{KnowledgeName}.yml`"
     )
 
 
@@ -357,8 +357,8 @@ def _validate_depth_one(
     if first_level_folder == AGENTIX_SKILLS_DIR:
         raise InvalidAgentixSkillFileName
 
-    if first_level_folder == COLLECTIONS_DIR:
-        raise InvalidCollectionFileName
+    if first_level_folder == KNOWLEDGE_DIR:
+        raise InvalidKnowledgeFileName
 
     if first_level_folder not in DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES:
         # Packs/MyPack/SomeFolderThatShouldntHaveFilesDirectly/<file>
@@ -440,10 +440,10 @@ def _validate_depth_two(
     ):
         raise InvalidAgentixSkillFileName
 
-    elif first_level_folder == COLLECTIONS_DIR and not (
+    elif first_level_folder == KNOWLEDGE_DIR and not (
         path.stem == path.parent.name and path.suffix == ".yml"
     ):
-        raise InvalidCollectionFileName
+        raise InvalidKnowledgeFileName
 
 
 def _validate_image_file_name(image_name: str):

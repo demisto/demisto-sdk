@@ -1,12 +1,10 @@
-from typing import Annotated, Any, List, Optional
+from typing import Any, List, Optional
 
 from pydantic import Field, conlist, validator
 
 from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON2,
     TYPE_PYTHON3,
-    MarketplaceVersions,
-    PlatformSupportedModules,
 )
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
@@ -28,6 +26,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     QUICK_ACTION_DYNAMIC_MODEL,
     REQUIRED_DYNAMIC_MODEL,
     SupportedFeaturesList,
+    SupportedModulesList,
     create_dynamic_model,
     create_model,
 )
@@ -53,6 +52,12 @@ class SectionOrderValues(StrEnum):
     AGENTIC_ASSISTANT = "Agentic Assistant"
 
 
+class SupportLevelHeader(StrEnum):
+    XSOAR = "xsoar"
+    PARTNER = "partner"
+    COMMUNITY = "community"
+
+
 class _Configuration(BaseStrictModel):
     supportedFeatures: Optional[SupportedFeaturesList] = None
     display: Optional[str] = None
@@ -69,12 +74,7 @@ class _Configuration(BaseStrictModel):
     hidden_username: Optional[bool] = Field(None, alias="hiddenusername")
     hidden_password: Optional[bool] = Field(None, alias="hiddenpassword")
     from_license: Optional[str] = Field(None, alias="fromlicense")
-    supportedModules: Optional[
-        Annotated[
-            List[PlatformSupportedModules],
-            Field(min_length=1, max_length=len(PlatformSupportedModules)),
-        ]
-    ] = None
+    supportedModules: Optional[SupportedModulesList] = None
 
 
 Configuration = create_model(
@@ -112,12 +112,7 @@ class _Command(BaseStrictModel):
     # (see `_Configuration.hidden`). The explicit declaration here overrides the
     # `hidden: Optional[bool]` that HIDDEN_DYNAMIC_MODEL would otherwise add.
     hidden: Optional[Any] = None
-    supportedModules: Optional[
-        Annotated[
-            List[PlatformSupportedModules],
-            Field(min_length=1, max_length=len(PlatformSupportedModules)),
-        ]
-    ]
+    supportedModules: Optional[SupportedModulesList] = None
 
 
 Command = create_model(
@@ -223,7 +218,7 @@ class _StrictIntegration(BaseStrictModel):
     default_classifier: Optional[str] = Field(None, alias="defaultclassifier")
     detailed_description: Optional[str] = Field(None, alias="detaileddescription")
     auto_config_instance: Optional[bool] = Field(None, alias="autoconfiginstance")
-    support_level_header: MarketplaceVersions = Field(None, alias="supportlevelheader")
+    support_level_header: SupportLevelHeader = Field(None, alias="supportlevelheader")
     script: Script  # type:ignore[valid-type]
     hidden: Optional[bool] = None
     internal: Optional[bool] = None
@@ -237,9 +232,7 @@ class _StrictIntegration(BaseStrictModel):
         False, alias="isCloudProviderIntegration"
     )
     triggers: Optional[List[Trigger]] = None
-    supportedModules: Optional[
-        Annotated[List[PlatformSupportedModules], Field(min_length=1, max_length=7)]
-    ]
+    supportedModules: Optional[SupportedModulesList] = None
 
     def __init__(self, **data):
         """

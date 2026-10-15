@@ -179,6 +179,9 @@ from demisto_sdk.commands.validate.validators.CO_validators.CO194_is_sub_capabil
 from demisto_sdk.commands.validate.validators.CO_validators.CO195_is_classifier_field_has_show_action import (
     IsClassifierFieldHasShowActionValidator,
 )
+from demisto_sdk.commands.validate.validators.CO_validators.CO196_is_connector_integration_not_excluded_from_tightly_coupled import (
+    IsConnectorIntegrationNotExcludedFromTightlyCoupledValidator,
+)
 
 VALID_CONNECTION_DESCRIPTION = (
     "Enter the credentials to securely authorize the connection"
@@ -20769,6 +20772,167 @@ class TestCO192IsIntegrationCoveredByConnector:
         # `path` is not explicitly passed to ValidationResult, so it falls
         # back to `content_object.path`.
         assert results[0].content_object.path == integration.path
+
+    def test_uncovered_integration_excluded_from_tightly_coupled_is_skipped(self):
+        """
+        Given: Two uncovered integrations in the stash, one of which sets
+               `excludefromtightlycoupled: true`.
+        When: CO192 runs.
+        Then: Only the integration without the opt-out flag is reported, and
+              the message suggests setting the flag.
+        """
+        from demisto_sdk.commands.validate.initializer import (
+            ConnectorAwareInitializer,
+        )
+
+        opted_out = create_integration_object(
+            paths=["commonfields.id", "name"], values=["OptedOut", "OptedOut"]
+        )
+        opted_out.exclude_from_tightly_coupled = True
+        uncovered = create_integration_object(
+            paths=["commonfields.id", "name"], values=["Uncovered", "Uncovered"]
+        )
+        ConnectorAwareInitializer._integrations_without_connector_handler = frozenset(
+            {opted_out, uncovered}
+        )
+
+        results = (
+            IsIntegrationCoveredByConnectorValidator().obtain_invalid_content_items([])
+        )
+
+        assert len(results) == 1
+        assert results[0].content_object.object_id == "Uncovered"
+        assert "excludefromtightlycoupled: true" in results[0].message
+
+
+# ============================================================
+# CO196 - IsConnectorIntegrationNotExcludedFromTightlyCoupledValidator
+# ============================================================
+
+
+class TestCO196IsConnectorIntegrationNotExcludedFromTightlyCoupled:
+    """Tests for CO196: a connector XSOAR handler must not reference an
+    integration that sets `excludefromtightlycoupled: true`."""
+
+    @staticmethod
+    def _integration(object_id: str, excluded: bool):
+        return SimpleNamespace(
+            object_id=object_id, exclude_from_tightly_coupled=excluded
+        )
+
+    def test_handler_integration_excluded_fails(self):
+        """
+        Given: A connector whose XSOAR handler references an integration with
+               `excludefromtightlycoupled: true`.
+        When: CO196 runs.
+        Then: One error naming the integration and telling the user to set the
+              flag to false or remove it.
+        """
+        connector = create_connector_object()
+        connector.handlers[0].related_integration = self._integration(
+            "MyIntegration", True
+        )
+
+        results = IsConnectorIntegrationNotExcludedFromTightlyCoupledValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+        assert "'MyIntegration'" in results[0].message
+        assert "Set the flag to false or remove it" in results[0].message
+
+    def test_handler_integration_not_excluded_passes(self):
+        """
+        Given: A connector whose XSOAR handler references an integration
+               without the opt-out flag.
+        When: CO196 runs.
+        Then: No errors.
+        """
+        connector = create_connector_object()
+        connector.handlers[0].related_integration = self._integration(
+            "MyIntegration", False
+        )
+
+        results = IsConnectorIntegrationNotExcludedFromTightlyCoupledValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert results == []
+
+    def test_real_integration_object_flag_is_read(self):
+        """
+        Given: A connector whose handler references a real Integration object
+               with `exclude_from_tightly_coupled` set.
+        When: CO196 runs.
+        Then: One error.
+        """
+        connector = create_connector_object()
+        integration = create_integration_object()
+        integration.exclude_from_tightly_coupled = True
+        connector.handlers[0].related_integration = integration
+
+        results = IsConnectorIntegrationNotExcludedFromTightlyCoupledValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+        assert integration.object_id in results[0].message
+
+    def test_unresolved_integration_is_skipped(self):
+        """
+        Given: A connector whose XSOAR handler's integration was not resolved.
+        When: CO196 runs.
+        Then: No errors (CO164 owns unresolved integrations).
+        """
+        connector = create_connector_object()
+        connector.handlers[0].related_integration = None
+
+        results = IsConnectorIntegrationNotExcludedFromTightlyCoupledValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert results == []
+
+    def test_multiple_handlers_only_excluded_reported(self):
+        """
+        Given: A connector with two XSOAR handlers, only one of which references
+               an opted-out integration.
+        When: CO196 runs.
+        Then: A single aggregated error naming only the opted-out integration.
+        """
+        connector = create_connector_object(
+            handlers=[{"id": "xsoar-int-one"}, {"id": "xsoar-int-two"}]
+        )
+        connector.handlers[0].related_integration = self._integration("IntOne", True)
+        connector.handlers[1].related_integration = self._integration("IntTwo", False)
+
+        results = IsConnectorIntegrationNotExcludedFromTightlyCoupledValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert len(results) == 1
+        assert "'IntOne'" in results[0].message
+        assert "IntTwo" not in results[0].message
+
+    def test_non_xsoar_handler_is_ignored(self):
+        """
+        Given: A non-XSOAR handler whose related_integration carries the flag.
+        When: CO196 runs.
+        Then: No errors - only XSOAR handlers are checked.
+        """
+        connector = create_connector_object()
+        h = connector.handlers[0]
+        h.metadata.module = "identity"
+        h.metadata.ownership.team = "identity"
+        h.triggering.labels = {"identity-content-id": "gsuite"}
+        h.related_integration = self._integration("Whatever", True)
+        assert not h.is_xsoar  # precondition
+
+        results = IsConnectorIntegrationNotExcludedFromTightlyCoupledValidator().obtain_invalid_content_items(
+            [connector]
+        )
+
+        assert results == []
 
 
 # ---------------------------------------------------------------------------

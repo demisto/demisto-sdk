@@ -40,6 +40,11 @@ class IsIntegrationCoveredByConnectorValidator(BaseValidator[ContentTypes]):
     (``--run-connectors-validation`` was not passed) the getter returns
     ``frozenset()`` and this validator emits nothing -- which is the
     correct behaviour: no scan means no verdict.
+
+    An uncovered integration that explicitly opts out of tight coupling via
+    ``excludefromtightlycoupled: true`` is intentionally connector-less and
+    is not reported. The inverse (a connector added for an opted-out
+    integration) is enforced by CO196.
     """
 
     error_code = "CO192"
@@ -63,7 +68,8 @@ class IsIntegrationCoveredByConnectorValidator(BaseValidator[ContentTypes]):
         "(PLATFORM marketplace, not deprecated, support level not in "
         "{{partner, community}}) but no connector's XSOAR handler "
         "references it via 'triggering.labels.xsoar-integration-id'. "
-        "Add a handler that pins this integration's YML id, or narrow the "
+        "Add a handler that pins this integration's YML id, or set "
+        "'excludefromtightlycoupled: true' on the integration, or narrow the "
         "integration's scope so the connector flow no longer considers it."
     )
     related_field = "commonfields.id"
@@ -86,4 +92,5 @@ class IsIntegrationCoveredByConnectorValidator(BaseValidator[ContentTypes]):
                 content_object=integration,
             )
             for integration in uncovered
+            if not integration.exclude_from_tightly_coupled
         ]

@@ -1,0 +1,6 @@
+changes:
+- description: Added the **CO196** validation, which fails when a connector's XSOAR handler references an integration that sets `excludefromtightlycoupled` to true. Set the flag to false or remove it once a connector is added for the integration.
+  type: feature
+- description: Updated the **CO192** validation to skip integrations that set `excludefromtightlycoupled` to true, and updated its error message to suggest setting the flag on integrations that have no connector.
+  type: feature
+pr_number: '5538'

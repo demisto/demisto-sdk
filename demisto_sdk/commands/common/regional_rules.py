@@ -1,6 +1,6 @@
 """Reader and merge logic for the repo-level ``Config/regional_rules.json``.
 
-The file is the per-region source of truth for which platform features are
+The file is the per-region source of truth for which platform features are 
 enabled. Its shape is::
 
     {

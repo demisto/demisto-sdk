@@ -464,8 +464,6 @@ TIGHTLY_COUPLED_TYPES: frozenset[ContentType] = frozenset(
 # Item-level opt-out key from tight coupling; same spelling in yml and json.
 EXCLUDE_FROM_TIGHTLY_COUPLED_KEY: str = "excludefromtightlycoupled"
 
-MANAGED_PAIRED_KEY: str = "managedPaired"
-
 
 class PackDestination(str, enum.Enum):
     """Where a pack's content is destined during the build."""

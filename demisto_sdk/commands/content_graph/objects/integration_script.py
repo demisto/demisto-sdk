@@ -115,7 +115,6 @@ class IntegrationScript(ContentItem):
             # ``super().prepare_for_upload`` is bypassed, so strip the SDK-only flag here, on a copy (``self.data`` may be shared).
             data = dict(self.data)
             data.pop(EXCLUDE_FROM_TIGHTLY_COUPLED_KEY, None)
-            data = self._add_managed_paired(data)
         else:
             data = super().prepare_for_upload(current_marketplace)
         if self.content_type != ContentType.SCRIPT or (

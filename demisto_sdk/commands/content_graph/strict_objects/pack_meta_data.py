@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     BaseStrictModel,
     SupportedFeaturesList,
+    SupportedModulesList,
 )
 
 
@@ -102,7 +103,9 @@ class StrictPackMetadata(BaseStrictModel):
     preview_only: Optional[bool] = Field(None, alias="previewOnly")
     disable_monthly: Optional[bool] = Field(None, alias="disableMonthly")
     content_commit_hash: Optional[str] = Field(None, alias="contentCommitHash")
-    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
+    supportedModules: Optional[SupportedModulesList] = Field(
+        None, alias="supportedModules"
+    )
     source: Optional[str] = Field("", alias="source")
     managed: Optional[bool] = Field(False, alias="managed")
     internal: Optional[bool] = Field(False, alias="internal")

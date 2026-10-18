@@ -31,7 +31,7 @@ class AgentixAgent(AgentixBase, content_type=ContentType.AGENTIX_AGENT):
     autoenablenewactions: bool = False
     roles: list[str] = []
     sharedwithroles: list[str] = []
-    collectionids: list[str] = []
+    knowledgeids: list[str] = []
     mcps: list[Mcp] = Field(default_factory=list, exclude=True)
 
     @staticmethod

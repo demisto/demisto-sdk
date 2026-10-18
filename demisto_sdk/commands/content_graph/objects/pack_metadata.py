@@ -17,7 +17,6 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_json, is_external_repository
 from demisto_sdk.commands.content_graph.common import (
     ENABLE_SPLIT_PACKS,
-    MANAGED_PAIRED_KEY,
     ContentType,
     PackTags,
 )
@@ -573,7 +572,7 @@ class PackMetadata(BaseModel):
         )
         # CIAC-16414: ``managedPaired == (pack splits) AND (item is tightly coupled)``; both operands come from the caller.
         if ENABLE_SPLIT_PACKS:
-            content_item_summary[MANAGED_PAIRED_KEY] = bool(
+            content_item_summary["managedPaired"] = bool(
                 pack_is_managed_paired and item_is_tightly_coupled
             )
 

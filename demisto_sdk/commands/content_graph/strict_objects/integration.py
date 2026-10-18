@@ -5,6 +5,7 @@ from pydantic import Field, conlist, validator
 from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON2,
     TYPE_PYTHON3,
+    SupportLevelHeader,
 )
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
@@ -50,12 +51,6 @@ class SectionOrderValues(StrEnum):
     MIRRORING = "Mirroring"
     RESULT = "Result"
     AGENTIC_ASSISTANT = "Agentic Assistant"
-
-
-class SupportLevelHeader(StrEnum):
-    XSOAR = "xsoar"
-    PARTNER = "partner"
-    COMMUNITY = "community"
 
 
 class _Configuration(BaseStrictModel):

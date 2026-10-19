@@ -20,6 +20,7 @@ from demisto_sdk.commands.common.constants import (
     DEVELOPER_SUPPORT,
     MIRRORING_COMMANDS,
     PARTNER_SUPPORT,
+    PREVIEW_SUPPORT,
     SUPPORT_LEVEL_HEADER,
     TYPE_TO_EXTENSION,
     FileType,
@@ -47,6 +48,7 @@ from demisto_sdk.commands.prepare_content.unifier import Unifier
 
 PACK_METADATA_PATH = "pack_metadata.json"
 CONTRIBUTOR_DISPLAY_NAME = " ({} Contribution)"
+PREVIEW_DISPLAY_NAME = " (Preview)"
 CONTRIBUTOR_DETAILED_DESC = (
     "### {} Contributed Integration\n"
     "#### Integration Author: {}\n"
@@ -128,6 +130,10 @@ class IntegrationScriptUnifier(Unifier):
                     contributor_email,
                     contributor_url,
                     author,
+                )
+            elif contributor_type == PREVIEW_SUPPORT:
+                yml_unified["display"] = IntegrationScriptUnifier.get_display_name(
+                    yml_unified["display"], contributor_type
                 )
 
         if custom:
@@ -755,15 +761,22 @@ class IntegrationScriptUnifier(Unifier):
         return unified_yml
 
     @staticmethod
+    def get_display_name_suffix(contributor_type: str) -> str:
+        if contributor_type == PREVIEW_SUPPORT:
+            return PREVIEW_DISPLAY_NAME
+        return CONTRIBUTOR_DISPLAY_NAME.format(contributor_type.capitalize())
+
+    @staticmethod
     def get_display_name(display_name: str, contributor_type: str):
         if (
             display_name
             and contributor_type
             and " Contribution)" not in display_name
+            and not display_name.endswith(PREVIEW_DISPLAY_NAME)
             and contributor_type != "xsoar"
         ):
-            display_name += CONTRIBUTOR_DISPLAY_NAME.format(
-                contributor_type.capitalize()
+            display_name += IntegrationScriptUnifier.get_display_name_suffix(
+                contributor_type
             )
         return display_name
 
@@ -771,13 +784,8 @@ class IntegrationScriptUnifier(Unifier):
     def remove_support_from_display_name(
         display_name: str, contributor_type: Optional[str]
     ):
-        if (
-            display_name
-            and contributor_type
-            and " Contribution)" in display_name
-            and contributor_type != "xsoar"
-        ):
-            suffix = CONTRIBUTOR_DISPLAY_NAME.format(contributor_type.capitalize())
+        if display_name and contributor_type and contributor_type != "xsoar":
+            suffix = IntegrationScriptUnifier.get_display_name_suffix(contributor_type)
             if display_name.endswith(suffix):
                 display_name = display_name[: -len(suffix)]
         return display_name

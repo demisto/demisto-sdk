@@ -1,0 +1,4 @@
+changes:
+- description: Added the `preview` pack support level. Integrations in preview packs have "(Preview)" appended to their display name.
+  type: feature
+pr_number: '5544'

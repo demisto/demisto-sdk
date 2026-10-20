@@ -772,7 +772,10 @@ class IntegrationScriptUnifier(Unifier):
             display_name
             and contributor_type
             and " Contribution)" not in display_name
-            and not display_name.endswith(PREVIEW_DISPLAY_NAME)
+            and not (
+                contributor_type == PREVIEW_SUPPORT
+                and display_name.endswith(PREVIEW_DISPLAY_NAME)
+            )
             and contributor_type != "xsoar"
         ):
             display_name += IntegrationScriptUnifier.get_display_name_suffix(

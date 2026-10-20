@@ -296,6 +296,11 @@ def test_insert_description_to_yml_with_no_detailed_desc(tmp_path):
         ("Cymulate v2", "community", "Cymulate v2 (Community Contribution)"),
         ("Cymulate v2", "preview", "Cymulate v2 (Preview)"),
         ("Cymulate v2 (Preview)", "preview", "Cymulate v2 (Preview)"),
+        (
+            "Cymulate v2 (Preview)",
+            "partner",
+            "Cymulate v2 (Preview) (Partner Contribution)",
+        ),
         (None, "community", None),
         ("", "community", ""),
     ),
@@ -1422,6 +1427,23 @@ PACK_METADATA_COMMUNITY = json.dumps(
     }
 )
 
+PACK_METADATA_PREVIEW = json.dumps(
+    {
+        "name": "test",
+        "description": "test",
+        "support": "preview",
+        "currentVersion": "1.0.0",
+        "author": "Cortex XSOAR",
+        "url": "",
+        "email": "",
+        "categories": ["Endpoint"],
+        "tags": [],
+        "useCases": [],
+        "keywords": [],
+        "created": "2020-06-15T11:49:45Z",
+    }
+)
+
 PARTNER_UNIFY = {
     "script": {},
     "type": "python",
@@ -1434,6 +1456,7 @@ PARTNER_UNIFY_NO_URL = PARTNER_UNIFY.copy()
 XSOAR_UNIFY = PARTNER_UNIFY.copy()
 COMMUNITY_UNIFY = PARTNER_UNIFY.copy()
 PARTNER_UNIFY_EMAIL_LIST = PARTNER_UNIFY.copy()
+PREVIEW_UNIFY = PARTNER_UNIFY.copy()
 
 INTEGRATION_YAML = {
     "commonfields": {"id": "IntegrationName"},
@@ -1802,6 +1825,51 @@ def test_unify_community_contributed(mocker, repo):
         "No support or maintenance is provided by the author."
         in COMMUNITY_UNIFY["detaileddescription"]
     )
+
+
+def test_unify_preview_pack(mocker, repo):
+    """
+    Given
+        - A pack with preview support.
+    When
+        - Running unify on it.
+    Then
+        - Ensure the display name gets exactly one " (Preview)" suffix.
+        - Ensure the detailed description is unchanged (no contributed-integration block).
+    """
+    pack = repo.create_pack("PackName")
+    integration = pack.create_integration("integration", "bla", INTEGRATION_YAML)
+    pack.pack_metadata.write_json(PACK_METADATA_PREVIEW)
+    for method in (
+        "insert_script_to_yml",
+        "insert_image_to_yml",
+        "insert_description_to_yml",
+    ):
+        mocker.patch.object(
+            IntegrationScriptUnifier, method, return_value=(PREVIEW_UNIFY, "")
+        )
+    mocker.patch.object(
+        IntegrationScriptUnifier,
+        "get_data",
+        return_value=(PACK_METADATA_PREVIEW, pack.pack_metadata.path),
+    )
+
+    with ChangeCWD(pack.repo_path):
+        result = CliRunner(mix_stderr=False).invoke(
+            app,
+            [
+                UNIFY_CMD,
+                "-i",
+                integration.path,
+                "-o",
+                integration.path,
+                "--console-log-threshold",
+                "DEBUG",
+            ],
+        )
+    assert "Created unified yml:" in result.output
+    assert PREVIEW_UNIFY["display"] == "test (Preview)"
+    assert PREVIEW_UNIFY["detaileddescription"] == "test details"
 
 
 def test_add_contributors_support(tmp_path):

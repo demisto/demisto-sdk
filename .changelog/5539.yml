@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where **validate** in git mode crashed with a parse error when an Agentix agent or skill was renamed. Markdown side files (system instructions, skill markdown) are no longer parsed as content items, and the **BA114** validation no longer fails when the previous version of an item cannot be parsed.
-  type: fix
-pr_number: 5539

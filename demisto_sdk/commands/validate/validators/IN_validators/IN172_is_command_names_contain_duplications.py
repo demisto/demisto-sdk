@@ -18,7 +18,7 @@ class IsCommandNamesContainDuplicationsValidator(BaseValidator[ContentTypes]):
     rationale = (
         "The server rejects installing an integration with duplicated command names."
     )
-    error_message = "The following commands appear more than once in the integration: {0}. Please remove the duplications."
+    error_message = "Duplicated command names found: {0}. Each command name must be unique within the integration."
     related_field = "script.commands"
     is_auto_fixable = False
 

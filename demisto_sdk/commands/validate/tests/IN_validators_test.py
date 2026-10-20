@@ -7286,5 +7286,5 @@ def test_IsCommandNamesContainDuplicationsValidator():
     assert len(results) == 1
     assert (
         results[0].message
-        == "The following commands appear more than once in the integration: test-cmd. Please remove the duplications."
+        == "Duplicated command names found: test-cmd. Each command name must be unique within the integration."
     )

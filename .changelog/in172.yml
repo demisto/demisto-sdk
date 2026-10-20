@@ -1,0 +1,4 @@
+changes:
+- description: Added the **IN172** validation, which ensures an integration does not contain duplicate command names.
+  type: feature
+pr_number: 0

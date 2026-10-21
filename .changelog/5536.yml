@@ -1,6 +1,0 @@
-changes:
-- description: Enforced `supportedModules` against `PlatformSupportedModules` in pack metadata, and unified the field's declaration across the strict schemas.
-  type: fix
-- description: Fixed the integration `supportlevelheader` structure validation (ST110) rejecting valid `community`, `partner` and `developer` values.
-  type: fix
-pr_number: 5536

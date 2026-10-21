@@ -1,4 +1,17 @@
 # Changelog
+## 1.39.13 (2026-10-20)
+### Breaking
+* Removed the defaultDataSource field from the pack metadata schema, along with its validators PA131 (IsDefaultDataSourceProvidedValidator) and PA132 (IsValidDefaultDataSourceNameValidator), as all integrations are now shown in the Data Sources screen. [#5513](https://github.com/demisto/demisto-sdk/pull/5513)
+
+### Fix
+* Enforced `supportedModules` against `PlatformSupportedModules` in pack metadata, and unified the field's declaration across the strict schemas. [#5536](https://github.com/demisto/demisto-sdk/pull/5536)
+* Fixed the integration `supportlevelheader` structure validation (ST110) rejecting valid `community`, `partner` and `developer` values. [#5536](https://github.com/demisto/demisto-sdk/pull/5536)
+* Fixed an issue where **validate** in git mode crashed with a parse error when an Agentix agent or skill was renamed. Markdown side files (system instructions, skill markdown) are no longer parsed as content items, and the **BA114** validation no longer fails when the previous version of an item cannot be parsed. [#5539](https://github.com/demisto/demisto-sdk/pull/5539)
+
+### Internal
+* Renamed the Collection content item type to Knowledge. [#5494](https://github.com/demisto/demisto-sdk/pull/5494)
+
+
 ## 1.39.12 (2026-10-14)
 ### Internal
 * Added the **managedPaired** field to tightly coupled content items during prepare. [#5531](https://github.com/demisto/demisto-sdk/pull/5531)

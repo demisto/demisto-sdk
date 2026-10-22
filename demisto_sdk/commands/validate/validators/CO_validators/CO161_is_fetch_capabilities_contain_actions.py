@@ -22,16 +22,18 @@ ContentTypes = Connector
 # declare optional actions on it — CO161 only enforces required ones).
 #
 # A base capability may require MULTIPLE actions. ``fetch-issues`` (the
-# incident-fetch family) requires BOTH its reset action
-# (``reset_incidents_last_run``) and ``fetch_history``. ``fetch_history`` is a
-# bare action that lets users backfill/replay historical incidents; every
-# incident-fetch capability must expose it. The other three families each
+# incident-fetch family) and ``threat-intelligence-and-enrichment`` (the feed
+# family) each require BOTH their reset action and ``fetch_history``.
+# ``fetch_history`` drives the "View Fetch History" entry in the ConnectUs
+# Instance Health Monitor; this mirrors the classic XSOAR UI, which shows
+# fetch history for incident-fetching and feed instances (CRTX-287637). The
+# other two families (log-collection, fetch-assets-and-vulnerabilities)
 # require only their single reset action.
 REQUIRED_ACTION_BY_BASE_CAP: dict = {
     "fetch-issues": ["reset_incidents_last_run", "fetch_history"],
     "log-collection": ["reset_events_last_run"],
     "fetch-assets-and-vulnerabilities": ["reset_assets_last_run"],
-    "threat-intelligence-and-enrichment": ["reset_feed_last_run"],
+    "threat-intelligence-and-enrichment": ["reset_feed_last_run", "fetch_history"],
 }
 
 
@@ -51,9 +53,10 @@ class IsFetchCapabilitiesContainActionsValidator(ConnectorsValidator[ContentType
     description = (
         "Validates that every fetch-family capability the handler "
         "subscribes to declares all of its required actions. The "
-        "incident-fetch family (fetch-issues) requires TWO actions: "
-        "reset_incidents_last_run and fetch_history; the other stateful "
-        "fetch families each require their single reset-state action."
+        "incident-fetch family (fetch-issues) and the feed family "
+        "(threat-intelligence-and-enrichment) each require their reset-state "
+        "action and fetch_history; the other stateful fetch families each "
+        "require their single reset-state action."
     )
     rationale = (
         "Fetch-type sub-capabilities are stateful (last-run cursors, event "
@@ -61,14 +64,16 @@ class IsFetchCapabilitiesContainActionsValidator(ConnectorsValidator[ContentType
         "reset action per stateful capability so users can recover from "
         "bad state. A subscribed fetch capability that omits a required "
         "action leaves users without a recovery path. The incident-fetch "
-        "family additionally requires the fetch_history action, a bare "
-        "action that lets users backfill/replay historical incidents; every "
-        "incident-fetch capability must expose it. Base id -> required "
-        "action(s) mapping: "
+        "and feed families additionally require the fetch_history action, "
+        "which drives 'View Fetch History' in the ConnectUs Instance Health "
+        "Monitor; this mirrors the classic XSOAR UI, which shows fetch "
+        "history for incident-fetching and feed instances. Base id -> "
+        "required action(s) mapping: "
         "fetch-issues -> reset_incidents_last_run + fetch_history; "
         "log-collection -> reset_events_last_run; "
         "fetch-assets-and-vulnerabilities -> reset_assets_last_run; "
-        "threat-intelligence-and-enrichment -> reset_feed_last_run. "
+        "threat-intelligence-and-enrichment -> reset_feed_last_run + "
+        "fetch_history. "
         "fetch-secrets is stateless and has no required action. "
         "automation-and-remediation is not a fetch capability and is not "
         "required to declare any action (optional actions are permitted)."

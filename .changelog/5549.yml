@@ -1,0 +1,4 @@
+changes:
+- description: Updated **CO161** to require the `fetch_history` action on `threat-intelligence-and-enrichment` capabilities, so feed connectors expose View Fetch History in the ConnectUs UI.
+  type: feature
+pr_number: 5549

@@ -179,6 +179,9 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN170_is_param_suppo
 from demisto_sdk.commands.validate.validators.IN_validators.IN171_is_param_supported_modules_not_empty import (
     IsParamSupportedModulesNotEmptyValidator,
 )
+from demisto_sdk.commands.validate.validators.IN_validators.IN172_is_command_names_contain_duplications import (
+    IsCommandNamesContainDuplicationsValidator,
+)
 from TestSuite.repo import ChangeCWD
 
 MARKETPLACE_VALUES = [mp.value for mp in MarketplaceVersions]
@@ -7254,3 +7257,34 @@ def test_IsParamSupportedModulesNotEmptyValidator_invalid_one_of_multiple_params
         assert len(results) == 1
         assert "param_empty_modules" in results[0].message
         assert results[0].validator.error_code == "IN171"
+
+
+def test_IsCommandNamesContainDuplicationsValidator():
+    """
+    Given
+        - An integration with unique command names and one with a duplicated command name.
+    When
+        - Running IN172.
+    Then
+        - Only the integration with the duplicated command name fails.
+    """
+    command = {
+        "name": "test-cmd",
+        "description": "desc",
+        "arguments": [],
+        "outputs": [],
+    }
+    valid = create_integration_object(
+        paths=["script.commands"], values=[[command, {**command, "name": "other-cmd"}]]
+    )
+    invalid = create_integration_object(
+        paths=["script.commands"], values=[[command, command]]
+    )
+    results = IsCommandNamesContainDuplicationsValidator().obtain_invalid_content_items(
+        [valid, invalid]
+    )
+    assert len(results) == 1
+    assert (
+        results[0].message
+        == "Duplicated command names found: test-cmd. Each command name must be unique within the integration."
+    )

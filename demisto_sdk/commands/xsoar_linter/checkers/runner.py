@@ -22,7 +22,11 @@ from demisto_sdk.commands.xsoar_linter.checkers.registry import (
 )
 
 GOLDEN_SAMPLES_DIR = (
-    Path(__file__).resolve().parent.parent / "tests" / "test_files" / "golden" / "samples"
+    Path(__file__).resolve().parent.parent
+    / "tests"
+    / "test_files"
+    / "golden"
+    / "samples"
 )
 
 
@@ -42,13 +46,17 @@ def lint_source(source: str, module_name: str, settings: LintSettings) -> LintRe
     try:
         tree = ast.parse(source)
     except SyntaxError as error:
-        return LintResult(findings=[parse_error_finding(error, module_name)], fails=True)
+        return LintResult(
+            findings=[parse_error_finding(error, module_name)], fails=True
+        )
 
     suppressions = build_suppressions(source, tree, all_rule_names())
     if suppressions.skip_file:
         return LintResult()
 
-    context = FileContext(tree, settings, rules_for_checkers(checker_classes), suppressions)
+    context = FileContext(
+        tree, settings, rules_for_checkers(checker_classes), suppressions
+    )
     run_checkers(context, [checker_class(context) for checker_class in checker_classes])
 
     findings = sorted(set(context.findings), key=Finding.sort_key)
@@ -79,7 +87,9 @@ def settings_from_integration_script(integration_script: Any) -> LintSettings:
     is_integration = isinstance(integration_script, Integration)
     python_version: Optional[str] = integration_script.python_version
     commands: List[str] = (
-        [command.name for command in integration_script.commands] if is_integration else []
+        [command.name for command in integration_script.commands]
+        if is_integration
+        else []
     )
     return LintSettings(
         support=integration_script.support,

@@ -49,10 +49,26 @@ def docstring_nodes(tree: ast.Module) -> Set[ast.AST]:
 
 class BaseChecker(Checker):
     RULES: ClassVar[List[Rule]] = [
-        Rule("E9002", "print-exists", "Print is found, Please remove all prints from the code."),
-        Rule("E9003", "sleep-exists", "Sleep is found, Please remove all sleep statements from the code."),
-        Rule("E9004", "exit-exists", "exit is found, Please remove all exit() statements from the code."),
-        Rule("E9005", "quit-exists", "quit is found, Please remove all quit() statements from the code."),
+        Rule(
+            "E9002",
+            "print-exists",
+            "Print is found, Please remove all prints from the code.",
+        ),
+        Rule(
+            "E9003",
+            "sleep-exists",
+            "Sleep is found, Please remove all sleep statements from the code.",
+        ),
+        Rule(
+            "E9004",
+            "exit-exists",
+            "exit is found, Please remove all exit() statements from the code.",
+        ),
+        Rule(
+            "E9005",
+            "quit-exists",
+            "quit is found, Please remove all quit() statements from the code.",
+        ),
         Rule(
             "E9006",
             "invalid-import-common-server-python",
@@ -105,7 +121,9 @@ class BaseChecker(Checker):
             self.report("E9004", node)
         elif name == "quit":
             self.report("E9005", node)
-        elif name == "CommandResults" and any(keyword.arg == "indicators" for keyword in node.keywords):
+        elif name == "CommandResults" and any(
+            keyword.arg == "indicators" for keyword in node.keywords
+        ):
             self.report("E9007", node)
         if self._is_long_sleep(node):
             self.report("E9003", node)

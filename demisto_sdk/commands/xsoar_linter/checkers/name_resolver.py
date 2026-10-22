@@ -13,7 +13,9 @@ MAX_DEPTH = 10
 
 VALUE = "value"  # bound to an expression we can try to evaluate
 UNKNOWN = "unknown"  # bound to something we cannot evaluate (argument, loop variable, import...)
-UNSUPPORTED = "unsupported"  # bound to something that is not a single value (function, class)
+UNSUPPORTED = (
+    "unsupported"  # bound to something that is not a single value (function, class)
+)
 
 
 class UnsupportedValue(Exception):
@@ -50,7 +52,9 @@ class NameResolver:
             if not bindings:
                 continue
             if index == 0:
-                bindings = [binding for binding in bindings if binding.end <= use_position]
+                bindings = [
+                    binding for binding in bindings if binding.end <= use_position
+                ]
                 if not bindings:
                     return []
             return self._binding_values(bindings[-1], depth)
@@ -106,8 +110,13 @@ def collect_bindings(scope: ast.AST) -> Dict[str, List[Binding]]:
     """All names assigned directly in the scope (not in nested functions/classes), in source order."""
     bindings: Dict[str, List[Binding]] = {}
 
-    def bind(name: str, node: ast.AST, kind: str, value: Optional[ast.expr] = None) -> None:
-        end = (getattr(node, "end_lineno", 0) or 0, getattr(node, "end_col_offset", 0) or 0)
+    def bind(
+        name: str, node: ast.AST, kind: str, value: Optional[ast.expr] = None
+    ) -> None:
+        end = (
+            getattr(node, "end_lineno", 0) or 0,
+            getattr(node, "end_col_offset", 0) or 0,
+        )
         bindings.setdefault(name, []).append(Binding(end, kind, value))
 
     def bind_target(target: ast.AST, statement: ast.AST) -> None:
@@ -139,7 +148,11 @@ def collect_bindings(scope: ast.AST) -> Dict[str, List[Binding]]:
                     bind(target.id, node, VALUE, node.value)
                 else:
                     bind_target(target, node)
-        elif isinstance(node, ast.AnnAssign) and node.value is not None and isinstance(node.target, ast.Name):
+        elif (
+            isinstance(node, ast.AnnAssign)
+            and node.value is not None
+            and isinstance(node.target, ast.Name)
+        ):
             bind(node.target.id, node, VALUE, node.value)
         elif isinstance(node, (ast.AugAssign, ast.For, ast.AsyncFor, ast.NamedExpr)):
             bind_target(node.target, node)

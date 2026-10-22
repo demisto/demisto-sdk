@@ -93,7 +93,9 @@ def read_pragmas(source: str, known_names: Dict[str, str]) -> Tuple[List[Pragma]
                 continue
             keyword = clause_match["keyword"]
             names = re.split(r"[,\s]+", clause_match["names"] or "")
-            if keyword in SKIP_FILE_KEYWORDS or (keyword in DISABLE_KEYWORDS and "all" in names):
+            if keyword in SKIP_FILE_KEYWORDS or (
+                keyword in DISABLE_KEYWORDS and "all" in names
+            ):
                 skip_file = True
                 continue
             codes = tuple(known_names[name] for name in names if name in known_names)
@@ -128,7 +130,11 @@ def _pragma_range(
     if not enabled and pragma.keyword not in DISABLE_KEYWORDS:
         return pragma.line, pragma.line, True  # unknown keyword: no effect
     if not blocks:
-        return (pragma.line, last_line, enabled) if pragma.own_line else (pragma.line, pragma.line, enabled)
+        return (
+            (pragma.line, last_line, enabled)
+            if pragma.own_line
+            else (pragma.line, pragma.line, enabled)
+        )
     if pragma.own_line:
         first, last = blocks.enclosing_block(pragma.line)
         return first, last, enabled
@@ -154,7 +160,9 @@ class BlockMap:
             for name in STATEMENT_LIST_FIELDS
             if isinstance(getattr(node, name, None), list) and getattr(node, name)
         ]
-        statement_lists = [items for items in statement_lists if isinstance(items[0], ast.stmt)]
+        statement_lists = [
+            items for items in statement_lists if isinstance(items[0], ast.stmt)
+        ]
         if not statement_lists or isinstance(node, ast.Module):
             return
         header_line = node.lineno
@@ -163,13 +171,19 @@ class BlockMap:
             header_end = node.end_lineno or header_line
         else:
             header_end = body[-1].end_lineno or header_line
-        self.header_ends[header_line] = max(self.header_ends.get(header_line, 0), header_end)
+        self.header_ends[header_line] = max(
+            self.header_ends.get(header_line, 0), header_end
+        )
 
         definition_line = header_line if isinstance(node, DEFINITION_NODES) else 0
-        self.blocks.append((header_line + 1, body[-1].end_lineno or header_line, definition_line))
+        self.blocks.append(
+            (header_line + 1, body[-1].end_lineno or header_line, definition_line)
+        )
         self._first_statement[header_line + 1] = body[0].lineno
         for items in statement_lists[1:]:
-            self.blocks.append((items[0].lineno - 1, items[-1].end_lineno or items[0].lineno, 0))
+            self.blocks.append(
+                (items[0].lineno - 1, items[-1].end_lineno or items[0].lineno, 0)
+            )
 
     def header_block_end(self, line: int) -> int:
         return self.header_ends.get(line, line)
@@ -179,7 +193,9 @@ class BlockMap:
         best: Optional[Tuple[int, int, int]] = None
         for block in self.blocks:
             first, last, _ = block
-            if first <= line <= last and (best is None or last - first < best[1] - best[0]):
+            if first <= line <= last and (
+                best is None or last - first < best[1] - best[0]
+            ):
                 best = block
         if best is None:
             return line, self.last_line

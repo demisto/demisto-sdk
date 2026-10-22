@@ -7,7 +7,10 @@ import pytest
 from demisto_sdk.commands.xsoar_linter.checkers.context import FileContext
 from demisto_sdk.commands.xsoar_linter.checkers.models import LintSettings, Rule
 from demisto_sdk.commands.xsoar_linter.checkers.pragmas import build_suppressions
-from demisto_sdk.commands.xsoar_linter.checkers.runner import format_finding, lint_source
+from demisto_sdk.commands.xsoar_linter.checkers.runner import (
+    format_finding,
+    lint_source,
+)
 
 CHECKERS_DIR = Path(__file__).resolve().parent.parent / "checkers"
 KNOWN_NAMES = {"E9003": "E9003", "sleep-exists": "E9003", "E9002": "E9002"}
@@ -139,12 +142,17 @@ def test_disable_comment_scope(source, disabled_lines, enabled_lines):
         - Ensure E9003 is turned off exactly on the expected lines.
     """
     suppressions = suppressions_for(source)
-    assert [line for line in disabled_lines if not suppressions.is_disabled("E9003", line)] == []
-    assert [line for line in enabled_lines if suppressions.is_disabled("E9003", line)] == []
+    assert [
+        line for line in disabled_lines if not suppressions.is_disabled("E9003", line)
+    ] == []
+    assert [
+        line for line in enabled_lines if suppressions.is_disabled("E9003", line)
+    ] == []
 
 
 @pytest.mark.parametrize(
-    "comment", ["# pylint: skip-file", "# pylint: disable=all", "# xsoar-lint: skip-file"]
+    "comment",
+    ["# pylint: skip-file", "# pylint: disable=all", "# xsoar-lint: skip-file"],
 )
 def test_skip_file(comment):
     """
@@ -199,15 +207,33 @@ def test_scope_name_and_position():
     )
     tree = ast.parse(source)
     rule = Rule("E9003", "sleep-exists", "Sleep is found")
-    context = FileContext(tree, LintSettings(), {"E9003": rule}, build_suppressions(source, tree, KNOWN_NAMES))
-    calls = [node for node in ast.walk(tree) if isinstance(node, ast.Call) and getattr(node.func, "id", "") == "sleep"]
-    helper = next(node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef) and node.name == "helper")
+    context = FileContext(
+        tree,
+        LintSettings(),
+        {"E9003": rule},
+        build_suppressions(source, tree, KNOWN_NAMES),
+    )
+    calls = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call) and getattr(node.func, "id", "") == "sleep"
+    ]
+    helper = next(
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.FunctionDef) and node.name == "helper"
+    )
     for node in calls + [helper]:
         context.report("E9003", node)
     context.report("E9003")
 
     found = sorted((f.line, f.col, f.obj) for f in context.findings)
-    assert found == [(1, 0, ""), (4, 8, "Client.__init__"), (7, 0, "helper"), (10, 0, "")]
+    assert found == [
+        (1, 0, ""),
+        (4, 8, "Client.__init__"),
+        (7, 0, "helper"),
+        (10, 0, ""),
+    ]
 
 
 def test_parse_error_reports_e0001():
@@ -219,7 +245,9 @@ def test_parse_error_reports_e0001():
     Then:
         - Ensure a single failing E0001 finding is reported, like pylint.
     """
-    result = lint_source('def main():\n    print "x"\n', "sample", LintSettings(support="xsoar"))
+    result = lint_source(
+        'def main():\n    print "x"\n', "sample", LintSettings(support="xsoar")
+    )
     assert result.fails
     assert [(f.line, f.col, f.code) for f in result.findings] == [(2, 5, "E0001")]
     assert result.findings[0].message.startswith("Parsing failed: 'Missing parentheses")
@@ -250,9 +278,13 @@ def test_format_finding_matches_hook_pattern(tmp_path):
         - Ensure the hook's error/warning regex can parse it.
     """
     from demisto_sdk.commands.xsoar_linter.checkers.models import Finding
-    from demisto_sdk.commands.xsoar_linter.xsoar_linter import ERROR_AND_WARNING_CODE_PATTERN
+    from demisto_sdk.commands.xsoar_linter.xsoar_linter import (
+        ERROR_AND_WARNING_CODE_PATTERN,
+    )
 
-    line = format_finding(tmp_path / "a.py", Finding(3, 4, "E9003", "helper", "Sleep is found"))
+    line = format_finding(
+        tmp_path / "a.py", Finding(3, 4, "E9003", "helper", "Sleep is found")
+    )
     match = ERROR_AND_WARNING_CODE_PATTERN.match(line)
     assert match
     assert (match["line"], match["col"], match["error_code"]) == ("3", "4", "E9003")
@@ -268,7 +300,11 @@ def test_checkers_do_not_import_pylint_or_astroid():
         - Ensure nothing imports pylint, astroid or the pylint plugins, so the package
           keeps working unchanged once pylint is removed.
     """
-    forbidden = ("pylint", "astroid", "demisto_sdk.commands.pre_commit.resources.pylint_plugins")
+    forbidden = (
+        "pylint",
+        "astroid",
+        "demisto_sdk.commands.pre_commit.resources.pylint_plugins",
+    )
     offenders = []
     for module_path in CHECKERS_DIR.glob("*.py"):
         for node in ast.walk(ast.parse(module_path.read_text())):
@@ -281,6 +317,9 @@ def test_checkers_do_not_import_pylint_or_astroid():
             offenders += [
                 f"{module_path.name}: {name}"
                 for name in names
-                if any(name == prefix or name.startswith(f"{prefix}.") for prefix in forbidden)
+                if any(
+                    name == prefix or name.startswith(f"{prefix}.")
+                    for prefix in forbidden
+                )
             ]
     assert offenders == []

@@ -10,13 +10,16 @@ and the same pass / fail outcome.
 - engine "ast": proves the ast implementation matches it (skipped until the ast engine exists).
 """
 
-import json
 from pathlib import Path
 from typing import Any, Callable, Dict, List
 
 import pytest
 
+from demisto_sdk.commands.common.handlers import JSON_Handler
+
 GOLDEN_DIR = Path(__file__).parent / "test_files" / "golden"
+json = JSON_Handler()
+
 GOLDEN_CASES: List[Dict[str, Any]] = json.loads(
     (GOLDEN_DIR / "golden.json").read_text()
 )

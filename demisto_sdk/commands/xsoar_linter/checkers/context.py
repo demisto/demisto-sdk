@@ -3,7 +3,11 @@
 import ast
 from typing import Any, Dict, List, Optional, Sequence
 
-from demisto_sdk.commands.xsoar_linter.checkers.models import Finding, LintSettings, Rule
+from demisto_sdk.commands.xsoar_linter.checkers.models import (
+    Finding,
+    LintSettings,
+    Rule,
+)
 from demisto_sdk.commands.xsoar_linter.checkers.pragmas import Suppressions
 
 PARSE_ERROR_CODE = "E0001"
@@ -49,7 +53,10 @@ class FileContext:
         return ".".join(reversed(names))
 
     def report(
-        self, code: str, node: Optional[ast.AST] = None, args: Optional[Sequence[Any]] = None
+        self,
+        code: str,
+        node: Optional[ast.AST] = None,
+        args: Optional[Sequence[Any]] = None,
     ) -> None:
         """
         Report a finding for an enabled rule, unless a disable comment turns it off.

@@ -11,7 +11,6 @@ Only re-record when adding new samples or cases, and only with the pylint engine
 This script is deleted together with the pylint implementation.
 """
 
-import json
 import os
 import re
 import subprocess
@@ -20,12 +19,21 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from demisto_sdk.commands.common.handlers import JSON_Handler
+
+json = JSON_Handler()
+
 GOLDEN_DIR = Path(__file__).resolve().parent
 SAMPLES_DIR = GOLDEN_DIR / "samples"
 GOLDEN_FILE = GOLDEN_DIR / "golden.json"
 SDK_ROOT = GOLDEN_DIR.parents[5]
 PYLINT_PLUGINS_DIR = (
-    SDK_ROOT / "demisto_sdk" / "commands" / "pre_commit" / "resources" / "pylint_plugins"
+    SDK_ROOT
+    / "demisto_sdk"
+    / "commands"
+    / "pre_commit"
+    / "resources"
+    / "pylint_plugins"
 )
 
 # Same pattern as ERROR_AND_WARNING_CODE_PATTERN in xsoar_linter.py, with the object name split out.
@@ -110,7 +118,12 @@ def build_cases() -> List[Dict[str, Any]]:
                 sample,
                 make_settings(
                     py2=True,
-                    commands=["py2-dict-command", "py2-if-command", "legacy-concat-command", "dict-a"],
+                    commands=[
+                        "py2-dict-command",
+                        "py2-if-command",
+                        "legacy-concat-command",
+                        "dict-a",
+                    ],
                 ),
             )
         )
@@ -192,7 +205,9 @@ def build_cases() -> List[Dict[str, Any]]:
 
 def build_env(settings: Dict[str, Any]) -> Dict[str, str]:
     """Mirror build_xsoar_linter_env_var() in xsoar_linter.py for the given settings."""
-    env = {key: value for key, value in os.environ.items() if key not in LINTER_ENV_KEYS}
+    env = {
+        key: value for key, value in os.environ.items() if key not in LINTER_ENV_KEYS
+    }
     if not settings["is_script"] and settings["long_running"]:
         env["LONGRUNNING"] = "True"
     if settings["py2"]:
@@ -218,12 +233,16 @@ def parse_findings(output: str) -> List[Dict[str, Any]]:
                     "message": match["message"],
                 }
             )
-    return sorted(findings, key=lambda f: (f["line"], f["col"], f["code"], f["message"]))
+    return sorted(
+        findings, key=lambda f: (f["line"], f["col"], f["code"], f["message"])
+    )
 
 
 def run_pylint_engine(sample: str, settings: Dict[str, Any]) -> Dict[str, Any]:
     """Run the current pylint-based xsoar-linter on one sample and return its normalized result."""
-    from demisto_sdk.commands.xsoar_linter.xsoar_linter import build_xsoar_linter_command
+    from demisto_sdk.commands.xsoar_linter.xsoar_linter import (
+        build_xsoar_linter_command,
+    )
 
     command = build_xsoar_linter_command(settings["support"])
     command.append(str(SAMPLES_DIR / sample))
@@ -247,7 +266,9 @@ def main() -> None:
         recorded = list(executor.map(record_case, cases))
     GOLDEN_FILE.write_text(json.dumps(recorded, indent=2) + "\n")
     total_findings = sum(len(case["expected"]["findings"]) for case in recorded)
-    print(f"Recorded {len(recorded)} cases with {total_findings} findings to {GOLDEN_FILE}")  # noqa: T201
+    print(
+        f"Recorded {len(recorded)} cases with {total_findings} findings to {GOLDEN_FILE}"
+    )  # noqa: T201
 
 
 if __name__ == "__main__":

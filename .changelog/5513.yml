@@ -1,0 +1,4 @@
+changes:
+- description: Removed the defaultDataSource field from the pack metadata schema, along with its validators PA131 (IsDefaultDataSourceProvidedValidator) and PA132 (IsValidDefaultDataSourceNameValidator), as all integrations are now shown in the Data Sources screen.
+  type: breaking
+pr_number: '5513'

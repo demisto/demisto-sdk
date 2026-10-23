@@ -1,0 +1,4373 @@
+[
+  {
+    "id": "base_commandresults_indicators,integration,support=xsoar",
+    "sample": "base_commandresults_indicators.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9005",
+          "obj": "",
+          "message": "Main function wasnt found in the file, Please add main()"
+        },
+        {
+          "line": 3,
+          "col": 0,
+          "code": "E9007",
+          "obj": "",
+          "message": "Invalid usage of indicators key in CommandResults was found, Please use indicator key instead."
+        },
+        {
+          "line": 5,
+          "col": 0,
+          "code": "E9007",
+          "obj": "",
+          "message": "Invalid usage of indicators key in CommandResults was found, Please use indicator key instead."
+        }
+      ]
+    }
+  },
+  {
+    "id": "base_commandresults_indicators,script,support=xsoar",
+    "sample": "base_commandresults_indicators.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9005",
+          "obj": "",
+          "message": "Main function wasnt found in the file, Please add main()"
+        },
+        {
+          "line": 3,
+          "col": 0,
+          "code": "E9007",
+          "obj": "",
+          "message": "Invalid usage of indicators key in CommandResults was found, Please use indicator key instead."
+        },
+        {
+          "line": 5,
+          "col": 0,
+          "code": "E9007",
+          "obj": "",
+          "message": "Invalid usage of indicators key in CommandResults was found, Please use indicator key instead."
+        }
+      ]
+    }
+  },
+  {
+    "id": "base_csp_import,integration,support=xsoar",
+    "sample": "base_csp_import.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9005",
+          "obj": "",
+          "message": "Main function wasnt found in the file, Please add main()"
+        },
+        {
+          "line": 4,
+          "col": 0,
+          "code": "E9006",
+          "obj": "",
+          "message": "Invalid CommonServerPython import was found. Please change the import to: from CommonServerPython import *"
+        },
+        {
+          "line": 5,
+          "col": 0,
+          "code": "E9006",
+          "obj": "",
+          "message": "Invalid CommonServerPython import was found. Please change the import to: from CommonServerPython import *"
+        },
+        {
+          "line": 9,
+          "col": 0,
+          "code": "E9006",
+          "obj": "",
+          "message": "Invalid CommonServerPython import was found. Please change the import to: from CommonServerPython import *"
+        }
+      ]
+    }
+  },
+  {
+    "id": "base_csp_import,script,support=xsoar",
+    "sample": "base_csp_import.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9005",
+          "obj": "",
+          "message": "Main function wasnt found in the file, Please add main()"
+        },
+        {
+          "line": 4,
+          "col": 0,
+          "code": "E9006",
+          "obj": "",
+          "message": "Invalid CommonServerPython import was found. Please change the import to: from CommonServerPython import *"
+        },
+        {
+          "line": 5,
+          "col": 0,
+          "code": "E9006",
+          "obj": "",
+          "message": "Invalid CommonServerPython import was found. Please change the import to: from CommonServerPython import *"
+        },
+        {
+          "line": 9,
+          "col": 0,
+          "code": "E9006",
+          "obj": "",
+          "message": "Invalid CommonServerPython import was found. Please change the import to: from CommonServerPython import *"
+        }
+      ]
+    }
+  },
+  {
+    "id": "base_demisto_log,integration,support=xsoar",
+    "sample": "base_demisto_log.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9005",
+          "obj": "",
+          "message": "Main function wasnt found in the file, Please add main()"
+        },
+        {
+          "line": 3,
+          "col": 0,
+          "code": "E9012",
+          "obj": "",
+          "message": "Demisto.log is found, Please replace all demisto.log usage with demisto.info or demisto.debug"
+        }
+      ]
+    }
+  },
+  {
+    "id": "base_demisto_log,script,support=xsoar",
+    "sample": "base_demisto_log.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9005",
+          "obj": "",
+          "message": "Main function wasnt found in the file, Please add main()"
+        },
+        {
+          "line": 3,
+          "col": 0,
+          "code": "E9012",
+          "obj": "",
+          "message": "Demisto.log is found, Please replace all demisto.log usage with demisto.info or demisto.debug"
+        }
+      ]
+    }
+  },
+  {
+    "id": "base_exit_quit,integration,support=xsoar",
+    "sample": "base_exit_quit.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9005",
+          "obj": "",
+          "message": "Main function wasnt found in the file, Please add main()"
+        },
+        {
+          "line": 6,
+          "col": 0,
+          "code": "E9004",
+          "obj": "",
+          "message": "exit is found, Please remove all exit() statements from the code."
+        },
+        {
+          "line": 7,
+          "col": 0,
+          "code": "E9004",
+          "obj": "",
+          "message": "exit is found, Please remove all exit() statements from the code."
+        },
+        {
+          "line": 8,
+          "col": 0,
+          "code": "E9004",
+          "obj": "",
+          "message": "exit is found, Please remove all exit() statements from the code."
+        },
+        {
+          "line": 9,
+          "col": 0,
+          "code": "E9005",
+          "obj": "",
+          "message": "quit is found, Please remove all quit() statements from the code."
+        },
+        {
+          "line": 10,
+          "col": 0,
+          "code": "E9005",
+          "obj": "",
+          "message": "quit is found, Please remove all quit() statements from the code."
+        },
+        {
+          "line": 11,
+          "col": 0,
+          "code": "E9001",
+          "obj": "",
+          "message": "Sys.exit use is found, Please use return instead."
+        }
+      ]
+    }
+  },
+  {
+    "id": "base_exit_quit,script,support=xsoar",
+    "sample": "base_exit_quit.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9005",
+          "obj": "",
+          "message": "Main function wasnt found in the file, Please add main()"
+        },
+        {
+          "line": 6,
+          "col": 0,
+          "code": "E9004",
+          "obj": "",
+          "message": "exit is found, Please remove all exit() statements from the code."
+        },
+        {
+          "line": 7,
+          "col": 0,
+          "code": "E9004",
+          "obj": "",
+          "message": "exit is found, Please remove all exit() statements from the code."
+        },
+        {
+          "line": 8,
+          "col": 0,
+          "code": "E9004",
+          "obj": "",
+          "message": "exit is found, Please remove all exit() statements from the code."
+        },
+        {
+          "line": 9,
+          "col": 0,
+          "code": "E9005",
+          "obj": "",
+          "message": "quit is found, Please remove all quit() statements from the code."
+        },
+        {
+          "line": 10,
+          "col": 0,
+          "code": "E9005",
+          "obj": "",
+          "message": "quit is found, Please remove all quit() statements from the code."
+        },
+        {
+          "line": 11,
+          "col": 0,
+          "code": "E9001",
+          "obj": "",
+          "message": "Sys.exit use is found, Please use return instead."
+        }
+      ]
+    }
+  },
+  {
+    "id": "base_http,integration,support=xsoar",
+    "sample": "base_http.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9005",
+          "obj": "",
+          "message": "Main function wasnt found in the file, Please add main()"
+        },
+        {
+          "line": 3,
+          "col": 0,
+          "code": "W9013",
+          "obj": "",
+          "message": "Hardcoded http URL was found in the code, using https (when possible) is recommended."
+        },
+        {
+          "line": 5,
+          "col": 6,
+          "code": "W9013",
+          "obj": "",
+          "message": "Hardcoded http URL was found in the code, using https (when possible) is recommended."
+        },
+        {
+          "line": 11,
+          "col": 12,
+          "code": "W9013",
+          "obj": "",
+          "message": "Hardcoded http URL was found in the code, using https (when possible) is recommended."
+        },
+        {
+          "line": 12,
+          "col": 9,
+          "code": "W9013",
+          "obj": "",
+          "message": "Hardcoded http URL was found in the code, using https (when possible) is recommended."
+        },
+        {
+          "line": 13,
+          "col": 14,
+          "code": "W9013",
+          "obj": "",
+          "message": "Hardcoded http URL was found in the code, using https (when possible) is recommended."
+        },
+        {
+          "line": 17,
+          "col": 22,
+          "code": "W9013",
+          "obj": "helper",
+          "message": "Hardcoded http URL was found in the code, using https (when possible) is recommended."
+        }
+      ]
+    }
+  },
+  {
+    "id": "base_http,script,support=xsoar",
+    "sample": "base_http.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": false,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9005",
+          "obj": "",
+          "message": "Main function wasnt found in the file, Please add main()"
+        },
+        {
+          "line": 3,
+          "col": 0,
+          "code": "W9013",
+          "obj": "",
+          "message": "Hardcoded http URL was found in the code, using https (when possible) is recommended."
+        },
+        {
+          "line": 5,
+          "col": 6,
+          "code": "W9013",
+          "obj": "",
+          "message": "Hardcoded http URL was found in the code, using https (when possible) is recommended."
+        },
+        {
+          "line": 11,
+          "col": 12,
+          "code": "W9013",
+          "obj": "",
+          "message": "Hardcoded http URL was found in the code, using https (when possible) is recommended."
+        },
+        {
+          "line": 12,
+          "col": 9,
+          "code": "W9013",
+          "obj": "",
+          "message": "Hardcoded http URL was found in the code, using https (when possible) is recommended."
+        },
+        {
+          "line": 13,
+          "col": 14,
+          "code": "W9013",
+          "obj": "",
+          "message": "Hardcoded http URL was found in the code, using https (when possible) is recommended."
+        },
+        {
+          "line": 17,
+          "col": 22,
+          "code": "W9013",
+          "obj": "helper",
+          "message": "Hardcoded http URL was found in the code, using https (when possible) is recommended."
+        }
+      ]
+    }
+  },
+  {
+    "id": "base_print,integration,support=xsoar",
+    "sample": "base_print.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9005",
+          "obj": "",
+          "message": "Main function wasnt found in the file, Please add main()"
+        },
+        {
+          "line": 5,
+          "col": 4,
+          "code": "E9002",
+          "obj": "helper",
+          "message": "Print is found, Please remove all prints from the code."
+        },
+        {
+          "line": 13,
+          "col": 0,
+          "code": "E9002",
+          "obj": "",
+          "message": "Print is found, Please remove all prints from the code."
+        }
+      ]
+    }
+  },
+  {
+    "id": "base_print,script,support=xsoar",
+    "sample": "base_print.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9005",
+          "obj": "",
+          "message": "Main function wasnt found in the file, Please add main()"
+        },
+        {
+          "line": 5,
+          "col": 4,
+          "code": "E9002",
+          "obj": "helper",
+          "message": "Print is found, Please remove all prints from the code."
+        },
+        {
+          "line": 13,
+          "col": 0,
+          "code": "E9002",
+          "obj": "",
+          "message": "Print is found, Please remove all prints from the code."
+        }
+      ]
+    }
+  },
+  {
+    "id": "base_sleep,integration,support=xsoar",
+    "sample": "base_sleep.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9005",
+          "obj": "",
+          "message": "Main function wasnt found in the file, Please add main()"
+        },
+        {
+          "line": 8,
+          "col": 0,
+          "code": "E9003",
+          "obj": "",
+          "message": "Sleep is found, Please remove all sleep statements from the code."
+        },
+        {
+          "line": 9,
+          "col": 0,
+          "code": "E9003",
+          "obj": "",
+          "message": "Sleep is found, Please remove all sleep statements from the code."
+        },
+        {
+          "line": 12,
+          "col": 0,
+          "code": "E9003",
+          "obj": "",
+          "message": "Sleep is found, Please remove all sleep statements from the code."
+        },
+        {
+          "line": 13,
+          "col": 0,
+          "code": "E9003",
+          "obj": "",
+          "message": "Sleep is found, Please remove all sleep statements from the code."
+        },
+        {
+          "line": 14,
+          "col": 0,
+          "code": "E9003",
+          "obj": "",
+          "message": "Sleep is found, Please remove all sleep statements from the code."
+        },
+        {
+          "line": 22,
+          "col": 0,
+          "code": "E9003",
+          "obj": "",
+          "message": "Sleep is found, Please remove all sleep statements from the code."
+        },
+        {
+          "line": 24,
+          "col": 0,
+          "code": "E9003",
+          "obj": "",
+          "message": "Sleep is found, Please remove all sleep statements from the code."
+        }
+      ]
+    }
+  },
+  {
+    "id": "base_sleep,script,support=xsoar",
+    "sample": "base_sleep.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9005",
+          "obj": "",
+          "message": "Main function wasnt found in the file, Please add main()"
+        },
+        {
+          "line": 8,
+          "col": 0,
+          "code": "E9003",
+          "obj": "",
+          "message": "Sleep is found, Please remove all sleep statements from the code."
+        },
+        {
+          "line": 9,
+          "col": 0,
+          "code": "E9003",
+          "obj": "",
+          "message": "Sleep is found, Please remove all sleep statements from the code."
+        },
+        {
+          "line": 12,
+          "col": 0,
+          "code": "E9003",
+          "obj": "",
+          "message": "Sleep is found, Please remove all sleep statements from the code."
+        },
+        {
+          "line": 13,
+          "col": 0,
+          "code": "E9003",
+          "obj": "",
+          "message": "Sleep is found, Please remove all sleep statements from the code."
+        },
+        {
+          "line": 14,
+          "col": 0,
+          "code": "E9003",
+          "obj": "",
+          "message": "Sleep is found, Please remove all sleep statements from the code."
+        },
+        {
+          "line": 22,
+          "col": 0,
+          "code": "E9003",
+          "obj": "",
+          "message": "Sleep is found, Please remove all sleep statements from the code."
+        },
+        {
+          "line": 24,
+          "col": 0,
+          "code": "E9003",
+          "obj": "",
+          "message": "Sleep is found, Please remove all sleep statements from the code."
+        }
+      ]
+    }
+  },
+  {
+    "id": "certified_no_main,integration,support=xsoar",
+    "sample": "certified_no_main.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9005",
+          "obj": "",
+          "message": "Main function wasnt found in the file, Please add main()"
+        }
+      ]
+    }
+  },
+  {
+    "id": "certified_no_main,script,support=xsoar",
+    "sample": "certified_no_main.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": false,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9005",
+          "obj": "",
+          "message": "Main function wasnt found in the file, Please add main()"
+        }
+      ]
+    }
+  },
+  {
+    "id": "certified_params_args,integration,support=xsoar",
+    "sample": "certified_params_args.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 3,
+          "col": 9,
+          "code": "W9016",
+          "obj": "",
+          "message": "Initialize of params was found outside of main function. Please use demisto.params() only inside main func"
+        },
+        {
+          "line": 4,
+          "col": 7,
+          "code": "W9017",
+          "obj": "",
+          "message": "Initialize of args was found outside of main function. Please use demisto.args() only inside main func"
+        },
+        {
+          "line": 8,
+          "col": 11,
+          "code": "W9017",
+          "obj": "helper",
+          "message": "Initialize of args was found outside of main function. Please use demisto.args() only inside main func"
+        },
+        {
+          "line": 13,
+          "col": 22,
+          "code": "W9016",
+          "obj": "Client.__init__",
+          "message": "Initialize of params was found outside of main function. Please use demisto.params() only inside main func"
+        },
+        {
+          "line": 16,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 16,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        },
+        {
+          "line": 16,
+          "col": 0,
+          "code": "W9018",
+          "obj": "main",
+          "message": "It is best practice for Integrations to raise a NotImplementedError when receiving a command which is not recognized. exception"
+        }
+      ]
+    }
+  },
+  {
+    "id": "certified_params_args,script,support=xsoar",
+    "sample": "certified_params_args.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": false,
+      "findings": [
+        {
+          "line": 3,
+          "col": 9,
+          "code": "W9016",
+          "obj": "",
+          "message": "Initialize of params was found outside of main function. Please use demisto.params() only inside main func"
+        },
+        {
+          "line": 4,
+          "col": 7,
+          "code": "W9017",
+          "obj": "",
+          "message": "Initialize of args was found outside of main function. Please use demisto.args() only inside main func"
+        },
+        {
+          "line": 8,
+          "col": 11,
+          "code": "W9017",
+          "obj": "helper",
+          "message": "Initialize of args was found outside of main function. Please use demisto.args() only inside main func"
+        },
+        {
+          "line": 13,
+          "col": 22,
+          "code": "W9016",
+          "obj": "Client.__init__",
+          "message": "Initialize of params was found outside of main function. Please use demisto.params() only inside main func"
+        },
+        {
+          "line": 16,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 16,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        }
+      ]
+    }
+  },
+  {
+    "id": "certified_results_outputs,integration,support=xsoar",
+    "sample": "certified_results_outputs.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 4,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 4,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        },
+        {
+          "line": 4,
+          "col": 0,
+          "code": "W9018",
+          "obj": "main",
+          "message": "It is best practice for Integrations to raise a NotImplementedError when receiving a command which is not recognized. exception"
+        },
+        {
+          "line": 5,
+          "col": 4,
+          "code": "W9008",
+          "obj": "main",
+          "message": "Do not use demisto.results function. Please return CommandResults object instead."
+        },
+        {
+          "line": 6,
+          "col": 4,
+          "code": "W9009",
+          "obj": "main",
+          "message": "Do not use return_outputs function. Please return CommandResults object instead."
+        }
+      ]
+    }
+  },
+  {
+    "id": "certified_results_outputs,script,support=xsoar",
+    "sample": "certified_results_outputs.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": false,
+      "findings": [
+        {
+          "line": 4,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 4,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        },
+        {
+          "line": 5,
+          "col": 4,
+          "code": "W9008",
+          "obj": "main",
+          "message": "Do not use demisto.results function. Please return CommandResults object instead."
+        },
+        {
+          "line": 6,
+          "col": 4,
+          "code": "W9009",
+          "obj": "main",
+          "message": "Do not use return_outputs function. Please return CommandResults object instead."
+        }
+      ]
+    }
+  },
+  {
+    "id": "certified_sys_exit,integration,support=xsoar",
+    "sample": "certified_sys_exit.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9005",
+          "obj": "",
+          "message": "Main function wasnt found in the file, Please add main()"
+        },
+        {
+          "line": 7,
+          "col": 0,
+          "code": "E9001",
+          "obj": "",
+          "message": "Sys.exit use is found, Please use return instead."
+        },
+        {
+          "line": 10,
+          "col": 0,
+          "code": "E9001",
+          "obj": "",
+          "message": "Sys.exit use is found, Please use return instead."
+        },
+        {
+          "line": 12,
+          "col": 0,
+          "code": "E9001",
+          "obj": "",
+          "message": "Sys.exit use is found, Please use return instead."
+        }
+      ]
+    }
+  },
+  {
+    "id": "certified_sys_exit,script,support=xsoar",
+    "sample": "certified_sys_exit.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9005",
+          "obj": "",
+          "message": "Main function wasnt found in the file, Please add main()"
+        },
+        {
+          "line": 7,
+          "col": 0,
+          "code": "E9001",
+          "obj": "",
+          "message": "Sys.exit use is found, Please use return instead."
+        },
+        {
+          "line": 10,
+          "col": 0,
+          "code": "E9001",
+          "obj": "",
+          "message": "Sys.exit use is found, Please use return instead."
+        },
+        {
+          "line": 12,
+          "col": 0,
+          "code": "E9001",
+          "obj": "",
+          "message": "Sys.exit use is found, Please use return instead."
+        }
+      ]
+    }
+  },
+  {
+    "id": "clean_integration,integration,support=xsoar",
+    "sample": "clean_integration.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": false,
+      "findings": []
+    }
+  },
+  {
+    "id": "clean_integration,script,support=xsoar",
+    "sample": "clean_integration.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": false,
+      "findings": []
+    }
+  },
+  {
+    "id": "commands_api_module,integration,support=xsoar",
+    "sample": "commands_api_module.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": false,
+      "findings": [
+        {
+          "line": 8,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 8,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        },
+        {
+          "line": 8,
+          "col": 0,
+          "code": "W9018",
+          "obj": "main",
+          "message": "It is best practice for Integrations to raise a NotImplementedError when receiving a command which is not recognized. exception"
+        }
+      ]
+    }
+  },
+  {
+    "id": "commands_api_module,script,support=xsoar",
+    "sample": "commands_api_module.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": false,
+      "findings": [
+        {
+          "line": 8,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 8,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        }
+      ]
+    }
+  },
+  {
+    "id": "commands_api_module_plain_import,integration,support=xsoar",
+    "sample": "commands_api_module_plain_import.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 6,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 6,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        },
+        {
+          "line": 6,
+          "col": 0,
+          "code": "W9018",
+          "obj": "main",
+          "message": "It is best practice for Integrations to raise a NotImplementedError when receiving a command which is not recognized. exception"
+        }
+      ]
+    }
+  },
+  {
+    "id": "commands_api_module_plain_import,script,support=xsoar",
+    "sample": "commands_api_module_plain_import.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": false,
+      "findings": [
+        {
+          "line": 6,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 6,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        }
+      ]
+    }
+  },
+  {
+    "id": "commands_dict_dispatch,integration,support=xsoar",
+    "sample": "commands_dict_dispatch.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": false,
+      "findings": [
+        {
+          "line": 7,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 7,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        },
+        {
+          "line": 7,
+          "col": 0,
+          "code": "W9018",
+          "obj": "main",
+          "message": "It is best practice for Integrations to raise a NotImplementedError when receiving a command which is not recognized. exception"
+        }
+      ]
+    }
+  },
+  {
+    "id": "commands_dict_dispatch,script,support=xsoar",
+    "sample": "commands_dict_dispatch.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": false,
+      "findings": [
+        {
+          "line": 7,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 7,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        }
+      ]
+    }
+  },
+  {
+    "id": "commands_function_name_variable,integration,support=xsoar",
+    "sample": "commands_function_name_variable.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": false,
+      "findings": [
+        {
+          "line": 9,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 9,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        },
+        {
+          "line": 9,
+          "col": 0,
+          "code": "W9018",
+          "obj": "main",
+          "message": "It is best practice for Integrations to raise a NotImplementedError when receiving a command which is not recognized. exception"
+        }
+      ]
+    }
+  },
+  {
+    "id": "commands_function_name_variable,script,support=xsoar",
+    "sample": "commands_function_name_variable.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": false,
+      "findings": [
+        {
+          "line": 9,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 9,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        }
+      ]
+    }
+  },
+  {
+    "id": "commands_if_dispatch,integration,support=xsoar",
+    "sample": "commands_if_dispatch.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 8,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 8,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        },
+        {
+          "line": 42,
+          "col": 8,
+          "code": "E9002",
+          "obj": "main",
+          "message": "Print is found, Please remove all prints from the code."
+        }
+      ]
+    }
+  },
+  {
+    "id": "commands_if_dispatch,script,support=xsoar",
+    "sample": "commands_if_dispatch.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 8,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 8,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        },
+        {
+          "line": 42,
+          "col": 8,
+          "code": "E9002",
+          "obj": "main",
+          "message": "Print is found, Please remove all prints from the code."
+        }
+      ]
+    }
+  },
+  {
+    "id": "empty_file,integration,support=xsoar",
+    "sample": "empty_file.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9005",
+          "obj": "",
+          "message": "Main function wasnt found in the file, Please add main()"
+        }
+      ]
+    }
+  },
+  {
+    "id": "empty_file,script,support=xsoar",
+    "sample": "empty_file.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9005",
+          "obj": "",
+          "message": "Main function wasnt found in the file, Please add main()"
+        }
+      ]
+    }
+  },
+  {
+    "id": "main_as_method,integration,support=xsoar",
+    "sample": "main_as_method.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 5,
+          "col": 4,
+          "code": "W9010",
+          "obj": "Client.main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 5,
+          "col": 4,
+          "code": "W9012",
+          "obj": "Client.main",
+          "message": "return_error should be used in main function. Please add it."
+        },
+        {
+          "line": 5,
+          "col": 4,
+          "code": "W9018",
+          "obj": "Client.main",
+          "message": "It is best practice for Integrations to raise a NotImplementedError when receiving a command which is not recognized. exception"
+        }
+      ]
+    }
+  },
+  {
+    "id": "main_as_method,script,support=xsoar",
+    "sample": "main_as_method.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": false,
+      "findings": [
+        {
+          "line": 5,
+          "col": 4,
+          "code": "W9010",
+          "obj": "Client.main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 5,
+          "col": 4,
+          "code": "W9012",
+          "obj": "Client.main",
+          "message": "return_error should be used in main function. Please add it."
+        }
+      ]
+    }
+  },
+  {
+    "id": "main_async,integration,support=xsoar",
+    "sample": "main_async.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9005",
+          "obj": "",
+          "message": "Main function wasnt found in the file, Please add main()"
+        },
+        {
+          "line": 6,
+          "col": 4,
+          "code": "E9002",
+          "obj": "main",
+          "message": "Print is found, Please remove all prints from the code."
+        }
+      ]
+    }
+  },
+  {
+    "id": "main_async,script,support=xsoar",
+    "sample": "main_async.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9005",
+          "obj": "",
+          "message": "Main function wasnt found in the file, Please add main()"
+        },
+        {
+          "line": 6,
+          "col": 4,
+          "code": "E9002",
+          "obj": "main",
+          "message": "Print is found, Please remove all prints from the code."
+        }
+      ]
+    }
+  },
+  {
+    "id": "partner_main_ok,integration,support=xsoar",
+    "sample": "partner_main_ok.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 4,
+          "col": 0,
+          "code": "W9018",
+          "obj": "main",
+          "message": "It is best practice for Integrations to raise a NotImplementedError when receiving a command which is not recognized. exception"
+        }
+      ]
+    }
+  },
+  {
+    "id": "partner_main_ok,script,support=xsoar",
+    "sample": "partner_main_ok.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": false,
+      "findings": []
+    }
+  },
+  {
+    "id": "partner_return_error_count,integration,support=xsoar",
+    "sample": "partner_return_error_count.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9011",
+          "obj": "",
+          "message": "return_error used too many times, should be used only once in the code, in main function. Please remove other usages."
+        },
+        {
+          "line": 9,
+          "col": 0,
+          "code": "W9018",
+          "obj": "main",
+          "message": "It is best practice for Integrations to raise a NotImplementedError when receiving a command which is not recognized. exception"
+        }
+      ]
+    }
+  },
+  {
+    "id": "partner_return_error_count,script,support=xsoar",
+    "sample": "partner_return_error_count.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": false,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9011",
+          "obj": "",
+          "message": "return_error used too many times, should be used only once in the code, in main function. Please remove other usages."
+        }
+      ]
+    }
+  },
+  {
+    "id": "partner_try_finally_no_return_error,integration,support=xsoar",
+    "sample": "partner_try_finally_no_return_error.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 4,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        },
+        {
+          "line": 4,
+          "col": 0,
+          "code": "W9018",
+          "obj": "main",
+          "message": "It is best practice for Integrations to raise a NotImplementedError when receiving a command which is not recognized. exception"
+        }
+      ]
+    }
+  },
+  {
+    "id": "partner_try_finally_no_return_error,script,support=xsoar",
+    "sample": "partner_try_finally_no_return_error.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": false,
+      "findings": [
+        {
+          "line": 4,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        }
+      ]
+    }
+  },
+  {
+    "id": "partner_try_nested_in_if,integration,support=xsoar",
+    "sample": "partner_try_nested_in_if.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 4,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 4,
+          "col": 0,
+          "code": "W9018",
+          "obj": "main",
+          "message": "It is best practice for Integrations to raise a NotImplementedError when receiving a command which is not recognized. exception"
+        }
+      ]
+    }
+  },
+  {
+    "id": "partner_try_nested_in_if,script,support=xsoar",
+    "sample": "partner_try_nested_in_if.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": false,
+      "findings": [
+        {
+          "line": 4,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        }
+      ]
+    }
+  },
+  {
+    "id": "py2_compatible,integration,support=xsoar",
+    "sample": "py2_compatible.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 6,
+          "col": 0,
+          "code": "W9014",
+          "obj": "helper",
+          "message": "Function arguments are missing type annotations. Please add type annotations"
+        },
+        {
+          "line": 10,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 10,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        },
+        {
+          "line": 10,
+          "col": 0,
+          "code": "W9018",
+          "obj": "main",
+          "message": "It is best practice for Integrations to raise a NotImplementedError when receiving a command which is not recognized. exception"
+        },
+        {
+          "line": 19,
+          "col": 4,
+          "code": "E9002",
+          "obj": "main",
+          "message": "Print is found, Please remove all prints from the code."
+        }
+      ]
+    }
+  },
+  {
+    "id": "py2_compatible,script,support=xsoar",
+    "sample": "py2_compatible.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 6,
+          "col": 0,
+          "code": "W9014",
+          "obj": "helper",
+          "message": "Function arguments are missing type annotations. Please add type annotations"
+        },
+        {
+          "line": 10,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 10,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        },
+        {
+          "line": 19,
+          "col": 4,
+          "code": "E9002",
+          "obj": "main",
+          "message": "Print is found, Please remove all prints from the code."
+        }
+      ]
+    }
+  },
+  {
+    "id": "py2_syntax,integration,support=xsoar",
+    "sample": "py2_syntax.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 5,
+          "col": 5,
+          "code": "E0001",
+          "obj": "",
+          "message": "Parsing failed: 'Missing parentheses in call to 'print'. Did you mean print(...)? (py2_syntax, line 5)'"
+        }
+      ]
+    }
+  },
+  {
+    "id": "py2_syntax,script,support=xsoar",
+    "sample": "py2_syntax.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 5,
+          "col": 5,
+          "code": "E0001",
+          "obj": "",
+          "message": "Parsing failed: 'Missing parentheses in call to 'print'. Did you mean print(...)? (py2_syntax, line 5)'"
+        }
+      ]
+    }
+  },
+  {
+    "id": "support_tiers,integration,support=xsoar",
+    "sample": "support_tiers.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9011",
+          "obj": "",
+          "message": "return_error used too many times, should be used only once in the code, in main function. Please remove other usages."
+        },
+        {
+          "line": 6,
+          "col": 0,
+          "code": "E9006",
+          "obj": "",
+          "message": "Invalid CommonServerPython import was found. Please change the import to: from CommonServerPython import *"
+        },
+        {
+          "line": 8,
+          "col": 6,
+          "code": "W9013",
+          "obj": "",
+          "message": "Hardcoded http URL was found in the code, using https (when possible) is recommended."
+        },
+        {
+          "line": 9,
+          "col": 9,
+          "code": "W9016",
+          "obj": "",
+          "message": "Initialize of params was found outside of main function. Please use demisto.params() only inside main func"
+        },
+        {
+          "line": 12,
+          "col": 0,
+          "code": "W9014",
+          "obj": "helper",
+          "message": "Function arguments are missing type annotations. Please add type annotations"
+        },
+        {
+          "line": 13,
+          "col": 4,
+          "code": "E9002",
+          "obj": "helper",
+          "message": "Print is found, Please remove all prints from the code."
+        },
+        {
+          "line": 14,
+          "col": 4,
+          "code": "E9003",
+          "obj": "helper",
+          "message": "Sleep is found, Please remove all sleep statements from the code."
+        },
+        {
+          "line": 15,
+          "col": 4,
+          "code": "E9004",
+          "obj": "helper",
+          "message": "exit is found, Please remove all exit() statements from the code."
+        },
+        {
+          "line": 16,
+          "col": 4,
+          "code": "E9005",
+          "obj": "helper",
+          "message": "quit is found, Please remove all quit() statements from the code."
+        },
+        {
+          "line": 17,
+          "col": 4,
+          "code": "E9001",
+          "obj": "helper",
+          "message": "Sys.exit use is found, Please use return instead."
+        },
+        {
+          "line": 18,
+          "col": 4,
+          "code": "E9012",
+          "obj": "helper",
+          "message": "Demisto.log is found, Please replace all demisto.log usage with demisto.info or demisto.debug"
+        },
+        {
+          "line": 19,
+          "col": 4,
+          "code": "W9008",
+          "obj": "helper",
+          "message": "Do not use demisto.results function. Please return CommandResults object instead."
+        },
+        {
+          "line": 20,
+          "col": 4,
+          "code": "W9009",
+          "obj": "helper",
+          "message": "Do not use return_outputs function. Please return CommandResults object instead."
+        },
+        {
+          "line": 23,
+          "col": 11,
+          "code": "E9007",
+          "obj": "helper",
+          "message": "Invalid usage of indicators key in CommandResults was found, Please use indicator key instead."
+        },
+        {
+          "line": 26,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 26,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        },
+        {
+          "line": 26,
+          "col": 0,
+          "code": "W9018",
+          "obj": "main",
+          "message": "It is best practice for Integrations to raise a NotImplementedError when receiving a command which is not recognized. exception"
+        },
+        {
+          "line": 28,
+          "col": 12,
+          "code": "W9019",
+          "obj": "main",
+          "message": "It is best practice to use .get when accessing the arg/params dict object rather then direct access."
+        }
+      ]
+    }
+  },
+  {
+    "id": "support_tiers,script,support=xsoar",
+    "sample": "support_tiers.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9011",
+          "obj": "",
+          "message": "return_error used too many times, should be used only once in the code, in main function. Please remove other usages."
+        },
+        {
+          "line": 6,
+          "col": 0,
+          "code": "E9006",
+          "obj": "",
+          "message": "Invalid CommonServerPython import was found. Please change the import to: from CommonServerPython import *"
+        },
+        {
+          "line": 8,
+          "col": 6,
+          "code": "W9013",
+          "obj": "",
+          "message": "Hardcoded http URL was found in the code, using https (when possible) is recommended."
+        },
+        {
+          "line": 9,
+          "col": 9,
+          "code": "W9016",
+          "obj": "",
+          "message": "Initialize of params was found outside of main function. Please use demisto.params() only inside main func"
+        },
+        {
+          "line": 12,
+          "col": 0,
+          "code": "W9014",
+          "obj": "helper",
+          "message": "Function arguments are missing type annotations. Please add type annotations"
+        },
+        {
+          "line": 13,
+          "col": 4,
+          "code": "E9002",
+          "obj": "helper",
+          "message": "Print is found, Please remove all prints from the code."
+        },
+        {
+          "line": 14,
+          "col": 4,
+          "code": "E9003",
+          "obj": "helper",
+          "message": "Sleep is found, Please remove all sleep statements from the code."
+        },
+        {
+          "line": 15,
+          "col": 4,
+          "code": "E9004",
+          "obj": "helper",
+          "message": "exit is found, Please remove all exit() statements from the code."
+        },
+        {
+          "line": 16,
+          "col": 4,
+          "code": "E9005",
+          "obj": "helper",
+          "message": "quit is found, Please remove all quit() statements from the code."
+        },
+        {
+          "line": 17,
+          "col": 4,
+          "code": "E9001",
+          "obj": "helper",
+          "message": "Sys.exit use is found, Please use return instead."
+        },
+        {
+          "line": 18,
+          "col": 4,
+          "code": "E9012",
+          "obj": "helper",
+          "message": "Demisto.log is found, Please replace all demisto.log usage with demisto.info or demisto.debug"
+        },
+        {
+          "line": 19,
+          "col": 4,
+          "code": "W9008",
+          "obj": "helper",
+          "message": "Do not use demisto.results function. Please return CommandResults object instead."
+        },
+        {
+          "line": 20,
+          "col": 4,
+          "code": "W9009",
+          "obj": "helper",
+          "message": "Do not use return_outputs function. Please return CommandResults object instead."
+        },
+        {
+          "line": 23,
+          "col": 11,
+          "code": "E9007",
+          "obj": "helper",
+          "message": "Invalid usage of indicators key in CommandResults was found, Please use indicator key instead."
+        },
+        {
+          "line": 26,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 26,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        },
+        {
+          "line": 28,
+          "col": 12,
+          "code": "W9019",
+          "obj": "main",
+          "message": "It is best practice to use .get when accessing the arg/params dict object rather then direct access."
+        }
+      ]
+    }
+  },
+  {
+    "id": "xsoar_direct_access,integration,support=xsoar",
+    "sample": "xsoar_direct_access.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 4,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 4,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        },
+        {
+          "line": 4,
+          "col": 0,
+          "code": "W9018",
+          "obj": "main",
+          "message": "It is best practice for Integrations to raise a NotImplementedError when receiving a command which is not recognized. exception"
+        },
+        {
+          "line": 7,
+          "col": 8,
+          "code": "W9019",
+          "obj": "main",
+          "message": "It is best practice to use .get when accessing the arg/params dict object rather then direct access."
+        },
+        {
+          "line": 8,
+          "col": 8,
+          "code": "W9019",
+          "obj": "main",
+          "message": "It is best practice to use .get when accessing the arg/params dict object rather then direct access."
+        },
+        {
+          "line": 9,
+          "col": 8,
+          "code": "W9019",
+          "obj": "main",
+          "message": "It is best practice to use .get when accessing the arg/params dict object rather then direct access."
+        },
+        {
+          "line": 10,
+          "col": 8,
+          "code": "W9019",
+          "obj": "main",
+          "message": "It is best practice to use .get when accessing the arg/params dict object rather then direct access."
+        },
+        {
+          "line": 11,
+          "col": 8,
+          "code": "W9019",
+          "obj": "main",
+          "message": "It is best practice to use .get when accessing the arg/params dict object rather then direct access."
+        },
+        {
+          "line": 12,
+          "col": 8,
+          "code": "W9019",
+          "obj": "main",
+          "message": "It is best practice to use .get when accessing the arg/params dict object rather then direct access."
+        },
+        {
+          "line": 13,
+          "col": 8,
+          "code": "W9019",
+          "obj": "main",
+          "message": "It is best practice to use .get when accessing the arg/params dict object rather then direct access."
+        },
+        {
+          "line": 24,
+          "col": 12,
+          "code": "W9019",
+          "obj": "main",
+          "message": "It is best practice to use .get when accessing the arg/params dict object rather then direct access."
+        }
+      ]
+    }
+  },
+  {
+    "id": "xsoar_direct_access,script,support=xsoar",
+    "sample": "xsoar_direct_access.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": false,
+      "findings": [
+        {
+          "line": 4,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 4,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        },
+        {
+          "line": 7,
+          "col": 8,
+          "code": "W9019",
+          "obj": "main",
+          "message": "It is best practice to use .get when accessing the arg/params dict object rather then direct access."
+        },
+        {
+          "line": 8,
+          "col": 8,
+          "code": "W9019",
+          "obj": "main",
+          "message": "It is best practice to use .get when accessing the arg/params dict object rather then direct access."
+        },
+        {
+          "line": 9,
+          "col": 8,
+          "code": "W9019",
+          "obj": "main",
+          "message": "It is best practice to use .get when accessing the arg/params dict object rather then direct access."
+        },
+        {
+          "line": 10,
+          "col": 8,
+          "code": "W9019",
+          "obj": "main",
+          "message": "It is best practice to use .get when accessing the arg/params dict object rather then direct access."
+        },
+        {
+          "line": 11,
+          "col": 8,
+          "code": "W9019",
+          "obj": "main",
+          "message": "It is best practice to use .get when accessing the arg/params dict object rather then direct access."
+        },
+        {
+          "line": 12,
+          "col": 8,
+          "code": "W9019",
+          "obj": "main",
+          "message": "It is best practice to use .get when accessing the arg/params dict object rather then direct access."
+        },
+        {
+          "line": 13,
+          "col": 8,
+          "code": "W9019",
+          "obj": "main",
+          "message": "It is best practice to use .get when accessing the arg/params dict object rather then direct access."
+        },
+        {
+          "line": 24,
+          "col": 12,
+          "code": "W9019",
+          "obj": "main",
+          "message": "It is best practice to use .get when accessing the arg/params dict object rather then direct access."
+        }
+      ]
+    }
+  },
+  {
+    "id": "xsoar_main_bare_raise,integration,support=xsoar",
+    "sample": "xsoar_main_bare_raise.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": false,
+      "findings": [
+        {
+          "line": 4,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        }
+      ]
+    }
+  },
+  {
+    "id": "xsoar_main_bare_raise,script,support=xsoar",
+    "sample": "xsoar_main_bare_raise.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": false,
+      "findings": [
+        {
+          "line": 4,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        }
+      ]
+    }
+  },
+  {
+    "id": "xsoar_main_missing_not_implemented,integration,support=xsoar",
+    "sample": "xsoar_main_missing_not_implemented.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": false,
+      "findings": [
+        {
+          "line": 4,
+          "col": 0,
+          "code": "W9018",
+          "obj": "main",
+          "message": "It is best practice for Integrations to raise a NotImplementedError when receiving a command which is not recognized. exception"
+        }
+      ]
+    }
+  },
+  {
+    "id": "xsoar_main_missing_not_implemented,script,support=xsoar",
+    "sample": "xsoar_main_missing_not_implemented.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": false,
+      "findings": []
+    }
+  },
+  {
+    "id": "xsoar_main_not_implemented_without_call,integration,support=xsoar",
+    "sample": "xsoar_main_not_implemented_without_call.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": false,
+      "findings": []
+    }
+  },
+  {
+    "id": "xsoar_main_not_implemented_without_call,script,support=xsoar",
+    "sample": "xsoar_main_not_implemented_without_call.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": false,
+      "findings": []
+    }
+  },
+  {
+    "id": "xsoar_main_raises_not_implemented,integration,support=xsoar",
+    "sample": "xsoar_main_raises_not_implemented.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": false,
+      "findings": []
+    }
+  },
+  {
+    "id": "xsoar_main_raises_not_implemented,script,support=xsoar",
+    "sample": "xsoar_main_raises_not_implemented.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": false,
+      "findings": []
+    }
+  },
+  {
+    "id": "xsoar_type_annotations,integration,support=xsoar",
+    "sample": "xsoar_type_annotations.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 4,
+          "col": 0,
+          "code": "W9014",
+          "obj": "no_annotation",
+          "message": "Function arguments are missing type annotations. Please add type annotations"
+        },
+        {
+          "line": 12,
+          "col": 0,
+          "code": "W9014",
+          "obj": "partial",
+          "message": "Function arguments are missing type annotations. Please add type annotations"
+        },
+        {
+          "line": 20,
+          "col": 0,
+          "code": "W9014",
+          "obj": "method_unannotated",
+          "message": "Function arguments are missing type annotations. Please add type annotations"
+        },
+        {
+          "line": 24,
+          "col": 0,
+          "code": "W9014",
+          "obj": "cls_first",
+          "message": "Function arguments are missing type annotations. Please add type annotations"
+        },
+        {
+          "line": 44,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 44,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        },
+        {
+          "line": 44,
+          "col": 0,
+          "code": "W9018",
+          "obj": "main",
+          "message": "It is best practice for Integrations to raise a NotImplementedError when receiving a command which is not recognized. exception"
+        },
+        {
+          "line": 56,
+          "col": 4,
+          "code": "W9014",
+          "obj": "Holder.method",
+          "message": "Function arguments are missing type annotations. Please add type annotations"
+        },
+        {
+          "line": 60,
+          "col": 4,
+          "code": "W9014",
+          "obj": "Holder.static",
+          "message": "Function arguments are missing type annotations. Please add type annotations"
+        }
+      ]
+    }
+  },
+  {
+    "id": "xsoar_type_annotations,script,support=xsoar",
+    "sample": "xsoar_type_annotations.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": true,
+      "long_running": false,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": false,
+      "findings": [
+        {
+          "line": 4,
+          "col": 0,
+          "code": "W9014",
+          "obj": "no_annotation",
+          "message": "Function arguments are missing type annotations. Please add type annotations"
+        },
+        {
+          "line": 12,
+          "col": 0,
+          "code": "W9014",
+          "obj": "partial",
+          "message": "Function arguments are missing type annotations. Please add type annotations"
+        },
+        {
+          "line": 20,
+          "col": 0,
+          "code": "W9014",
+          "obj": "method_unannotated",
+          "message": "Function arguments are missing type annotations. Please add type annotations"
+        },
+        {
+          "line": 24,
+          "col": 0,
+          "code": "W9014",
+          "obj": "cls_first",
+          "message": "Function arguments are missing type annotations. Please add type annotations"
+        },
+        {
+          "line": 44,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 44,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        },
+        {
+          "line": 56,
+          "col": 4,
+          "code": "W9014",
+          "obj": "Holder.method",
+          "message": "Function arguments are missing type annotations. Please add type annotations"
+        },
+        {
+          "line": 60,
+          "col": 4,
+          "code": "W9014",
+          "obj": "Holder.static",
+          "message": "Function arguments are missing type annotations. Please add type annotations"
+        }
+      ]
+    }
+  },
+  {
+    "id": "support_tiers,integration,support=None,commands=missing-command",
+    "sample": "support_tiers.py",
+    "settings": {
+      "support": null,
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": [
+        "missing-command"
+      ]
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9010",
+          "obj": "",
+          "message": "Some commands from yml file are not implemented in the python file, Please make sure that every command is implemented in your code. The commands that are not implemented are ['missing-command']"
+        },
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 6,
+          "col": 0,
+          "code": "E9006",
+          "obj": "",
+          "message": "Invalid CommonServerPython import was found. Please change the import to: from CommonServerPython import *"
+        },
+        {
+          "line": 8,
+          "col": 6,
+          "code": "W9013",
+          "obj": "",
+          "message": "Hardcoded http URL was found in the code, using https (when possible) is recommended."
+        },
+        {
+          "line": 13,
+          "col": 4,
+          "code": "E9002",
+          "obj": "helper",
+          "message": "Print is found, Please remove all prints from the code."
+        },
+        {
+          "line": 14,
+          "col": 4,
+          "code": "E9003",
+          "obj": "helper",
+          "message": "Sleep is found, Please remove all sleep statements from the code."
+        },
+        {
+          "line": 15,
+          "col": 4,
+          "code": "E9004",
+          "obj": "helper",
+          "message": "exit is found, Please remove all exit() statements from the code."
+        },
+        {
+          "line": 16,
+          "col": 4,
+          "code": "E9005",
+          "obj": "helper",
+          "message": "quit is found, Please remove all quit() statements from the code."
+        },
+        {
+          "line": 18,
+          "col": 4,
+          "code": "E9012",
+          "obj": "helper",
+          "message": "Demisto.log is found, Please replace all demisto.log usage with demisto.info or demisto.debug"
+        },
+        {
+          "line": 23,
+          "col": 11,
+          "code": "E9007",
+          "obj": "helper",
+          "message": "Invalid usage of indicators key in CommandResults was found, Please use indicator key instead."
+        }
+      ]
+    }
+  },
+  {
+    "id": "support_tiers,integration,support=base,commands=missing-command",
+    "sample": "support_tiers.py",
+    "settings": {
+      "support": "base",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": [
+        "missing-command"
+      ]
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9010",
+          "obj": "",
+          "message": "Some commands from yml file are not implemented in the python file, Please make sure that every command is implemented in your code. The commands that are not implemented are ['missing-command']"
+        },
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 6,
+          "col": 0,
+          "code": "E9006",
+          "obj": "",
+          "message": "Invalid CommonServerPython import was found. Please change the import to: from CommonServerPython import *"
+        },
+        {
+          "line": 8,
+          "col": 6,
+          "code": "W9013",
+          "obj": "",
+          "message": "Hardcoded http URL was found in the code, using https (when possible) is recommended."
+        },
+        {
+          "line": 13,
+          "col": 4,
+          "code": "E9002",
+          "obj": "helper",
+          "message": "Print is found, Please remove all prints from the code."
+        },
+        {
+          "line": 14,
+          "col": 4,
+          "code": "E9003",
+          "obj": "helper",
+          "message": "Sleep is found, Please remove all sleep statements from the code."
+        },
+        {
+          "line": 15,
+          "col": 4,
+          "code": "E9004",
+          "obj": "helper",
+          "message": "exit is found, Please remove all exit() statements from the code."
+        },
+        {
+          "line": 16,
+          "col": 4,
+          "code": "E9005",
+          "obj": "helper",
+          "message": "quit is found, Please remove all quit() statements from the code."
+        },
+        {
+          "line": 18,
+          "col": 4,
+          "code": "E9012",
+          "obj": "helper",
+          "message": "Demisto.log is found, Please replace all demisto.log usage with demisto.info or demisto.debug"
+        },
+        {
+          "line": 23,
+          "col": 11,
+          "code": "E9007",
+          "obj": "helper",
+          "message": "Invalid usage of indicators key in CommandResults was found, Please use indicator key instead."
+        }
+      ]
+    }
+  },
+  {
+    "id": "support_tiers,integration,support=community,commands=missing-command",
+    "sample": "support_tiers.py",
+    "settings": {
+      "support": "community",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": [
+        "missing-command"
+      ]
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9010",
+          "obj": "",
+          "message": "Some commands from yml file are not implemented in the python file, Please make sure that every command is implemented in your code. The commands that are not implemented are ['missing-command']"
+        },
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 6,
+          "col": 0,
+          "code": "E9006",
+          "obj": "",
+          "message": "Invalid CommonServerPython import was found. Please change the import to: from CommonServerPython import *"
+        },
+        {
+          "line": 8,
+          "col": 6,
+          "code": "W9013",
+          "obj": "",
+          "message": "Hardcoded http URL was found in the code, using https (when possible) is recommended."
+        },
+        {
+          "line": 13,
+          "col": 4,
+          "code": "E9002",
+          "obj": "helper",
+          "message": "Print is found, Please remove all prints from the code."
+        },
+        {
+          "line": 14,
+          "col": 4,
+          "code": "E9003",
+          "obj": "helper",
+          "message": "Sleep is found, Please remove all sleep statements from the code."
+        },
+        {
+          "line": 15,
+          "col": 4,
+          "code": "E9004",
+          "obj": "helper",
+          "message": "exit is found, Please remove all exit() statements from the code."
+        },
+        {
+          "line": 16,
+          "col": 4,
+          "code": "E9005",
+          "obj": "helper",
+          "message": "quit is found, Please remove all quit() statements from the code."
+        },
+        {
+          "line": 18,
+          "col": 4,
+          "code": "E9012",
+          "obj": "helper",
+          "message": "Demisto.log is found, Please replace all demisto.log usage with demisto.info or demisto.debug"
+        },
+        {
+          "line": 23,
+          "col": 11,
+          "code": "E9007",
+          "obj": "helper",
+          "message": "Invalid usage of indicators key in CommandResults was found, Please use indicator key instead."
+        }
+      ]
+    }
+  },
+  {
+    "id": "support_tiers,integration,support=developer,commands=missing-command",
+    "sample": "support_tiers.py",
+    "settings": {
+      "support": "developer",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": [
+        "missing-command"
+      ]
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9010",
+          "obj": "",
+          "message": "Some commands from yml file are not implemented in the python file, Please make sure that every command is implemented in your code. The commands that are not implemented are ['missing-command']"
+        },
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 6,
+          "col": 0,
+          "code": "E9006",
+          "obj": "",
+          "message": "Invalid CommonServerPython import was found. Please change the import to: from CommonServerPython import *"
+        },
+        {
+          "line": 8,
+          "col": 6,
+          "code": "W9013",
+          "obj": "",
+          "message": "Hardcoded http URL was found in the code, using https (when possible) is recommended."
+        },
+        {
+          "line": 13,
+          "col": 4,
+          "code": "E9002",
+          "obj": "helper",
+          "message": "Print is found, Please remove all prints from the code."
+        },
+        {
+          "line": 14,
+          "col": 4,
+          "code": "E9003",
+          "obj": "helper",
+          "message": "Sleep is found, Please remove all sleep statements from the code."
+        },
+        {
+          "line": 15,
+          "col": 4,
+          "code": "E9004",
+          "obj": "helper",
+          "message": "exit is found, Please remove all exit() statements from the code."
+        },
+        {
+          "line": 16,
+          "col": 4,
+          "code": "E9005",
+          "obj": "helper",
+          "message": "quit is found, Please remove all quit() statements from the code."
+        },
+        {
+          "line": 18,
+          "col": 4,
+          "code": "E9012",
+          "obj": "helper",
+          "message": "Demisto.log is found, Please replace all demisto.log usage with demisto.info or demisto.debug"
+        },
+        {
+          "line": 23,
+          "col": 11,
+          "code": "E9007",
+          "obj": "helper",
+          "message": "Invalid usage of indicators key in CommandResults was found, Please use indicator key instead."
+        }
+      ]
+    }
+  },
+  {
+    "id": "support_tiers,integration,support=partner,commands=missing-command",
+    "sample": "support_tiers.py",
+    "settings": {
+      "support": "partner",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": [
+        "missing-command"
+      ]
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9010",
+          "obj": "",
+          "message": "Some commands from yml file are not implemented in the python file, Please make sure that every command is implemented in your code. The commands that are not implemented are ['missing-command']"
+        },
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9011",
+          "obj": "",
+          "message": "return_error used too many times, should be used only once in the code, in main function. Please remove other usages."
+        },
+        {
+          "line": 6,
+          "col": 0,
+          "code": "E9006",
+          "obj": "",
+          "message": "Invalid CommonServerPython import was found. Please change the import to: from CommonServerPython import *"
+        },
+        {
+          "line": 8,
+          "col": 6,
+          "code": "W9013",
+          "obj": "",
+          "message": "Hardcoded http URL was found in the code, using https (when possible) is recommended."
+        },
+        {
+          "line": 13,
+          "col": 4,
+          "code": "E9002",
+          "obj": "helper",
+          "message": "Print is found, Please remove all prints from the code."
+        },
+        {
+          "line": 14,
+          "col": 4,
+          "code": "E9003",
+          "obj": "helper",
+          "message": "Sleep is found, Please remove all sleep statements from the code."
+        },
+        {
+          "line": 15,
+          "col": 4,
+          "code": "E9004",
+          "obj": "helper",
+          "message": "exit is found, Please remove all exit() statements from the code."
+        },
+        {
+          "line": 16,
+          "col": 4,
+          "code": "E9005",
+          "obj": "helper",
+          "message": "quit is found, Please remove all quit() statements from the code."
+        },
+        {
+          "line": 18,
+          "col": 4,
+          "code": "E9012",
+          "obj": "helper",
+          "message": "Demisto.log is found, Please replace all demisto.log usage with demisto.info or demisto.debug"
+        },
+        {
+          "line": 23,
+          "col": 11,
+          "code": "E9007",
+          "obj": "helper",
+          "message": "Invalid usage of indicators key in CommandResults was found, Please use indicator key instead."
+        },
+        {
+          "line": 26,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 26,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        }
+      ]
+    }
+  },
+  {
+    "id": "support_tiers,integration,support=certified partner,commands=missing-command",
+    "sample": "support_tiers.py",
+    "settings": {
+      "support": "certified partner",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": [
+        "missing-command"
+      ]
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9010",
+          "obj": "",
+          "message": "Some commands from yml file are not implemented in the python file, Please make sure that every command is implemented in your code. The commands that are not implemented are ['missing-command']"
+        },
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9011",
+          "obj": "",
+          "message": "return_error used too many times, should be used only once in the code, in main function. Please remove other usages."
+        },
+        {
+          "line": 6,
+          "col": 0,
+          "code": "E9006",
+          "obj": "",
+          "message": "Invalid CommonServerPython import was found. Please change the import to: from CommonServerPython import *"
+        },
+        {
+          "line": 8,
+          "col": 6,
+          "code": "W9013",
+          "obj": "",
+          "message": "Hardcoded http URL was found in the code, using https (when possible) is recommended."
+        },
+        {
+          "line": 9,
+          "col": 9,
+          "code": "W9016",
+          "obj": "",
+          "message": "Initialize of params was found outside of main function. Please use demisto.params() only inside main func"
+        },
+        {
+          "line": 13,
+          "col": 4,
+          "code": "E9002",
+          "obj": "helper",
+          "message": "Print is found, Please remove all prints from the code."
+        },
+        {
+          "line": 14,
+          "col": 4,
+          "code": "E9003",
+          "obj": "helper",
+          "message": "Sleep is found, Please remove all sleep statements from the code."
+        },
+        {
+          "line": 15,
+          "col": 4,
+          "code": "E9004",
+          "obj": "helper",
+          "message": "exit is found, Please remove all exit() statements from the code."
+        },
+        {
+          "line": 16,
+          "col": 4,
+          "code": "E9005",
+          "obj": "helper",
+          "message": "quit is found, Please remove all quit() statements from the code."
+        },
+        {
+          "line": 17,
+          "col": 4,
+          "code": "E9001",
+          "obj": "helper",
+          "message": "Sys.exit use is found, Please use return instead."
+        },
+        {
+          "line": 18,
+          "col": 4,
+          "code": "E9012",
+          "obj": "helper",
+          "message": "Demisto.log is found, Please replace all demisto.log usage with demisto.info or demisto.debug"
+        },
+        {
+          "line": 19,
+          "col": 4,
+          "code": "W9008",
+          "obj": "helper",
+          "message": "Do not use demisto.results function. Please return CommandResults object instead."
+        },
+        {
+          "line": 20,
+          "col": 4,
+          "code": "W9009",
+          "obj": "helper",
+          "message": "Do not use return_outputs function. Please return CommandResults object instead."
+        },
+        {
+          "line": 23,
+          "col": 11,
+          "code": "E9007",
+          "obj": "helper",
+          "message": "Invalid usage of indicators key in CommandResults was found, Please use indicator key instead."
+        },
+        {
+          "line": 26,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 26,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        }
+      ]
+    }
+  },
+  {
+    "id": "support_tiers,integration,support=xsoar,commands=missing-command",
+    "sample": "support_tiers.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": [
+        "missing-command"
+      ]
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9010",
+          "obj": "",
+          "message": "Some commands from yml file are not implemented in the python file, Please make sure that every command is implemented in your code. The commands that are not implemented are ['missing-command']"
+        },
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9011",
+          "obj": "",
+          "message": "return_error used too many times, should be used only once in the code, in main function. Please remove other usages."
+        },
+        {
+          "line": 6,
+          "col": 0,
+          "code": "E9006",
+          "obj": "",
+          "message": "Invalid CommonServerPython import was found. Please change the import to: from CommonServerPython import *"
+        },
+        {
+          "line": 8,
+          "col": 6,
+          "code": "W9013",
+          "obj": "",
+          "message": "Hardcoded http URL was found in the code, using https (when possible) is recommended."
+        },
+        {
+          "line": 9,
+          "col": 9,
+          "code": "W9016",
+          "obj": "",
+          "message": "Initialize of params was found outside of main function. Please use demisto.params() only inside main func"
+        },
+        {
+          "line": 12,
+          "col": 0,
+          "code": "W9014",
+          "obj": "helper",
+          "message": "Function arguments are missing type annotations. Please add type annotations"
+        },
+        {
+          "line": 13,
+          "col": 4,
+          "code": "E9002",
+          "obj": "helper",
+          "message": "Print is found, Please remove all prints from the code."
+        },
+        {
+          "line": 14,
+          "col": 4,
+          "code": "E9003",
+          "obj": "helper",
+          "message": "Sleep is found, Please remove all sleep statements from the code."
+        },
+        {
+          "line": 15,
+          "col": 4,
+          "code": "E9004",
+          "obj": "helper",
+          "message": "exit is found, Please remove all exit() statements from the code."
+        },
+        {
+          "line": 16,
+          "col": 4,
+          "code": "E9005",
+          "obj": "helper",
+          "message": "quit is found, Please remove all quit() statements from the code."
+        },
+        {
+          "line": 17,
+          "col": 4,
+          "code": "E9001",
+          "obj": "helper",
+          "message": "Sys.exit use is found, Please use return instead."
+        },
+        {
+          "line": 18,
+          "col": 4,
+          "code": "E9012",
+          "obj": "helper",
+          "message": "Demisto.log is found, Please replace all demisto.log usage with demisto.info or demisto.debug"
+        },
+        {
+          "line": 19,
+          "col": 4,
+          "code": "W9008",
+          "obj": "helper",
+          "message": "Do not use demisto.results function. Please return CommandResults object instead."
+        },
+        {
+          "line": 20,
+          "col": 4,
+          "code": "W9009",
+          "obj": "helper",
+          "message": "Do not use return_outputs function. Please return CommandResults object instead."
+        },
+        {
+          "line": 23,
+          "col": 11,
+          "code": "E9007",
+          "obj": "helper",
+          "message": "Invalid usage of indicators key in CommandResults was found, Please use indicator key instead."
+        },
+        {
+          "line": 26,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 26,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        },
+        {
+          "line": 26,
+          "col": 0,
+          "code": "W9018",
+          "obj": "main",
+          "message": "It is best practice for Integrations to raise a NotImplementedError when receiving a command which is not recognized. exception"
+        },
+        {
+          "line": 28,
+          "col": 12,
+          "code": "W9019",
+          "obj": "main",
+          "message": "It is best practice to use .get when accessing the arg/params dict object rather then direct access."
+        }
+      ]
+    }
+  },
+  {
+    "id": "support_tiers,integration,support=unknown-level,commands=missing-command",
+    "sample": "support_tiers.py",
+    "settings": {
+      "support": "unknown-level",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": [
+        "missing-command"
+      ]
+    },
+    "expected": {
+      "fails": true,
+      "findings": []
+    }
+  },
+  {
+    "id": "base_sleep,integration,support=xsoar,long_running",
+    "sample": "base_sleep.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": true,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9005",
+          "obj": "",
+          "message": "Main function wasnt found in the file, Please add main()"
+        }
+      ]
+    }
+  },
+  {
+    "id": "support_tiers,integration,support=xsoar,long_running",
+    "sample": "support_tiers.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": true,
+      "py2": false,
+      "commands": []
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9011",
+          "obj": "",
+          "message": "return_error used too many times, should be used only once in the code, in main function. Please remove other usages."
+        },
+        {
+          "line": 6,
+          "col": 0,
+          "code": "E9006",
+          "obj": "",
+          "message": "Invalid CommonServerPython import was found. Please change the import to: from CommonServerPython import *"
+        },
+        {
+          "line": 8,
+          "col": 6,
+          "code": "W9013",
+          "obj": "",
+          "message": "Hardcoded http URL was found in the code, using https (when possible) is recommended."
+        },
+        {
+          "line": 9,
+          "col": 9,
+          "code": "W9016",
+          "obj": "",
+          "message": "Initialize of params was found outside of main function. Please use demisto.params() only inside main func"
+        },
+        {
+          "line": 12,
+          "col": 0,
+          "code": "W9014",
+          "obj": "helper",
+          "message": "Function arguments are missing type annotations. Please add type annotations"
+        },
+        {
+          "line": 13,
+          "col": 4,
+          "code": "E9002",
+          "obj": "helper",
+          "message": "Print is found, Please remove all prints from the code."
+        },
+        {
+          "line": 15,
+          "col": 4,
+          "code": "E9004",
+          "obj": "helper",
+          "message": "exit is found, Please remove all exit() statements from the code."
+        },
+        {
+          "line": 16,
+          "col": 4,
+          "code": "E9005",
+          "obj": "helper",
+          "message": "quit is found, Please remove all quit() statements from the code."
+        },
+        {
+          "line": 17,
+          "col": 4,
+          "code": "E9001",
+          "obj": "helper",
+          "message": "Sys.exit use is found, Please use return instead."
+        },
+        {
+          "line": 18,
+          "col": 4,
+          "code": "E9012",
+          "obj": "helper",
+          "message": "Demisto.log is found, Please replace all demisto.log usage with demisto.info or demisto.debug"
+        },
+        {
+          "line": 19,
+          "col": 4,
+          "code": "W9008",
+          "obj": "helper",
+          "message": "Do not use demisto.results function. Please return CommandResults object instead."
+        },
+        {
+          "line": 20,
+          "col": 4,
+          "code": "W9009",
+          "obj": "helper",
+          "message": "Do not use return_outputs function. Please return CommandResults object instead."
+        },
+        {
+          "line": 23,
+          "col": 11,
+          "code": "E9007",
+          "obj": "helper",
+          "message": "Invalid usage of indicators key in CommandResults was found, Please use indicator key instead."
+        },
+        {
+          "line": 26,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 26,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        },
+        {
+          "line": 26,
+          "col": 0,
+          "code": "W9018",
+          "obj": "main",
+          "message": "It is best practice for Integrations to raise a NotImplementedError when receiving a command which is not recognized. exception"
+        },
+        {
+          "line": 28,
+          "col": 12,
+          "code": "W9019",
+          "obj": "main",
+          "message": "It is best practice to use .get when accessing the arg/params dict object rather then direct access."
+        }
+      ]
+    }
+  },
+  {
+    "id": "py2_compatible,integration,support=xsoar,py2,commands=py2-dict-command|py2-if-command|legacy-concat-command|dict-a",
+    "sample": "py2_compatible.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": true,
+      "commands": [
+        "py2-dict-command",
+        "py2-if-command",
+        "legacy-concat-command",
+        "dict-a"
+      ]
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9010",
+          "obj": "",
+          "message": "Some commands from yml file are not implemented in the python file, Please make sure that every command is implemented in your code. The commands that are not implemented are ['legacy-concat-command', 'dict-a']"
+        },
+        {
+          "line": 10,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 10,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        },
+        {
+          "line": 10,
+          "col": 0,
+          "code": "W9018",
+          "obj": "main",
+          "message": "It is best practice for Integrations to raise a NotImplementedError when receiving a command which is not recognized. exception"
+        },
+        {
+          "line": 19,
+          "col": 4,
+          "code": "E9002",
+          "obj": "main",
+          "message": "Print is found, Please remove all prints from the code."
+        }
+      ]
+    }
+  },
+  {
+    "id": "py2_syntax,integration,support=xsoar,py2,commands=py2-dict-command|py2-if-command|legacy-concat-command|dict-a",
+    "sample": "py2_syntax.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": true,
+      "commands": [
+        "py2-dict-command",
+        "py2-if-command",
+        "legacy-concat-command",
+        "dict-a"
+      ]
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 5,
+          "col": 5,
+          "code": "E0001",
+          "obj": "",
+          "message": "Parsing failed: 'Missing parentheses in call to 'print'. Did you mean print(...)? (py2_syntax, line 5)'"
+        }
+      ]
+    }
+  },
+  {
+    "id": "xsoar_type_annotations,integration,support=xsoar,py2,commands=py2-dict-command|py2-if-command|legacy-concat-command|dict-a",
+    "sample": "xsoar_type_annotations.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": true,
+      "commands": [
+        "py2-dict-command",
+        "py2-if-command",
+        "legacy-concat-command",
+        "dict-a"
+      ]
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9010",
+          "obj": "",
+          "message": "Some commands from yml file are not implemented in the python file, Please make sure that every command is implemented in your code. The commands that are not implemented are ['py2-dict-command', 'py2-if-command', 'legacy-concat-command', 'dict-a']"
+        },
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 44,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 44,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        },
+        {
+          "line": 44,
+          "col": 0,
+          "code": "W9018",
+          "obj": "main",
+          "message": "It is best practice for Integrations to raise a NotImplementedError when receiving a command which is not recognized. exception"
+        }
+      ]
+    }
+  },
+  {
+    "id": "commands_dict_dispatch,integration,support=xsoar,py2,commands=py2-dict-command|py2-if-command|legacy-concat-command|dict-a",
+    "sample": "commands_dict_dispatch.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": true,
+      "commands": [
+        "py2-dict-command",
+        "py2-if-command",
+        "legacy-concat-command",
+        "dict-a"
+      ]
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9010",
+          "obj": "",
+          "message": "Some commands from yml file are not implemented in the python file, Please make sure that every command is implemented in your code. The commands that are not implemented are ['py2-dict-command', 'py2-if-command', 'legacy-concat-command']"
+        },
+        {
+          "line": 7,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 7,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        },
+        {
+          "line": 7,
+          "col": 0,
+          "code": "W9018",
+          "obj": "main",
+          "message": "It is best practice for Integrations to raise a NotImplementedError when receiving a command which is not recognized. exception"
+        }
+      ]
+    }
+  },
+  {
+    "id": "base_print,integration,support=xsoar,py2,commands=py2-dict-command|py2-if-command|legacy-concat-command|dict-a",
+    "sample": "base_print.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": true,
+      "commands": [
+        "py2-dict-command",
+        "py2-if-command",
+        "legacy-concat-command",
+        "dict-a"
+      ]
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9010",
+          "obj": "",
+          "message": "Some commands from yml file are not implemented in the python file, Please make sure that every command is implemented in your code. The commands that are not implemented are ['py2-dict-command', 'py2-if-command', 'legacy-concat-command', 'dict-a']"
+        },
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9005",
+          "obj": "",
+          "message": "Main function wasnt found in the file, Please add main()"
+        },
+        {
+          "line": 5,
+          "col": 4,
+          "code": "E9002",
+          "obj": "helper",
+          "message": "Print is found, Please remove all prints from the code."
+        },
+        {
+          "line": 13,
+          "col": 0,
+          "code": "E9002",
+          "obj": "",
+          "message": "Print is found, Please remove all prints from the code."
+        }
+      ]
+    }
+  },
+  {
+    "id": "commands_if_dispatch,integration,support=xsoar,commands=eq-command|reversed-command|list-a|list-b|tuple-a|tuple-b|set-a|set-b|or-a|or-b|fetch-incidents|xdr-get-alert|static-fstring|alias-one|alias-two|not-equal-command|prefix-something|after-else|nested-in-else|outside-main|match-command|never-implemented",
+    "sample": "commands_if_dispatch.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": [
+        "eq-command",
+        "reversed-command",
+        "list-a",
+        "list-b",
+        "tuple-a",
+        "tuple-b",
+        "set-a",
+        "set-b",
+        "or-a",
+        "or-b",
+        "fetch-incidents",
+        "xdr-get-alert",
+        "static-fstring",
+        "alias-one",
+        "alias-two",
+        "not-equal-command",
+        "prefix-something",
+        "after-else",
+        "nested-in-else",
+        "outside-main",
+        "match-command",
+        "never-implemented"
+      ]
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9010",
+          "obj": "",
+          "message": "Some commands from yml file are not implemented in the python file, Please make sure that every command is implemented in your code. The commands that are not implemented are ['reversed-command', 'alias-one', 'alias-two', 'prefix-something', 'match-command', 'never-implemented']"
+        },
+        {
+          "line": 8,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 8,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        },
+        {
+          "line": 42,
+          "col": 8,
+          "code": "E9002",
+          "obj": "main",
+          "message": "Print is found, Please remove all prints from the code."
+        }
+      ]
+    }
+  },
+  {
+    "id": "commands_dict_dispatch,integration,support=xsoar,commands=dict-a|search-command|vendor-dict-b|static-dict-fstring|dict-value-only|dict-in-value|never-implemented",
+    "sample": "commands_dict_dispatch.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": [
+        "dict-a",
+        "search-command",
+        "vendor-dict-b",
+        "static-dict-fstring",
+        "dict-value-only",
+        "dict-in-value",
+        "never-implemented"
+      ]
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9010",
+          "obj": "",
+          "message": "Some commands from yml file are not implemented in the python file, Please make sure that every command is implemented in your code. The commands that are not implemented are ['dict-in-value', 'never-implemented']"
+        },
+        {
+          "line": 7,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 7,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        },
+        {
+          "line": 7,
+          "col": 0,
+          "code": "W9018",
+          "obj": "main",
+          "message": "It is best practice for Integrations to raise a NotImplementedError when receiving a command which is not recognized. exception"
+        }
+      ]
+    }
+  },
+  {
+    "id": "commands_api_module,integration,support=xsoar,commands=api-command-a|api-command-b",
+    "sample": "commands_api_module.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": [
+        "api-command-a",
+        "api-command-b"
+      ]
+    },
+    "expected": {
+      "fails": false,
+      "findings": [
+        {
+          "line": 8,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 8,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        },
+        {
+          "line": 8,
+          "col": 0,
+          "code": "W9018",
+          "obj": "main",
+          "message": "It is best practice for Integrations to raise a NotImplementedError when receiving a command which is not recognized. exception"
+        }
+      ]
+    }
+  },
+  {
+    "id": "commands_api_module_plain_import,integration,support=xsoar,commands=api-command-a",
+    "sample": "commands_api_module_plain_import.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": [
+        "api-command-a"
+      ]
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9010",
+          "obj": "",
+          "message": "Some commands from yml file are not implemented in the python file, Please make sure that every command is implemented in your code. The commands that are not implemented are ['api-command-a']"
+        },
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 6,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 6,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        },
+        {
+          "line": 6,
+          "col": 0,
+          "code": "W9018",
+          "obj": "main",
+          "message": "It is best practice for Integrations to raise a NotImplementedError when receiving a command which is not recognized. exception"
+        }
+      ]
+    }
+  },
+  {
+    "id": "commands_function_name_variable,integration,support=xsoar,commands=first-value|second-value",
+    "sample": "commands_function_name_variable.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": [
+        "first-value",
+        "second-value"
+      ]
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9010",
+          "obj": "",
+          "message": "Some commands from yml file are not implemented in the python file, Please make sure that every command is implemented in your code. The commands that are not implemented are ['first-value']"
+        },
+        {
+          "line": 9,
+          "col": 0,
+          "code": "W9010",
+          "obj": "main",
+          "message": "try and except statements were not found in main function. Please add them"
+        },
+        {
+          "line": 9,
+          "col": 0,
+          "code": "W9012",
+          "obj": "main",
+          "message": "return_error should be used in main function. Please add it."
+        },
+        {
+          "line": 9,
+          "col": 0,
+          "code": "W9018",
+          "obj": "main",
+          "message": "It is best practice for Integrations to raise a NotImplementedError when receiving a command which is not recognized. exception"
+        }
+      ]
+    }
+  },
+  {
+    "id": "clean_integration,integration,support=xsoar,commands=vendor-get-item",
+    "sample": "clean_integration.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": [
+        "vendor-get-item"
+      ]
+    },
+    "expected": {
+      "fails": false,
+      "findings": []
+    }
+  },
+  {
+    "id": "clean_integration,integration,support=xsoar,commands=vendor-get-item|vendor-missing-command",
+    "sample": "clean_integration.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": [
+        "vendor-get-item",
+        "vendor-missing-command"
+      ]
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9010",
+          "obj": "",
+          "message": "Some commands from yml file are not implemented in the python file, Please make sure that every command is implemented in your code. The commands that are not implemented are ['vendor-missing-command']"
+        }
+      ]
+    }
+  },
+  {
+    "id": "empty_file,integration,support=xsoar,commands=some-command",
+    "sample": "empty_file.py",
+    "settings": {
+      "support": "xsoar",
+      "is_script": false,
+      "long_running": false,
+      "py2": false,
+      "commands": [
+        "some-command"
+      ]
+    },
+    "expected": {
+      "fails": true,
+      "findings": [
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9010",
+          "obj": "",
+          "message": "Some commands from yml file are not implemented in the python file, Please make sure that every command is implemented in your code. The commands that are not implemented are ['some-command']"
+        },
+        {
+          "line": 1,
+          "col": 0,
+          "code": "E9011",
+          "obj": "",
+          "message": "test-module command is not implemented in the python file, it is essential for every integration. Please add it to your code. For more information see: https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        },
+        {
+          "line": 1,
+          "col": 0,
+          "code": "W9005",
+          "obj": "",
+          "message": "Main function wasnt found in the file, Please add main()"
+        }
+      ]
+    }
+  }
+]

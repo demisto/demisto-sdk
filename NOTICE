@@ -1,0 +1,100 @@
+demisto-sdk
+Copyright (c) Palo Alto Networks
+
+This product includes software developed by third parties. The following
+third-party dependencies are distributed under weak-copyleft licenses
+(LGPL / MPL) and are used **unmodified, as external libraries loaded at
+runtime** (dynamic library use model). No source code of these libraries
+is vendored, forked, or statically bundled inside this repository or the
+distributed `demisto-sdk` wheel/sdist. All copies are obtained at install
+time from PyPI as declared in `pyproject.toml` / `poetry.lock`.
+
+Source code, license texts, and copyright notices for each library are
+available from PyPI and the projects' upstream repositories linked below.
+
+=================================================================
+LGPL-2.1 (GNU Lesser General Public License, version 2.1)
+=================================================================
+
+  * paramiko
+      Homepage:  https://www.paramiko.org/
+      PyPI:      https://pypi.org/project/paramiko/
+      License:   LGPL-2.1
+      Use:       Transitive dependency (SSH2 protocol library).
+
+  * chardet
+      Homepage:  https://github.com/chardet/chardet
+      PyPI:      https://pypi.org/project/chardet/
+      License:   LGPL-2.1 or later
+      Use:       Character encoding detection.
+
+  * astroid
+      Homepage:  https://github.com/pylint-dev/astroid
+      PyPI:      https://pypi.org/project/astroid/
+      License:   LGPL-2.1
+      Use:       Transitive dependency of pylint (AST parsing).
+
+=================================================================
+LGPL-3.0 / LGPL-3.0-or-later (GNU Lesser General Public License, v3)
+=================================================================
+
+  * PyGithub
+      Homepage:  https://github.com/PyGithub/PyGithub
+      PyPI:      https://pypi.org/project/PyGithub/
+      License:   LGPL-3.0
+      Use:       GitHub REST API client library.
+
+  * python-gitlab
+      Homepage:  https://github.com/python-gitlab/python-gitlab
+      PyPI:      https://pypi.org/project/python-gitlab/
+      License:   LGPL-3.0-or-later
+      Use:       GitLab REST API client library.
+
+  * Pebble
+      Homepage:  https://github.com/noxdafox/pebble
+      PyPI:      https://pypi.org/project/Pebble/
+      License:   LGPL-3.0
+      Use:       Process/thread pool library used for parallelism.
+
+=================================================================
+MPL-2.0 (Mozilla Public License, version 2.0)
+=================================================================
+
+  * certifi
+      Homepage:  https://github.com/certifi/python-certifi
+      PyPI:      https://pypi.org/project/certifi/
+      License:   MPL-2.0
+      Use:       Transitive dependency (root CA bundle for TLS).
+
+  * orjson
+      Homepage:  https://github.com/ijl/orjson
+      PyPI:      https://pypi.org/project/orjson/
+      License:   MPL-2.0 AND (Apache-2.0 OR MIT)
+      Use:       Fast JSON serialization/deserialization.
+
+  * tqdm
+      Homepage:  https://github.com/tqdm/tqdm
+      PyPI:      https://pypi.org/project/tqdm/
+      License:   MPL-2.0 AND MIT
+      Use:       Transitive dependency (progress bar rendering).
+
+=================================================================
+Modification and distribution statement (for LGPL / MPL compliance)
+=================================================================
+
+Palo Alto Networks has not modified the source code of any of the
+libraries listed above. Each library is consumed as the original,
+unmodified upstream artifact published by its authors on PyPI. The
+`demisto-sdk` distribution does not embed, statically link, or otherwise
+combine these libraries into a derivative work; users of `demisto-sdk`
+receive them as independent packages installed from PyPI at install time
+(pip / poetry resolve them via the standard dependency mechanism).
+
+Anyone wishing to obtain, modify, or relink these libraries can do so
+directly from PyPI or the upstream project homepages listed above,
+subject to the terms of the applicable LGPL or MPL license.
+
+Full license texts are available at:
+  * LGPL-2.1  https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
+  * LGPL-3.0  https://www.gnu.org/licenses/lgpl-3.0.html
+  * MPL-2.0   https://www.mozilla.org/en-US/MPL/2.0/

@@ -82,12 +82,15 @@ def read_pragmas(source: str, known_names: Dict[str, str]) -> Tuple[List[Pragma]
     skip_file = False
     lines = source.splitlines()
     for token in _comment_tokens(source):
-        match = PRAGMA_PATTERN.search(token.string)
-        if not match:
-            continue
         line_number, column = token.start
         own_line = not lines[line_number - 1][:column].strip()
-        for clause in match["body"].split(";"):
+        # A comment can hold several pragmas, e.g. `# pylint: disable=X  # xsoar-lint: disable=Y`.
+        clauses = [
+            clause
+            for match in PRAGMA_PATTERN.finditer(token.string)
+            for clause in match["body"].split(";")
+        ]
+        for clause in clauses:
             clause_match = CLAUSE_PATTERN.match(clause)
             if not clause_match:
                 continue

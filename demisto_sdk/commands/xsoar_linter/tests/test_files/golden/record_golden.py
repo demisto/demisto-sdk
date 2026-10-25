@@ -266,9 +266,9 @@ def main() -> None:
         recorded = list(executor.map(record_case, cases))
     GOLDEN_FILE.write_text(json.dumps(recorded, indent=2) + "\n")
     total_findings = sum(len(case["expected"]["findings"]) for case in recorded)
-    print(
+    print(  # noqa: T201
         f"Recorded {len(recorded)} cases with {total_findings} findings to {GOLDEN_FILE}"
-    )  # noqa: T201
+    )
 
 
 if __name__ == "__main__":

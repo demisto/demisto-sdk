@@ -6,11 +6,14 @@ from pathlib import Path
 import pytest
 
 from demisto_sdk.commands.validate.tests.test_tools import create_integration_object
+from demisto_sdk.commands.xsoar_linter import xsoar_linter
 from demisto_sdk.commands.xsoar_linter.xsoar_linter import (
     ProcessResults,
     build_xsoar_linter_command,
     build_xsoar_linter_env_var,
     process_file,
+    process_file_ast,
+    xsoar_linter_manager,
 )
 
 
@@ -172,3 +175,103 @@ def test_process_file(mocker, graph_repo, mock_object, expected_res):
     mocker.patch.object(subprocess, "run", return_value=mock_object)
     res = process_file(Path(integration.path))
     assert res == expected_res
+
+
+def test_process_file_ast(graph_repo):
+    """
+    Given:
+        An integration whose code has a print (error E9002).
+
+    When:
+        Calling process_file_ast.
+
+    Then:
+        Assert the error is caught in the same line format as the pylint engine, and the return code is 1.
+    """
+    pack = graph_repo.create_pack("pack")
+    integration = pack.create_integration(
+        "integration", code='def main():\n    print("x")\n'
+    )
+    res = process_file_ast(Path(integration.path))
+    print_errors = [
+        error
+        for error in res.errors
+        if error.endswith(
+            ":2:4: E9002 main: Print is found, Please remove all prints from the code."
+        )
+    ]
+    assert res.return_code == 1
+    assert len(print_errors) == 1
+    assert print_errors[0] in res.errors_and_warnings.splitlines()
+
+
+class InProcessPool:
+    """Runs pool.map in the current process, so mocks and patches apply."""
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        return False
+
+    def map(self, func, items):
+        return [func(item) for item in items]
+
+
+@pytest.mark.parametrize(
+    "engine, expected_worker",
+    [("pylint", "process_file"), ("ast", "process_file_ast")],
+)
+def test_xsoar_linter_manager_engine(mocker, engine, expected_worker):
+    """
+    Given:
+        An engine name.
+
+    When:
+        Calling xsoar_linter_manager.
+
+    Then:
+        Assert only the matching worker runs, and the start/finish log lines name the engine and the duration.
+    """
+    mocker.patch.object(xsoar_linter.multiprocessing, "Pool", InProcessPool)
+    workers = {
+        name: mocker.patch.object(xsoar_linter, name, return_value=ProcessResults())
+        for name in ("process_file", "process_file_ast")
+    }
+    logger_info = mocker.patch.object(xsoar_linter.logger, "info")
+
+    assert xsoar_linter_manager([Path("a.py")], engine=engine) == 0
+
+    assert workers[expected_worker].call_count == 1
+    assert sum(worker.call_count for worker in workers.values()) == 1
+    messages = [call.args[0] for call in logger_info.call_args_list]
+    assert any(
+        message.startswith(f"[xsoar-lint] engine={engine}: starting on 1 file(s)")
+        for message in messages
+    )
+    assert any(
+        message.startswith(f"[xsoar-lint] engine={engine}: finished 1 file(s) in ")
+        and "errors=0, warnings=0, failed files=0." in message
+        for message in messages
+    )
+
+
+def test_xsoar_linter_manager_unknown_engine(mocker):
+    """
+    Given:
+        An unknown engine name.
+
+    When:
+        Calling xsoar_linter_manager.
+
+    Then:
+        Assert it fails with a clear error and no file is processed.
+    """
+    pool = mocker.patch.object(xsoar_linter.multiprocessing, "Pool")
+    logger_error = mocker.patch.object(xsoar_linter.logger, "error")
+    assert xsoar_linter_manager([Path("a.py")], engine="foo") == 1
+    pool.assert_not_called()
+    assert "Unknown engine 'foo'" in logger_error.call_args.args[0]

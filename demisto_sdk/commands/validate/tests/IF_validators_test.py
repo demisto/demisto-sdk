@@ -280,6 +280,20 @@ def test_UnsearchableKeyValidator_obtain_invalid_content_items(
     assert not UnsearchableKeyValidator().obtain_invalid_content_items([content_item])
 
 
+def test_UnsearchableKeyValidator_expected_git_statuses():
+    """
+    Given:
+        - The UnsearchableKeyValidator (IF115)
+    Then:
+        - Ensure it runs on both ADDED and MODIFIED files, so changes to the
+          searchability of existing incident fields are not silently introduced.
+    """
+    assert set(UnsearchableKeyValidator.expected_git_statuses) == {
+        GitStatuses.ADDED,
+        GitStatuses.MODIFIED,
+    }
+
+
 def test_NameFieldPrefixValidator_obtain_invalid_content_items_without_item_prefix():
     """
     Given:

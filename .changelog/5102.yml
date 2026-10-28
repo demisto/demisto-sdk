@@ -1,0 +1,4 @@
+changes:
+- description: Updated the **validate** command `IF115` (UnsearchableKeyValidator) now also runs on modified incident fields, warning when `unsearchable` is false or missing.
+  type: feature
+pr_number: '5102'

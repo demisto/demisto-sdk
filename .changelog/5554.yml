@@ -1,0 +1,4 @@
+changes:
+- description: Removed the temporary **GR117** validation. **GR105** now reports duplicate AgentixAction and AgentixAgent IDs again.
+  type: internal
+pr_number: 5554

@@ -771,7 +771,7 @@ def test_SupportedModulesIsNotEmpty_missing_field(pack: Pack):
         - Ensure the validation passes without any errors (missing field is allowed).
     """
     script = create_script_object()
-    script.supportedModules = ["C3", "X0", "X1", "X3"]
+    script.supportedModules = ["xsiam", "agentix", "edr", "asm"]
 
     results = SupportedModulesIsNotEmpty().obtain_invalid_content_items([script])
     assert len(results) == 0

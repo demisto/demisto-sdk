@@ -1774,7 +1774,7 @@ def repo_for_test_gr_109_with_supported_module_none_in_content_item_a(graph_repo
                 MarketplaceVersions.MarketplaceV2.value,
                 MarketplaceVersions.XSOAR.value,
             ],
-            "supportedModules": ["X0"],
+            "supportedModules": ["edr"],
         }
     )
     pack_b.create_script(
@@ -3824,7 +3824,7 @@ def _gr116_collection_dep(
         "name": name,
         "description": description,
         "path": f"Packs/P/Collections/{object_id}/{object_id}.json",
-        "content_type": ContentType.COLLECTION.value,
+        "content_type": ContentType.KNOWLEDGE.value,
         "fromversion": fromversion,
     }
 

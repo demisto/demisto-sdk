@@ -62,7 +62,6 @@ from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
     ASSETS_MODELING_RULES_DIR,
     CLASSIFIERS_DIR,
-    COLLECTIONS_DIR,
     CONF_JSON_FILE_NAME,
     CONNECTORS_FOLDER,
     CONTENT_ENTITIES_DIRS,
@@ -88,6 +87,7 @@ from demisto_sdk.commands.common.constants import (
     INTEGRATIONS_DIR,
     ISO_TIMESTAMP_FORMAT,
     JOBS_DIR,
+    KNOWLEDGE_DIR,
     LAYOUT_RULES_DIR,
     LAYOUTS_DIR,
     LISTS_DIR,
@@ -1859,8 +1859,8 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
         elif AGENTIX_SKILLS_DIR in path.parts:
             return FileType.AGENTIX_SKILL
 
-        elif COLLECTIONS_DIR in path.parts:
-            return FileType.COLLECTION
+        elif KNOWLEDGE_DIR in path.parts:
+            return FileType.KNOWLEDGE
 
     elif path.name == FileType.PACK_IGNORE:
         return FileType.PACK_IGNORE
@@ -1929,7 +1929,6 @@ def find_type(
         CaseLayout,
         CaseLayoutRule,
         Classifier,
-        Collection,
         CorrelationRule,
         Dashboard,
         GenericDefinition,
@@ -1942,6 +1941,7 @@ def find_type(
         IndicatorType,
         Integration,
         Job,
+        Knowledge,
         Layout,
         LayoutRule,
         Mapper,
@@ -2129,8 +2129,8 @@ def find_type(
     if AgentixSkill.match(_dict, Path(path)):
         return FileType.AGENTIX_SKILL
 
-    if Collection.match(_dict, Path(path)):
-        return FileType.COLLECTION
+    if Knowledge.match(_dict, Path(path)):
+        return FileType.KNOWLEDGE
 
     return None
 

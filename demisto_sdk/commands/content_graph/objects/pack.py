@@ -16,6 +16,7 @@ from demisto_sdk.commands.common.constants import (
     BASE_PACK,
     CONTRIBUTORS_README_TEMPLATE,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
+    KNOWLEDGE_DIR,
     MANDATORY_PACK_METADATA_FIELDS,
     MARKETPLACE_MIN_VERSION,
     PACKS_PACK_IGNORE_FILE_NAME,
@@ -39,7 +40,6 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.content_graph.common import (
     DERIVED_PACK_ALLOWED_SUPPORT_LEVELS,
     ENABLE_SPLIT_PACKS,
-    MANAGED_PAIRED_KEY,
     PACK_METADATA_FILENAME,
     VERSION_CONFIG_FILENAME,
     ContentType,
@@ -446,8 +446,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             )
         self.server_min_version = self.server_min_version or min_content_items_version
         self.content_items = PackContentItems(**content_item_dct)
-        for content_item in content_items:
-            content_item.pack = self
 
     def _clean_empty_supportedModuels_from_commands(self, content_items: dict):
         if not content_items:
@@ -575,7 +573,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         )
         # CIAC-16414: emit ``managedPaired``; omitted entirely while ENABLE_SPLIT_PACKS is off.
         if ENABLE_SPLIT_PACKS:
-            metadata[MANAGED_PAIRED_KEY] = self.is_managed_paired()
+            metadata["managedPaired"] = self.is_managed_paired()
             # Pack level only: True when every non-test item is tightly coupled.
             metadata["exclusivelyManagedPaired"] = self.is_exclusively_managed_paired()
         self._clean_empty_supportedModuels_from_commands(
@@ -709,6 +707,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 # The content structure is different from the server
                 if folder == "CaseLayouts":
                     folder = "Layouts"
+                # Knowledge items live under a 'Knowledge' folder in the source,
+                # but the server expects them under 'Collections'
+                if folder == KNOWLEDGE_DIR:
+                    folder = "Collections"
                 dir = path / folder
                 content_item.upload_path = dir / content_item.normalize_name
                 content_item.dump(

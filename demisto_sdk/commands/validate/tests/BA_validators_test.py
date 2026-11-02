@@ -1648,6 +1648,21 @@ def test_ValidPackNameValidator_obtain_invalid_content_items(
     )
 
 
+def test_ValidPackNameValidator_missing_old_object_is_skipped():
+    """
+    Given:
+    - A content item whose old_base_content_object is None.
+    When:
+    - Calling the PackNameValidator obtain_invalid_content_items function.
+    Then:
+    - No exception is raised and the item is not reported.
+    """
+    content_item = create_integration_object()
+    content_item.old_base_content_object = None
+
+    assert PackNameValidator().obtain_invalid_content_items([content_item]) == []
+
+
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_error_message",
     [

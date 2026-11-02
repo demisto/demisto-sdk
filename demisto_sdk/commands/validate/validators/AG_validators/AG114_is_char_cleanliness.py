@@ -6,14 +6,14 @@ from typing import Iterable, List, Tuple, Union
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
-from demisto_sdk.commands.content_graph.objects.collection import Collection
+from demisto_sdk.commands.content_graph.objects.knowledge import Knowledge
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
 
-ContentTypes = Union[AgentixSkill, AgentixAction, Collection]
+ContentTypes = Union[AgentixSkill, AgentixAction, Knowledge]
 
 # Allowed punctuation per the authoring guide, plus alphanumerics and whitespace.
 _ALLOWED_PUNCTUATION = r""".,;:!?'"`~@#$%^&*()\[\]{}\-_+=<>/\\| """
@@ -151,10 +151,10 @@ def _collect_action_fields(item: AgentixAction) -> List[Tuple[str, str]]:
     return fields
 
 
-def _collect_collection_fields(item: Collection) -> List[Tuple[str, str]]:
-    """Return (field_name, text) pairs for a knowledge (Collection) item.
+def _collect_knowledge_fields(item: Knowledge) -> List[Tuple[str, str]]:
+    """Return (field_name, text) pairs for a Knowledge item.
 
-    Collection has a minimal, evolving schema, so text fields are gathered
+    Knowledge has a minimal, evolving schema, so text fields are gathered
     defensively via ``getattr``.
     """
     fields: List[Tuple[str, str]] = []
@@ -171,7 +171,7 @@ def collect_text_fields(item: ContentTypes) -> List[Tuple[str, str]]:
         return _collect_skill_fields(item)
     if isinstance(item, AgentixAction):
         return _collect_action_fields(item)
-    return _collect_collection_fields(item)
+    return _collect_knowledge_fields(item)
 
 
 # Backward-compatible alias for the previous skill-only class name.

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Annotated, Any, List, Literal, Optional, Tuple, Union
+from typing import Any, List, Literal, Optional, Tuple, Union
 
 import more_itertools
 from pydantic import BaseModel, Field
@@ -10,7 +10,6 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON,
     Auto,
     MarketplaceVersions,
-    PlatformSupportedModules,
 )
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.content_graph.strict_objects.common import (
@@ -23,6 +22,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     REQUIRED_DYNAMIC_MODEL,
     BaseStrictModel,
     SupportedFeaturesList,
+    SupportedModulesList,
     create_dynamic_model,
     create_model,
 )
@@ -55,9 +55,7 @@ class _Argument(BaseStrictModel):
     deprecated: Optional[bool] = None
     type: Optional[str] = None
     hidden: Optional[bool] = None
-    supportedModules: Optional[
-        Annotated[List[PlatformSupportedModules], Field(min_length=1, max_length=7)]
-    ]
+    supportedModules: Optional[SupportedModulesList] = None
 
 
 HIDDEN_MARKETPLACE_V2_DYNAMIC_MODEL = create_dynamic_model(

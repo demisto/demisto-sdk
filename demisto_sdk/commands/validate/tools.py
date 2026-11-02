@@ -24,13 +24,13 @@ from demisto_sdk.commands.content_graph.objects.agentix_action_test import (
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-from demisto_sdk.commands.content_graph.objects.collection import Collection
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.integration import (
     Command,
     Integration,
     Parameter,
 )
+from demisto_sdk.commands.content_graph.objects.knowledge import Knowledge
 from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
@@ -359,7 +359,7 @@ def should_skip_rn_check(content_item: ContentItem) -> bool:
         return not is_pack_move(content_item)
     if isinstance(
         content_item,
-        (AgentixAction, AgentixActionTest, AgentixAgent, AgentixSkill, Collection),
+        (AgentixAction, AgentixActionTest, AgentixAgent, AgentixSkill, Knowledge),
     ) or (isinstance(content_item, Script) and content_item.is_llm):
         return True
     return content_item.git_status is None
@@ -442,7 +442,7 @@ def dependency_text_fragments(node: dict) -> List[str]:
       action is re-parsed from ``node['path']`` and scored via
       :func:`action_text_fragments`. If the path cannot be parsed into an
       AgentixAction, it falls back to the node's name + description.
-    - AgentixSkill / Collection: only their name + description count toward an
+    - AgentixSkill / Knowledge: only their name + description count toward an
       agent's budget (a skill's body is deliberately excluded), and both are
       plain properties on the graph node - so they are read straight from the
       node. Reconstructing the full object via ``parse_obj`` is avoided on
@@ -472,7 +472,7 @@ def dependency_text_fragments(node: dict) -> List[str]:
         return name_description
     if content_type in (
         ContentType.AGENTIX_SKILL.value,
-        ContentType.COLLECTION.value,
+        ContentType.KNOWLEDGE.value,
     ):
         return name_description
     logger.opt(colors=False).debug(
@@ -487,7 +487,7 @@ def agent_text_fragments(agent: AgentixAgent) -> List[str]:
     Includes the agent name, description, and system instructions. The system
     instructions are read from the related file when available, falling back to
     the model's ``systeminstructions`` field. This does NOT include the agent's
-    graph dependencies (dependent actions/skills/collections); the full,
+    graph dependencies (dependent actions/skills/knowledges); the full,
     dependency-aware char budget is computed by the GR116 validator.
 
     Args:

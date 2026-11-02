@@ -1009,6 +1009,74 @@ def test_get_items_status(repo):
     )
 
 
+@pytest.mark.parametrize(
+    "md_name, item_dir",
+    [
+        pytest.param("SupportAgent_systeminstructions.md", "AgentixAgents", id="agent"),
+        pytest.param("SupportSkill_skill.md", "AgentixSkills", id="skill"),
+    ],
+)
+@pytest.mark.parametrize(
+    "git_status, expected_status",
+    [
+        pytest.param(GitStatuses.RENAMED, None, id="renamed"),
+        pytest.param(GitStatuses.MODIFIED, GitStatuses.MODIFIED, id="modified"),
+        pytest.param(GitStatuses.ADDED, GitStatuses.ADDED, id="added"),
+    ],
+)
+def test_get_items_status_agentix_md_maps_to_item_yml(
+    md_name, item_dir, git_status, expected_status
+):
+    """
+    Given:
+    - An Agentix side markdown file (agent system instructions / skill md).
+    When:
+    - Calling get_items_status.
+    Then:
+    - The markdown file is not collected as a content item; the item yml of the
+      same directory is collected instead. The git status is kept, except for
+      renames where it is reset (the old path cannot be parsed).
+    """
+    item_name = md_name.split("_")[0]
+    item_path = Path(f"Packs/AgentixPack_x/{item_dir}/{item_name}")
+    md_path = item_path / md_name
+    yml_path = item_path / f"{item_name}.yml"
+
+    results = Initializer().get_items_status({md_path: git_status})
+
+    assert md_path not in results
+    assert results[yml_path] == expected_status
+
+
+def test_git_paths_to_basecontent_set_old_object_parse_failure_falls_back(mocker):
+    """
+    Given:
+    - A modified content item whose previous version cannot be parsed, so
+      BaseContent.from_path returns None for it (it does not raise).
+    When:
+    - Calling git_paths_to_basecontent_set.
+    Then:
+    - old_base_content_object falls back to a copy of the item instead of None.
+    """
+    new_obj = mocker.MagicMock()
+    new_obj_copy = mocker.MagicMock()
+    new_obj.copy.return_value = new_obj_copy
+    mocker.patch(
+        "demisto_sdk.commands.validate.initializer.BaseContent.from_path",
+        side_effect=[new_obj, None],
+    )
+    mocker.patch("demisto_sdk.commands.validate.initializer.GitUtil.from_content_path")
+
+    results, invalid, non_content = Initializer().git_paths_to_basecontent_set(
+        {Path("Packs/P/Scripts/S/S.yml"): GitStatuses.MODIFIED},
+        prev_ver="origin/master",
+    )
+
+    assert results == {new_obj}
+    assert not invalid and not non_content
+    assert new_obj.old_base_content_object is new_obj_copy
+
+
 def test_validation_prefix():
     """
     Given   All validators

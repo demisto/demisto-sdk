@@ -16848,6 +16848,104 @@ class TestCO161IsFetchCapabilitiesContainActions:
         assert "reset_events_last_run" in msg
         assert "fetch_history" not in msg
 
+    @pytest.mark.parametrize(
+        "cap_id",
+        [
+            "threat-intelligence-and-enrichment",
+            "threat-intelligence-and-enrichment_aws-feed",
+        ],
+    )
+    def test_feed_missing_fetch_history_fails(self, cap_id):
+        """
+        Given: A feed capability (bare or namespaced
+               threat-intelligence-and-enrichment) declaring only
+               reset_feed_last_run.
+        When: CO161 runs.
+        Then: One error flagging only the missing fetch_history action, so
+              feed connectors expose View Fetch History in the ConnectUs UI
+              (CRTX-287637).
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-feed",
+                    "capabilities": [
+                        _cap_with_actions(cap_id, ["reset_feed_last_run"])
+                    ],
+                }
+            ]
+        )
+        results = (
+            IsFetchCapabilitiesContainActionsValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert f"'{cap_id}'" in msg
+        missing_part = msg.split("(found")[0]
+        assert "'fetch_history'" in missing_part
+        assert "reset_feed_last_run" not in missing_part
+
+    @pytest.mark.parametrize(
+        "cap_id",
+        [
+            "threat-intelligence-and-enrichment",
+            "threat-intelligence-and-enrichment_aws-feed",
+        ],
+    )
+    def test_feed_with_reset_and_fetch_history_passes(self, cap_id):
+        """
+        Given: A feed capability declaring both reset_feed_last_run and
+               fetch_history.
+        When: CO161 runs.
+        Then: No error.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-feed",
+                    "capabilities": [
+                        _cap_with_actions(
+                            cap_id, ["reset_feed_last_run", "fetch_history"]
+                        )
+                    ],
+                }
+            ]
+        )
+        results = (
+            IsFetchCapabilitiesContainActionsValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 0
+
+    def test_feed_missing_both_actions_fails(self):
+        """
+        Given: A feed capability declaring no actions.
+        When: CO161 runs.
+        Then: One error listing both reset_feed_last_run and fetch_history.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-feed",
+                    "capabilities": [
+                        _cap_with_actions("threat-intelligence-and-enrichment", [])
+                    ],
+                }
+            ]
+        )
+        results = (
+            IsFetchCapabilitiesContainActionsValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        missing_part = results[0].message.split("(found")[0]
+        assert "'reset_feed_last_run'" in missing_part
+        assert "'fetch_history'" in missing_part
+
     def test_all_fetch_families_valid_passes(self):
         """
         Given: A handler with one capability from each fetch family, each
@@ -16873,7 +16971,7 @@ class TestCO161IsFetchCapabilitiesContainActions:
                         ),
                         _cap_with_actions(
                             "threat-intelligence-and-enrichment",
-                            ["reset_feed_last_run"],
+                            ["reset_feed_last_run", "fetch_history"],
                         ),
                         _cap_with_actions("automation-and-remediation", []),
                         _cap_with_actions("fetch-secrets", []),

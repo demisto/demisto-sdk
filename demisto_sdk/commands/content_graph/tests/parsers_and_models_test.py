@@ -2070,13 +2070,13 @@ class TestParsersAndModels:
         """
         pack = repo.create_pack("HelloWorld")
         pack_metadata = load_json("pack_metadata.json")
-        pack_metadata.update({"supportedModules": ["C1", "C3"]})
+        pack_metadata.update({"supportedModules": ["xsiam", "edr"]})
         pack.pack_metadata.write_json(pack_metadata)
         pack_path = Path(pack.path)
         parser = PackParser(pack_path)
 
         model = PackModel.from_orm(parser)
-        assert model.supportedModules == ["C1", "C3"]
+        assert model.supportedModules == ["xsiam", "edr"]
 
     def test_supported_modules_override(self, mocker, repo: Repo):
         """
@@ -2092,7 +2092,7 @@ class TestParsersAndModels:
         """
         pack = repo.create_pack("HelloWorld")
         pack_metadata = load_json("pack_metadata.json")
-        pack_metadata.update({"supportedModules": ["X1", "X3", "ENT_PLUS"]})
+        pack_metadata.update({"supportedModules": ["xsiam", "agentix", "edr"]})
         pack.pack_metadata.write_json(pack_metadata)
 
         script = pack.create_script()
@@ -2100,11 +2100,13 @@ class TestParsersAndModels:
         script_path = Path(script.path)
 
         parser = ScriptParser(
-            script_path, list(MarketplaceVersions), pack_supported_modules=["C1", "C3"]
+            script_path,
+            list(MarketplaceVersions),
+            pack_supported_modules=["xsiam", "edr"],
         )
         model = Script.from_orm(parser)
 
-        assert model.supportedModules == ["C1", "C3"]
+        assert model.supportedModules == ["xsiam", "edr"]
 
     def test_supported_modules_inheritance(self, mocker, repo: Repo):
         """
@@ -2122,7 +2124,7 @@ class TestParsersAndModels:
         """
         pack1 = repo.create_pack("sample1")
         pack_metadata = load_json("pack_metadata.json")
-        pack_metadata.update({"supportedModules": ["C1", "C3"]})
+        pack_metadata.update({"supportedModules": ["xsiam", "edr"]})
         pack1.pack_metadata.write_json(pack_metadata)
 
         pack2 = repo.create_pack("sample2")
@@ -2153,7 +2155,7 @@ class TestParsersAndModels:
             if script.name == "sample_script"
         )
 
-        assert script1_model.supportedModules == ["C1", "C3"]
+        assert script1_model.supportedModules == ["xsiam", "edr"]
         assert script2_model.supportedModules is None
 
     @pytest.mark.parametrize(

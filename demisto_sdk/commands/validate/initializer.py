@@ -5,6 +5,9 @@ from typing import Any, ClassVar, Dict, FrozenSet, List, Optional, Set, Tuple, U
 from git import InvalidGitRepositoryError
 
 from demisto_sdk.commands.common.constants import (
+    AGENTIX_ACTIONS_DIR,
+    AGENTIX_AGENTS_DIR,
+    AGENTIX_SKILLS_DIR,
     AUTHOR_IMAGE_FILE_NAME,
     COMMUNITY_SUPPORT,
     DEMISTO_GIT_PRIMARY_BRANCH,
@@ -961,6 +964,9 @@ class Initializer:
                                     f"Could not parse the old_base_content_object for {obj.path}, setting a copy of the object as the old_base_content_object."
                                 )
                                 obj.old_base_content_object = obj.copy(deep=True)
+                            if obj.old_base_content_object is None:
+                                # from_path returns None (not raises) on parse failure.
+                                obj.old_base_content_object = obj.copy(deep=True)
                         else:
                             obj.old_base_content_object = obj.copy(deep=True)
                         if obj.old_base_content_object:
@@ -1095,6 +1101,14 @@ class Initializer:
                 # Connectors do not live under Packs/, so there is no
                 # pack_metadata.json to collect for them.
                 continue
+            elif self.is_agentix_non_yml_file(path, path_str):
+                # Agentix md files (system instructions, skill) are not content
+                # items; collect the item yml of the same directory instead.
+                path = path.parent / f"{path.parent.name}.yml"
+                if path not in statuses_dict:
+                    statuses_dict[path] = (
+                        None if git_status == GitStatuses.RENAMED else git_status
+                    )
             elif not self.is_pack_item(path_str):
                 # If the file is not a pack item, collect it as well.
                 statuses_dict[path] = git_status
@@ -1286,6 +1300,21 @@ class Initializer:
                 "command_examples.txt",
                 "test_data",
                 "testdata",
+            )
+        )
+
+    def is_agentix_non_yml_file(self, path: Path, path_str: str) -> bool:
+        """Whether the path is a markdown side file inside an Agentix item directory."""
+        return (
+            path.suffix == ".md"
+            and not self.is_pack_item(path_str)
+            and any(
+                agentix_dir in path.parts[:-2]
+                for agentix_dir in (
+                    AGENTIX_ACTIONS_DIR,
+                    AGENTIX_AGENTS_DIR,
+                    AGENTIX_SKILLS_DIR,
+                )
             )
         )
 

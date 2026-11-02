@@ -5,9 +5,14 @@ import pydantic
 from pydantic import BaseModel, Extra, validator
 from pydantic.fields import FieldInfo
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    MarketplaceVersions,
+    PlatformSupportedModules,
+)
 
 marketplace_suffixes = tuple((marketplace.value for marketplace in MarketplaceVersions))
+
+SupportedModulesList = List[PlatformSupportedModules]
 
 
 class SupportedFeaturesList(List[str]):

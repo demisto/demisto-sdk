@@ -168,7 +168,7 @@ class BlockMap:
         ]
         if not statement_lists or isinstance(node, ast.Module):
             return
-        header_line = node.lineno
+        header_line = _start_line(node)
         body = statement_lists[0]
         if isinstance(node, DEFINITION_NODES):
             header_end = node.end_lineno or header_line
@@ -206,6 +206,24 @@ class BlockMap:
         if definition_line and line < self._first_statement.get(first, line + 1):
             return definition_line, last
         return line, last
+
+
+def _start_line(node: ast.AST) -> int:
+    """
+    The first line of a block node.
+
+    Some block nodes carry no position of their own, e.g. a `case` clause of a
+    `match` statement (ast.match_case). For those, use the earliest line of
+    the nodes inside it (the `case` pattern comes first).
+    """
+    line = getattr(node, "lineno", None)
+    if line is not None:
+        return line
+    return min(
+        child.lineno
+        for child in ast.walk(node)
+        if child is not node and getattr(child, "lineno", None) is not None
+    )
 
 
 def _comment_tokens(source: str) -> Iterable[tokenize.TokenInfo]:

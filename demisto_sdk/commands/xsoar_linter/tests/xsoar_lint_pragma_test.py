@@ -151,3 +151,63 @@ def test_suppressed_error_does_not_fail_the_run():
     not_suppressed = lint_source('print("a")\n', "sample", SCRIPT_SETTINGS)
     assert not suppressed.fails
     assert not_suppressed.fails
+
+
+@pytest.mark.parametrize(
+    "source, expected",
+    [
+        pytest.param(
+            """
+            def main():
+                match command:
+                    case "a":
+                        print("a")
+                    case "b" | "c":
+                        print("b")
+                    case _:
+                        print("c")
+            """,
+            [(5, "E9002"), (7, "E9002"), (9, "E9002")],
+            id="match/case is linted",
+        ),
+        pytest.param(
+            """
+            def main():
+                match command:
+                    case "a":  # xsoar-lint: disable=E9002
+                        print("a")
+                        print("a2")
+                    case _:
+                        print("c")
+            """,
+            [(8, "E9002")],
+            id="trailing comment on a case line covers the case block",
+        ),
+        pytest.param(
+            """
+            def main():
+                match command:
+                    case "a":
+                        # xsoar-lint: disable=E9002
+                        print("a")
+                    case {"key": value}:
+                        match value:
+                            case [first, *_]:
+                                print(first)
+            """,
+            [(10, "E9002")],
+            id="own-line comment stays in its case block, nested match is linted",
+        ),
+    ],
+)
+def test_match_case(source: str, expected: List[Tuple[int, str]]):
+    """
+    Given:
+        - Code with match/case statements (ast.match_case nodes carry no line number).
+    When:
+        - Linting it with the ast engine.
+    Then:
+        - Ensure linting does not crash, findings inside case blocks are reported,
+          and disable comments on or inside a case block apply to that block only.
+    """
+    assert findings_for(source) == expected

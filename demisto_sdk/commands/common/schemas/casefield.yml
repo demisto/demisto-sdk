@@ -98,6 +98,8 @@ mapping:
     type: seq
     sequence:
     - type: str
+  excludefromtightlycoupled:
+    type: bool
   Aliases:
     type: seq
     sequence:
@@ -106,6 +108,10 @@ mapping:
     type: str
   aliasTo:
     type: str
+  supportedFeatures:
+    type: seq
+    sequence:
+    - type: str
 
 schema;aliases_schema:
   type: map

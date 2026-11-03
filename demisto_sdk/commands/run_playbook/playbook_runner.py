@@ -70,7 +70,8 @@ class PlaybookRunner:
         if self.should_wait:
             logger.info(
                 f"Waiting for the playbook to finish running.. \n"
-                f"To see the playbook run in real-time, visit: {work_plan_link}"
+                f"To see the playbook run in real-time, visit: {work_plan_link}\n"
+                f"Or for the web console: {work_plan_link.replace('/#/', '/').replace('//api-', '//')}"
             )
             try:
                 playbook_state_raw_response = (
@@ -92,8 +93,9 @@ class PlaybookRunner:
             playbook_state = playbook_state_raw_response.get("state")
             if playbook_state == InvestigationPlaybookState.FAILED:
                 logger.error(
-                    f"<red>The playbook finished running with status: {InvestigationPlaybookState.FAILED}"
+                    f"<red>The playbook finished running with status: {InvestigationPlaybookState.FAILED}</red>"
                 )
+                return 1
             else:
                 logger.info(
                     f"<green>The playbook {self.playbook_id} has completed its run successfully</green>"

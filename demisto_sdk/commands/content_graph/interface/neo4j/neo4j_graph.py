@@ -34,6 +34,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints impo
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
     create_pack_dependencies,
     get_all_level_packs_relationships,
+    prune_severed_dependencies,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.import_export import (
     export_graphml,
@@ -43,6 +44,9 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.import_export im
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import (
     create_indexes,
+)
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.isolation import (
+    isolate_managed_packs,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
     _match,
@@ -64,6 +68,8 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships im
     get_targets_by_path,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations import (
+    get_agent_budget_dependencies,
+    get_agentix_actions_using_content_items,
     get_items_using_deprecated,
     get_supported_modules_mismatch_commands,
     get_supported_modules_mismatch_content_items,
@@ -71,7 +77,10 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations impo
     validate_core_packs_dependencies,
     validate_duplicate_ids,
     validate_fromversion,
+    validate_managed_playbook_dependencies,
     validate_marketplaces,
+    validate_multiple_agentix_actions_with_same_display_name,
+    validate_multiple_agentix_actions_with_same_name,
     validate_multiple_packs_with_same_display_name,
     validate_multiple_script_with_same_name,
     validate_packs_with_hidden_mandatory_dependencies,
@@ -301,7 +310,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             logger.debug(
                 "No nodes to parse packs because all of them in mapping",
             )
-            logger.debug("{}", f"{self._id_to_obj=}")  # noqa: PLE1205
+            # Log only the cache size; a full repr of _id_to_obj recurses
+            # forever on circular relationships (e.g. Connector -> Pack -> ...).
+            logger.debug(f"_id_to_obj cache size: {len(self._id_to_obj)}")
             return
         with Pool(processes=cpu_count()) as pool:
             results = pool.starmap(
@@ -449,6 +460,40 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
 
+    def get_agentix_actions_using_content_items(
+        self, content_item_ids: List[str]
+    ) -> List[BaseNode]:
+        with self.driver.session() as session:
+            agentix_action_nodes = session.execute_read(
+                get_agentix_actions_using_content_items,
+                content_item_ids,
+            )
+            self._add_nodes_to_mapping(agentix_action_nodes)
+            return [self._id_to_obj[node.element_id] for node in agentix_action_nodes]
+
+    def get_agent_budget_dependencies(self, changed_ids: List[str]) -> List[dict]:
+        """Return ``[{"agent": <AgentixAgent>, "deps": [<node>, ...]}, ...]`` rows
+        for GR116. An empty ``changed_ids`` selects every agent (validate-all-files).
+
+        The agent node is reconstructed into a real ``AgentixAgent`` object (same
+        interface convention as ``get_agentix_actions_using_content_items``), so the
+        validator can score the agent's own fields and attach it to a
+        ValidationResult. Dependency nodes stay raw so the validator can read each
+        one's path/fromversion/content_type and re-parse them itself.
+        """
+        with self.driver.session() as session:
+            rows = session.execute_read(get_agent_budget_dependencies, changed_ids)
+        agent_nodes = [row["agent"] for row in rows if row.get("agent") is not None]
+        self._add_nodes_to_mapping(agent_nodes)
+        return [
+            {
+                "agent": self._id_to_obj[row["agent"].element_id],
+                "deps": row.get("deps") or [],
+            }
+            for row in rows
+            if row.get("agent") is not None
+        ]
+
     def get_duplicate_pack_display_name(
         self, file_paths: List[str]
     ) -> List[Tuple[str, List[str]]]:
@@ -481,6 +526,24 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             dups = [self._id_to_obj[duplicate.element_id] for duplicate in dups]
             duplicate_models.append((self._id_to_obj[content_item.element_id], dups))
         return duplicate_models
+
+    def validate_duplicate_agentix_action_display_names(
+        self, file_paths: List[str]
+    ) -> List[Tuple[str, List[str]]]:
+        with self.driver.session() as session:
+            results = session.execute_read(
+                validate_multiple_agentix_actions_with_same_display_name, file_paths
+            )
+            return results
+
+    def validate_duplicate_agentix_action_names(
+        self, file_paths: List[str]
+    ) -> List[Tuple[str, List[str]]]:
+        with self.driver.session() as session:
+            results = session.execute_read(
+                validate_multiple_agentix_actions_with_same_name, file_paths
+            )
+            return results
 
     def find_uses_paths_with_invalid_fromversion(
         self, file_paths: List[str], for_supported_versions=False
@@ -592,6 +655,35 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
 
+    def find_managed_playbooks_with_invalid_dependencies(
+        self,
+        file_paths: List[str],
+        core_pack_list: List[str],
+    ) -> List[Tuple[BaseNode, str]]:
+        """Searches and retrieves playbooks in managed packs that use scripts or sub-playbooks
+        from packs that are neither core packs nor managed packs with the same source.
+
+        Args:
+            file_paths (List[str]): A list of playbook file paths to check.
+                If empty, runs the query over all playbooks.
+            core_pack_list (List[str]): A list of core pack IDs.
+
+        Returns:
+            List[Tuple[BaseNode, str]]: Tuples of (playbook, pack_source) with invalid dependencies.
+        """
+        with self.driver.session() as session:
+            results: Dict[str, Neo4jRelationshipResult]
+            sources: Dict[str, str]
+            results, sources = session.execute_read(
+                validate_managed_playbook_dependencies, file_paths, core_pack_list
+            )
+            self._add_nodes_to_mapping(result.node_from for result in results.values())
+            self._add_relationships_to_objects(session, results)
+            return [
+                (self._id_to_obj[element_id], sources.get(element_id, ""))
+                for element_id in results
+            ]
+
     def find_packs_with_invalid_dependencies(
         self, pack_ids: List[str]
     ) -> List[BaseNode]:
@@ -613,7 +705,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             return [self._id_to_obj[result] for result in results]
 
     def find_content_items_with_module_mismatch_dependencies(
-        self, content_item_ids: List[str]
+        self, content_item_ids: List[str], mandatory: bool = True
     ) -> List[BaseNode]:
         """
         Retrieves content items with invalid dependency relationships based on supported modules.
@@ -624,13 +716,15 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         Args:
             content_item_ids (List[str]): List of content item IDs to check for invalid dependencies.
                                         If empty, all relevant content items will be checked.
+            mandatory (bool): If True, checks mandatory USES relationships (default).
+                              If False, checks non-mandatory (optional) USES relationships.
         Returns:
             List[BaseNode]: Content items that have invalid supported module dependencies, if any exist.
 
         """
         with self.driver.session() as session:
             results = session.execute_read(
-                get_supported_modules_mismatch_dependencies, content_item_ids
+                get_supported_modules_mismatch_dependencies, content_item_ids, mandatory
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)
@@ -660,27 +754,42 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             return [self._id_to_obj[result] for result in results]
 
     def find_content_items_with_module_mismatch_content_items(
-        self, content_item_ids: List[str]
-    ) -> List[BaseNode]:
+        self, content_item_ids: List[str], mandatory: bool = True
+    ) -> List[Tuple[BaseNode, List[str]]]:
         """
         Retrieves content items with invalid command relationships based on supported modules.
 
         This method identifies content items where a command's `supportedModules`
         are not fully included in the `supportedModules` of the parent content item.
 
+        The list of mismatched command object IDs is computed directly by the Cypher
+        query (per command).
+
         Args:
             content_item_ids (List[str]): List of content item IDs to check for invalid commands.
                                         If empty, all relevant content items will be checked.
+            mandatory (bool): If True, checks mandatory (mandatorily:true) USES relationships.
+                              If False, checks non-mandatory (mandatorily:false) USES relationships.
+                              Defaults to True.
         Returns:
-            List[BaseNode]: Content items that have invalid supported module commands, if any exist.
+            List[Tuple[BaseNode, List[str]]]: Tuples of (content item, mismatched command
+            object IDs) for content items that have invalid supported module commands.
         """
         with self.driver.session() as session:
-            results = session.execute_read(
-                get_supported_modules_mismatch_content_items, content_item_ids
+            results, mismatched_commands_by_item = session.execute_read(
+                get_supported_modules_mismatch_content_items,
+                content_item_ids,
+                mandatory,
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)
-            return [self._id_to_obj[result] for result in results]
+            return [
+                (
+                    self._id_to_obj[element_id],
+                    mismatched_commands_by_item.get(element_id, []),
+                )
+                for element_id in results
+            ]
 
     def find_unused_test_playbook(
         self, test_playbook_ids: List[str], test_playbooks_ids_to_skip: List[str]
@@ -811,7 +920,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         if output_path:
             output_path = output_path / marketplace.value
             logger.info(f"Saving content graph in {output_path}.zip")
-            self.zip_import_dir(output_path)
+            self.zip_import_dir(output_path)  # type: ignore[arg-type]
 
     def clean_graph(self):
         with self.driver.session() as session:
@@ -858,6 +967,19 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         logger.info("Creating pack dependencies...")
         with self.driver.session() as session:
             self._depends_on = session.execute_write(create_pack_dependencies)
+
+    def isolate_managed_packs(self) -> List[Tuple[str, str]]:
+        """Sever managed-pack boundary relationships and prune the cached ``depends_on``; returns the deleted pack id pairs."""
+        logger.info("Isolating managed packs...")
+        with self.driver.session() as session:
+            severed_dependencies: List[Tuple[str, str]] = session.execute_write(
+                isolate_managed_packs
+            )
+        if severed_dependencies and self._depends_on:
+            self._depends_on = prune_severed_dependencies(
+                self._depends_on, set(severed_dependencies)
+            )
+        return severed_dependencies
 
     def is_alive(self):
         return neo4j_service.is_alive()

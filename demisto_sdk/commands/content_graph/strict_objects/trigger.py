@@ -9,13 +9,21 @@ from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import 
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
     BaseStrictModel,
+    SupportedFeaturesList,
     create_model,
 )
 
 
 class _StrictTrigger(BaseStrictModel):
-    trigger_id: str
-    trigger_name: str
+    supportedFeatures: Optional[SupportedFeaturesList] = None
+    trigger_id: Optional[str] = None
+    # NOTE: 'id' should exist in all trigger content items, but is currently not supported
+    # on XSIAM/Platform tenants.
+    id: Optional[str] = None
+    trigger_name: Optional[str] = None
+    # NOTE: 'name' should exist in all trigger content items, but is currently not supported
+    # on XSIAM/Platform tenants.
+    name: Optional[str] = None
     playbook_id: Optional[str]
     description: str
     suggestion_reason: str
@@ -24,6 +32,8 @@ class _StrictTrigger(BaseStrictModel):
     automation_id: Optional[str]
     supportedModules: Optional[list[str]] = Field(None, alias="supportedModules")
     issilent: Optional[bool] = Field(default=False)
+    grouping_element: Optional[str] = None
+    is_auto_enabled: Optional[bool] = None
 
     @root_validator
     def validate_automation_playbook_logic(cls, values):

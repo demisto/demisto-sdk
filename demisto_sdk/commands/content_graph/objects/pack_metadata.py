@@ -15,7 +15,11 @@ from demisto_sdk.commands.common.content_constant_paths import (
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_json, is_external_repository
-from demisto_sdk.commands.content_graph.common import ContentType, PackTags
+from demisto_sdk.commands.content_graph.common import (
+    ENABLE_SPLIT_PACKS,
+    ContentType,
+    PackTags,
+)
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import PackContentItems
@@ -34,7 +38,14 @@ class PackMetadata(BaseModel):
     name: str
     display_name: str
     description: Optional[str]
-    created: Optional[str]
+    source: Optional[str] = Field("")
+    managed: Optional[bool] = Field(False)
+    # Marketplace-suffixed managed/source fields (e.g. ``managed:platform``).
+    # Resolved into the plain managed/source per-marketplace during dump.
+    managed_platform: Optional[bool] = Field(None, alias="managed:platform")
+    source_platform: Optional[str] = Field(None, alias="source:platform")
+    internal: Optional[bool] = Field(False)
+    created: Optional[str] = Field(alias="firstCreated")
     updated: Optional[str] = Field("")
     legacy: Optional[bool]
     support: str = Field("")
@@ -61,8 +72,8 @@ class PackMetadata(BaseModel):
     modules: List[str] = Field([])
     integrations: List[str] = Field([])
     hybrid: bool = Field(False, alias="hybrid")
-    default_data_source_id: Optional[str] = Field("", alias="defaultDataSource")
-    default_data_source_name: Optional[str] = Field("", exclude=True)
+    # Per-pack override of the derived twin's source; see ``resolve_derived_pack_source()``.
+    derived_source: Optional[str] = Field(None, alias="derivedSource")
 
     # For private packs
     premium: Optional[bool]
@@ -90,8 +101,6 @@ class PackMetadata(BaseModel):
             pack_id (str): The pack ID.
             content_items (PackContentItems): The pack content items object.
         """
-        if not self.hybrid:
-            self._set_default_data_source(content_items)
         self.tags = self._get_pack_tags(marketplace, pack_id, content_items)
         self.author = self._get_author(self.author, marketplace)
         # We want to add the pipeline_id only if this is called within our repo.
@@ -104,6 +113,7 @@ class PackMetadata(BaseModel):
         marketplace: MarketplaceVersions,
         content_items: PackContentItems,
         dependencies: List[RelationshipData],
+        strip_internal: bool = False,
     ) -> dict:
         """
         Enhancing the pack metadata properties after dumping into a dictionary. (properties that can't be calculating before)
@@ -111,12 +121,14 @@ class PackMetadata(BaseModel):
         - Adding the content items display names.
         - Gathering the pack dependencies and adding the metadata.
         - Unifying the `url` and `email` into the `support_details` property.
-        - Adding the default data source if exists.
 
         Args:
             marketplace (MarketplaceVersions): The marketplace to which the pack should belong to.
             content_items (PackContentItems): The pack content items object.
             dependencies (list[RelationshipData]): List of the pack dependencies.
+            strip_internal (bool): When true, scripts marked with ``isInternal: true``
+                are still listed in the pack metadata content items. Should only be
+                set by the ``demisto-sdk upload`` flow.
 
         Returns:
             dict: The update metadata dictionary.
@@ -126,19 +138,8 @@ class PackMetadata(BaseModel):
         (
             collected_content_items,
             content_displays,
-        ) = self._get_content_items_and_displays_metadata(marketplace, content_items)
-
-        default_data_source_value = (
-            {
-                "name": self.default_data_source_name,
-                "id": self.default_data_source_id,
-            }
-            if self.default_data_source_name
-            and self.default_data_source_id
-            and marketplace
-            in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]
-            and not self.hybrid
-            else None  # if the pack is multiple marketplace, override the initially set str default_data_source_id
+        ) = self._get_content_items_and_displays_metadata(
+            marketplace, content_items, strip_internal=strip_internal
         )
 
         _metadata.update(
@@ -147,33 +148,16 @@ class PackMetadata(BaseModel):
                 "contentDisplays": content_displays,
                 "dependencies": self._enhance_dependencies(marketplace, dependencies),
                 "supportDetails": self._get_support_details(),
-                "defaultDataSource": default_data_source_value,
             }
         )
 
         return _metadata
 
-    @staticmethod
-    def _place_data_source_integration_first(
-        integration_list: List[Dict],
-        data_source_id: str,
-    ):
-        integration_metadata_object = [
-            integration
-            for integration in integration_list
-            if integration.get("id") == data_source_id
-        ]
-
-        if not integration_metadata_object:
-            logger.error(
-                f"Integration metadata object was not found for {data_source_id=} in {integration_list=}."
-            )
-        logger.info(f"Placing {data_source_id=} first in the integration_list.")
-        integration_list.remove(integration_metadata_object[0])
-        integration_list.insert(0, integration_metadata_object[0])
-
     def _get_content_items_and_displays_metadata(
-        self, marketplace: MarketplaceVersions, content_items: PackContentItems
+        self,
+        marketplace: MarketplaceVersions,
+        content_items: PackContentItems,
+        strip_internal: bool = False,
     ) -> Tuple[Dict, Dict]:
         """
         Gets the pack content items and display names to add into the pack's metadata dictionary.
@@ -183,28 +167,45 @@ class PackMetadata(BaseModel):
         Args:
             marketplace (MarketplaceVersions): The marketplace to which the pack should belong to.
             content_items (PackContentItems): The pack content items object.
+            strip_internal (bool): When true, scripts marked with ``isInternal: true``
+                are still listed in the pack metadata content items. Should only be
+                set by the ``demisto-sdk upload`` flow.
 
         Returns:
             Tuple[Dict, Dict]: The content items and display names dictionaries to add to the pack metadata.
         """
         collected_content_items: dict = {}
         content_displays: dict = {}
+        # Computed once per dump: ``is_managed_paired()`` scans every item, so evaluating it per item would be O(n^2).
+        pack_is_managed_paired: bool = (
+            bool(self.is_managed_paired())  # type: ignore[attr-defined]
+            if ENABLE_SPLIT_PACKS
+            else False
+        )
         for content_item in content_items:
-            if should_ignore_item_in_metadata(content_item, marketplace):
+            if should_ignore_item_in_metadata(
+                content_item, marketplace, strip_internal=strip_internal
+            ):
                 continue
+            # Must be evaluated before the re-parse below: ``prepare_for_upload`` strips the opt-out key.
+            item_is_tightly_coupled: bool = ENABLE_SPLIT_PACKS and bool(
+                self._is_item_tightly_coupled(content_item)  # type: ignore[attr-defined]
+            )
             new_content_item = None
             try:
-                new_content_item = BaseContent.from_path(content_item.upload_path)  # type:ignore[assignment]
+                new_content_item = BaseContent.from_path(content_item.upload_path)  # type: ignore[assignment]
             except Exception as e:
                 logger.error(
                     f"Failed to generate content item for {content_item.upload_path}, will use original content item: {str(e)}"
                 )
             if new_content_item:
-                content_item = new_content_item  # type:ignore[assignment]
+                content_item = new_content_item  # type: ignore[assignment]
             self._add_item_to_metadata_list(
                 collected_content_items=collected_content_items,
                 content_item=content_item,
                 marketplace=marketplace,
+                pack_is_managed_paired=pack_is_managed_paired,
+                item_is_tightly_coupled=item_is_tightly_coupled,
             )
 
             content_displays[content_item.content_type.metadata_name] = (
@@ -222,19 +223,6 @@ class PackMetadata(BaseModel):
             )
             for content_type, content_type_display in content_displays.items()
         }
-        if (
-            self.default_data_source_id
-            and self.default_data_source_name
-            and collected_content_items
-            and marketplace
-            in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]
-            and not self.hybrid
-        ):
-            # order collected_content_items integration list so that the defaultDataSource will be first
-            self._place_data_source_integration_first(
-                collected_content_items[ContentType.INTEGRATION.metadata_name],
-                self.default_data_source_id,
-            )
         return collected_content_items, content_displays
 
     def _enhance_dependencies(
@@ -255,13 +243,13 @@ class PackMetadata(BaseModel):
             r.content_item_to.object_id: {
                 "mandatory": r.mandatorily,
                 # Get the minVersion either from the pack_metadata if exists, or from graph calculation
-                "minVersion": r.target_min_version or r.content_item_to.current_version,  # type:ignore[attr-defined]
+                "minVersion": r.target_min_version or r.content_item_to.current_version,  # type: ignore[attr-defined]
                 "author": self._get_author(
-                    r.content_item_to.author,  # type:ignore[attr-defined]
+                    r.content_item_to.author,  # type: ignore[attr-defined]
                     marketplace,
                 ),
-                "name": r.content_item_to.name,  # type:ignore[attr-defined]
-                "certification": r.content_item_to.certification  # type:ignore[attr-defined]
+                "name": r.content_item_to.name,  # type: ignore[attr-defined]
+                "certification": r.content_item_to.certification  # type: ignore[attr-defined]
                 or "",
             }
             for r in dependencies
@@ -301,6 +289,11 @@ class PackMetadata(BaseModel):
                     if not playbook.is_test
                 ]
             )
+            else set()
+        )
+        tags |= (
+            {PackTags.MCP}
+            if any(integration.mcp for integration in content_items.integration)
             else set()
         )
         tags |= {PackTags.USE_CASE} if self.use_cases else set()
@@ -386,50 +379,7 @@ class PackMetadata(BaseModel):
         if self.hybrid:
             # hybrid packs have a builtin data source
             return False
-        if self.default_data_source_id and self.default_data_source_name:
-            return True
         return any(self.get_valid_data_source_integrations(content_items))
-
-    def _set_default_data_source(self, content_items: PackContentItems) -> None:
-        """If there is more than one data source in the pack, return the default data source."""
-        data_sources: List[Dict[str, str]] = self.get_valid_data_source_integrations(  # type: ignore[assignment]
-            content_items, self.support, include_name=True
-        )
-
-        if self.default_data_source_id and self.default_data_source_id in [
-            data_source.get("id") for data_source in data_sources
-        ]:
-            # the provided default_data_source_id is of a valid integration, keep it
-            self.default_data_source_name = [
-                data_source.get("name")
-                for data_source in data_sources
-                if data_source.get("id") == self.default_data_source_id
-            ][0]
-            logger.info(
-                f"Keeping the provided {self.default_data_source_id=} with {self.default_data_source_name=}"
-            )
-            return
-
-        if not data_sources:
-            return
-
-        logger.info(
-            f"No defaultDataSource provided ({self.default_data_source_id}) or it is not a valid data source,"
-            f" choosing default from {data_sources=}"
-        )
-        if len(data_sources) > 1:
-            # should not happen because of validation PA131
-            logger.info(
-                f"{self.name} has multiple data sources. Setting a default value."
-            )
-
-        # setting a value to the defaultDataSource in case there is a data source
-        self.default_data_source_name = (
-            data_sources[0].get("name") if data_sources else None
-        )
-        self.default_data_source_id = (
-            data_sources[0].get("id") if data_sources else None
-        )
 
     @staticmethod
     def get_valid_data_source_integrations(
@@ -518,30 +468,26 @@ class PackMetadata(BaseModel):
         content_item: ContentItem,
         marketplace: MarketplaceVersions,
         incident_to_alert: bool = False,
+        pack_is_managed_paired: bool = False,
+        item_is_tightly_coupled: bool = False,
     ):
-        """
-        Adds the given content item to the metadata content items list.
-        - Checks if the given content item was already added to the metadata content items list
-        and replaces the object if its `toversion` is higher than the existing metadata object's `toversion`.
-        - If the content item name should be replaced from incident to alert, then the function will be called recursively
-        to replace also the item that its name was replaced from incident to alert.
-
-        Args:
-            collected_content_items (dict): The content items metadata list that were already collected.
-            content_item (ContentItem): The current content item to check.
-            marketplace (MarketplaceVersions): The marketplace to prepare the pack to upload.
-            incident_to_alert (bool, optional): Whether should replace incident to alert. Defaults to False.
-        """
+        """Add a content item to the metadata list, replacing a lower-``toversion`` duplicate and recursing for incident-to-alert."""
         collected_content_items.setdefault(content_item.content_type.metadata_name, [])
         content_item_summary = content_item.summary(
             marketplace, incident_to_alert=incident_to_alert
         )
+        # CIAC-16414: ``managedPaired == (pack splits) AND (item is tightly coupled)``; both operands come from the caller.
+        if ENABLE_SPLIT_PACKS:
+            content_item_summary["managedPaired"] = bool(
+                pack_is_managed_paired and item_is_tightly_coupled
+            )
 
         if content_item_metadata := self._search_content_item_metadata_object(
             collected_content_items=collected_content_items,
             item_id=content_item_summary["id"],
             item_name=content_item_summary["name"],
             item_type_key=content_item.content_type.metadata_name,
+            item_supported_features=content_item_summary.get("supportedFeatures"),
         ):
             logger.debug(
                 f'Found content item with name "{content_item.name}" that was already appended to the list'
@@ -570,6 +516,8 @@ class PackMetadata(BaseModel):
                 content_item,
                 marketplace,
                 incident_to_alert=True,
+                pack_is_managed_paired=pack_is_managed_paired,
+                item_is_tightly_coupled=item_is_tightly_coupled,
             )
 
     def _replace_item_if_has_higher_toversion(
@@ -626,19 +574,53 @@ class PackMetadata(BaseModel):
         )
 
     @staticmethod
+    def _is_same_item_despite_features(
+        item_supported_features: Optional[List[str]],
+        collected_supported_features: Optional[List[str]],
+    ) -> bool:
+        """
+        Whether two items sharing an ID are the same item, judging by their `supportedFeatures`.
+
+        An ID may legitimately be reused for variants targeting different regions.
+        Disjoint features mean the variants are never active together, so they are
+        distinct items and must both be listed in the metadata.
+
+        No attempt is made to resolve features to regions: GR105 already fails the
+        build when items sharing an ID are active in the same region, so requiring
+        the feature sets to be disjoint is enough here.
+
+        Args:
+            item_supported_features: The `supportedFeatures` of the item being added.
+            collected_supported_features: The `supportedFeatures` of the already collected item.
+
+        Returns:
+            bool: False only when both declare features and share none of them.
+        """
+        if not item_supported_features or not collected_supported_features:
+            # An absent or empty value carries no restriction, meaning the item is
+            # supported everywhere and therefore overlaps every other variant.
+            return True
+        return bool(set(item_supported_features) & set(collected_supported_features))
+
+    @staticmethod
     def _search_content_item_metadata_object(
         collected_content_items: dict,
         item_id: Optional[str],
         item_name: Optional[str],
         item_type_key: Optional[str],
+        item_supported_features: Optional[List[str]] = None,
     ) -> Optional[dict]:
         """
         Search a content item object in the content items metadata list by its ID and name.
+
+        Items sharing an ID but declaring disjoint `supportedFeatures` are variants
+        targeting different regions, and are not considered the same item.
 
         Args:
             collected_content_items (dict): The content items metadata list that were already collected.
             item_id (Optional[str]): The content item ID to search.
             item_type_key (Optional[str]): The content item type key to search in its list value that exists in the collected_content_items dict.
+            item_supported_features (Optional[List[str]]): The `supportedFeatures` of the content item to search.
 
         Returns:
             Optional[dict]: The object of the found content item.
@@ -646,7 +628,12 @@ class PackMetadata(BaseModel):
         filtered_content_items = [
             content_item
             for content_item in collected_content_items[item_type_key]
-            if content_item.get("id") == item_id
+            if (
+                content_item.get("id") == item_id
+                and PackMetadata._is_same_item_despite_features(
+                    item_supported_features, content_item.get("supportedFeatures")
+                )
+            )
             or (
                 content_item.get("name") == item_name
                 and item_type_key == ContentType.MODELING_RULE.metadata_name
@@ -655,9 +642,22 @@ class PackMetadata(BaseModel):
         return filtered_content_items[0] if filtered_content_items else None
 
 
-def should_ignore_item_in_metadata(content_item, marketplace: MarketplaceVersions):
+def should_ignore_item_in_metadata(
+    content_item,
+    marketplace: MarketplaceVersions,
+    strip_internal: bool = False,
+):
     """
-    Checks whether content item should be ignored from metadata
+    Checks whether content item should be ignored from metadata.
+
+    Args:
+        content_item: The content item to evaluate.
+        marketplace (MarketplaceVersions): The destination marketplace.
+        strip_internal (bool): When true, scripts marked with ``isInternal: true``
+            are NOT skipped (so they will appear in the pack metadata content items).
+            Should only be set by the ``demisto-sdk upload`` flow so that uploaded
+            content is visible to users; other flows (prepare-content, artifact
+            builds) preserve the original skip behavior.
     """
     if content_item.is_test:
         logger.debug(
@@ -671,17 +671,21 @@ def should_ignore_item_in_metadata(content_item, marketplace: MarketplaceVersion
         logger.debug(
             f"Skipping {content_item.name} in metadata creation: item is not supported in {marketplace=}."
         )
-    elif content_item.content_type == ContentType.AGENTIX_AGENT:
-        logger.info(
-            f"Skipping {content_item.name} in metadata creation: item is under Agentix {content_item.content_type.value}."
-        )
     elif content_item.content_type == ContentType.SCRIPT and content_item.is_llm:
         logger.info(
             f"Skipping {content_item.name} in metadata creation: item is under Agentix {content_item.content_type.value} and is_llm={content_item.is_llm}."
         )
-    elif content_item.content_type == ContentType.SCRIPT and content_item.is_internal:
+    elif (
+        content_item.content_type == ContentType.SCRIPT
+        and content_item.is_internal
+        and not strip_internal
+    ):
         logger.info(
             f"Skipping {content_item.name} in metadata creation: item is an internal script."
+        )
+    elif content_item.content_type == ContentType.AGENTIX_ACTION_TEST:
+        logger.debug(
+            f"Skipping {content_item.name} in metadata creation: item is an AgentixActionTest."
         )
 
     else:

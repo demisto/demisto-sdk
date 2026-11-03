@@ -184,6 +184,7 @@ class TestIntegrationScriptUnifier:
             - make sure the nativeImage was key was added with the native-images.
         """
         pack = repo.create_pack("PackName")
+        pack.pack_metadata.update({"created": "2023-10-24T11:49:45Z"})
         integration = pack.create_integration("dummy-integration")
         integration.create_default_integration()
 
@@ -242,6 +243,7 @@ class TestIntegrationScriptUnifier:
             - make sure the nativeimage was key was added with the native-images.
         """
         pack = repo.create_pack("PackName")
+        pack.pack_metadata.update({"created": "2023-10-24T11:49:45Z"})
         script = pack.create_script("dummy-script")
         script.create_default_script()
 
@@ -267,6 +269,7 @@ class TestIntegrationScriptUnifier:
             - make sure the nativeimage key is not added to the integration unified yml.
         """
         pack = repo.create_pack("PackName")
+        pack.pack_metadata.update({"created": "2023-10-24T11:49:45Z"})
         integration = pack.create_integration("dummy-integration")
         integration.create_default_integration()
 
@@ -295,6 +298,7 @@ class TestIntegrationScriptUnifier:
             - make sure the nativeImage key is not added to the script unified yml.
         """
         pack = repo.create_pack("PackName")
+        pack.pack_metadata.update({"created": "2023-10-24T11:49:45Z"})
         script = pack.create_script("dummy-script")
         script.create_default_script()
 
@@ -356,3 +360,79 @@ class TestLayoutUnifer:
 
             assert layout_data["fromVersion"] == layout_data["fromServerVersion"]
             assert layout_data["toVersion"] == layout_data["toServerVersion"]
+
+
+class TestAgentixAgentUnifier:
+    def test_unify_agentix_agent(self, repo, tmpdir):
+        """
+        Given
+        - Content Pack which contains an agentix agent with system instructions file
+        - System instructions contain multiline content, special characters, and Unicode
+
+        When
+        - Running unify on it.
+
+        Then
+        - Ensure the command runs successfully
+        - Ensure the system instructions are written to the unified YAML as expected
+        - Ensure all other fields are preserved in the unified YAML
+        """
+        pack = repo.create_pack()
+        agent_name = "test_agent"
+        system_instructions_content = """You are a helpful AI assistant.
+
+Your responsibilities include:
+1. Answering questions
+2. Providing guidance
+3. Being helpful
+
+Special chars: "quotes" and 'single' @#$% 你好
+Always be polite and professional."""
+
+        custom_yml = {
+            "commonfields": {"id": f"{agent_name}_id", "version": -1},
+            "display": "Custom Agent Display",
+            "name": agent_name,
+            "tags": ["custom", "test"],
+            "category": "AI & Machine Learning",
+            "description": "A custom test agent",
+            "color": "#00FF00",
+            "visibility": "public",
+            "systeminstructions": "",
+            "conversationstarters": ["Hello", "Help me"],
+            "actionids": ["Action1", "Action2"],
+            "builtinactions": [],
+            "roles": [],
+            "sharedwithroles": [],
+            "marketplaces": ["platform"],
+            "supportedModules": ["agentix"],
+        }
+
+        # Create agentix agent with custom fields and system instructions
+        agent = pack.create_agentix_agent(
+            name=agent_name,
+            yml=custom_yml,
+            system_instructions=system_instructions_content,
+        )
+
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(
+            app,
+            [UNIFY_CMD, "-i", agent.path, "-o", tmpdir],
+            catch_exceptions=False,
+        )
+
+        assert result.exit_code == 0
+        unified_file_path = Path(tmpdir) / f"agentixagent-{agent_name}.yml"
+        assert unified_file_path.exists()
+
+        with open(unified_file_path) as unified_agent_file:
+            unified_agent = yaml.load(unified_agent_file)
+            # Check system instructions were added
+            assert unified_agent["systeminstructions"] == system_instructions_content
+            # Check other fields are preserved
+            assert unified_agent["display"] == "Custom Agent Display"
+            assert unified_agent["tags"] == ["custom", "test"]
+            assert unified_agent["color"] == "#00FF00"
+            assert unified_agent["conversationstarters"] == ["Hello", "Help me"]
+            assert unified_agent["actionids"] == ["Action1", "Action2"]

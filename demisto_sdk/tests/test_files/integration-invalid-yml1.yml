@@ -1,3 +1,4 @@
+provider: test provider
 commonfields:
   version: -1
 configuration:

@@ -11,11 +11,13 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     REQUIRED_DYNAMIC_MODEL,
     SUFFIXED_ID_DYNAMIC_MODEL,
     BaseStrictModel,
+    SupportedFeaturesList,
     create_model,
 )
 
 
 class _StrictGenericField(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     id: str
     version: Optional[int] = None
     modified: Optional[str] = None

@@ -53,9 +53,9 @@ def main(
     sdk.configuration = Configuration()  # Initialize the configuration
     ctx.obj = sdk  # Pass sdk instance to context
     load_dotenv(CONTENT_PATH / ".env", override=True)
-    if platform.python_version_tuple()[:2] == ("3", "9"):
+    if platform.python_version_tuple()[:2] == ("3", "10"):
         message = typer.style(
-            "Warning: Demisto-SDK will soon stop supporting Python 3.9. Please update your python environment.",
+            "Warning: Demisto-SDK will soon stop supporting Python 3.10. Please update your python environment.",
             fg=typer.colors.RED,
         )
         typer.echo(message)
@@ -172,6 +172,16 @@ def register_commands(_args: list[str] = []):  # noqa: C901
             name="upload", help="Uploads an entity to Cortex XSOAR or Cortex XSIAM."
         )(upload)
 
+    if command_name == "upload-custom-integration" or register_all:
+        from demisto_sdk.commands.upload.upload_custom_integration_setup import (
+            upload_custom_integration,
+        )
+
+        app.command(
+            name="upload-custom-integration",
+            help="Upload a custom integration to Cortex Platform with '_copy' marker safety enforcement.",
+        )(upload_custom_integration)
+
     if command_name == "download" or register_all:
         from demisto_sdk.commands.download.download_setup import download
 
@@ -179,6 +189,22 @@ def register_commands(_args: list[str] = []):  # noqa: C901
             name="download",
             help="Downloads and merges content from a Cortex XSOAR or Cortex XSIAM tenant to your local repository.",
         )(download)
+
+    if command_name == "detach" or register_all:
+        from demisto_sdk.commands.detach.detach_setup import detach
+
+        app.command(
+            name="detach",
+            help="Detach content items.",
+        )(detach)
+
+    if command_name == "reattach" or register_all:
+        from demisto_sdk.commands.reattach.reattach_setup import reattach
+
+        app.command(
+            name="reattach",
+            help="Reattach content items.",
+        )(reattach)
 
     if command_name == "run" or register_all:
         from demisto_sdk.commands.run_cmd.run_cmd_setup import run
@@ -464,16 +490,6 @@ def register_commands(_args: list[str] = []):  # noqa: C901
         app.command(
             name="merge-id-sets", help="Deprecated. Merge two id_sets.", hidden=True
         )(merge_id_sets)
-
-    if command_name == "generate-unit-tests" or register_all:
-        from demisto_sdk.commands.generate_unit_tests.generate_unit_tests_setup import (
-            generate_unit_tests,
-        )
-
-        app.command(
-            name="generate-unit-tests",
-            help="This command generates unit tests automatically from an integration's Python code.",
-        )(generate_unit_tests)
 
     if command_name == "generate-test-playbook" or register_all:
         from demisto_sdk.commands.generate_test_playbook.generate_test_playbook_setup import (

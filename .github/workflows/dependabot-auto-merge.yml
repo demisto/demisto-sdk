@@ -1,0 +1,104 @@
+name: Dependabot auto-merge
+on: pull_request_target
+
+permissions:
+  pull-requests: write
+  contents: write
+
+env:
+  MAJOR_VERSION_THRESHOLD: 20  # Configurable threshold for major version percentage increase
+
+jobs:
+  dependabot:
+    runs-on: ubuntu-latest
+    if: ${{ github.actor == 'dependabot[bot]' }}
+    steps:
+      - name: Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@4de7a6c08ce727a42e0adbbdc345f761a01240ce # v1.3.6
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Check for breaking changes
+        id: check_breaking
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          if echo "$PR_BODY" | grep -qi "breaking changes"; then
+            echo "has_breaking_changes=true" >> $GITHUB_OUTPUT
+            echo "Found 'Breaking Changes' in PR description - skipping automerge"
+          else
+            echo "has_breaking_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Evaluate major version bump
+        id: evaluate_major
+        if: steps.metadata.outputs.update-type == 'version-update:semver-major'
+        env:
+          PREV_VERSION: ${{ steps.metadata.outputs.previous-version }}
+          NEW_VERSION: ${{ steps.metadata.outputs.new-version }}
+          THRESHOLD: ${{ env.MAJOR_VERSION_THRESHOLD }}
+        run: |
+          # Extract major version numbers
+          prev_major=$(echo "$PREV_VERSION" | cut -d. -f1)
+          new_major=$(echo "$NEW_VERSION" | cut -d. -f1)
+
+          echo "Previous major version: $prev_major"
+          echo "New major version: $new_major"
+
+          # Calculate percentage increase
+          if [ "$prev_major" -eq 0 ]; then
+            # Avoid division by zero - treat 0.x.x -> 1.x.x as 100% increase
+            percentage=100
+          else
+            percentage=$(awk "BEGIN {printf \"%.2f\", (($new_major - $prev_major) / $prev_major) * 100}")
+          fi
+
+          echo "Percentage increase: $percentage%"
+          echo "Threshold: $THRESHOLD%"
+
+          # Compare percentage with threshold
+          should_merge=$(awk "BEGIN {print ($percentage < $THRESHOLD) ? \"true\" : \"false\"}")
+
+          echo "should_merge_major=$should_merge" >> $GITHUB_OUTPUT
+          echo "percentage_increase=$percentage" >> $GITHUB_OUTPUT
+
+          if [ "$should_merge" = "true" ]; then
+            echo "Major version increase ($percentage%) is below threshold ($THRESHOLD%) - will automerge"
+          else
+            echo "Major version increase ($percentage%) exceeds threshold ($THRESHOLD%) - skipping automerge"
+          fi
+
+      - name: Approve and auto-merge for Dependabot PRs
+        if: |
+          steps.check_breaking.outputs.has_breaking_changes != 'true' && (
+            steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
+            steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
+            (steps.metadata.outputs.update-type == 'version-update:semver-major' && steps.evaluate_major.outputs.should_merge_major == 'true')
+          )
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        run: |
+          echo "Approving and merging"
+          gh pr review --approve "$PR_URL"
+          gh pr merge --auto --squash "$PR_URL"
+
+      - name: Skip automerge
+        if: |
+          steps.check_breaking.outputs.has_breaking_changes == 'true' ||
+          (steps.metadata.outputs.update-type == 'version-update:semver-major' && steps.evaluate_major.outputs.should_merge_major != 'true')
+        env:
+          HAS_BREAKING_CHANGES: ${{ steps.check_breaking.outputs.has_breaking_changes }}
+          UPDATE_TYPE: ${{ steps.metadata.outputs.update-type }}
+          SHOULD_MERGE_MAJOR: ${{ steps.evaluate_major.outputs.should_merge_major }}
+          PERCENTAGE_INCREASE: ${{ steps.evaluate_major.outputs.percentage_increase }}
+          VERSION_THRESHOLD: ${{ env.MAJOR_VERSION_THRESHOLD }}
+        run: |
+          echo "Skipping automerge due to:"
+          if [ "$HAS_BREAKING_CHANGES" = "true" ]; then
+            echo "  - Breaking changes detected in PR description"
+          fi
+          if [ "$UPDATE_TYPE" = "version-update:semver-major" ] && [ "$SHOULD_MERGE_MAJOR" != "true" ]; then
+            echo "  - Major version increase (${PERCENTAGE_INCREASE}%) exceeds threshold (${VERSION_THRESHOLD}%)"
+          fi

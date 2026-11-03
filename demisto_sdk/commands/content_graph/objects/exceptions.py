@@ -25,7 +25,7 @@ class FailedUploadException(RuntimeError):
                 (
                     additional_info or "",
                     f"{status_code=}" if status_code else "",
-                    f"{response_body=}" if response_body else "",
+                    f"{response_body}" if response_body else "",
                 )
             )
         )

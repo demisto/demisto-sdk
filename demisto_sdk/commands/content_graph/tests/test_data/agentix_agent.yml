@@ -1,0 +1,22 @@
+commonfields:
+  id: TestAgentixAgent
+  version: -1
+display: Test Agentix Agent
+name: TestAgentixAgent
+tags:
+  - gpt
+  - llm
+  - generative-ai
+category: AI & Machine Learning
+description: |-
+    Test Agentix Agent for unit tests.
+color: "#FF0000"
+conversationstarters:
+  - "What can you do?"
+  - "Tell me about your capabilities."
+actionids:
+  - TestAgentixAction
+marketplaces:
+- platform
+supportedModules:
+- agentix

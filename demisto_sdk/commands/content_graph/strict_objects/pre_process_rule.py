@@ -2,11 +2,13 @@ from typing import Any, Dict, List, Optional, Union
 
 from pydantic import Field
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
     NAME_DYNAMIC_MODEL,
     SUFFIXED_ID_DYNAMIC_MODEL,
     BaseStrictModel,
+    SupportedFeaturesList,
     create_model,
 )
 
@@ -17,6 +19,7 @@ class Period(BaseStrictModel):
 
 
 class _StrictPreProcessRule(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     action: str
     enabled: bool
     existing_events_filters: List[Any] = Field(
@@ -46,6 +49,7 @@ class _StrictPreProcessRule(BaseStrictModel):
     system: bool
     to_server_version: str = Field(alias="toServerVersion")
     version: int
+    marketplaces: Optional[List[MarketplaceVersions]] = None
 
 
 StrictPreProcessRule = create_model(

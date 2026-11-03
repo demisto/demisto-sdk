@@ -26,6 +26,7 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
         )
         self.type = self.json_data.get("type")
         self.definition_id = self.json_data.get("definitionId")
+        self.feed = bool(self.json_data.get("feed", False))
         self.connect_to_dependencies()
         self.mapping = self.json_data.get("mapping", {})
 

@@ -99,6 +99,7 @@ def mock_integration(
         type="python3",
         docker_image=DockerImage("demisto/python3:3.10.11.54799"),
         category="blabla",
+        provider="Test Provider",
         commands=[Command(name="test-command", description="")],
     )
     if pack is not None:

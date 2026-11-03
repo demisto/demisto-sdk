@@ -51,6 +51,16 @@ mapping:
         required: false
   requiresuserapproval:
     type: bool
+  islongrunning:
+    type: bool
+  longrunningtimeoutseconds:
+    type: int
+  internal:
+    type: bool # Hidden from UI and API
+  fromversion:
+    type: str
+  toversion:
+    type: str
   marketplaces:
     type: seq
     sequence:
@@ -59,7 +69,13 @@ mapping:
     type: seq
     sequence:
     - type: str
+  excludefromtightlycoupled:
+    type: bool
   fewshots:
+    type: seq
+    sequence:
+    - type: str
+  supportedFeatures:
     type: seq
     sequence:
     - type: str
@@ -84,7 +100,7 @@ schema;args_schema:
       type: bool
     underlyingargname:
       type: str
-    generatable:
+    isgeneratable:
       type: bool
     disabled:
       type: bool

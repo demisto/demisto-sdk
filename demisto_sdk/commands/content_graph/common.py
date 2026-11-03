@@ -1,3 +1,4 @@
+import enum
 import os
 import re
 from pathlib import Path
@@ -14,7 +15,12 @@ from demisto_sdk.commands.common.constants import (
     DEMISTO_SDK_NEO4J_DATABASE_URL,
     DEMISTO_SDK_NEO4J_PASSWORD,
     DEMISTO_SDK_NEO4J_USERNAME,
+    DEPRECATED_DESC_REGEX,
+    DEPRECATED_NO_REPLACE_DESC_REGEX,
+    KNOWLEDGE_DIR,
+    PACK_NAME_DEPRECATED_REGEX,
     PACKS_FOLDER,
+    XSOAR_SUPPORT,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
@@ -55,6 +61,8 @@ class RelationshipType(StrEnum):
     HAS_COMMAND = "HAS_COMMAND"
     IMPORTS = "IMPORTS"
     IN_PACK = "IN_PACK"
+    REFERENCES_INTEGRATION = "REFERENCES_INTEGRATION"
+    REFERENCES_PACK = "REFERENCES_PACK"
     TESTED_BY = "TESTED_BY"
     USES = "USES"
     USES_BY_ID = "USES_BY_ID"
@@ -109,6 +117,10 @@ class ContentType(StrEnum):
     CASE_LAYOUT = "CaseLayout"
     AGENTIX_AGENT = "AgentixAgent"
     AGENTIX_ACTION = "AgentixAction"
+    AGENTIX_ACTION_TEST = "AgentixActionTest"
+    AGENTIX_SKILL = "AgentixSkill"
+    KNOWLEDGE = "Knowledge"
+    CONNECTOR = "Connector"
 
     @property
     def labels(self) -> List[str]:
@@ -146,6 +158,8 @@ class ContentType(StrEnum):
             return ContentType.PLAYBOOK.server_name
         elif self == ContentType.MAPPER:
             return "classifier-mapper"
+        elif self == ContentType.KNOWLEDGE:
+            return "agentixknowledgecollection"
         return self.lower()
 
     # def __hash__(self) -> int:
@@ -163,6 +177,8 @@ class ContentType(StrEnum):
             return ContentType.PLAYBOOK.server_name
         elif self == ContentType.MAPPER:
             return "classifier"
+        elif self == ContentType.KNOWLEDGE:
+            return "agentixknowledgecollection"
         return self.lower()
 
     @property
@@ -186,6 +202,56 @@ class ContentType(StrEnum):
     def values() -> Iterator[str]:
         return (c.value for c in ContentType)
 
+    @staticmethod
+    def _is_agentix_action_test_path(path: Path) -> bool:
+        """
+        Check if the given path represents an AgentixActionTest file.
+
+        Detects two patterns:
+        - New pattern: *_test.yml (e.g., EnrichIP_test.yml)
+        - Old pattern: test_*.yaml in test_data directory
+
+        Note: This method intentionally does NOT check directories.
+        A directory under AgentixActions/ may contain both an action file
+        and a test file, so the directory itself should not be classified
+        as a test path.
+
+        Args:
+            path: The path to check
+
+        Returns:
+            True if the path represents an AgentixActionTest file, False otherwise
+        """
+        # Check for test file patterns
+        if path.stem.endswith("_test") or (
+            path.stem.startswith("test_") and "test_data" in path.parts
+        ):
+            return True
+
+        return False
+
+    @staticmethod
+    def _is_agentix_agent_test_path(path: Path) -> bool:
+        """
+        Check if the given path represents a test file under AgentixAgents.
+
+        Test files (e.g., CloudPostureAgent_test.yml) live alongside agent
+        files in the same directory and should NOT be parsed as content items.
+
+        Note: This method intentionally does NOT use path.is_file() or check
+        directories, as the path may not exist on the filesystem (e.g., when
+        coming from git).
+
+        Args:
+            path: The path to check
+
+        Returns:
+            True if the path represents a test file under AgentixAgents, False otherwise
+        """
+        if path.suffix in (".yml", ".yaml") and path.stem.endswith("_test"):
+            return True
+        return False
+
     @classmethod
     def by_path(cls, path: Path) -> "ContentType":
         for idx, folder in enumerate(path.parts):
@@ -193,16 +259,34 @@ class ContentType(StrEnum):
                 if len(path.parts) <= idx + 2:
                     raise ValueError("Invalid content path.")
                 content_type_dir = path.parts[idx + 2]
+
+                # Special handling for AgentixActionTest files
+                if content_type_dir == "AgentixActions":
+                    if cls._is_agentix_action_test_path(path):
+                        return cls.AGENTIX_ACTION_TEST
+
+                # Skip test files under AgentixAgents - they are not content items
+                if content_type_dir == "AgentixAgents":
+                    if cls._is_agentix_agent_test_path(path):
+                        raise ValueError(
+                            f"Test file under AgentixAgents is not a content item: {path}"
+                        )
+
                 break
         else:
             # less safe option - will raise an exception if the path
             # is not to the content item directory or file
-            if path.parts[-2][:-1] in ContentType.values():
+            if path.parts[-2] == KNOWLEDGE_DIR or path.parts[-3] == KNOWLEDGE_DIR:
+                return cls.KNOWLEDGE
+            elif path.parts[-2][:-1] in ContentType.values():
                 content_type_dir = path.parts[-2]
             elif path.parts[-3][:-1] in ContentType.values():
                 content_type_dir = path.parts[-3]
             else:
                 raise ValueError(f"Could not find content type in path {path}")
+        # Knowledge uses a singular folder name (no trailing 's')
+        if content_type_dir == KNOWLEDGE_DIR:
+            return cls.KNOWLEDGE
         return cls(content_type_dir[:-1])  # remove the `s`
 
     @staticmethod
@@ -213,6 +297,8 @@ class ContentType(StrEnum):
     def as_folder(self) -> str:
         if self == ContentType.MAPPER:
             return f"{ContentType.CLASSIFIER}s"
+        if self == ContentType.KNOWLEDGE:
+            return KNOWLEDGE_DIR
         return f"{self.value}s"
 
     @staticmethod
@@ -244,6 +330,21 @@ class ContentType(StrEnum):
     @staticmethod
     def content_items() -> Iterator["ContentType"]:
         return ContentType.non_abstracts(include_non_content_items=False)
+
+    @property
+    def is_tightly_coupled(self) -> bool:
+        """Whether this content type travels with the pack to Managed Content."""
+        return self in TIGHTLY_COUPLED_TYPES
+
+    @classmethod
+    def tightly_coupled_types(cls) -> "frozenset[ContentType]":
+        """The frozenset of tightly coupled content types."""
+        return TIGHTLY_COUPLED_TYPES
+
+    @classmethod
+    def loosely_coupled_types(cls) -> "frozenset[ContentType]":
+        """The loosely coupled content types - Marketplace only."""
+        return frozenset(cls.content_items()) - TIGHTLY_COUPLED_TYPES
 
     @staticmethod
     def threat_intel_report_types() -> List["ContentType"]:
@@ -308,6 +409,14 @@ class ContentType(StrEnum):
             return "Modules"
         elif self == ContentType.CASE_LAYOUT:
             return "Layouts"
+        elif self == ContentType.AGENTIX_AGENT:
+            return "Agents"
+        elif self == ContentType.AGENTIX_ACTION:
+            return "Actions"
+        elif self == ContentType.AGENTIX_SKILL:
+            return "Skills"
+        elif self == ContentType.KNOWLEDGE:
+            return "Knowledge"
         separated_str = pascalToSpace(self)
         return f"{separated_str}s"
 
@@ -330,8 +439,125 @@ class ContentType(StrEnum):
             return ContentType.GENERIC_TYPE
         elif header == "Object Fields":
             return ContentType.GENERIC_FIELD
+        elif header == "Agents":
+            return ContentType.AGENTIX_AGENT
+        elif header == "Actions":
+            return ContentType.AGENTIX_ACTION
+        elif header == "Skills":
+            return ContentType.AGENTIX_SKILL
+        elif header == "Knowledge":
+            return ContentType.KNOWLEDGE
         normalized_header = header.rstrip("s").replace(" ", "_").upper()
         return ContentType[normalized_header]
+
+
+# Coupling classification: which content types travel with the pack to Managed Content.
+
+TIGHTLY_COUPLED_TYPES: frozenset[ContentType] = frozenset(
+    {
+        ContentType.INTEGRATION,
+        ContentType.MODELING_RULE,
+        ContentType.PARSING_RULE,
+        ContentType.ASSETS_MODELING_RULE,
+        ContentType.MAPPER,
+        ContentType.CLASSIFIER,
+        ContentType.INCIDENT_FIELD,
+        ContentType.INCIDENT_TYPE,
+        ContentType.INDICATOR_FIELD,
+        ContentType.INDICATOR_TYPE,
+        ContentType.CASE_FIELD,
+    }
+)
+
+# Item-level opt-out key from tight coupling; same spelling in yml and json.
+EXCLUDE_FROM_TIGHTLY_COUPLED_KEY: str = "excludefromtightlycoupled"
+
+
+class PackDestination(str, enum.Enum):
+    """Where a pack's content is destined during the build."""
+
+    MARKETPLACE = "marketplace"
+    MANAGED_CONTENT = "managed_content"
+
+
+DERIVED_PACK_SUFFIX = "Managed"
+
+# Feature flag: when False, derived pack generation is skipped entirely.
+ENABLE_SPLIT_PACKS = os.getenv("ENABLE_SPLIT_PACKS", "false").lower() == "true"
+
+# Default feature name a derived pack is published under: <bucket>/<bucket_path>/<source>/<pack_id>/.
+DEFAULT_DERIVED_PACK_SOURCE = "connectus"
+
+
+def resolve_derived_pack_source(pack_derived_source: Optional[str] = None) -> str:
+    """Resolve a derived pack's source: pack metadata > DERIVED_PACK_SOURCE env > default; env read per call."""
+    if pack_derived_source:
+        return pack_derived_source
+    return os.getenv("DERIVED_PACK_SOURCE") or DEFAULT_DERIVED_PACK_SOURCE
+
+
+# Env var: comma-separated pack ids that must never yield a derived pack.
+DERIVED_PACKS_EXCLUDE_ENV = "DERIVED_PACKS_EXCLUDE"
+
+# Only xsoar-supported packs are split-eligible.
+DERIVED_PACK_ALLOWED_SUPPORT_LEVELS: frozenset[str] = frozenset({XSOAR_SUPPORT})
+
+DERIVED_PACKS_EXCLUDE_SEPARATOR = ","
+
+
+def derived_pack_exclusions() -> frozenset[str]:
+    """Pack ids excluded from splitting, read per call from DERIVED_PACKS_EXCLUDE (casefolded, blanks dropped)."""
+    raw = os.getenv(DERIVED_PACKS_EXCLUDE_ENV) or ""
+    return frozenset(
+        entry.strip().casefold()
+        for entry in raw.split(DERIVED_PACKS_EXCLUDE_SEPARATOR)
+        if entry.strip()
+    )
+
+
+# Canonical deprecation rule, used by the split-pack logic only; legacy per-entity properties are untouched.
+
+# Explicit deprecation field; same key in pack_metadata.json and item yml/json.
+DEPRECATED_FIELD = "deprecated"
+
+
+def is_deprecated_entity(
+    name: Optional[str],
+    description: Optional[str],
+    deprecated_field: Optional[bool] = None,
+) -> bool:
+    """True when the explicit ``deprecated`` field is truthy, or the name/description deprecation convention matches."""
+    if deprecated_field:
+        return True
+    if not isinstance(name, str) or not isinstance(description, str):
+        return False
+    return bool(
+        re.match(PACK_NAME_DEPRECATED_REGEX, name)
+        and (
+            re.match(DEPRECATED_NO_REPLACE_DESC_REGEX, description)
+            or re.match(DEPRECATED_DESC_REGEX, description)
+        )
+    )
+
+
+def is_deprecated_content_item(content_item: Any) -> bool:
+    """``is_deprecated_entity`` for a content item (parser or object)."""
+    return is_deprecated_entity(
+        name=getattr(content_item, "name", None),
+        description=getattr(content_item, "description", None),
+        deprecated_field=getattr(content_item, DEPRECATED_FIELD, None),
+    )
+
+
+def is_deprecated_pack(pack: Any) -> bool:
+    """``is_deprecated_entity`` for a pack; unlike ``PackParser.deprecated`` it also honours the explicit field."""
+    metadata = getattr(pack, "pack_metadata_dict", None) or {}
+    return is_deprecated_entity(
+        name=getattr(pack, "name", None),
+        description=getattr(pack, "description", None),
+        deprecated_field=metadata.get(DEPRECATED_FIELD)
+        or getattr(pack, DEPRECATED_FIELD, None),
+    )
 
 
 class Relationship(BaseModel):
@@ -385,7 +611,7 @@ class Nodes(dict):
         self.add_batch(args)  # type: ignore[arg-type]
 
     def add(self, **kwargs):
-        content_type: ContentType = ContentType(kwargs.get("content_type"))
+        content_type: ContentType = ContentType(kwargs["content_type"])
         if content_type not in self.keys():
             self.__setitem__(content_type, [])
         self.__getitem__(content_type).append(kwargs)
@@ -413,6 +639,7 @@ class PackTags:
     FILTER = "Filter"
     COLLECTION = "Collection"
     DATA_SOURCE = "Data Source"
+    MCP = "MCP"
 
 
 class LazyProperty(property):

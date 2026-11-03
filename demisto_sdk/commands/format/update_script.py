@@ -6,6 +6,7 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PWSH,
     FileType,
 )
+from demisto_sdk.commands.common.docker_helper import EXTENDED_REPOSITORY_SEGMENT
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import is_iron_bank_pack, server_version_compare
@@ -71,38 +72,86 @@ class ScriptYMLFormat(BaseUpdateYML):
                 "<yellow>Skipping docker image update as default docker image is being used.</yellow>"
             )
             return
-        image_name = dockerimage.split(":")[0]
-        try:
-            if is_iron_bank_pack(file_path):
-                latest_tag = DockerImageValidator.get_docker_image_latest_tag_from_iron_bank_request(
-                    image_name
-                )
-            else:
-                latest_tag = DockerImageValidator.get_docker_image_latest_tag_request(
-                    image_name
-                )
-            if not latest_tag:
-                logger.info("<yellow>Failed getting docker image latest tag</yellow>")
+        if dockerimage.startswith(EXTENDED_REPOSITORY_SEGMENT):
+            full_name = ScriptYMLFormat._get_extended_image_latest_full_name(
+                dockerimage
+            )
+            if not full_name:
                 return
+        else:
+            image_name = dockerimage.split(":")[0]
+            try:
+                if is_iron_bank_pack(file_path):
+                    latest_tag = DockerImageValidator.get_docker_image_latest_tag_from_iron_bank_request(
+                        image_name
+                    )
+                else:
+                    latest_tag = (
+                        DockerImageValidator.get_docker_image_latest_tag_request(
+                            image_name
+                        )
+                    )
+                if not latest_tag:
+                    logger.info(
+                        "<yellow>Failed getting docker image latest tag</yellow>"
+                    )
+                    return
+            except Exception as e:
+                logger.info(
+                    f"<yellow>Failed getting docker image latest tag. {e} - Invalid docker image</yellow>"
+                )
+                return
+            full_name = f"{image_name}:{latest_tag}"
+
+        ScriptYMLFormat._apply_docker_image_update(
+            script_obj, dockerimage, full_name, from_version
+        )
+
+    @staticmethod
+    def _get_extended_image_latest_full_name(dockerimage: str) -> str:
+        """Resolve the latest ``repo:tag`` for a demistoextended image via the extended registry.
+
+        Returns an empty string on any failure, so the caller leaves the image unchanged.
+        """
+        from demisto_sdk.commands.common.docker.docker_image import DockerImage
+
+        try:
+            latest_image = DockerImage(dockerimage).latest_docker_image
         except Exception as e:
             logger.info(
-                f"<yellow>Failed getting docker image latest tag. {e} - Invalid docker image</yellow>"
+                f"<yellow>Failed getting latest tag for extended image "
+                f"{dockerimage}. {e}</yellow>"
             )
-            return
-        full_name = f"{image_name}:{latest_tag}"
-        if full_name != dockerimage:
+            return ""
+        if not latest_image.tag:
+            logger.info("<yellow>Failed getting docker image latest tag</yellow>")
+            return ""
+        return str(latest_image)
+
+    @staticmethod
+    def _apply_docker_image_update(
+        script_obj: dict,
+        current_image: str,
+        full_name: str,
+        from_version: Optional[str],
+    ) -> None:
+        """Write the resolved image back to the script object if it changed.
+
+        Also sets ``dockerimage45`` for scripts that still support 4.5 and earlier.
+        """
+        if full_name != current_image:
             logger.info(f"Updating docker image to: {full_name}")
             script_obj["dockerimage"] = full_name
             if (not from_version) or server_version_compare("5.0.0", from_version) > 0:
                 # if this is a script that supports 4.5 and earlier. Make sure dockerimage45 is set
                 if not script_obj.get("dockerimage45"):
                     logger.info(
-                        f"Setting dockerimage45 to previous image value: {dockerimage} for 4.5 and earlier support"
+                        f"Setting dockerimage45 to previous image value: {current_image} for 4.5 and earlier support"
                     )
-                    script_obj["dockerimage45"] = dockerimage
+                    script_obj["dockerimage45"] = current_image
         else:
             logger.info(
-                f"Already using latest docker image: {dockerimage}. Nothing to update."
+                f"Already using latest docker image: {current_image}. Nothing to update."
             )
 
     def update_docker_image(self):

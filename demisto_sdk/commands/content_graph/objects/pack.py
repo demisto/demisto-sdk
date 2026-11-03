@@ -1,5 +1,7 @@
 import shutil
 from collections import defaultdict
+from configparser import ConfigParser
+from configparser import Error as ConfigParserError
 from functools import cached_property
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -14,26 +16,40 @@ from demisto_sdk.commands.common.constants import (
     BASE_PACK,
     CONTRIBUTORS_README_TEMPLATE,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
+    KNOWLEDGE_DIR,
     MANDATORY_PACK_METADATA_FIELDS,
     MARKETPLACE_MIN_VERSION,
+    PACKS_PACK_IGNORE_FILE_NAME,
     ImagesFolderNames,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.git_util import (
+    CommitOrBranchNotFoundError,
+    GitFileNotFoundError,
+    GitUtil,
+)
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     MarketplaceTagParser,
     get_file,
     get_relative_path,
+    parse_ignore_list,
     write_dict,
 )
 from demisto_sdk.commands.content_graph.common import (
+    DERIVED_PACK_ALLOWED_SUPPORT_LEVELS,
+    ENABLE_SPLIT_PACKS,
     PACK_METADATA_FILENAME,
     VERSION_CONFIG_FILENAME,
     ContentType,
     Nodes,
+    PackDestination,
     Relationships,
     RelationshipType,
+    derived_pack_exclusions,
+    is_deprecated_content_item,
+    is_deprecated_pack,
     replace_marketplace_references,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
@@ -62,8 +78,12 @@ from demisto_sdk.commands.content_graph.parsers.related_files import (
 from demisto_sdk.commands.prepare_content.markdown_images_handler import (
     update_markdown_images_with_urls_and_rel_paths,
 )
+from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer import (
+    MarketplaceSuffixPreparer,
+)
 from demisto_sdk.commands.upload.constants import (
     CONTENT_TYPES_EXCLUDED_FROM_UPLOAD,
+    CONTENT_TYPES_NOT_SUPPORTED_IN_UPLOAD,
     MULTIPLE_ZIPPED_PACKS_FILE_NAME,
     MULTIPLE_ZIPPED_PACKS_FILE_STEM,
 )
@@ -125,6 +145,7 @@ def upload_zip(
 class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     path: Path
     supportedModules: Optional[List[str]] = None
+    supportedFeatures: Optional[List[str]] = None
     contributors: Optional[List[str]] = None
     relationships: Relationships = Field(Relationships(), exclude=True)
     deprecated: bool = False
@@ -135,6 +156,12 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         PackContentItems(), alias="contentItems", exclude=True
     )
     pack_metadata_dict: Optional[dict] = Field({}, exclude=True)
+
+    # Split-pack / derived-pack fields
+    is_derived: bool = False
+    derived_from: Optional[str] = None
+    # All source-pack items tightly coupled; propagated to the twin and dumped only as ``exclusivelyManagedPaired``.
+    exclusively_managed_paired: bool = Field(False, exclude=True)
 
     @classmethod
     def from_orm(cls, obj) -> "Pack":
@@ -160,11 +187,180 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         return self.object_id
 
     @property
+    def destination(self) -> PackDestination:
+        """Where this pack's artifacts are routed."""
+        if self.managed:
+            return PackDestination.MANAGED_CONTENT
+        return PackDestination.MARKETPLACE
+
+    def _is_item_tightly_coupled(self, content_item: ContentItem) -> bool:
+        """True when the item is tightly coupled: not deprecated and not opted out. Mirrors ``PackParser._is_item_tightly_coupled``."""
+        if content_item.exclude_from_tightly_coupled:
+            return False
+        if is_deprecated_content_item(content_item):
+            return False
+        return content_item.content_type.is_tightly_coupled
+
+    def _is_derived_pack_eligible(self) -> bool:
+        """True when the pack may yield a derived pack. Mirrors ``PackParser._is_derived_pack_eligible`` - keep in sync."""
+        pack_id = self.object_id or ""
+        if self.managed:
+            return False
+        if (self.support or "").casefold() not in DERIVED_PACK_ALLOWED_SUPPORT_LEVELS:
+            logger.debug(
+                f"Pack '{pack_id}' is not derived-pack eligible: support level "
+                f"'{self.support}' is not one of {sorted(DERIVED_PACK_ALLOWED_SUPPORT_LEVELS)}"
+            )
+            return False
+        if is_deprecated_pack(self):
+            logger.debug(
+                f"Pack '{pack_id}' is not derived-pack eligible: the pack is deprecated"
+            )
+            return False
+        if self.hidden:
+            logger.debug(
+                f"Pack '{pack_id}' is not derived-pack eligible: the pack is hidden"
+            )
+            return False
+        if pack_id.casefold() in derived_pack_exclusions():
+            logger.debug(
+                f"Pack '{pack_id}' is not derived-pack eligible: it is listed in the exclusion list"
+            )
+            return False
+        return True
+
+    def is_managed_paired(self) -> bool:
+        """True when the pack is one half of a marketplace/managed pair. Mirrors ``PackParser._generate_derived_pack``."""
+        if self.is_derived:
+            return True
+        if not self._is_derived_pack_eligible():
+            return False
+        return any(
+            self._is_item_tightly_coupled(content_item)
+            for content_item in self.content_items
+        )
+
+    def is_exclusively_managed_paired(self) -> bool:
+        """``all`` sibling of ``is_managed_paired``; a derived twin returns the value propagated from its source pack."""
+        if self.is_derived:
+            return self.exclusively_managed_paired
+        if not self.is_managed_paired():
+            return False
+        considered = [
+            content_item
+            for content_item in self.content_items
+            if content_item.content_type not in CONTENT_TYPES_EXCLUDED_FROM_UPLOAD
+        ]
+        if not considered:
+            return False
+        return all(
+            self._is_item_tightly_coupled(content_item) for content_item in considered
+        )
+
+    @property
     def ignored_errors(self) -> List[str]:
         if ignored_errors := self.get_ignored_errors(PACK_METADATA_FILENAME):
             return ignored_errors
         file_path = get_relative_path(self.path, CONTENT_PATH)
         return self.get_ignored_errors(file_path / PACK_METADATA_FILENAME)
+
+    @cached_property
+    def pack_level_ignored_errors(self) -> List[str]:
+        """Error codes listed under the [pack] section of `.pack-ignore`.
+
+        Codes returned here are ignored for the pack itself and for every
+        content item belonging to it (including their related files).
+        """
+        section = self.ignored_errors_dict.get("pack")
+        if section is None:
+            return []
+        for key, value in section.items():
+            if key == "ignore":
+                return parse_ignore_list(value)
+        return []
+
+    def old_pack_level_ignored_errors(self, prev_ver: Optional[str]) -> List[str]:
+        """The [pack]-section error codes from `.pack-ignore` as of `prev_ver`.
+
+        Reads the previous version straight from git (the parsed
+        `pack_level_ignored_errors` only reflects the working tree, so it can't
+        be used as the "before" side of a diff).
+
+        Args:
+            prev_ver: the git ref to read the old file from (branch,
+                `remote/branch`, or sha). None means "no previous version".
+
+        Returns:
+            The old [pack] codes, or [] when `prev_ver` is None, the file did
+            not exist at that ref, or it had no [pack] section.
+        """
+        if not prev_ver:
+            return []
+        git_util = GitUtil.from_content_path()
+        pack_ignore_path = self.path / PACKS_PACK_IGNORE_FILE_NAME
+        old_text = self._read_pack_ignore_at_ref(git_util, pack_ignore_path, prev_ver)
+        if old_text is None:
+            return []
+        try:
+            config = ConfigParser(allow_no_value=True)
+            config.read_string(old_text)
+        except ConfigParserError as e:
+            # The old `.pack-ignore` at `prev_ver` is malformed INI. This is an
+            # expected, data-driven failure (bad committed file), not a bug, so
+            # we treat the old [pack] section as empty rather than crash.
+            logger.debug(
+                f"Malformed old .pack-ignore for {self.object_id} at {prev_ver}: {e}"
+            )
+            return []
+        if config.has_section("pack"):
+            for key in config["pack"]:
+                if key == "ignore":
+                    return parse_ignore_list(config["pack"][key])
+        return []
+
+    @staticmethod
+    def _read_pack_ignore_at_ref(
+        git_util: GitUtil, pack_ignore_path: Path, prev_ver: str
+    ) -> Optional[str]:
+        """Read `.pack-ignore` text at `prev_ver`, tolerating fork/offline setups.
+
+        Resolves `prev_ver` via `handle_prev_ver`, then reads the remote ref
+        first and falls back to the local ref, so the baseline is still found
+        when the remote is behind (forks) or unreachable (offline).
+
+        Args:
+            git_util: the GitUtil used to resolve refs and read file content.
+            pack_ignore_path: path to the pack's `.pack-ignore` file.
+            prev_ver: the git ref to read from (branch, `remote/branch`, or sha).
+
+        Returns:
+            The file text, or None if it does not exist at that ref.
+        """
+        remote, branch = git_util.handle_prev_ver(prev_ver)
+        ref = f"{remote}/{branch}" if remote else branch
+        for candidate_ref, from_remote in ((ref, True), (branch, False)):
+            try:
+                if git_util.is_file_exist_in_commit_or_branch(
+                    pack_ignore_path, candidate_ref, from_remote
+                ):
+                    return git_util.read_file_content(
+                        pack_ignore_path, candidate_ref, from_remote
+                    ).decode("utf-8")
+            except (
+                CommitOrBranchNotFoundError,
+                GitFileNotFoundError,
+                UnicodeDecodeError,
+            ) as e:
+                # Expected, data-driven reasons this candidate ref can't be read:
+                # the ref/commit doesn't exist here (common on forks/offline for
+                # the remote candidate), the file isn't present at that ref, or
+                # its bytes aren't valid UTF-8. Any of these just means "try the
+                # next candidate / no old file"; unexpected errors propagate.
+                logger.debug(
+                    f"Could not read {pack_ignore_path} at {candidate_ref} "
+                    f"(from_remote={from_remote}): {e}"
+                )
+        return None
 
     def ignored_errors_related_files(self, file_path: Path) -> List[str]:
         if ignored_errors := self.get_ignored_errors((Path(file_path)).name):
@@ -263,12 +459,75 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                     ):
                         del command["supportedModules"]
 
-    def dump_metadata(self, path: Path, marketplace: MarketplaceVersions) -> None:
+    def _dump_pack_metadata(
+        self,
+        source: Path,
+        destination: Path,
+        marketplace: MarketplaceVersions,
+        strip_internal: bool = False,
+    ) -> None:
+        """Copies the pack_metadata.json file to the destination.
+
+        The marketplace-suffixed ``managed``/``source`` fields are resolved into
+        the plain ``managed``/``source`` fields for the given marketplace (see
+        ``MarketplaceSuffixPreparer.prepare_managed_and_source``), so the copied
+        ``pack_metadata.json`` is consistent with the dumped ``metadata.json``.
+
+        When ``strip_internal`` is true, the ``internal`` field is also removed so
+        the uploaded pack will be visible to the user.
+
+        Falls back to a plain copy if the source cannot be parsed as JSON.
+
+        Args:
+            source (Path): The path to the original pack_metadata.json.
+            destination (Path): The path to write the (possibly modified)
+                pack_metadata.json.
+            marketplace (MarketplaceVersions): The marketplace to resolve the
+                suffixed managed/source fields for.
+            strip_internal (bool): If true, remove the ``internal`` field from
+                the destination file. Should only be set by the
+                ``demisto-sdk upload`` flow.
+        """
+        try:
+            pack_metadata = get_file(source, raise_on_error=True)
+        except Exception as e:
+            logger.debug(
+                f"Failed reading {source} as JSON ({e}); falling back to plain copy"
+            )
+            shutil.copy(source, destination)
+            return
+
+        if not isinstance(pack_metadata, dict):
+            logger.debug(f"{source} is not a JSON object; falling back to plain copy")
+            shutil.copy(source, destination)
+            return
+
+        # Resolve marketplace-suffixed managed/source fields for the current
+        # marketplace, consistent with the dumped metadata.json.
+        pack_metadata = MarketplaceSuffixPreparer.prepare_managed_and_source(
+            pack_metadata, marketplace
+        )
+
+        if strip_internal and pack_metadata.pop("internal", None):
+            logger.debug(f"Removed 'internal' field from {source} before upload")
+        write_dict(destination, data=pack_metadata, indent=4)
+
+    def dump_metadata(
+        self,
+        path: Path,
+        marketplace: MarketplaceVersions,
+        strip_internal: bool = False,
+    ) -> None:
         """Dumps the pack metadata file.
 
         Args:
             path (Path): The path of the file to dump the metadata.
             marketplace (MarketplaceVersions): The marketplace to which the pack should belong to.
+            strip_internal (bool): If true, the ``internal`` field is excluded
+                from the dumped ``metadata.json`` so the uploaded pack is
+                visible to users, and scripts marked with ``isInternal: true``
+                are still listed in ``metadata.json``'s content items.
+                Should only be set by the ``demisto-sdk upload`` flow.
         """
         self.server_min_version = self.server_min_version or MARKETPLACE_MIN_VERSION
         self._enhance_pack_properties(marketplace, self.object_id, self.content_items)
@@ -281,6 +540,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             "email",
             "database_id",
         }
+        if strip_internal:
+            # Strip `internal` so the uploaded pack will be visible to the user.
+            excluded_fields_from_metadata.add("internal")
         if not self.is_private:
             excluded_fields_from_metadata |= {
                 "premium",
@@ -291,10 +553,29 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 "disable_monthly",
             }
 
+        if self.derived_source is None:
+            # Omit the `derivedSource` key entirely instead of emitting it as `null`.
+            excluded_fields_from_metadata.add("derived_source")
+
         metadata = self.dict(exclude=excluded_fields_from_metadata, by_alias=True)
-        metadata.update(
-            self._format_metadata(marketplace, self.content_items, self.depends_on)
+        # Resolve marketplace-suffixed managed/source fields into the plain
+        # managed/source fields for the current marketplace.
+        metadata = MarketplaceSuffixPreparer.prepare_managed_and_source(
+            metadata, marketplace
         )
+        metadata.update(
+            self._format_metadata(
+                marketplace,
+                self.content_items,
+                self.depends_on,
+                strip_internal=strip_internal,
+            )
+        )
+        # CIAC-16414: emit ``managedPaired``; omitted entirely while ENABLE_SPLIT_PACKS is off.
+        if ENABLE_SPLIT_PACKS:
+            metadata["managedPaired"] = self.is_managed_paired()
+            # Pack level only: True when every non-test item is tightly coupled.
+            metadata["exclusivelyManagedPaired"] = self.is_exclusively_managed_paired()
         self._clean_empty_supportedModuels_from_commands(
             metadata.get("contentItems", {})
         )
@@ -302,6 +583,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         metadata = replace_marketplace_references(metadata, marketplace, str(self.path))
         if "supportedModules" in metadata and not metadata["supportedModules"]:
             del metadata["supportedModules"]
+        # Authored values are never empty (validation rejects []), so only an
+        # absent value is removed.
+        if "supportedFeatures" in metadata and metadata["supportedFeatures"] is None:
+            del metadata["supportedFeatures"]
         write_dict(path, data=metadata, indent=4, sort_keys=True)
 
     def dump_readme(self, path: Path, marketplace: MarketplaceVersions) -> None:
@@ -348,7 +633,32 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         except FileNotFoundError:
             logger.debug(f'No such file {self.path / "ReleaseNotes"}')
 
-    def dump(self, path: Path, marketplace: MarketplaceVersions, tpb: bool = False):
+    def dump(
+        self,
+        path: Path,
+        marketplace: MarketplaceVersions,
+        **kwargs,
+    ):
+        """Dumps the pack to ``path`` for upload/artifact creation.
+
+        Args:
+            path: Output directory.
+            marketplace: Destination marketplace.
+            **kwargs: Optional flags forwarded to the inner dump steps:
+                - ``tpb`` (bool): When true, include test playbooks in the
+                  dump.
+                - ``strip_internal`` (bool): When true, the ``internal`` and
+                  ``isInternal`` fields are removed from the dumped script
+                  YAMLs (and ``internal`` from pack metadata files), and
+                  scripts marked ``isInternal: true`` are still listed in
+                  the pack ``metadata.json`` content items. Should only be
+                  set by the ``demisto-sdk upload`` flow so that uploaded
+                  content is visible to users; other flows (prepare-content,
+                  artifact builds) keep the fields intact.
+        """
+        tpb: bool = kwargs.pop("tpb", False)
+        strip_internal: bool = kwargs.get("strip_internal", False)
+
         if not self.path.exists():
             logger.warning(f"Pack {self.name} does not exist in {self.path}")
             return
@@ -379,6 +689,14 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                     )
                     continue
 
+                # Derived packs only include tightly coupled items
+                if self.is_derived and not self._is_item_tightly_coupled(content_item):
+                    logger.debug(
+                        f"SKIPPING dump {content_item.content_type} {content_item.normalize_name}"
+                        f" — derived pack only includes tightly coupled items"
+                    )
+                    continue
+
                 folder = content_item.content_type.as_folder
                 if (
                     content_item.content_type == ContentType.SCRIPT
@@ -389,16 +707,26 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 # The content structure is different from the server
                 if folder == "CaseLayouts":
                     folder = "Layouts"
+                # Knowledge items live under a 'Knowledge' folder in the source,
+                # but the server expects them under 'Collections'
+                if folder == KNOWLEDGE_DIR:
+                    folder = "Collections"
                 dir = path / folder
                 content_item.upload_path = dir / content_item.normalize_name
                 content_item.dump(
                     dir=dir,
                     marketplace=marketplace,
+                    **kwargs,
                 )
-            self.dump_metadata(path / "metadata.json", marketplace)
+            self.dump_metadata(
+                path / "metadata.json", marketplace, strip_internal=strip_internal
+            )
             self.dump_readme(path / "README.md", marketplace)
-            shutil.copy(
-                self.path / PACK_METADATA_FILENAME, path / PACK_METADATA_FILENAME
+            self._dump_pack_metadata(
+                self.path / PACK_METADATA_FILENAME,
+                path / PACK_METADATA_FILENAME,
+                marketplace,
+                strip_internal=strip_internal,
             )
             try:
                 shutil.copy(
@@ -475,7 +803,16 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         # 1) dump the pack into a temporary file
         with TemporaryDirectory() as temp_dump_dir:
             temp_dir_path = Path(temp_dump_dir)
-            self.dump(temp_dir_path, marketplace=marketplace, tpb=tpb)
+            # strip_internal=True: this is an upload flow, so the `internal`
+            # and `isInternal` fields should be removed from the dumped
+            # script YAMLs and pack metadata so the uploaded content is
+            # visible to users.
+            self.dump(
+                temp_dir_path,
+                marketplace=marketplace,
+                tpb=tpb,
+                strip_internal=True,
+            )
 
             # 2) zip the dumped pack
             with TemporaryDirectory() as pack_zips_dir:
@@ -527,6 +864,18 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             content_types_excluded_from_upload.discard(ContentType.TEST_PLAYBOOK)
 
         for item in self.content_items:
+            if item.content_type in CONTENT_TYPES_NOT_SUPPORTED_IN_UPLOAD:
+                upload_failures.append(
+                    FailedUploadException(
+                        item.path,
+                        response_body={},
+                        additional_info=(
+                            f"{item.content_type} is not a content item and therefore cannot be uploaded as part of a pack"
+                        ),
+                    )
+                )
+                continue
+
             if item.content_type in content_types_excluded_from_upload:
                 logger.debug(
                     f"SKIPPING upload of {item.content_type} {item.object_id}: type is skipped"
@@ -604,16 +953,30 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             )
 
     def to_nodes(self) -> Nodes:
+        # The twin shares the source pack's item objects, so only the source emits item nodes (CREATE, no constraint).
+        if self.is_derived:
+            return Nodes(self.to_dict())
         return Nodes(
             self.to_dict(),
             *[content_item.to_dict() for content_item in self.content_items],
         )
 
     def save(self):
+        # A derived pack is virtual: ``self.path`` is the source pack's dir, so saving would overwrite its metadata.
+        if self.is_derived:
+            logger.debug(f"Skipping save for derived pack {self.object_id}")
+            return
         file_path = self.path / PACK_METADATA_FILENAME
         data = get_file(file_path)
+        # Never inject ``firstCreated`` if it was not already in the original
+        # file.  The field_mapping maps ``created`` → ``firstCreated``, so
+        # excluding ``created`` from _save() prevents the injection.
+        fields_to_exclude = [] if "firstCreated" in data else ["created"]
         super()._save(
-            file_path, data, predefined_keys_to_keep=MANDATORY_PACK_METADATA_FIELDS
+            file_path,
+            data,
+            predefined_keys_to_keep=MANDATORY_PACK_METADATA_FIELDS,
+            fields_to_exclude=fields_to_exclude,
         )  # type: ignore
 
     @cached_property

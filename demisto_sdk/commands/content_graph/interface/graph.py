@@ -160,6 +160,16 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
+    def get_agentix_actions_using_content_items(
+        self, content_item_ids: List[str]
+    ) -> List[BaseNode]:
+        pass
+
+    @abstractmethod
+    def get_agent_budget_dependencies(self, changed_ids: List[str]) -> List[dict]:
+        pass
+
+    @abstractmethod
     def get_duplicate_pack_display_name(
         self, file_paths: List[str]
     ) -> List[Tuple[str, List[str]]]:
@@ -190,6 +200,14 @@ class ContentGraphInterface(ABC):
         marketplace: MarketplaceVersions,
         core_pack_list: List[str],
     ) -> List[BaseNode]:
+        pass
+
+    @abstractmethod
+    def find_managed_playbooks_with_invalid_dependencies(
+        self,
+        file_paths: List[str],
+        core_pack_list: List[str],
+    ) -> List[Tuple[BaseNode, str]]:
         pass
 
     @abstractmethod
@@ -303,6 +321,11 @@ class ContentGraphInterface(ABC):
     def create_pack_dependencies(self): ...
 
     @abstractmethod
+    def isolate_managed_packs(self) -> List[Tuple[str, str]]:
+        """Sever every relationship crossing a managed pack boundary; returns the deleted ``(source, target)`` pack ids."""
+        pass
+
+    @abstractmethod
     def run_single_query(self, query: str, **kwargs) -> Any:
         pass
 
@@ -314,8 +337,14 @@ class ContentGraphInterface(ABC):
 
     @abstractmethod
     def find_content_items_with_module_mismatch_dependencies(
-        self, content_item_ids: List[str]
+        self, content_item_ids: List[str], mandatory: bool = True
     ) -> List[BaseNode]:
+        pass
+
+    @abstractmethod
+    def find_content_items_with_module_mismatch_content_items(
+        self, content_item_ids: List[str], mandatory: bool = True
+    ) -> List[Tuple[BaseNode, List[str]]]:
         pass
 
     @abstractmethod

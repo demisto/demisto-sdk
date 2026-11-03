@@ -11,7 +11,9 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import (
+    EXCLUDE_FROM_TIGHTLY_COUPLED_KEY,
     UNIFIED_FILES_SUFFIXES,
     ContentType,
     Relationships,
@@ -92,23 +94,65 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         self.git_sha: Optional[str] = git_sha
 
     @staticmethod
+    def _resolve_pack_defaults(
+        path: Path,
+    ) -> List[MarketplaceVersions]:
+        """Resolve the pack's marketplaces from the item's `pack_metadata.json`,
+        falling back to all marketplaces when unavailable.
+        """
+        from demisto_sdk.commands.common.tools import get_pack_metadata
+        from demisto_sdk.commands.content_graph.parsers.pack import (
+            PackMetadataParser,
+        )
+
+        metadata = get_pack_metadata(str(path))
+        if not metadata or not metadata.get("marketplaces"):
+            return list(MarketplaceVersions)
+
+        return PackMetadataParser.resolve_marketplaces(metadata)
+
+    @staticmethod
     def from_path(
         path: Path,
-        pack_marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions),
+        pack_marketplaces: Optional[List[MarketplaceVersions]] = None,
         pack_supported_modules: Optional[List[str]] = None,
         git_sha: Optional[str] = None,
     ) -> "ContentItemParser":
         """Tries to parse a content item by its path.
         If during the attempt we detected the file is not a content item, `None` is returned.
 
+        When `pack_marketplaces` is not provided (standalone parsing), the
+        marketplaces are resolved from the `pack_metadata.json` of the pack
+        containing the item.
+
         Returns:
             Optional[ContentItemParser]: The parsed content item.
         """
+        from demisto_sdk.commands.common.constants import AGENTIX_AGENTS_DIR
         from demisto_sdk.commands.content_graph.common import ContentType
 
         logger.debug(f"Parsing content item {path}")
+
+        if pack_marketplaces is None:
+            pack_marketplaces = ContentItemParser._resolve_pack_defaults(path)
+
+        # Skip test files under AgentixAgents - they are not content items
+        if AGENTIX_AGENTS_DIR in path.parts and ContentType._is_agentix_agent_test_path(
+            path
+        ):
+            logger.debug(
+                f"Skipping {path} - test file under AgentixAgents is not a content item"
+            )
+            raise NotAContentItemException
+
         if not ContentItemParser.is_content_item(path):
-            if ContentItemParser.is_content_item(path.parent):
+            # Check if this is an AgentixActionTest file before resolving
+            # to parent directory. Test files (e.g., EnrichIP_test.yml) live
+            # alongside action files in the same directory and must be parsed
+            # as individual file-based content items, not as the parent package.
+            if ContentType._is_agentix_action_test_path(path):
+                pass  # Keep the file path as-is
+            elif ContentItemParser.is_content_item(path.parent):
                 path = path.parent
         try:
             content_type: ContentType = ContentType.by_path(path)
@@ -158,6 +202,16 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         return parser
 
     @property
+    def supportedFeatures(self) -> Optional[List[str]]:
+        """The item's own authored `supportedFeatures`, or None if it declares none.
+
+        Deliberately not resolved against the pack: use
+        `get_content_item_supported_features` when you need the effective value.
+        """
+        raw_data = self.raw_data if isinstance(self.raw_data, dict) else {}
+        return raw_data.get("supportedFeatures")
+
+    @property
     @abstractmethod
     def name(self) -> Optional[str]:
         pass
@@ -198,6 +252,11 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     @abstractmethod
     def is_silent(self) -> bool:
         pass
+
+    @property
+    def exclude_from_tightly_coupled(self) -> bool:
+        """True when the item opts out of tight coupling; read generically from the raw data."""
+        return bool(get_value(self.raw_data, EXCLUDE_FROM_TIGHTLY_COUPLED_KEY, False))
 
     def get_marketplaces(self, data: dict) -> List[MarketplaceVersions]:
         if file_marketplaces := [

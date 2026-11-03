@@ -21,6 +21,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     SCRIPT_ID_DYNAMIC_MODEL,
     VALUE_DYNAMIC_MODEL,
     BaseStrictModel,
+    SupportedFeaturesList,
     create_model,
 )
 
@@ -145,6 +146,18 @@ class EvidenceData(BaseStrictModel):
     tags: Optional[Dict[str, Any]] = None
 
 
+class TimelineRecord(BaseStrictModel):
+    should_mark_as_record: Optional[bool] = Field(None, alias="shouldMarkAsRecord")
+    record_type: Optional[str] = Field(None, alias="recordType")
+    record_name: Optional[str] = Field(None, alias="recordName")
+    description: Optional[str] = None
+    is_evidence: Optional[bool] = Field(None, alias="isEvidence")
+    evidence_comment: Optional[str] = Field(None, alias="evidenceComment")
+    effective_time: Optional[str] = Field(None, alias="effectiveTime")
+    attachments: Optional[str] = None
+    tags: Optional[List[str]] = None
+
+
 class _SubTaskPlaybook(BaseStrictModel):
     id: str
     version: int
@@ -163,6 +176,11 @@ class _SubTaskPlaybook(BaseStrictModel):
     brand: str
     is_system_task: Optional[bool] = Field(None, alias="issystemtask")
     cloned_from: Optional[str] = Field(None, alias="clonedfrom")
+    ai_task_id: Optional[str] = Field(None, alias="aiTaskId")
+    display_label: Optional[str] = Field(None, alias="displayLabel")
+    is_response: Optional[bool] = Field(None, alias="isResponse")
+    requires_intervention: Optional[bool] = Field(None, alias="requiresIntervention")
+    is_sub_section: Optional[bool] = Field(None, alias="isSubSection")
 
 
 SubTaskPlaybook = create_model(
@@ -212,6 +230,7 @@ class _TaskPlaybook(BaseStrictModel):
             "section",
             "standard",
             "collection",
+            "aiTask",
         ],
     )
     default_assignee_complex: Optional[Dict] = Field(
@@ -230,6 +249,7 @@ class _TaskPlaybook(BaseStrictModel):
     )
     quiet: Optional[bool] = None
     evidence_data: Optional[EvidenceData] = Field(None, alias="evidencedata")
+    timeline_record: Optional[TimelineRecord] = Field(None, alias="timelineRecord")
     task: SubTaskPlaybook  # type:ignore[valid-type]
     note: Optional[bool] = None
     next_tasks: Optional[Dict[constr(regex=r".+"), List[str]]] = Field(  # type:ignore[valid-type]
@@ -259,6 +279,7 @@ TaskPlaybook = create_model(
 
 
 class StrictPlaybook(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     content_item_exportable_fields: Optional[ContentItemExportableFields] = Field(
         None, alias="contentitemexportablefields"
     )
@@ -272,6 +293,8 @@ class StrictPlaybook(BaseStrictModel):
     name: str
     description: str
     hidden: Optional[bool] = None
+    internal: Optional[bool] = None
+    source: Optional[str] = None
     deprecated: Optional[bool] = None
     start_task_id: str = Field(alias="starttaskid")
     view: str
@@ -295,3 +318,4 @@ class StrictPlaybook(BaseStrictModel):
     marketplaces: Optional[List[MarketplaceVersions]] = None
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
     is_silent: Optional[bool] = Field(alias="issilent")
+    adopted: Optional[bool] = None

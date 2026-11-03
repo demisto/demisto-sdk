@@ -1,3 +1,4 @@
+from functools import cached_property
 from pathlib import Path
 from typing import List, Optional, Set
 
@@ -21,6 +22,19 @@ class ListParser(JSONContentItemParser, content_type=ContentType.LIST):
             path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
         )
         self.type = self.json_data.get("type")
+        self.internal: bool = self.json_data.get("internal", False)
+        self.source: str = self.json_data.get("source", "")
+
+    @cached_property
+    def field_mapping(self):
+        mapping = super().field_mapping
+        mapping.update(
+            {
+                "source": "source",
+                "internal": "internal",
+            }
+        )
+        return mapping
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

@@ -1,6 +1,9 @@
 from typing import Iterable
 
 from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.strict_objects.integration import (
+    SectionOrderValues,
+)
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -8,7 +11,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = Integration
 
-ALLOWED_SECTIONS = ["Connect", "Collect", "Optimize", "Mirroring", "Result"]
+ALLOWED_SECTIONS = [section.value for section in SectionOrderValues]
 
 
 class StrictSchemaValidator(BaseValidator[ContentTypes]):

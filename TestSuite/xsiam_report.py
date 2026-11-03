@@ -17,8 +17,8 @@ class XSIAMReport(JSONBased):
             {
                 "templates_data": [
                     {
-                        "global_id": self.id,
-                        "report_name": self.id,
+                        "id": self.id,
+                        "name": self.id,
                         "report_description": None,
                         "default_template_id": None,
                         "time_frame": {"relativeTime": 86400000},

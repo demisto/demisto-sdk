@@ -82,6 +82,8 @@ mapping:
     type: seq
     sequence:
     - type: str
+  excludefromtightlycoupled:
+    type: bool
   name:xsoar:
     type: str
   name:marketplacev2:
@@ -102,3 +104,7 @@ mapping:
     type: str
   id:xsoar_on_prem:
     type: str
+  supportedFeatures:
+    type: seq
+    sequence:
+    - type: str

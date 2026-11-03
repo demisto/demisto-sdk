@@ -9,13 +9,17 @@ from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import 
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
     BaseStrictModel,
+    SupportedFeaturesList,
     create_model,
 )
 
 
 class _StrictLayoutRule(BaseStrictModel):
-    rule_id: str
-    rule_name: str
+    supportedFeatures: Optional[SupportedFeaturesList] = None
+    rule_id: Optional[str] = None
+    id: str
+    rule_name: Optional[str] = None
+    name: str
     layout_id: str
     from_version: str = Field(
         alias="fromVersion"

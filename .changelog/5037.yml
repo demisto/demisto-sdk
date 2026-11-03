@@ -1,4 +1,0 @@
-changes:
-- description: Format new playbooks as silent playbooks.
-  type: feature
-pr_number: 5037

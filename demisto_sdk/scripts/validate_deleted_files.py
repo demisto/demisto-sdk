@@ -16,6 +16,7 @@ from demisto_sdk.commands.common.files.file import File
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger, logging_setup
 from demisto_sdk.commands.common.tools import find_type
+from demisto_sdk.commands.validate.initializer import handle_private_repo_deleted_files
 
 
 def is_file_allowed_to_be_deleted_by_file_type(file_path: Path) -> bool:
@@ -30,7 +31,7 @@ def is_file_allowed_to_be_deleted_by_file_type(file_path: Path) -> bool:
             file_path, tag=DEMISTO_GIT_PRIMARY_BRANCH
         )
     except (FileReadError, FileNotFoundError):
-        logger.warning(
+        logger.debug(
             f"Could not retrieve {file_path} in remote branch {DEMISTO_GIT_UPSTREAM}/{DEMISTO_GIT_PRIMARY_BRANCH}"
         )
         logger.debug(
@@ -51,7 +52,8 @@ def is_file_allowed_to_be_deleted_by_file_type(file_path: Path) -> bool:
             )
     is_silent = check_if_content_item_is_silent(file_content)
     if file_type := find_type(str(file_path), file_content):
-        return True if file_type in FileType_ALLOWED_TO_DELETE or is_silent else False
+        return file_type in FileType_ALLOWED_TO_DELETE or is_silent
+
     return True
 
 
@@ -67,7 +69,17 @@ def get_forbidden_deleted_files(protected_dirs: Set[str]) -> List[str]:
     Returns all the file paths which cannot be deleted
     """
     git_util = GitUtil.from_content_path()
-    deleted_files = git_util.deleted_files(DEMISTO_GIT_PRIMARY_BRANCH)
+
+    # Get deleted files - don't use committed_only to ensure we catch all deletions
+    raw_deleted_files = git_util.deleted_files(
+        prev_ver=DEMISTO_GIT_PRIMARY_BRANCH,
+        committed_only=False,  # Get both staged and committed to catch all deletions
+        staged_only=False,
+    )
+
+    deleted_files = handle_private_repo_deleted_files(
+        raw_deleted_files, show_deleted_files=False
+    )
 
     deleted_files_in_protected_dirs = [
         file_path

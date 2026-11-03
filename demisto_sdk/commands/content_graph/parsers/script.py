@@ -1,10 +1,15 @@
+from functools import cached_property
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.parsers.base_script import BaseScriptParser
-from demisto_sdk.commands.content_graph.strict_objects.script import StrictScript
+from demisto_sdk.commands.content_graph.parsers.base_script import (
+    BaseScriptParser,
+)
+from demisto_sdk.commands.content_graph.strict_objects.script import (
+    StrictScript,
+)
 
 
 class ScriptParser(BaseScriptParser, content_type=ContentType.SCRIPT):
@@ -22,11 +27,26 @@ class ScriptParser(BaseScriptParser, content_type=ContentType.SCRIPT):
             is_test_script=False,
             git_sha=git_sha,
         )
-        self.model: str = self.yml_data.get("model", False)
+        self.model: str = self.yml_data.get("model", "")
         self.user_prompt: str = self.yml_data.get("userprompt", "")
         self.system_prompt: str = self.yml_data.get("systemprompt", "")
         self.few_shots: Optional[str] = self.yml_data.get("fewshots", "")
+        self.prompt_config: Dict[str, Any] = self.yml_data.get("promptConfig", {})
         self.is_internal: bool = self.yml_data.get("isInternal", False)
+        self.internal: bool = self.yml_data.get("internal", False)
+        self.source: str = self.yml_data.get("source", "")
+
+    @cached_property
+    def field_mapping(self):
+        mapping = super().field_mapping
+        mapping.update(
+            {
+                "source": "source",
+                "internal": "internal",
+                "is_internal": "isInternal",
+            }
+        )
+        return mapping
 
     @property
     def strict_object(self):

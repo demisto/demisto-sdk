@@ -1,10 +1,12 @@
 from pathlib import Path
 
 import pytest
+from docker.errors import DockerException
 
 from demisto_sdk.commands.common.native_image import NativeImageConfig
 from demisto_sdk.commands.pre_commit.hooks.docker import (
     DockerHook,
+    devtest_image,
     docker_tag_to_runfiles,
 )
 from demisto_sdk.commands.pre_commit.pre_commit_command import PreCommitContext
@@ -329,3 +331,65 @@ def test_docker_image_argument(mocker):
     )
     DockerHook(**hook).prepare_hook()
     assert hook["repo"]["hooks"][0]["id"] == "test-python3-candidate-image"
+
+
+_DOCKER_HOOK_MODULE = "demisto_sdk.commands.pre_commit.hooks.docker"
+
+
+def _mock_get_or_create_test_image(mocker, image: str, errors: str):
+    """Make devtest_image()'s get_or_create_test_image return (image, errors)."""
+    devtest_image.cache_clear()
+    mocker.patch(f"{_DOCKER_HOOK_MODULE}.docker_login", return_value=False)
+    mocker.patch(f"{_DOCKER_HOOK_MODULE}.init_global_docker_client")
+    docker_base = mocker.MagicMock()
+    docker_base.get_or_create_test_image.return_value = (image, errors)
+    mocker.patch(f"{_DOCKER_HOOK_MODULE}.get_docker", return_value=docker_base)
+
+
+@pytest.mark.parametrize(
+    "errors",
+    [
+        "Credentials store error: docker-credential-gcloud not installed",
+        "500 Server Error ... input/output error",
+        "denied: permission denied on repository",
+    ],
+)
+def test_devtest_image_gar_error_local_skips(mocker, monkeypatch, errors):
+    """
+    Given a GAR image that fails to pull/build (any error), running locally.
+    When calling devtest_image.
+    Then it returns "" (skip the hook) instead of raising.
+    """
+    monkeypatch.delenv("CONTENT_GITLAB_CI", raising=False)
+    _mock_get_or_create_test_image(
+        mocker, "gcr.io/xsoar-registry/demistoextended/accessdata-p:1.0", errors
+    )
+    assert devtest_image("demistoextended/accessdata-p:1.0", False, False, False) == ""
+
+
+def test_devtest_image_gar_error_in_ci_raises(mocker, monkeypatch):
+    """
+    Given a GAR image that fails, running in CI.
+    When calling devtest_image.
+    Then it raises DockerException (in CI the image must be available).
+    """
+    monkeypatch.setenv("CONTENT_GITLAB_CI", "true")
+    _mock_get_or_create_test_image(
+        mocker,
+        "gcr.io/xsoar-registry/demistoextended/accessdata-p:1.0",
+        "500 Server Error",
+    )
+    with pytest.raises(DockerException):
+        devtest_image("demistoextended/accessdata-p:1.0", False, False, False)
+
+
+def test_devtest_image_demisto_error_raises(mocker, monkeypatch):
+    """
+    Given a non-GAR demisto/ image that fails, running locally.
+    When calling devtest_image.
+    Then it raises (skip only applies to demistoextended GAR images).
+    """
+    monkeypatch.delenv("CONTENT_GITLAB_CI", raising=False)
+    _mock_get_or_create_test_image(mocker, "demisto/python3:3.10", "500 Server Error")
+    with pytest.raises(DockerException):
+        devtest_image("demisto/python3:3.10", False, False, False)

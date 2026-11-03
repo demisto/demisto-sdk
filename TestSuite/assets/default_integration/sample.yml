@@ -4,6 +4,7 @@ commonfields:
 name: Sample
 display: Sample
 category: Authentication
+provider: Sample Provider
 description: This is a sample integration
 fromversion: 5.0.0
 configuration:

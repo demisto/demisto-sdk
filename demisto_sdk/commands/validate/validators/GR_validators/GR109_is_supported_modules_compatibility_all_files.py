@@ -3,7 +3,12 @@ from __future__ import annotations
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.constants import ExecutionMode
-from demisto_sdk.commands.content_graph.objects import AgentixAction, AgentixAgent, Job
+from demisto_sdk.commands.content_graph.objects import (
+    AgentixAction,
+    AgentixAgent,
+    AgentixSkill,
+    Job,
+)
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
 from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
@@ -21,6 +26,7 @@ from demisto_sdk.commands.content_graph.objects.incident_type import IncidentTyp
 from demisto_sdk.commands.content_graph.objects.indicator_field import IndicatorField
 from demisto_sdk.commands.content_graph.objects.indicator_type import IndicatorType
 from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.knowledge import Knowledge
 from demisto_sdk.commands.content_graph.objects.layout import Layout
 from demisto_sdk.commands.content_graph.objects.layout_rule import LayoutRule
 from demisto_sdk.commands.content_graph.objects.mapper import Mapper
@@ -77,6 +83,8 @@ ContentTypes = Union[
     CaseLayoutRule,
     AgentixAction,
     AgentixAgent,
+    AgentixSkill,
+    Knowledge,
 ]
 
 

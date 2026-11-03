@@ -1,4 +1,472 @@
 # Changelog
+## 1.39.13 (2026-10-20)
+### Breaking
+* Removed the defaultDataSource field from the pack metadata schema, along with its validators PA131 (IsDefaultDataSourceProvidedValidator) and PA132 (IsValidDefaultDataSourceNameValidator), as all integrations are now shown in the Data Sources screen. [#5513](https://github.com/demisto/demisto-sdk/pull/5513)
+
+### Fix
+* Enforced `supportedModules` against `PlatformSupportedModules` in pack metadata, and unified the field's declaration across the strict schemas. [#5536](https://github.com/demisto/demisto-sdk/pull/5536)
+* Fixed the integration `supportlevelheader` structure validation (ST110) rejecting valid `community`, `partner` and `developer` values. [#5536](https://github.com/demisto/demisto-sdk/pull/5536)
+* Fixed an issue where **validate** in git mode crashed with a parse error when an Agentix agent or skill was renamed. Markdown side files (system instructions, skill markdown) are no longer parsed as content items, and the **BA114** validation no longer fails when the previous version of an item cannot be parsed. [#5539](https://github.com/demisto/demisto-sdk/pull/5539)
+
+### Internal
+* Renamed the Collection content item type to Knowledge. [#5494](https://github.com/demisto/demisto-sdk/pull/5494)
+
+
+## 1.39.12 (2026-10-14)
+### Internal
+* Added the **managedPaired** field to tightly coupled content items during prepare. [#5531](https://github.com/demisto/demisto-sdk/pull/5531)
+
+
+## 1.39.11 (2026-10-06)
+### Feature
+* Updated the python3 dev-requirements used by the `pre-commit` command, most notably vcrpy 4.3.1 to 8.3.0 for httpx support. [#5516](https://github.com/demisto/demisto-sdk/pull/5516)
+
+### Fix
+* Fixed an issue where the **GR109** and **GR114** validations crashed with an AttributeError, aborting the entire validate run, when a content item with a supported modules mismatch also used a content item that is missing from the repository. Missing dependencies are now skipped by these validations, as they are already reported by **GR103**. [#5527](https://github.com/demisto/demisto-sdk/pull/5527)
+
+### Internal
+* Updated the hardcoded docker images in all init templates and in the postman codegen fallback to demisto/python3:3.12.13.10116658. [#5516](https://github.com/demisto/demisto-sdk/pull/5516)
+* Added support for the force update feature, centered on uploading marketplace packs also to the Managed Content bucket. Managed packs are now handled as a separate marketplace and ship as self-contained units with no pack dependencies. [#5483](https://github.com/demisto/demisto-sdk/pull/5483)
+
+
+## 1.39.10 (2026-09-22)
+### Feature
+* Added the MR109 validation, ensuring that every xdm.*.user.* field mapped in a modeling rule has a corresponding xdm.*.identity.* field. The validation runs in use-git mode on the latest modeling rule. [#5519](https://github.com/demisto/demisto-sdk/pull/5519)
+* Added a new validation for Agentix Actions, CO195_is_classifier_field_has_show_action, which verifies that a handler delivering a classifier field declares a properly-formatted show_classifier action (references the delivered classifier id with exactly one return_data entry). [#5514](https://github.com/demisto/demisto-sdk/pull/5514)
+* Added a new optional **supportedFeatures** field (list of strings) to content item types and to pack_metadata.json. The field cannot be authored on connectors, modeling rules or parsing rules. A content item that does not declare the field inherits it from its pack. When neither declares it, the key is omitted entirely from the output and marketplace artifacts. When the field is declared it must hold real feature names - an empty list, or a list containing empty or whitespace-only values, is rejected. [#5508](https://github.com/demisto/demisto-sdk/pull/5508)
+* The **GR105** duplicate-ID validation is now region-aware - content items may share an ID when they are provably never active in the same region, according to **Config/regional_rules.json**. Duplicates whose regions cannot be resolved are still reported. When the **Config/regional_rules.json** file is not available, region-awareness is skipped and every duplicate ID is reported, as before. [#5508](https://github.com/demisto/demisto-sdk/pull/5508)
+* Added the **ST115** validation, ensuring a content item's **supportedFeatures** are a subset of its pack's. [#5508](https://github.com/demisto/demisto-sdk/pull/5508)
+* Added the **BA134** validation, ensuring every declared **supportedFeatures** value exists under **supported_features** in **Config/regional_rules.json**. The validation runs on packs as well as content items, so a typo in **pack_metadata.json** is reported once at its source rather than on every item inheriting it. [#5508](https://github.com/demisto/demisto-sdk/pull/5508)
+* The **supportedFeatures** field now rejects duplicate entries. [#5508](https://github.com/demisto/demisto-sdk/pull/5508)
+* Added a temporary **GR117** validation, which reports duplicate AgentixAction and AgentixAgent IDs as a warning until the existing duplications are fixed. [#5520](https://github.com/demisto/demisto-sdk/pull/5520)
+* Added a new `demisto-sdk upload-custom-integration` command that safely uploads a custom integration to the Cortex Platform. Before uploading, it verifies that both `commonfields.id` and `name` in the integration YAML end with the `_copy` suffix, preventing ID conflicts. [#5469](https://github.com/demisto/demisto-sdk/pull/5469)
+
+### Fix
+* Improved the **GR105** duplicate-ID error message. A duplicate reported because its regions could not be resolved no longer claims the items are active in "all regions" or that their features overlap. Which duplicates are reported is unchanged. [#5508](https://github.com/demisto/demisto-sdk/pull/5508)
+* Fixed a content item not inheriting its pack's **supportedFeatures** when the pack had not already been resolved. The item was treated as available everywhere, and **ST115** did not report an item declaring a feature its pack disallows. [#5508](https://github.com/demisto/demisto-sdk/pull/5508)
+* The **GR105** duplicate-ID validation now logs a warning, rather than an informational message, when **Config/regional_rules.json** is unavailable, since every duplicate ID is reported in that case regardless of the regions it is restricted to. [#5508](https://github.com/demisto/demisto-sdk/pull/5508)
+* Fixed content items sharing an ID but declaring disjoint **supportedFeatures** being collapsed into a single entry in the pack metadata content items, so only one of them was listed. Such items are variants targeting different regions and are now all listed. Items sharing an ID and at least one feature, or where either declares none, are collapsed as before. [#5508](https://github.com/demisto/demisto-sdk/pull/5508)
+* Fixed an issue where the **PA114** validation skipped deprecated packs and could crash with a KeyError, aborting the entire validate run. Changes to a deprecated pack now correctly require a version bump, and a pack whose metadata was not collected is reported as a validation failure instead of crashing. [#5521](https://github.com/demisto/demisto-sdk/pull/5521)
+
+### Internal
+* Added a shared resolver for a content item's effective **supportedFeatures**, and a reader for **Config/regional_rules.json**. [#5508](https://github.com/demisto/demisto-sdk/pull/5508)
+* Added new connector validations covering fetch, feed, handler and parameter conventions. [#5510](https://github.com/demisto/demisto-sdk/pull/5510)
+* Improved existing connector validations and their reported results. [#5510](https://github.com/demisto/demisto-sdk/pull/5510)
+* Excluded AgentixAction and AgentixAgent items from the **GR105** validation, so it can be enforced as an error for all other content types. [#5520](https://github.com/demisto/demisto-sdk/pull/5520)
+* Added a log line reporting the duration of each **pre-commit** hook run. [#5522](https://github.com/demisto/demisto-sdk/pull/5522)
+* Increased the timeout of the **Test New Validate Command** CI job from 60 to 90 minutes, as it was reaching the limit and getting cancelled. [#5523](https://github.com/demisto/demisto-sdk/pull/5523)
+
+
+## 1.39.9 (2026-09-06)
+### Feature
+* Added support for "data_security" license. [#5515](https://github.com/demisto/demisto-sdk/pull/5515)
+* Added the is_long_running and long_running_timeout_seconds fields to the AgentixAction schema. [#5511](https://github.com/demisto/demisto-sdk/pull/5511)
+* Added support for the **mcps** field in the AgentixAgent schema. [#5509](https://github.com/demisto/demisto-sdk/pull/5509)
+
+### Internal
+* add pb-runner-v2 workload to validation CO162_is_valid_workloads [#5507](https://github.com/demisto/demisto-sdk/pull/5507)
+
+
+## 1.39.8 (2026-08-24)
+### Fix
+* Fixed an issue where the pack-level `[pack]` section of `.pack-ignore` was not honored for validators listed in `ALWAYS_RUN_ON_ERROR_CODE`. `ValidateManager.filter_validation_results` now consults both the content item's per-file `ignored_errors` and the pack's `pack_level_ignored_errors`. [#5503](https://github.com/demisto/demisto-sdk/pull/5503)
+
+### Internal
+* Added CO116, CO130, and CO171 to the list of ignorable ConnectUs validators, refined CO130 diagnostics and CO171 serializer awareness, and fixed a should_run preflight over-suppression where per-handler `.connector-ignore` entries silenced whole-connector validation runs. [#5505](https://github.com/demisto/demisto-sdk/pull/5505)
+
+
+## 1.39.7 (2026-08-18)
+### Feature
+* Added the **modelTier** field under the **promptConfig** object in the Script schema, allowing AI Tasks to pin an LLM tier (Flash, Thinking or Pro) instead of a concrete model id. An absent tier remains valid and resolves to the default model. [#5492](https://github.com/demisto/demisto-sdk/pull/5492)
+
+### Fix
+* Fixed an issue where a validator that declares a related_file_type (such as AG112) checked only the related-file ignore section and not the file's own per-file ignore section in `.pack-ignore`. [#5478](https://github.com/demisto/demisto-sdk/pull/5478)
+* Fixed an issue where the **GR111** and **GR112** graph validations flagged Agentix Actions as duplicates when they shared a name or display name but had the same id. They now fail only when the duplicate name or display name belongs to an action with a different id. [#5479](https://github.com/demisto/demisto-sdk/pull/5479)
+* Fixed an issue where the **AG112** validator forced its ignore entry onto the skill content file, preventing ignores placed on the main YAML from working for both AgentixAction and AgentixSkill items. [#5491](https://github.com/demisto/demisto-sdk/pull/5491)
+* Fixed an issue where re-running the **download** command with `--force` would duplicate the type prefix in file names (e.g. `indicatorfield-indicatorfield-<name>.json`) for incident fields, indicator fields, incident types, and layouts containers. [#5493](https://github.com/demisto/demisto-sdk/pull/5493)
+* Fixed post-push verification of extended dev/test images failing with "manifest unknown" by detecting GAR images from registry-qualified names. [#5496](https://github.com/demisto/demisto-sdk/pull/5496)
+* Fixed an issue where the **validate** command reported spurious BA102 errors for pack-level files (README, .pack-ignore, .secrets-ignore, release notes) when the pack name contained "ParsingRules" or "ModelingRules" as a substring. [#5500](https://github.com/demisto/demisto-sdk/pull/5500)
+* Fixed an issue where debug-logging in **validate** command failed. [#5497](https://github.com/demisto/demisto-sdk/pull/5497)
+* Fixed an issue where a **SyntaxWarning** was raised in Python 3.14 due to a 'return' statement inside a 'finally' block. [#5497](https://github.com/demisto/demisto-sdk/pull/5497)
+* The **validate** command now builds/updates the content graph automatically when running the connectors validation flow (`--run-connectors-validation`), which resolves handler-to-integration links through the graph while collecting content items. Previously this required passing `--graph` with a pre-built graph, and silently fell back to no-graph behavior otherwise. [#5480](https://github.com/demisto/demisto-sdk/pull/5480)
+
+### Internal
+* Reduced the number of content-graph queries performed by the connectors validation flow by fetching the connector table once and indexing it in memory, instead of re-scanning it for every unmatched integration. [#5480](https://github.com/demisto/demisto-sdk/pull/5480)
+* Fixed an issue where the SDK Nightly Gate PR comment rendered a stray trailing backslash after each file path. [#5489](https://github.com/demisto/demisto-sdk/pull/5489)
+* Add connectus validators. [#5477](https://github.com/demisto/demisto-sdk/pull/5477)
+* Updated the assignee in the Dependabot configuration. [#5490](https://github.com/demisto/demisto-sdk/pull/5490)
+* Changed the AG105 validation from a warning to an error. [#5482](https://github.com/demisto/demisto-sdk/pull/5482)
+
+
+## 1.39.6 (2026-08-03)
+### Feature
+* Docker image push now verifies the image is pullable after pushing. [#5458](https://github.com/demisto/demisto-sdk/pull/5458)
+* Added a new graph validation (GR116) that verifies an AgentixAgent's total context (its own name, description, system instructions and conversation starters, plus the name and description of every action, skill, and collection it depends on) does not exceed the maximum allowed character budget. [#5460](https://github.com/demisto/demisto-sdk/pull/5460)
+* Added a new validation (AG118) that enforces an evaluator test file ('<ActionName>_test.yml') exists next to each AgentixAction. [#5460](https://github.com/demisto/demisto-sdk/pull/5460)
+* Added a new `-ccp/--connectors-content-path` option to `demisto-sdk validate` so an external Unified Connector Content (UCC) repository can be validated together with a plain content checkout. Works with both `-a` (all UCC connectors are temporarily synced into the content repo) and `-g` (only the connectors changed in the UCC repo's git diff are validated), mirroring the existing `--private-content-path` behavior for `Packs/**`. Copied files are automatically cleaned up on exit, and the flag can be combined with `--private-content-path`. [#5468](https://github.com/demisto/demisto-sdk/pull/5468)
+
+### Fix
+* Docker image push now fails loudly when the push did not succeed. [#5458](https://github.com/demisto/demisto-sdk/pull/5458)
+* Dev/test docker images are now pulled from the registry they were pushed to, fixing intermittent "manifest unknown" failures on first-time pushes. [#5458](https://github.com/demisto/demisto-sdk/pull/5458)
+* Updated the AG105 validation to align the AgentixAction argument/output valid types (removed 'keyValue' and 'textArea') and to compare types case-sensitively. [#5460](https://github.com/demisto/demisto-sdk/pull/5460)
+* Fixed `demisto-sdk validate -a` silently skipping connectors, so connector-only validations (such as `CO100`) now run under `-a` as they already did under `-g`. [#5468](https://github.com/demisto/demisto-sdk/pull/5468)
+* Fixed `demisto-sdk validate -i` not supporting a relative connectors path (e.g. `connectors/foo/connector.yaml`) together with `--connectors-content-path`, nor a pack-level path (e.g. `Packs/CommonScripts`) together with `--private-content-path`. [#5468](https://github.com/demisto/demisto-sdk/pull/5468)
+
+### Internal
+* Added connector validation infrastructure (ConnectorsValidator base, .connector-ignore, grouped/standard filtering) and new CO validators covering connector metadata, handlers, and capabilities. [#5642](https://github.com/demisto/demisto-sdk/pull/5642)
+* Added the **SDK Nightly Gate** GitHub Actions workflow, which flags PRs that modify SDK code and requires either a `nightly-run-passed` or `nightly-run-skipped` label (or a Content build against the SDK branch) before merge. [#5464](https://github.com/demisto/demisto-sdk/pull/5464)
+
+
+## 1.39.5 (2026-07-21)
+### Feature
+* Added the BA133 validation, which ensures fetch-related configuration parameters in an integration exist as required by their fetch type and resolve to supportedModules that are consistent with that fetch type. The validation is auto-fixable - it removes un-allowed supportedModules values and adds missing required server-level parameters with the correct supportedModules. [#5438](https://github.com/demisto/demisto-sdk/pull/5438)
+* Added the **AG117** validation that verifies an AgentixAction does not exceed the maximum allowed number of arguments. [#5440](https://github.com/demisto/demisto-sdk/pull/5440)
+* Extended the **AG112** total token budget validation to cover AgentixActions in addition to AgentixSkills. [#5440](https://github.com/demisto/demisto-sdk/pull/5440)
+* Extended the **AG114** character cleanliness validation to cover AgentixActions and Collections in addition to AgentixSkills. [#5440](https://github.com/demisto/demisto-sdk/pull/5440)
+* Added support for routing `demistoextended` docker images to a configurable registry via the `DEMISTO_SDK_EXTENDED_REGISTRY` environment variable. [#5412](https://github.com/demisto/demisto-sdk/pull/5412)
+* Added support for marketplace-suffixed **managed** and **source** pack metadata fields (e.g. `'managed:platform':true`, `'source:platform':foo`), which are resolved into the plain `managed`/`source` fields per marketplace when a pack is dumped or uploaded. [#5437](https://github.com/demisto/demisto-sdk/pull/5437)
+* Support pack-level validation ignores via a new `[pack]` section in `.pack-ignore` file. Error codes listed there are ignored for the pack itself and for every content item it contains, in addition to the existing per-file `[file:<path>]` mechanism. [#5406](https://github.com/demisto/demisto-sdk/pull/5406)
+* Added a new validation (PA135) that fails when pack-level ignored validations are added to the `[pack]` section of a `.pack-ignore` file (the section is added for the first time, or a new error code is added to it). Ignoring validations at the pack level now requires a force merge. PA135 cannot itself be ignored. [#5406](https://github.com/demisto/demisto-sdk/pull/5406)
+
+### Fix
+* Fixed an issue where Agentix action test files were wrongly collected as content items during validation. [#5452](https://github.com/demisto/demisto-sdk/pull/5452)
+* Updated the BA131 validation so that the List content item is allowed to declare all supported modules. [#5456](https://github.com/demisto/demisto-sdk/pull/5456)
+* Fixed an issue where the graph update did not pick up changed packs/connectors in CI validation jobs because the git-diff computation ran before the graph was imported (so ``content_graph_interface.commit`` was ``None``), leaving ``builder.update_graph`` to short-circuit on empty inputs and keeping the stale bucket state. [#5453](https://github.com/demisto/demisto-sdk/pull/5453)
+* Fixed standalone content item parsing to resolve marketplaces and supported modules from the item's pack_metadata.json instead of assuming all marketplaces, preventing false BA130 failures. [#5441](https://github.com/demisto/demisto-sdk/pull/5441)
+
+### Internal
+* Removed the automatic addition of the **source** field to managed content items from the **format** command, and removed the **MC100** validation that validates the existence of a **source** field in managed content items. [#5461](https://github.com/demisto/demisto-sdk/pull/5461)
+
+
+## 1.39.4 (2026-07-12)
+### Breaking
+* Renamed the Connector's ``metadata.category`` field to ``metadata.categories`` (a list of strings, at least one required) to match the updated Connector schema. [#5442](https://github.com/demisto/demisto-sdk/pull/5442)
+
+### Internal
+* Move MC101 validation to warning level as it is a broken validation [#5443](https://github.com/demisto/demisto-sdk/pull/5443)
+
+
+## 1.39.3 (2026-07-06)
+### Feature
+* Added support for skill action dependencies. [#5411](https://github.com/demisto/demisto-sdk/pull/5411)
+* Added support for the new **Connector** content item, so connectors are recognized and handled by the SDK like any other content type. [#5318](https://github.com/demisto/demisto-sdk/pull/5318)
+* Added validations for Connector content items, catching common issues in connector definitions early - before they reach the platform. [#5318](https://github.com/demisto/demisto-sdk/pull/5318)
+* Added support for updating the content graph with Connector items, so connectors are included in graph builds and updates alongside other content. [#5318](https://github.com/demisto/demisto-sdk/pull/5318)
+* Added the BA131 validation, which ensures a content item's supportedModules field only contains module values permitted for that content item type. [#5425](https://github.com/demisto/demisto-sdk/pull/5425)
+* Added the BA132 validation, which ensures a content item does not declare supportedModules unless 'platform' is present in its marketplaces. [#5425](https://github.com/demisto/demisto-sdk/pull/5425)
+* Added support for hiding integration commands per marketplace. The command-level `hidden` field now accepts a list of marketplace names (mirroring the existing parameter-level behavior); listed marketplaces resolve to `hidden=true` for that marketplace during unify, while others resolve to `hidden=false`. Pre-existing boolean `hidden` values are left untouched. [#5430](https://github.com/demisto/demisto-sdk/pull/5430)
+* Add the `spec` field for Integrations and Scripts. [#5436](https://github.com/demisto/demisto-sdk/pull/5436)
+* Added support for the new `timelinerecord` object on playbook tasks, including schema validation, strict model, and content graph model. [#5419](https://github.com/demisto/demisto-sdk/pull/5419)
+
+### Fix
+* Fixed an issue where the **RN114** validator failed on valid release note headers for Agentix content (Actions, Agents, Skills) and Collections. [#5429](https://github.com/demisto/demisto-sdk/pull/5429)
+* Fixed an issue where the GR109 (IsSupportedModulesCompatibility) validator falsely reported module-compatible commands (e.g. Set, Print, ReadFile) as incompatible when another validator had already loaded the content item's full set of USES relationships into the shared graph cache. The list of incompatible commands is now computed directly by the graph query instead of relying on the shared cache. [#5424](https://github.com/demisto/demisto-sdk/pull/5424)
+* Fix the error message in the **GR105** validator to be more clear. [#5343](https://github.com/demisto/demisto-sdk/pull/5343)
+
+### Internal
+* Improve GR109 validation by leveraging get_content_item_supported_modules from tools.py [#5434](https://github.com/demisto/demisto-sdk/pull/5434)
+* Updated the content item structure to adopt standardized id and name fields. [#5426](https://github.com/demisto/demisto-sdk/pull/5426)
+
+
+## 1.39.2 (2026-06-18)
+### Feature
+* Added SC110 validator: Validates that wrapper scripts declare all commands/scripts they call via executeCommand in the "dependson" field. [#5342](https://github.com/demisto/demisto-sdk/pull/5342)
+* Added support for "xti" license. [#5397](https://github.com/demisto/demisto-sdk/pull/5397)
+* Added PA134 validation to detect packs whose declared supportedModules are not covered by any uploadable content item, which would result in an empty pack for tenants licensed only for those modules. The validation is auto-fixable and removes the uncovered modules from the pack's supportedModules. [#5398](https://github.com/demisto/demisto-sdk/pull/5398)
+* Added Skill content item type. [#5394](https://github.com/demisto/demisto-sdk/pull/5394)
+* Extended `AgentixAgent` with a new `skillids` field — a list of registered `AgentixSkill` IDs attached to the agent. [#5394](https://github.com/demisto/demisto-sdk/pull/5394)
+
+### Fix
+* Fixed docker-image validations (DO103, DO104, DO106) failing for users with a custom container registry. [#5408](https://github.com/demisto/demisto-sdk/pull/5408)
+* Fixed all graph-based validators (GR100–GR113, PA124, PA133, PB133, SC109, etc.) not running correctly in nightly (`-a` / ALL_FILES) mode. [#5351](https://github.com/demisto/demisto-sdk/pull/5351)
+* Fixed RM109 validation to point to the expected README file path instead of the content item's YML file when the README is missing. [#5396](https://github.com/demisto/demisto-sdk/pull/5396)
+* Excluded autonomous playbooks from RM109 README existence validation. [#5396](https://github.com/demisto/demisto-sdk/pull/5396)
+* Fixed Pack.save() to not inject the `firstCreated` field into pack_metadata.json when it was not originally present. Previously, any auto-fix (PA134, PA120, PA104, etc.) would silently add `firstCreated` as a side-effect. [#5398](https://github.com/demisto/demisto-sdk/pull/5398)
+* Fixed an issue where `pre-commit` silently skipped hooks targeting non-code files (e.g. `markdownlint-cli2` on `README.md`). [#5405](https://github.com/demisto/demisto-sdk/pull/5405)
+* Fixed PA134 auto-fix to correctly generate and populate the `supportedModules` field from platform defaults if it is missing from `pack_metadata.json` when removing uncovered modules. [#5413](https://github.com/demisto/demisto-sdk/pull/5413)
+* Fixed ST110 schema validation error for `isArray:<marketplace>` in integration command arguments. [#5395](https://github.com/demisto/demisto-sdk/pull/5395)
+* Fixed the download command to fall back to YAML parsing when a JSON-suffixed file fails to parse as JSON. [#5409](https://github.com/demisto/demisto-sdk/pull/5409)
+
+### Internal
+* Updated the content item structure to adopt standardized id and name fields. [#5403](https://github.com/demisto/demisto-sdk/pull/5403)
+* Added Collection content item type. [#5393](https://github.com/demisto/demisto-sdk/pull/5393)
+
+
+## 1.39.1 (2026-05-31)
+### Feature
+* Enriched the pack marketplace metadata for classifiers and mappers by adding a `tags` field (set to `["feed"]` when the item is a feed) and exposing the `type` field. [#5367](https://github.com/demisto/demisto-sdk/pull/5367)
+* Enriched the integration marketplace metadata with a `tags` field that advertises fetch capabilities (`feed`, `fetch-incidents`, `fetch-events`, `fetch-assets`, `fetch-credentials`) so consumers can identify supported fetch types before installation. [#5367](https://github.com/demisto/demisto-sdk/pull/5367)
+* Added support for the `isfetchcredentials` integration field in the schema, parser, content graph object, and strict object models. [#5367](https://github.com/demisto/demisto-sdk/pull/5367)
+* Adding Github.com co-pilot instructions [#5350](https://github.com/demisto/demisto-sdk/pull/5350)
+* Improved BA129 validation to exclude reputation commands, list commands, and get commands from validation to prevent false positives. [#5356](https://github.com/demisto/demisto-sdk/pull/5356)
+
+### Fix
+* Strip the `internal` and `isInternal` fields from script YAMLs and the `internal` field from pack metadata files during the `upload` flow so the uploaded content is visible to users (including in the pack `metadata.json` content items list). [#5346](https://github.com/demisto/demisto-sdk/pull/5346)
+* Fixed false positives in AS109 validation by improving context key detection to handle single-segment keys, complex root/accessor splits, DT filter expressions, iscontext fields, and Set command key arguments. [#5341](https://github.com/demisto/demisto-sdk/pull/5341)
+* Fixed the error message of BA125 to be more clear. [#5344](https://github.com/demisto/demisto-sdk/pull/5344)
+* Fixed IM106 validation crash when integration image file does not exist by checking image existence before attempting to load it. [#5388](https://github.com/demisto/demisto-sdk/pull/5388)
+
+### Internal
+* Switch `npm install` to `npm ci` in the `setup_test_environment` action, add NPM caching to the action. [#5386](https://github.com/demisto/demisto-sdk/pull/5386)
+* Add auto-merge for Dependabot PRs [#5352](https://github.com/demisto/demisto-sdk/pull/5352)
+
+
+## 1.39.0 (2026-05-13)
+### Breaking
+* Drop support for Python 3.9. [#5319](https://github.com/demisto/demisto-sdk/pull/5319)
+* Removed the deprecated **generate-unit-tests** command, which is no longer supported. [#5319](https://github.com/demisto/demisto-sdk/pull/5319)
+
+### Feature
+* Added support for Python 3.13 and 3.14 [#5319](https://github.com/demisto/demisto-sdk/pull/5319)
+* Added GR114 validation that warns when a content item's supportedModules are not a subset of its non-mandatory dependency's supportedModules. [#5327](https://github.com/demisto/demisto-sdk/pull/5327)
+* Added support for the marketplace-suffix syntax (e.g. `hybrid:marketplacev2`) on the integration root-level `hybrid` field, so it no longer fails the ST110 validation. [#5353](https://github.com/demisto/demisto-sdk/pull/5353)
+* Added `internal` and `prompt` as valid `underlyingcontentitem.type` values for Agentix actions. [#5206](https://github.com/demisto/demisto-sdk/pull/5206)
+
+### Fix
+* Added `marketplaces` field to the `StrictPreProcessRule` schema to prevent ST110 validation failures when pre-process rules include a `marketplaces` field. [#5345](https://github.com/demisto/demisto-sdk/pull/5345)
+
+### Internal
+* Fixed docstring parsing in generate-yml-from-python for Python 3.13+ compatibility using inspect.cleandoc normalization. [#5319](https://github.com/demisto/demisto-sdk/pull/5319)
+* Updated GitHub Actions to support Node.js 24 and resolve deprecation warnings for Node.js 20. [#5319](https://github.com/demisto/demisto-sdk/pull/5319)
+
+
+## 1.38.25 (2026-05-04)
+### Feature
+* Added support for the `internal` flag in pack_metadata.json to mark packs as internal (hidden from UI and API). [#5325](https://github.com/demisto/demisto-sdk/pull/5325)
+* Jobs are now blocked from being uploaded as part of a pack. [#5329](https://github.com/demisto/demisto-sdk/pull/5329)
+
+### Fix
+* Prevent SDK crash when encountering `deployment.json` files in pack root. [#5332](https://github.com/demisto/demisto-sdk/pull/5332)
+* Get script's python file from local repo when unifying old_base_content. [#5331](https://github.com/demisto/demisto-sdk/pull/5331)
+* Fixed BC117 validation to handle new pack scenarios where the old content item has no pack attribute, preventing an AttributeError. [#5326](https://github.com/demisto/demisto-sdk/pull/5326)
+* Added support for RENAMED git status in BC117 validation and improved handling of newly added items in new packs. [#5326](https://github.com/demisto/demisto-sdk/pull/5326)
+
+### Internal
+* Bump nltk version [#5328](https://github.com/demisto/demisto-sdk/pull/5328)
+
+
+## 1.38.24 (2026-04-26)
+### Feature
+* Added AS109 validation to ensure that context keys referenced in displayLabel fields of autonomous playbook tasks are actually used in other tasks within the same playbook. [#5299](https://github.com/demisto/demisto-sdk/pull/5299)
+* Added new ignorable and auto-fixable validation BA130 that checks whether 'marketplacev2' appears in a content item's marketplaces while 'platform' does not. [#5315](https://github.com/demisto/demisto-sdk/pull/5315)
+* Added AS107 validator: Validate that subplaybook prefix is consistent across filename, id, and name fields. Added AS108 validator: Validate that subplaybooks have the internal field set to true. [#5312](https://github.com/demisto/demisto-sdk/pull/5312)
+* Added a deprecation warning to the **generate-unit-tests** command, this command will remove in a subsequent version of the SDK. [#5320](https://github.com/demisto/demisto-sdk/pull/5320)
+* Added TR101 validation to verify that trigger_id is a valid hex string without special characters like dashes or dots. [#5287](https://github.com/demisto/demisto-sdk/pull/5287)
+* Updated the `validate-content-path` pre-commit hook to enforce the new AgentixActions directory hierarchy. Files must now be placed in a subfolder (e.g., `AgentixActions/<ActionName>/<ActionName>.yml`), and the old flat structure (`AgentixActions/<ActionName>.yml`) is no longer allowed. [#5303](https://github.com/demisto/demisto-sdk/pull/5303)
+
+### Fix
+* Added support for `.html`, `.css`, and `.csv` file suffixes in the `validate-content-path` pre-commit hook. [#5317](https://github.com/demisto/demisto-sdk/pull/5317)
+
+### Internal
+* Remove agentix_xsiam references from demisto-sdk [#5323](https://github.com/demisto/demisto-sdk/pull/5323)
+* Updated AgentixActionTest parser to resolve action dependencies using `action_name` instead of `action_id`, and simplified the strict object model for `EvaluationOutcome` and `AgentixActionTestCase`. [#5313](https://github.com/demisto/demisto-sdk/pull/5313)
+
+
+## 1.38.23 (2026-03-29)
+### Feature
+* Added "Agentic assistant" as a valid sectionorder value for integrations. [#5296](https://github.com/demisto/demisto-sdk/pull/5296)
+* Added `supportedModules` support for integration parameters with new validators IN170 and IN171 to ensure parameter-level `supportedModules` values are valid. [#5301](https://github.com/demisto/demisto-sdk/pull/5301)
+* Added AS106 validation warning for autonomous playbook tasks that have a displayLabel but also have quietmode set to 1. [#5298](https://github.com/demisto/demisto-sdk/pull/5298)
+* Added adopted boolean field to playbooks. Added AS104 validator to enforce adopted:true on autonomous pack playbooks with auto-fix. Added Playbook Completed as a mandatory duplicatable section header in AS103. Format command now auto-sets adopted for autonomous pack playbooks. [#5286](https://github.com/demisto/demisto-sdk/pull/5286)
+* Added the AS105 validator to ensure playbooks and triggers in autonomous packs do not have issilent set to true. [#5288](https://github.com/demisto/demisto-sdk/pull/5288)
+* Added new MC101 validation that checks managed packs (managed: true in pack_metadata) have a deployment.json file in the pack folder. [#5294](https://github.com/demisto/demisto-sdk/pull/5294)
+
+### Fix
+* Pinned all third-party GitHub Actions to commit SHAs to mitigate supply chain attacks (CVE-2025-30066), upgraded tj-actions/changed-files from compromised v46.0.1 to v46.0.3, and fixed command injection vulnerabilities via GitHub expression interpolation in workflow run blocks. [#5295](https://github.com/demisto/demisto-sdk/pull/5295)
+* Fixed false duplicate errors in GR111/GR112 for Agentix Actions split across files with different version ranges. [#5300](https://github.com/demisto/demisto-sdk/pull/5300)
+* Fixed an issue where the test_xsoar_linter_errors UT was flaky and failed intermittently. [#5279](https://github.com/demisto/demisto-sdk/pull/5279)
+
+### Internal
+* Remove old product codes from demisto-sdk [#5281](https://github.com/demisto/demisto-sdk/pull/5281)
+
+
+## 1.38.22 (2026-03-16)
+### Feature
+* Do not prompt for silent playbook when formatting playbooks with the --assume-no argument is given. [#5270](https://github.com/demisto/demisto-sdk/pull/5270)
+* Added a new validation (GR113) which validates managed playbooks does not use scripts or sub-playbooks that are not managed or from our core packs. Also, a small bug where the graph could not be re-built if it was corrupt due to bad DELETE NODE query, was fixed. [#5241](https://github.com/demisto/demisto-sdk/pull/5241)
+
+### Fix
+* Fix a bug in the `demisto-sdk zip-files` command where list data files were parsed as unified files. [#5280](https://github.com/demisto/demisto-sdk/pull/5280)
+* Add an error message when the provided github token is unauthorized to help with debugging bad tokens in `demisto-sdk pre-commit`. [#5162](https://github.com/demisto/demisto-sdk/pull/5162)
+* Fix a bug where `.env` environment variables were not loaded upon creating the first instance of `GitCredentials`, making `demisto-sdk pre-commit` ignore the `DEMISTO_SDK_GITHUB_TOKEN` environment variable if it was set in the `.env` file. [#5162](https://github.com/demisto/demisto-sdk/pull/5162)
+* Fixed an issue where pre-commit incorrectly classified all files as added in content-private, causing it to run on all files instead of only the changed ones and updating the graph for packs which were not changed. [#5249](https://github.com/demisto/demisto-sdk/pull/5249)
+* Fixed PA133 validator to exclude test-only dependencies when checking the Base pack for new dependencies. [#5275](https://github.com/demisto/demisto-sdk/pull/5275)
+* Fixed a bug in content graph update where brand new packs not on master were not detected. [#5263](https://github.com/demisto/demisto-sdk/pull/5263)
+* Added the BA129 error code to the old-validation ignorable errors list in the **validate** command, effective when using the `--run-old-validate` flag. [#5278](https://github.com/demisto/demisto-sdk/pull/5278)
+* Fixed false-positive AS102, AS103, and ST110 validation errors in autonomous playbook tasks. Fields displayLabel, isResponse, requiresIntervention, and isSubSection are now correctly recognized on the inner task sub-object. AS103 now ignores sub-section title tasks where isSubSection is true. [#5277](https://github.com/demisto/demisto-sdk/pull/5277)
+* Fixed an issue where the **update-release-notes** command would not generate release notes for the ApiModule pack. [#5261](https://github.com/demisto/demisto-sdk/pull/5261)
+* Fix a bug in `demisto-sdk download` where custom content would be written in a different file than system content. [#5220](https://github.com/demisto/demisto-sdk/pull/5220)
+
+### Internal
+* Added the integrations Ids to the test_playbooks_report.json file. [#5261](https://github.com/demisto/demisto-sdk/pull/5261)
+
+
+## 1.38.21 (2026-03-03)
+### Feature
+* Added a new validation (PA133) that ensures the Base pack does not have any new dependencies beyond the currently allowed ones (Core and AggregateScripts). [#5232](https://github.com/demisto/demisto-sdk/pull/5232)
+* Added AS103 validation to check that autonomous playbooks have correct section headers with valid names, non-empty descriptions, and proper ordering. [#5250](https://github.com/demisto/demisto-sdk/pull/5250)
+* Add an explicit error log message when `demisto-sdk zip-packs` fails. Without this, it's not clear to users that the command failed. [#5194](https://github.com/demisto/demisto-sdk/pull/5194)
+* Added support for "internal" integration field to appear in the metadata.json file. [#5256](https://github.com/demisto/demisto-sdk/pull/5256)
+* Added support for AI tasks in playbooks. Playbooks can now include tasks of type 'aiTask' with an 'aiTaskId' field. Added validator PB135 to ensure playbooks with AI tasks are restricted to the platform marketplace only. [#5264](https://github.com/demisto/demisto-sdk/pull/5264)
+
+### Fix
+* Fixed an issue where `demisto-sdk run` would fail when command output contained HTML tags.
+ [#5157](https://github.com/demisto/demisto-sdk/pull/5157)
+* Fix a race condition in `demisto-sdk run-test-playbook` that resulted in a crash.
+Lower sleep time from 10 to 6 seconds in `demisto-sdk run-test-playbook` to make the user experience smoother for shorter test playbooks.
+ [#5154](https://github.com/demisto/demisto-sdk/pull/5154)
+* Fix a bug where `demisto-sdk run-test-playbook --all` would crash if one of the packs did not have the TestPlaybooks subdirectory. [#5223](https://github.com/demisto/demisto-sdk/pull/5223)
+* - Fix a bug in `demisto-sdk run-playbook` where an invalid log message crashed the command on failed playbook.
+- Exit with code 1 instead of 0 on failed playbook.
+ [#5193](https://github.com/demisto/demisto-sdk/pull/5193)
+* Added `is_test` property to AgentixAction and AgentixActionTest to distinguish test from production actions. [#5257](https://github.com/demisto/demisto-sdk/pull/5257)
+* Allow test files in AgentixAgent directories, consistent with AgentixAction support. [#5257](https://github.com/demisto/demisto-sdk/pull/5257)
+* Fixed `demisto-sdk run --debug` crashing when displaying error stack traces.
+ [#5195](https://github.com/demisto/demisto-sdk/pull/5195)
+* Cleaned up extra blank lines in `demisto-sdk run` output.
+ [#5195](https://github.com/demisto/demisto-sdk/pull/5195)
+
+### Internal
+* Added support for "tim" and "email_security" add-on licenses. [#5259](https://github.com/demisto/demisto-sdk/pull/5259)
+
+
+## 1.38.20 (2026-02-19)
+### Feature
+* Added a new validation (AS101) that ensures triggers in autonomous packs are properly configured. [#5234](https://github.com/demisto/demisto-sdk/pull/5234)
+* Updated the demisto-sdk validate command to support --private-content-path. [#5197](https://github.com/demisto/demisto-sdk/pull/5197)
+* Updated AgentixActions to support nested directory structure (AgentixActions/<action_id>/<action_id>.yaml) and both .yml and .yaml file extensions [#5237](https://github.com/demisto/demisto-sdk/pull/5237)
+* Added MC100 validation to ensure content items in managed packs have the correct source field matching pack_metadata, with auto-fix support in both validate and format commands. [#5238](https://github.com/demisto/demisto-sdk/pull/5238)
+* Add web console link to output of `demisto-sdk run-test-playbook` and `demisto-sdk run-playbook`. [#5153](https://github.com/demisto/demisto-sdk/pull/5153)
+* Updated the ST110 structure validation to ensure that managed packs have a valid non-empty source field. [#5248](https://github.com/demisto/demisto-sdk/pull/5248)
+* Added a new AS102 validation that checks autonomous playbook tasks without displayLabel have quietmode 1 (quiet mode enabled), with auto-fix support. Skips start/title task types. [#5246](https://github.com/demisto/demisto-sdk/pull/5246)
+
+### Fix
+* Fix a bug where `demisto-sdk xsoar-config-file-update` would crash instead of using the default value when omitting the `--file-path` option. [#5151](https://github.com/demisto/demisto-sdk/pull/5151)
+* Fixed an issue where debug-logging in **graph** command failed. [#5251](https://github.com/demisto/demisto-sdk/pull/5251)
+* Fix a bug where the path of a test playbook (which could be a directory and not a file) was printed instead of the playbook name in `demisto-sdk run-test-playbook` [#5161](https://github.com/demisto/demisto-sdk/pull/5161)
+* Fixed an issue that prevented bi-directional validations failures from being filtered and ignored. [#5243](https://github.com/demisto/demisto-sdk/pull/5243)
+
+### Internal
+* Added support for new schema fields (internal, isResponse, requiresIntervention, grouping_element, is_auto_enabled, source, managed) [#5224](https://github.com/demisto/demisto-sdk/pull/5224)
+* Agentix Agents system instructions are now defined in a separate md file. [#5188](https://github.com/demisto/demisto-sdk/pull/5188)
+* Restructure Agentix actions and agents [#5242](https://github.com/demisto/demisto-sdk/pull/5242)
+
+
+## 1.38.19 (2026-02-03)
+### Feature
+* Added the AG109 validator to ensure that Agentix Agent system instructions do not exceed the maximum allowed size of 65535 bytes. [#5205](https://github.com/demisto/demisto-sdk/pull/5205)
+* Added validation AG104 to ensure the agent color is a valid 6-digit RGB hex format. [#5092](https://github.com/demisto/demisto-sdk/pull/5092)
+* Added `--create-graph-from-scratch` flag to the **validate** command to force creating the content graph from scratch instead of downloading it from the bucket. [#5230](https://github.com/demisto/demisto-sdk/pull/5230)
+* Added the ***detach*** command, which allows detaching content items (Incident Types, Layouts, Playbooks, Scripts). [#5217](https://github.com/demisto/demisto-sdk/pull/5217)
+* Added the ***reattach*** command, which allows reattaching previously detached content items. [#5217](https://github.com/demisto/demisto-sdk/pull/5217)
+* Modified the ***validate*** command to enforce that the 'provider' field in integration YAML files must exist and be non-empty for integrations supported in the platform marketplace. [#5203](https://github.com/demisto/demisto-sdk/pull/5203)
+
+### Fix
+* Fixed an issue where the **upload** command incorrectly reported success when uploading system content-items failed. [#5198](https://github.com/demisto/demisto-sdk/pull/5198)
+* Fix ID set on non py. file when content item is script. [#5003](https://github.com/demisto/demisto-sdk/pull/5003)
+
+### Internal
+* Changed PB130 and PB131 validations from errors to warnings. [#5230](https://github.com/demisto/demisto-sdk/pull/5230)
+
+
+## 1.38.18 (2026-01-14)
+### Feature
+* Update BC115 validation to support default supportedModules handling. [#5122](https://github.com/demisto/demisto-sdk/pull/5122)
+* Adds a new validation (BA129) that ensures commands/scripts declare the appropriate compliantpolicies when using arguments associated with specific compliance standards (defined in compliant_policies.json). [#5168](https://github.com/demisto/demisto-sdk/pull/5168)
+* Improved handling private repositories. [#5185](https://github.com/demisto/demisto-sdk/pull/5185)
+
+### Internal
+* Added AgentixAgent to test tools. [#5143](https://github.com/demisto/demisto-sdk/pull/5143)
+* Delete Link PR to Jira github actions [#5191](https://github.com/demisto/demisto-sdk/pull/5191)
+* Added support for the fromversion and toversion fields for Agentix items. [#5180](https://github.com/demisto/demisto-sdk/pull/5180)
+* Updated Agentix items default marketplaces to platform only. [#5180](https://github.com/demisto/demisto-sdk/pull/5180)
+
+
+## 1.38.17 (2026-01-05)
+
+### Feature
+* Added IN168 validator to ensure MCP integrations have only PLATFORM marketplace. [#5174](https://github.com/demisto/demisto-sdk/pull/5174)
+* Added LLM configuration fields under promptConfig object (temperature, maxOutputTokens, webSearch) to Script schemas for AI Tasks with automatic defaults. [#5170](https://github.com/demisto/demisto-sdk/pull/5170)
+* Updated the update release notes command to support --private-content-path. [#5176](https://github.com/demisto/demisto-sdk/pull/5176)
+
+### Internal
+* Content packs containing MCP integrations are now automatically tagged as MCP packs. [#5156](https://github.com/demisto/demisto-sdk/pull/5156)
+* Added new GR111 and GR112 validations. [#5093](https://github.com/demisto/demisto-sdk/pull/5093)
+
+
+## 1.38.16 (2025-12-28)
+### Feature
+* Added support for handling private repositories. [#5159](https://github.com/demisto/demisto-sdk/pull/5159)
+
+### Fix
+* Fixed an issue where the ***format*** command attempted to format list data files when it should only format list metadata files. [#5166](https://github.com/demisto/demisto-sdk/pull/5166)
+
+### Internal
+* Ignore Gr110 when validating all in the Github action. [#5169](https://github.com/demisto/demisto-sdk/pull/5169)
+
+
+## 1.38.15 (2025-12-16)
+### Feature
+* Added the `provider` field to the integration schema. [#5155](https://github.com/demisto/demisto-sdk/pull/5155)
+* Enhanced GR110 validation to ensure Agentix Actions reference valid underlying content items (commands, scripts, and playbooks) with matching inputs and outputs. [#5134](https://github.com/demisto/demisto-sdk/pull/5134)
+* Add supportedModules for missing content items that are supported in the "platform" marketplace. [#5158](https://github.com/demisto/demisto-sdk/pull/5158)
+
+### Fix
+* Fixed an issue where the created date would conflict with the new XSOAR system field with the same name, by introducing a new field named `firstCreated`. [#4707](https://github.com/demisto/demisto-sdk/pull/4707)
+
+### Internal
+* Add an `is_beta` field to the `contentItems.integration` entry within the metadata file. [#5147](https://github.com/demisto/demisto-sdk/pull/5147)
+* Added Agentix Agents to metadata creation [#5145](https://github.com/demisto/demisto-sdk/pull/5145)
+
+
+## 1.38.14 (2025-11-23)
+### Feature
+* Added a new validation, BC117, which issues a warning when additional modules are added to the supportedModules list of any item. [#5128](https://github.com/demisto/demisto-sdk/pull/5128)
+* Improved implementation of the ST110 validation by expanding support to include additional fields for integration commands. [#5132](https://github.com/demisto/demisto-sdk/pull/5132)
+
+### Fix
+* Fixed an issue where the schema formatter would remove the runScriptAfterUpdate key during formatting instead of retaining it. [#5129](https://github.com/demisto/demisto-sdk/pull/5129)
+* Fixed an issue in the **Trigger** parser where the *automation_type* field was incorrectly mapped to *automation_id*. [#5130](https://github.com/demisto/demisto-sdk/pull/5130)
+* Added the missing release note headers for the *AgentixAction* and *AgentixAgent* content types. [#5131](https://github.com/demisto/demisto-sdk/pull/5131)
+
+### Internal
+* Added new AG106 and AG107 validations. [#5137](https://github.com/demisto/demisto-sdk/pull/5137)
+* Added AG105 to validate that the types of arguments and outputs are valid. [#5095](https://github.com/demisto/demisto-sdk/pull/5095)
+* Updated BA104 validation to ensure marketplace tag names are non-empty and follow the required uppercase, comma-separated format. [#5136](https://github.com/demisto/demisto-sdk/pull/5136)
+* Updated the schema for Agentix agents. [#5054](https://github.com/demisto/demisto-sdk/pull/5054)
+* Added RM103 to validate that internal scripts do not have a readme file. [#5094](https://github.com/demisto/demisto-sdk/pull/5094)
+* Added the ismcp field to the integration schema to support MCP configuration flag. [#5133](https://github.com/demisto/demisto-sdk/pull/5133)
+
+
+## 1.38.13 (2025-11-05)
+### Feature
+* Removed the GR106 validation from the xsoar_best_practices section so it does not execute when running the ValidateContent script in Cortex. [#5125](https://github.com/demisto/demisto-sdk/pull/5125)
+* Add ST114 validator to enforce content item supportedModules are a subset of the Content Pack's supported modules. [#5123](https://github.com/demisto/demisto-sdk/pull/5123)
+* Added the BC116 backwards-compatibility validator, which verifies that output keys are not removed from AgentixAction items. [#5100](https://github.com/demisto/demisto-sdk/pull/5100)
+
+### Internal
+* Changed the *generatable* field of *AgentixActionArgument* to *iseneratable* to match server. [#5069](https://github.com/demisto/demisto-sdk/pull/5069)
+* Updated NPM package dependencies to their latest versions for improved security and performance. [#5071](https://github.com/demisto/demisto-sdk/pull/5071)
+
+
+## 1.38.12 (2025-10-20)
+### Feature
+* Added graph support for the supportedModules field in commands, along with command mismatch validation in GR109. [#5028](https://github.com/demisto/demisto-sdk/pull/5028)
+* Format command is now support silent playbooks. [#5037](https://github.com/demisto/demisto-sdk/pull/5037)
+* Added the *automation_id* and *automation_type* fields to the **Trigger** Content type schema to support automation recommendations. [#5067](https://github.com/demisto/demisto-sdk/pull/5067)
+* Add new reliability options to feed configuration validator (IN122). [#5085](https://github.com/demisto/demisto-sdk/pull/5085)
+
+### Fix
+* Updated the pack files validator (PA128) to expect "secrets-ignore" instead of "secrets_ignore", ensuring consistency with actual file names. [#5070](https://github.com/demisto/demisto-sdk/pull/5070)
+* Fixed the RN111 validator to use exact matching instead of partial matching for integration names and Docker images. [#5064](https://github.com/demisto/demisto-sdk/pull/5064)
+
+### Internal
+* Removed AG104 validation. [#5089](https://github.com/demisto/demisto-sdk/pull/5089)
+* Updated the ***validate*** and ***format*** commands to enforce lowercase usage for the "sectionorder" key in YAML files. [#5065](https://github.com/demisto/demisto-sdk/pull/5065)
+* Added AgentixAction to test tools. [#5088](https://github.com/demisto/demisto-sdk/pull/5088)
+* Removed BA101 validation for actions. [#5091](https://github.com/demisto/demisto-sdk/pull/5091)
+
+
 ## 1.38.11 (2025-09-07)
 ### Fix
 * Fixed an issue in marketplace suffix preparer. [#5055](https://github.com/demisto/demisto-sdk/pull/5055)

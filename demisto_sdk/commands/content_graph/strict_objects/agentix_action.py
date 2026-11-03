@@ -17,7 +17,7 @@ class AgentixActionArgument(BaseStrictModel):
     hidden: bool = False
     disabled: bool = False
     content_item_arg_name: str = Field(..., alias="underlyingargname")
-    generatable: bool = False
+    isgeneratable: bool = False
 
 
 class AgentixActionOutput(BaseStrictModel):
@@ -37,10 +37,15 @@ class UnderlyingContentItem(BaseStrictModel):
 
 
 class AgentixAction(AgentixBase):
+    display: str
     args: Optional[list[AgentixActionArgument]] = None
     outputs: Optional[list[AgentixActionOutput]] = None
     underlying_content_item: UnderlyingContentItem = Field(
         ..., alias="underlyingcontentitem"
     )
     requires_user_approval: bool = Field(False, alias="requiresuserapproval")
+    is_long_running: bool = Field(False, alias="islongrunning")
+    long_running_timeout_seconds: Optional[int] = Field(
+        None, alias="longrunningtimeoutseconds"
+    )
     few_shots: Optional[list[str]] = Field(None, alias="fewshots")

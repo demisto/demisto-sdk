@@ -10,13 +10,18 @@ from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import 
 )
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     BaseStrictModel,
+    SupportedFeaturesList,
     create_model,
 )
 
 
 class _StrictIncidentType(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     marketplaces: Optional[List[MarketplaceVersions]] = Field(
         None, alias="marketplaces"
+    )
+    exclude_from_tightly_coupled: Optional[bool] = Field(
+        None, alias="excludefromtightlycoupled"
     )
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 

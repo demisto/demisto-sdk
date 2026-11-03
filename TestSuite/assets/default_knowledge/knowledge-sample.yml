@@ -1,0 +1,10 @@
+commonfields:
+  id: sample_knowledge
+  version: -1
+name: Sample Knowledge
+description: |-
+    A sample knowledge for testing purposes.
+marketplaces:
+- platform
+supportedModules:
+- agentix

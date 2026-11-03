@@ -456,6 +456,39 @@ def test_upload_pack_with_tpb(demisto_client_configure, mocker, tmpdir):
     assert mocked_upload_method.call_count == len(expected_names)
 
 
+def test_upload_pack_with_job_fails(mocker, repo, tmpdir):
+    """
+    Given
+        - A pack that contains a Job content item
+
+    When
+        - Uploading the pack (item-by-item, without -z flag)
+
+    Then
+        - Ensure the upload fails with ERROR_RETURN_CODE
+        - Ensure the Job is reported as a failed upload with a clear error message
+          indicating that Job is not a content item and cannot be uploaded as part of a pack
+    """
+    mock_api_client(mocker)
+    mocker.patch.object(
+        IntegrationScript, "get_supported_native_images", return_value=[]
+    )
+    # Prevent actual network calls for non-Job content items (e.g. the playbook created alongside the job)
+    mocker.patch.object(ContentItem, "upload")
+
+    pack = repo.create_pack("PackWithJob")
+    pack.create_job(is_feed=False, name="MyJob")
+
+    uploader = Uploader(Path(pack.path), destination_zip_dir=Path(tmpdir))
+    assert uploader.upload() == ERROR_RETURN_CODE
+
+    assert len(uploader._failed_upload_content_items) == 1
+    failed_item, error_msg = uploader._failed_upload_content_items[0]
+    assert "Job" in error_msg
+    assert "not a content item" in error_msg
+    assert "cannot be uploaded as part of a pack" in error_msg
+
+
 def test_upload_packs_from_configfile(demisto_client_configure, mocker):
     """
     Given

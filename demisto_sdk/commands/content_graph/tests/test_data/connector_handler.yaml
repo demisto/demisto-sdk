@@ -1,0 +1,32 @@
+id: "xsoar-test"
+
+metadata:
+  version: 1.0.0
+  description: "Test XSOAR handler"
+  module: "xsoar"
+  tags:
+    - "test"
+  ownership:
+    team: "xsoar"
+    maintainers:
+      - "@test"
+
+enabled: true
+
+triggering:
+  type: "PUB_SUB"
+  labels:
+    xsoar-integration-id: "TestIntegration"
+    xsoar-pack-id: "TestPack"
+    xsoar-content-id: "test-connector"
+  args: {}
+
+capabilities:
+  - id: "test-capability"
+    auth_options:
+      - id: "test-auth"
+        workloads:
+          - "test-workload"
+
+test_connection:
+  handler_id: "xsoar-test"

@@ -1,6 +1,6 @@
 
 const http = require( 'http')
-const mdx = require('@mdx-js/mdx');
+const {compile} = require('@mdx-js/mdx');
 const markdownlint = require( 'markdownlint')
 const markdownlintRuleHelpers = require( 'markdownlint-rule-helpers' )
 const url = require('url')
@@ -68,7 +68,7 @@ function requestHandler(req, res) {
         }
         else {
             try {
-                let parsed = await mdx(body)
+                let parsed = await compile(body)
                 res.end('Successfully parsed mdx')
             } catch (error) {
                 res.statusCode = 500

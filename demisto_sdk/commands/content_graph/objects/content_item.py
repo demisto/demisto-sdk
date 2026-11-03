@@ -32,6 +32,7 @@ from demisto_sdk.commands.common.tools import (
     write_dict,
 )
 from demisto_sdk.commands.content_graph.common import (
+    EXCLUDE_FROM_TIGHTLY_COUPLED_KEY,
     ContentType,
     RelationshipType,
     append_supported_modules,
@@ -58,6 +59,7 @@ class ContentItem(BaseContent):
     pack: Any = Field(None, exclude=True, repr=False)
     support: str = ""
     is_silent: bool = False
+    exclude_from_tightly_coupled: bool = False
     upload_path: Optional[Path] = None
 
     @validator("path", always=True)
@@ -258,18 +260,28 @@ class ContentItem(BaseContent):
 
     @property
     def data(self) -> dict:
-        return get_file(self.path, keep_order=False)
+        return get_file(
+            getattr(self, "path_to_read", None) or self.path, keep_order=False
+        )
 
     @property
     def text(self) -> str:
-        return get_file(self.path, return_content=True)
+        return get_file(
+            getattr(self, "path_to_read", None) or self.path, return_content=True
+        )
 
     @property
     def ordered_data(self) -> dict:
-        return get_file(self.path, keep_order=True)
+        return get_file(
+            getattr(self, "path_to_read", None) or self.path, keep_order=True
+        )
 
     def save(self, fields_to_exclude: List[str] = []):
-        super()._save(self.path, self.ordered_data, fields_to_exclude=fields_to_exclude)
+        super()._save(
+            getattr(self, "path_to_read", None) or self.path,
+            self.ordered_data,
+            fields_to_exclude=fields_to_exclude,
+        )
 
     def prepare_for_upload(
         self,
@@ -288,6 +300,8 @@ class ContentItem(BaseContent):
         else:
             if "supportedModules" in data:
                 del data["supportedModules"]
+        # SDK-only build-time flag - must never be uploaded to the server.
+        data.pop(EXCLUDE_FROM_TIGHTLY_COUPLED_KEY, None)
         return MarketplaceSuffixPreparer.prepare(data, current_marketplace)
 
     def summary(
@@ -306,6 +320,10 @@ class ContentItem(BaseContent):
         exclude_fields: Dict[Union[int, str], Any] = {}
         if not self.supportedModules:
             exclude_fields["supportedModules"] = True
+        # Authored values are never empty (validation rejects []), so only an
+        # absent value is excluded.
+        if self.supportedFeatures is None:
+            exclude_fields["supportedFeatures"] = True
 
         summary_res = self.dict(
             include=self.metadata_fields(), by_alias=True, exclude=exclude_fields
@@ -342,6 +360,7 @@ class ContentItem(BaseContent):
             "toversion",
             "deprecated",
             "supportedModules",
+            "supportedFeatures",
         }
 
     @property
@@ -365,11 +384,24 @@ class ContentItem(BaseContent):
         logger.debug(f"Normalized file name from {name} to {normalized}")
         return normalized
 
-    def dump(
+    def dump(  # type: ignore[override]
         self,
         dir: DirectoryPath,
         marketplace: MarketplaceVersions,
+        **kwargs,
     ) -> None:
+        """Dumps a single content item to ``dir`` for upload/artifact creation.
+
+        Args:
+            **kwargs: Additional flags forwarded to ``prepare_for_upload``.
+                The only upload-specific flag currently recognized is
+                ``strip_internal`` (set by the ``demisto-sdk upload`` flow
+                via ``ContentItem._upload`` / ``zip_multiple_packs``).
+                When true, the ``internal`` and ``isInternal`` fields are
+                removed from the dumped script data so the uploaded content
+                is visible to the user. Other flows (prepare-content,
+                artifact builds) do not pass it and the fields are kept.
+        """
         if not self.path.exists():
             logger.warning(f"Could not find file {self.path}, skipping dump")
             return
@@ -377,7 +409,10 @@ class ContentItem(BaseContent):
         try:
             write_dict(
                 dir / self.normalize_name,
-                data=self.prepare_for_upload(current_marketplace=marketplace),
+                data=self.prepare_for_upload(
+                    current_marketplace=marketplace,
+                    **kwargs,
+                ),
                 handler=self.handler,
             )
             logger.debug(f"path to dumped file: {str(dir / self.normalize_name)}")
@@ -446,9 +481,14 @@ class ContentItem(BaseContent):
 
         with TemporaryDirectory() as f:
             dir_path = Path(f)
+            # strip_internal=True: this is the per-item upload flow, so the
+            # `internal` and `isInternal` fields should be removed from the
+            # dumped script so the uploaded content is visible to users.
+            # Passed via **kwargs to keep the public `dump` signature stable.
             self.dump(
                 dir_path,
                 marketplace=marketplace,
+                strip_internal=True,
             )
             response = upload_method(dir_path / self.normalize_name)
             parse_upload_response(

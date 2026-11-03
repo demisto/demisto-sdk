@@ -38,6 +38,21 @@ AND
     """
 
 
+def pack_family_key(pack: str) -> str:
+    """Cypher expression for a pack's split-family key: ``derived_from`` when set, else ``object_id``."""
+    return f"coalesce({pack}.derived_from, {pack}.object_id)"
+
+
+def are_in_the_same_split_pack_family(pack_a: str, pack_b: str) -> str:
+    """Cypher predicate: both packs belong to the same split-pack family."""
+    return f"{pack_family_key(pack_a)} = {pack_family_key(pack_b)}"
+
+
+def is_managed_or_derived(pack: str) -> str:
+    """Cypher predicate: the pack is managed or derived, hence carries no pack-level dependencies."""
+    return f"(coalesce({pack}.managed, false) OR coalesce({pack}.is_derived, false))"
+
+
 def node_map(properties: Dict[str, Any]) -> str:
     """Returns a string representation of a map in neo4j format."""
     return f'{{{", ".join([f"{k}: {v}" for k, v in properties.items()])}}}'

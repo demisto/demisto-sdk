@@ -5,7 +5,10 @@ from pydantic import Field
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
-from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel
+from demisto_sdk.commands.content_graph.strict_objects.common import (
+    BaseStrictModel,
+    SupportedFeaturesList,
+)
 
 
 class LeftRight(BaseStrictModel):
@@ -52,6 +55,7 @@ class TabsAndSections(BaseStrictModel):
 
 
 class StrictCaseLayout(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     id_: str = Field(alias="id")
     group: str = Field(..., enum=["case"])
     definition_id: Optional[str] = Field(None, alias="definitionId")

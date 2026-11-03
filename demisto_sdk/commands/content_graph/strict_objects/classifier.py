@@ -13,11 +13,13 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     ID_DYNAMIC_MODEL,
     NAME_DYNAMIC_MODEL,
     BaseStrictModel,
+    SupportedFeaturesList,
     create_model,
 )
 
 
 class _StrictClassifier(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     feed: Optional[bool] = None
     incident_samples: Optional[List[str]] = Field(None, alias="incidentSamples")
     indicator_samples: Optional[List[str]] = Field(None, alias="indicatorSamples")
@@ -36,6 +38,9 @@ class _StrictClassifier(BaseStrictModel):
     definition_id: Optional[str] = Field(None, alias="definitionId")
     marketplaces: Optional[List[MarketplaceVersions]] = Field(
         None, alias="marketplaces"
+    )
+    exclude_from_tightly_coupled: Optional[bool] = Field(
+        None, alias="excludefromtightlycoupled"
     )
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
     id_: str = Field(..., alias="id")

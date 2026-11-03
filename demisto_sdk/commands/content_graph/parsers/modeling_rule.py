@@ -70,6 +70,9 @@ class ModelingRuleParser(YAMLContentItemParser, content_type=ContentType.MODELIN
         directory_pydantic_error = []
         directory = self.path if self.path.is_dir() else self.path.parent
         for file in directory.iterdir():
+            # Skip testdata.json files as they have a different structure
+            if file.name.endswith("testdata.json"):
+                continue
             try:
                 if file.suffix == ".yml":
                     StrictModelingRule.parse_obj(get_file(file))

@@ -3,12 +3,15 @@ from typing import Dict, List, Optional
 
 from demisto_sdk.commands.common.constants import (
     AGENTIX_ACTIONS_DIR,
+    AGENTIX_AGENTS_DIR,
+    AGENTIX_SKILLS_DIR,
     ASSETS_MODELING_RULES_DIR,
     CASE_FIELDS_DIR,
     CASE_LAYOUT_RULES_DIR,
     CASE_LAYOUTS_DIR,
     CORRELATION_RULES_DIR,
     DEFAULT_IMAGE_BASE64,
+    KNOWLEDGE_DIR,
     LAYOUT_RULES_DIR,
     MODELING_RULES_DIR,
     PARSING_RULES_DIR,
@@ -18,6 +21,8 @@ from demisto_sdk.commands.common.constants import (
     XSIAM_REPORTS_DIR,
 )
 from TestSuite.agentix_action import AgentixAction
+from TestSuite.agentix_agent import AgentixAgent
+from TestSuite.agentix_skill import AgentixSkill
 from TestSuite.case_field import CaseField
 from TestSuite.case_layout import CaseLayout
 from TestSuite.case_layout_rule import CaseLayoutRule
@@ -37,6 +42,7 @@ from TestSuite.indicator_type import IndicatorType
 from TestSuite.integration import Integration
 from TestSuite.job import Job
 from TestSuite.json_based import JSONBased
+from TestSuite.knowledge import Knowledge
 from TestSuite.layout import Layout
 from TestSuite.layout_rule import LayoutRule
 from TestSuite.mapper import Mapper
@@ -121,6 +127,9 @@ class Pack(TestSuiteBase):
         self.case_layout_rules: List[CaseLayoutRule] = list()
 
         self.agentix_actions: List[AgentixAction] = list()
+        self.agentix_agents: List[AgentixAgent] = list()
+        self.agentix_skills: List[AgentixSkill] = list()
+        self.knowledges: List[Knowledge] = list()
 
         # Create base pack
         self._pack_path = packs_dir / self.name
@@ -264,6 +273,15 @@ class Pack(TestSuiteBase):
         self._agentix_actions_path = self._pack_path / AGENTIX_ACTIONS_DIR
         self._agentix_actions_path.mkdir(exist_ok=True)
 
+        self._agentix_agents_path = self._pack_path / AGENTIX_AGENTS_DIR
+        self._agentix_agents_path.mkdir(exist_ok=True)
+
+        self._agentix_skills_path = self._pack_path / AGENTIX_SKILLS_DIR
+        self._agentix_skills_path.mkdir(exist_ok=True)
+
+        self._knowledges_path = self._pack_path / KNOWLEDGE_DIR
+        self._knowledges_path.mkdir(exist_ok=True)
+
         super().__init__(self._pack_path)
 
     def create_integration(
@@ -290,6 +308,7 @@ class Pack(TestSuiteBase):
                 "display": name,
                 "description": description or f"this is an integration {name}",
                 "category": "category",
+                "provider": name,
                 "script": {
                     "type": "python",
                     "subtype": "python3",
@@ -843,3 +862,50 @@ class Pack(TestSuiteBase):
         )
         self.agentix_actions.append(agentix_action)
         return agentix_action
+
+    def create_agentix_agent(
+        self,
+        name: Optional[str] = None,
+        yml: Optional[dict] = None,
+        system_instructions: Optional[str] = None,
+    ) -> AgentixAgent:
+        if name is None:
+            name = f"agentix_agent-{len(self.agentix_agents)}"
+        agentix_agent = AgentixAgent(self._agentix_agents_path, name, self._repo)
+        agentix_agent.build(
+            yml,
+            system_instructions,
+        )
+        self.agentix_agents.append(agentix_agent)
+        return agentix_agent
+
+    def create_agentix_skill(
+        self,
+        name: Optional[str] = None,
+        metadata: Optional[dict] = None,
+        skill_content: Optional[str] = None,
+    ) -> AgentixSkill:
+        """Create a TestSuite ``AgentixSkill`` under this pack's ``AgentixSkills/`` folder."""
+        if name is None:
+            name = f"agentix_skill-{len(self.agentix_skills)}"
+        agentix_skill = AgentixSkill(self._agentix_skills_path, name, self._repo)
+        agentix_skill.build(
+            metadata=metadata,
+            skill_content=skill_content,
+        )
+        self.agentix_skills.append(agentix_skill)
+        return agentix_skill
+
+    def create_knowledge(
+        self,
+        name: Optional[str] = None,
+        yml: Optional[dict] = None,
+    ) -> Knowledge:
+        if name is None:
+            name = f"knowledge-{len(self.knowledges)}"
+        knowledge = Knowledge(self._knowledges_path, name, self._repo)
+        knowledge.build(
+            yml,
+        )
+        self.knowledges.append(knowledge)
+        return knowledge

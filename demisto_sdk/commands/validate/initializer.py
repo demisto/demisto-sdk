@@ -1410,12 +1410,20 @@ class ConnectorAwareInitializer(Initializer):
     """Extends Initializer with connector-integration cross-discovery.
 
     When ``--run-connectors-validation`` is used, this initializer replaces the
-    standard ``Initializer``.  It:
+    standard ``Initializer``. The flow is additive:
 
-    1. Runs the normal file-collection flow (supports ``-g``, ``-i``, ``-a``).
-    2. Filters the result to only ``Integration`` and ``Connector`` objects.
-    3. Applies marketplace / support-level / XSOAR-handler filters.
-    4. Cross-matches connectors and integrations and expands with missing counterparts.
+    1. Runs the normal file-collection flow (supports ``-g``, ``-i``, ``-a``)
+       and keeps everything it collects.
+    2. Selects the connector-scope subset (in-scope integrations and
+       connectors with XSOAR handlers) by marketplace / support-level /
+       XSOAR-handler rules.
+    3. Cross-matches that subset and expands it with missing counterparts
+       pulled in from the content graph.
+
+    Graph-pulled-in items are validated by CO validators only, and CO
+    validators run only on the connector-scope subset (see
+    ``is_graph_pulled_in`` / ``is_in_connector_scope`` and
+    ``ValidateManager``).
     """
 
     # In-scope integrations no XSOAR handler references, byproduct of
@@ -1426,6 +1434,15 @@ class ConnectorAwareInitializer(Initializer):
     _integrations_without_connector_handler: ClassVar[FrozenSet[Integration]] = (
         frozenset()
     )
+
+    # ``(content_type, object_id)`` keys of objects added by graph expansion
+    # (counterparts the user did not change). These get CO validators only.
+    _graph_pulled_in_keys: ClassVar[FrozenSet[Tuple[Any, str]]] = frozenset()
+
+    # ``(content_type, object_id)`` keys of the cross-match output (the set the
+    # connector flow validated before it became additive). CO validators run
+    # only on these objects, so their results stay unchanged.
+    _connector_scope_keys: ClassVar[FrozenSet[Tuple[Any, str]]] = frozenset()
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
@@ -1449,52 +1466,50 @@ class ConnectorAwareInitializer(Initializer):
         return cls._integrations_without_connector_handler
 
     @staticmethod
-    def _is_relevant_path(path: Path) -> bool:
-        """Return True if the path is an Integration or Connector item."""
-        path_str = str(path)
-        return (
-            f"/{INTEGRATIONS_DIR}/" in path_str
-            or path_str.startswith(f"{INTEGRATIONS_DIR}/")
-            or "connectors/" in path_str
-        )
+    def _object_key(obj: Any) -> Tuple[Any, str]:
+        """Identity key shared with ``_dedup_by_object_id``."""
+        return (getattr(obj, "content_type", type(obj)), obj.object_id)
+
+    @classmethod
+    def is_graph_pulled_in(cls, obj: Any) -> bool:
+        """Whether ``obj`` was added by graph expansion (not collected from the user's changes)."""
+        return cls._object_key(obj) in cls._graph_pulled_in_keys
+
+    @classmethod
+    def is_in_connector_scope(cls, obj: Any) -> bool:
+        """Whether ``obj`` is part of the cross-matched connector-scope set."""
+        return cls._object_key(obj) in cls._connector_scope_keys
 
     def gather_objects_to_run_on(self) -> Tuple[Set[BaseContent], Set[Path]]:
-        """Collect, filter, and cross-match connector and integration objects.
+        """Collect everything the normal flow collects, then cross-match connectors.
 
         Overrides the parent ``Initializer.gather_objects_to_run_on`` to:
 
         1. **Collect** - Use the standard file-collection flow (``-g``, ``-i``,
-           or ``-a``) but pre-filter to only Integration and Connector paths
-           via ``_is_relevant_path``.
-        2. **Post-filter** - Keep only ``Integration`` objects that are in the
-           PLATFORM marketplace and not deprecated, and ``Connector`` objects
-           that have at least one XSOAR handler.
-        3. **Cross-match** - Call ``_cross_match_and_expand`` to link each
-           XSOAR handler to its referenced integration (and vice versa),
-           expanding with graph-discovered counterparts when needed.
+           or ``-a``) unchanged.
+        2. **Select** - Pick the connector-scope subset: ``Integration``
+           objects that are in the PLATFORM marketplace, not deprecated and not
+           partner/community supported, and ``Connector`` objects that have at
+           least one XSOAR handler. Connectors without XSOAR handlers are
+           dropped; every other object is kept as-is.
+        3. **Cross-match** - Call ``_cross_match_and_expand`` on the subset to
+           link each XSOAR handler to its referenced integration (and vice
+           versa), expanding with graph-discovered counterparts when needed.
 
         Returns:
             Tuple of:
-            - ``Set[BaseContent]``: The filtered set of ``Integration`` and
-              ``Connector`` objects with cross-links populated
-              (``handler.related_integration`` and ``integration.related_content``).
+            - ``Set[BaseContent]``: The normal collection (minus connectors
+              without XSOAR handlers) plus graph-pulled-in counterparts, with
+              cross-links populated (``handler.related_integration`` and
+              ``integration.related_content``).
             - ``Set[Path]``: Paths that could not be parsed into valid content items.
         """
-        # 1. Collect and parse only relevant paths (Integrations + connectors)
-        if self.execution_mode == ExecutionMode.USE_GIT:
-            statuses = self._collect_git_statuses(path_filter=self._is_relevant_path)
-            all_objects, invalid_items, _ = self.git_paths_to_basecontent_set(
-                statuses, prev_ver=self.prev_ver
-            )
-        elif self.execution_mode == ExecutionMode.SPECIFIC_FILES:
-            loaded = self.load_files(self.file_path.split(","))
-            filtered_paths = {p for p in loaded if self._is_relevant_path(p)}
-            all_objects, invalid_items, _ = self.paths_to_basecontent_set(
-                filtered_paths
-            )
-        else:
-            # ALL_FILES or fallback -- use parent as-is
-            all_objects, invalid_items = super().gather_objects_to_run_on()
+        # Reset per-run markers so every exit path reflects THIS call.
+        type(self)._graph_pulled_in_keys = frozenset()
+        type(self)._connector_scope_keys = frozenset()
+
+        # 1. Collect exactly what the normal flow collects.
+        all_objects, invalid_items = super().gather_objects_to_run_on()
 
         # 1b. De-duplicate objects that share the same content type + object_id.
         # A single connector directory can yield more than one BaseContent object
@@ -1504,39 +1519,50 @@ class ConnectorAwareInitializer(Initializer):
         # survive the ``set`` in ``git_paths_to_basecontent_set``. Collapse them
         # into a single object, preferring the higher-precedence status
         # (MODIFIED over ADDED) so a modified connector is never reported twice.
-        all_objects = self._dedup_by_object_id(all_objects)
+        # Only connectors are de-duplicated: other content types legitimately
+        # share ids (e.g. duplicate-id reports) and must match the normal flow.
+        connector_objects = {o for o in all_objects if isinstance(o, Connector)}
+        all_objects = (all_objects - connector_objects) | self._dedup_by_object_id(
+            connector_objects
+        )
 
-        # 2. Post-filter: keep only Integration and Connector objects.
+        # 2. Select the connector-scope subset; keep everything else as-is.
         # For integrations, "in scope for the connector flow" means all of:
         #   - not deprecated,
         #   - PLATFORM marketplace,
         #   - support level NOT in {partner, community} (see the
         #     `_EXCLUDED_CONNECTOR_SUPPORT_LEVELS` docstring).
-        # An integration failing any of these is skipped for the same reason
-        # deprecated ones are: it cannot be instantiated through UCP, so no
-        # connector-aware validator has anything to say about it.
+        # An integration failing any of these is not cross-matched: it cannot
+        # be instantiated through UCP, so no connector-aware validator has
+        # anything to say about it. It still gets the general validators.
         filtered_integrations: Set[Integration] = set()
         filtered_connectors: Set[Connector] = set()
+        other_objects: Set[BaseContent] = set()
         for obj in all_objects:
             if isinstance(obj, Integration):
                 if obj.deprecated:
                     logger.debug(
-                        f"Skipping integration '{obj.object_id}' -- deprecated."
+                        f"Not cross-matching integration '{obj.object_id}' -- deprecated."
                     )
+                    other_objects.add(obj)
                 elif MarketplaceVersions.PLATFORM not in obj.marketplaces:
                     logger.debug(
-                        f"Skipping integration '{obj.object_id}' -- "
+                        f"Not cross-matching integration '{obj.object_id}' -- "
                         f"not in PLATFORM marketplace."
                     )
+                    other_objects.add(obj)
                 elif obj.support in _EXCLUDED_CONNECTOR_SUPPORT_LEVELS:
                     logger.debug(
-                        f"Skipping integration '{obj.object_id}' -- "
+                        f"Not cross-matching integration '{obj.object_id}' -- "
                         f"support level '{obj.support}' is out of scope for "
                         f"the connector flow (partner/community)."
                     )
+                    other_objects.add(obj)
                 else:
                     filtered_integrations.add(obj)
             elif isinstance(obj, Connector):
+                # Connectors are only meaningful to CO validators, which skip
+                # connectors without XSOAR handlers - keep dropping them.
                 if obj.xsoar_handlers:
                     filtered_connectors.add(obj)
                 else:
@@ -1544,6 +1570,13 @@ class ConnectorAwareInitializer(Initializer):
                         f"Skipping connector '{obj.object_id}' -- "
                         f"no XSOAR handlers."
                     )
+            else:
+                other_objects.add(obj)
+
+        # The cross-match cleanup drops in-scope integrations with no handler.
+        # The user changed them, so keep them for the general validators.
+        user_integrations = set(filtered_integrations)
+        user_keys = {self._object_key(obj) for obj in all_objects}
 
         # 3. Cross-match and expand with missing counterparts.
         # The expand phases below resolve handler<->integration links through
@@ -1573,7 +1606,17 @@ class ConnectorAwareInitializer(Initializer):
                 BaseValidator.graph_interface = None
             raise
 
-        return filtered, invalid_items
+        matched_keys = {self._object_key(obj) for obj in filtered}
+        # In-scope integrations with no handler (the CO192 stash) are part of
+        # the connector scope too, so CO192 reports them.
+        uncovered_keys = {
+            self._object_key(obj)
+            for obj in type(self)._integrations_without_connector_handler
+        }
+        type(self)._connector_scope_keys = frozenset(matched_keys | uncovered_keys)
+        type(self)._graph_pulled_in_keys = frozenset(matched_keys - user_keys)
+
+        return other_objects | user_integrations | filtered, invalid_items
 
     @staticmethod
     def _hydrate_integration_params(integration: Any) -> None:
@@ -1716,9 +1759,6 @@ class ConnectorAwareInitializer(Initializer):
         """
         # Reset the CO192 stash on entry so every exit path below leaves it
         # equal to what THIS call dropped -- not a previous run's value.
-        type(self)._integrations_without_connector_handler = frozenset()
-
-        # Reset CO192 stash on entry: every exit path must reflect THIS call.
         type(self)._integrations_without_connector_handler = frozenset()
 
         # Phase 1: Direct matching

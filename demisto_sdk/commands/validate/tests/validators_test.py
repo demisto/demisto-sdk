@@ -38,6 +38,7 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_connector_object,
     create_integration_object,
     create_pack_object,
+    create_playbook_object,
     create_script_object,
 )
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
@@ -2010,22 +2011,36 @@ class TestConnectorAwareInitializerGatherObjects:
         connectors_in_result = [o for o in filtered if isinstance(o, Connector)]
         assert len(connectors_in_result) == 0
 
-    def test_non_platform_integration_filtered_out(self, mocker: MockerFixture):
+    @pytest.mark.parametrize(
+        "paths, values, deprecated",
+        [
+            (["marketplaces"], [["xsoar"]], False),
+            (["supportlevelheader"], ["partner"], False),
+            ([], [], True),
+        ],
+        ids=["non_platform", "partner", "deprecated"],
+    )
+    def test_out_of_scope_integration_kept_but_not_cross_matched(
+        self, mocker: MockerFixture, paths, values, deprecated
+    ):
         """
-        Given: An integration that does NOT have PLATFORM in its marketplaces.
-        When: gather_objects_to_run_on filters objects.
-        Then: Integration is excluded from the result.
+        Given: An integration that is out of the connector scope (non-PLATFORM,
+               partner supported, or deprecated).
+        When: gather_objects_to_run_on runs with the connectors flag.
+        Then: The integration is kept for the general validators, but it is
+              not passed to the cross-match and is not in the connector scope.
         """
-        integration = create_integration_object(
-            paths=["marketplaces"],
-            values=[["xsoar"]],
-        )
+        integration = create_integration_object(paths=paths, values=values)
+        integration.deprecated = deprecated
+        if "supportlevelheader" in paths:
+            integration.support = "partner"
 
         mocker.patch(
             "demisto_sdk.commands.validate.initializer.Initializer.gather_objects_to_run_on",
             return_value=({integration}, set()),
         )
-        mocker.patch.object(
+        mocker.patch.object(BaseValidator, "ensure_graph_initialized")
+        cross_match = mocker.patch.object(
             ConnectorAwareInitializer,
             "_cross_match_and_expand",
             side_effect=lambda ints, cons: ints | cons,
@@ -2035,35 +2050,281 @@ class TestConnectorAwareInitializerGatherObjects:
         initializer.execution_mode = ExecutionMode.ALL_FILES
         filtered, _ = initializer.gather_objects_to_run_on()
 
-        integrations_in_result = [o for o in filtered if isinstance(o, Integration)]
-        assert len(integrations_in_result) == 0
+        assert integration in filtered
+        assert cross_match.call_args[0][0] == set()
+        assert not ConnectorAwareInitializer.is_in_connector_scope(integration)
+        assert not ConnectorAwareInitializer.is_graph_pulled_in(integration)
 
-    def test_deprecated_integration_filtered_out(self, mocker: MockerFixture):
+
+class TestConnectorAwareInitializerAdditive:
+    """Tests for the additive collection of ``--run-connectors-validation``:
+    the normal collection is kept, connector-scope items are cross-matched,
+    and graph-pulled-in counterparts are tracked."""
+
+    @pytest.fixture(autouse=True)
+    def _reset_class_state(self, mocker: MockerFixture):
+        mocker.patch.object(BaseValidator, "ensure_graph_initialized")
+        ConnectorAwareInitializer._integrations_without_connector_handler = frozenset()
+        ConnectorAwareInitializer._graph_pulled_in_keys = frozenset()
+        ConnectorAwareInitializer._connector_scope_keys = frozenset()
+        yield
+        ConnectorAwareInitializer._integrations_without_connector_handler = frozenset()
+        ConnectorAwareInitializer._graph_pulled_in_keys = frozenset()
+        ConnectorAwareInitializer._connector_scope_keys = frozenset()
+
+    @staticmethod
+    def _gather(mocker: MockerFixture, collected, mode=ExecutionMode.USE_GIT):
+        mocker.patch.object(
+            Initializer, "gather_objects_to_run_on", return_value=(collected, set())
+        )
+        initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
+        initializer.execution_mode = mode
+        objects, _ = initializer.gather_objects_to_run_on()
+        return objects
+
+    def test_changed_playbook_and_connector_both_returned(self, mocker):
         """
-        Given: An integration that is deprecated.
-        When: gather_objects_to_run_on filters objects.
-        Then: Integration is excluded from the result.
+        Given: -g collects a changed playbook and a changed connector whose
+               handler references an integration that is only in the graph.
+        When: gather_objects_to_run_on runs.
+        Then: The playbook, the connector and the graph integration are all
+              returned; only the graph integration is marked as pulled in.
+        """
+        playbook = create_playbook_object()
+        connector = create_connector_object()
+        graph_integration = create_integration_object()
+        mocker.patch.object(
+            ConnectorAwareInitializer, "_all_graph_connectors", return_value=[]
+        )
+        mocker.patch.object(
+            ConnectorAwareInitializer,
+            "_graph_search_integration",
+            return_value=[graph_integration],
+        )
+
+        objects = self._gather(mocker, {playbook, connector})
+
+        assert {playbook, connector, graph_integration} <= objects
+        assert ConnectorAwareInitializer.is_graph_pulled_in(graph_integration)
+        assert not ConnectorAwareInitializer.is_graph_pulled_in(connector)
+        assert not ConnectorAwareInitializer.is_graph_pulled_in(playbook)
+        assert ConnectorAwareInitializer.is_in_connector_scope(connector)
+        assert not ConnectorAwareInitializer.is_in_connector_scope(playbook)
+
+    def test_in_scope_integration_without_handler_kept_and_stashed(self, mocker):
+        """
+        Given: A changed in-scope integration that no connector handler references.
+        When: gather_objects_to_run_on runs.
+        Then: The integration is returned (general validators run on it), it
+              is in the CO192 stash and in the connector scope.
+        """
+        integration = create_integration_object(
+            paths=["commonfields.id", "name"], values=["Orphan", "Orphan"]
+        )
+        mocker.patch.object(
+            ConnectorAwareInitializer, "_all_graph_connectors", return_value=[]
+        )
+
+        objects = self._gather(mocker, {integration})
+
+        assert integration in objects
+        stash = ConnectorAwareInitializer.get_integrations_without_connector_handler()
+        assert "Orphan" in {i.object_id for i in stash}
+        assert ConnectorAwareInitializer.is_in_connector_scope(integration)
+        assert not ConnectorAwareInitializer.is_graph_pulled_in(integration)
+
+    def test_connector_without_handlers_not_returned(self, mocker):
+        """
+        Given: A changed connector with no XSOAR handlers.
+        When: gather_objects_to_run_on runs.
+        Then: The connector is not returned.
+        """
+        connector = create_connector_object()
+        connector.handlers = []
+        playbook = create_playbook_object()
+
+        objects = self._gather(mocker, {connector, playbook})
+
+        assert connector not in objects
+        assert playbook in objects
+
+    def test_all_files_result_is_superset_of_normal_result(self, mocker):
+        """
+        Given: -a collects a playbook, a script, an out-of-scope integration,
+               an in-scope integration and a matching connector.
+        When: gather_objects_to_run_on runs.
+        Then: The result contains everything the normal Initializer returned.
         """
         connector = create_connector_object()
         integration = create_integration_object()
-        integration.deprecated = True
+        out_of_scope = create_integration_object(
+            paths=["commonfields.id", "name", "marketplaces"],
+            values=["Other", "Other", ["xsoar"]],
+        )
+        collected = {
+            create_playbook_object(),
+            create_script_object(),
+            out_of_scope,
+            integration,
+            connector,
+        }
 
-        mocker.patch(
-            "demisto_sdk.commands.validate.initializer.Initializer.gather_objects_to_run_on",
-            return_value=({connector, integration}, set()),
+        objects = self._gather(mocker, set(collected), mode=ExecutionMode.ALL_FILES)
+
+        assert collected <= objects
+        assert ConnectorAwareInitializer._graph_pulled_in_keys == frozenset()
+
+    def test_pulled_in_keys_reset_between_runs(self, mocker):
+        """
+        Given: A first run that pulls an integration in from the graph.
+        When: A second run pulls nothing in.
+        Then: The pulled-in set is empty after the second run.
+        """
+        graph_integration = create_integration_object()
+        mocker.patch.object(
+            ConnectorAwareInitializer, "_all_graph_connectors", return_value=[]
         )
         mocker.patch.object(
             ConnectorAwareInitializer,
-            "_cross_match_and_expand",
-            side_effect=lambda ints, cons: ints | cons,
+            "_graph_search_integration",
+            return_value=[graph_integration],
+        )
+        self._gather(mocker, {create_connector_object()})
+        assert ConnectorAwareInitializer.is_graph_pulled_in(graph_integration)
+
+        self._gather(mocker, {create_playbook_object()})
+
+        assert ConnectorAwareInitializer._graph_pulled_in_keys == frozenset()
+        assert not ConnectorAwareInitializer.is_graph_pulled_in(graph_integration)
+
+
+class TestConnectorScopeValidatorGate:
+    """Tests for ``ValidateManager._passes_connector_scope``: CO validators
+    run only in the connectors flow and only on connector-scope items, and
+    graph-pulled-in items get CO validators only."""
+
+    @pytest.fixture(autouse=True)
+    def _reset_class_state(self):
+        ConnectorAwareInitializer._graph_pulled_in_keys = frozenset()
+        ConnectorAwareInitializer._connector_scope_keys = frozenset()
+        yield
+        ConnectorAwareInitializer._graph_pulled_in_keys = frozenset()
+        ConnectorAwareInitializer._connector_scope_keys = frozenset()
+
+    @staticmethod
+    def _manager(mocker, initializer_cls, objects):
+        mocker.patch.object(
+            initializer_cls, "gather_objects_to_run_on", return_value=(objects, set())
+        )
+        manager = ValidateManager(
+            validation_results=ResultWriter(),
+            config_reader=ConfigReader(category="test"),
+            initializer=initializer_cls(),
+        )
+        manager.objects_to_run = objects
+        return manager
+
+    @staticmethod
+    def _validator(mocker, error_code):
+        validator = mocker.Mock()
+        validator.error_code = error_code
+        validator.expected_execution_mode = None
+        validator.is_auto_fixable = False
+        validator.should_run.return_value = True
+        validator.obtain_invalid_content_items.return_value = []
+        return validator
+
+    def _run(self, mocker, manager, validators):
+        manager.validators = validators
+        mocker.patch.object(manager, "add_invalid_content_items")
+        mocker.patch.object(manager.validation_results, "post_results", return_value=0)
+        manager.run_validations()
+        return {
+            v.error_code: set(v.obtain_invalid_content_items.call_args[0][0])
+            if v.obtain_invalid_content_items.called
+            else set()
+            for v in validators
+        }
+
+    def test_pulled_in_item_gets_only_co_validators(self, mocker):
+        """
+        Given: The connectors flow with a changed connector and an integration
+               pulled in from the graph.
+        When: run_validations runs a CO validator and a non-CO validator.
+        Then: The CO validator gets both items; the non-CO validator does not
+              get the pulled-in integration.
+        """
+        connector = create_connector_object()
+        pulled_in = create_integration_object()
+        key = ConnectorAwareInitializer._object_key
+        ConnectorAwareInitializer._connector_scope_keys = frozenset(
+            {key(connector), key(pulled_in)}
+        )
+        ConnectorAwareInitializer._graph_pulled_in_keys = frozenset({key(pulled_in)})
+        manager = self._manager(
+            mocker, ConnectorAwareInitializer, {connector, pulled_in}
         )
 
-        initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
-        initializer.execution_mode = ExecutionMode.ALL_FILES
-        filtered, _ = initializer.gather_objects_to_run_on()
+        got = self._run(
+            mocker,
+            manager,
+            [self._validator(mocker, "CO164"), self._validator(mocker, "IN100")],
+        )
 
-        integrations_in_result = [o for o in filtered if isinstance(o, Integration)]
-        assert len(integrations_in_result) == 0
+        assert got["CO164"] == {connector, pulled_in}
+        assert got["IN100"] == {connector}
+
+    def test_co_validator_skips_items_outside_connector_scope(self, mocker):
+        """
+        Given: The connectors flow with a playbook that is not in the
+               connector scope.
+        When: run_validations runs a CO validator and a non-CO validator.
+        Then: The CO validator does not get the playbook; the non-CO one does.
+        """
+        playbook = create_playbook_object()
+        manager = self._manager(mocker, ConnectorAwareInitializer, {playbook})
+
+        got = self._run(
+            mocker,
+            manager,
+            [self._validator(mocker, "CO190"), self._validator(mocker, "PB100")],
+        )
+
+        assert got["CO190"] == set()
+        assert got["PB100"] == {playbook}
+
+    def test_no_co_validators_without_flag(self, mocker):
+        """
+        Given: The plain Initializer (no --run-connectors-validation) and
+               `-i connectors/...` collecting a connector and an integration.
+        When: run_validations runs CO validators and a non-CO validator.
+        Then: CO validators get nothing; the non-CO validator is unaffected.
+        """
+        connector = create_connector_object()
+        integration = create_integration_object()
+        # Stale markers from a previous connectors run must not matter.
+        key = ConnectorAwareInitializer._object_key
+        ConnectorAwareInitializer._connector_scope_keys = frozenset(
+            {key(connector), key(integration)}
+        )
+        ConnectorAwareInitializer._graph_pulled_in_keys = frozenset(
+            {key(integration)}
+        )
+        manager = self._manager(mocker, Initializer, {connector, integration})
+
+        got = self._run(
+            mocker,
+            manager,
+            [
+                self._validator(mocker, "CO100"),
+                self._validator(mocker, "CO190"),
+                self._validator(mocker, "IN100"),
+            ],
+        )
+
+        assert got["CO100"] == set()
+        assert got["CO190"] == set()
+        assert got["IN100"] == {connector, integration}
 
 
 class TestConnectorRelatedFileDeduplication:

@@ -12,7 +12,10 @@ from demisto_sdk.commands.validate.config_reader import (
     ConfigReader,
     ConfiguredValidations,
 )
-from demisto_sdk.commands.validate.initializer import Initializer
+from demisto_sdk.commands.validate.initializer import (
+    ConnectorAwareInitializer,
+    Initializer,
+)
 from demisto_sdk.commands.validate.validation_results import (
     ResultWriter,
 )
@@ -83,7 +86,10 @@ class ValidateManager:
                 )
                 if filtered_content_objects_for_validator := list(
                     filter(
-                        lambda content_object: validator.should_run(
+                        lambda content_object: self._passes_connector_scope(
+                            validator, content_object
+                        )
+                        and validator.should_run(
                             content_item=content_object,
                             ignorable_errors=self.configured_validations.ignorable_errors,
                             support_level_dict=self.configured_validations.support_level_dict,
@@ -188,6 +194,26 @@ class ValidateManager:
         return self.validation_results.post_results(
             config_file_content=self.configured_validations
         )
+
+    def _passes_connector_scope(
+        self, validator: BaseValidator, content_object: BaseContent
+    ) -> bool:
+        """Central gate between the connector (CO) validators and the rest.
+
+        * Without ``--run-connectors-validation`` (plain ``Initializer``), CO
+          validators never run, so the CO codes can sit in the default config
+          sections without producing false positives.
+        * With the flag, CO validators run only on the cross-matched
+          connector-scope objects (the set the connector flow always
+          validated), and every other validator skips objects that were only
+          pulled in from the content graph.
+        """
+        is_co_validator = validator.error_code.startswith("CO")
+        if not isinstance(self.initializer, ConnectorAwareInitializer):
+            return not is_co_validator
+        if is_co_validator:
+            return ConnectorAwareInitializer.is_in_connector_scope(content_object)
+        return not ConnectorAwareInitializer.is_graph_pulled_in(content_object)
 
     def filter_validators(self) -> List[BaseValidator]:
         """

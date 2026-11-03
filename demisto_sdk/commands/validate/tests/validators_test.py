@@ -2307,9 +2307,7 @@ class TestConnectorScopeValidatorGate:
         ConnectorAwareInitializer._connector_scope_keys = frozenset(
             {key(connector), key(integration)}
         )
-        ConnectorAwareInitializer._graph_pulled_in_keys = frozenset(
-            {key(integration)}
-        )
+        ConnectorAwareInitializer._graph_pulled_in_keys = frozenset({key(integration)})
         manager = self._manager(mocker, Initializer, {connector, integration})
 
         got = self._run(
@@ -3325,6 +3323,9 @@ class TestConnectorHandlerIgnoreFiltering:
         )
         mocker.patch.object(manager, "add_invalid_content_items")
         mocker.patch.object(manager.validation_results, "post_results", return_value=0)
+        # CO validators only run in the connectors flow; open the scope gate so
+        # this test exercises the per-handler filter, not the scope gate.
+        mocker.patch.object(manager, "_passes_connector_scope", return_value=True)
 
         manager.run_validations()
 

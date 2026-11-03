@@ -1521,7 +1521,9 @@ class ConnectorAwareInitializer(Initializer):
         # (MODIFIED over ADDED) so a modified connector is never reported twice.
         # Only connectors are de-duplicated: other content types legitimately
         # share ids (e.g. duplicate-id reports) and must match the normal flow.
-        connector_objects = {o for o in all_objects if isinstance(o, Connector)}
+        connector_objects: Set[BaseContent] = {
+            o for o in all_objects if isinstance(o, Connector)
+        }
         all_objects = (all_objects - connector_objects) | self._dedup_by_object_id(
             connector_objects
         )

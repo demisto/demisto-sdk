@@ -1,4 +1,4 @@
 changes:
 - description: The **validate** command's `--run-connectors-validation` flag is now additive. It validates everything the normal flow collects and also cross-matches connectors and integrations. Items pulled in from the content graph are validated by connector (CO) validators only. Without the flag, CO validators do not run.
   type: feature
-pr_number: 'xxxx'
+pr_number: 5556

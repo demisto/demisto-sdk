@@ -1,3 +1,5 @@
+from pydantic import Extra
+
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     AgentixBase,
 )
@@ -9,6 +11,14 @@ class Mcp(BaseStrictModel):
 
 
 class AgentixAgent(AgentixBase):
+    class Config:
+        """
+        Unknown top-level fields are ignored (not forbidden), so an agent carrying
+        a field not yet defined in this schema does not fail ST110.
+        """
+
+        extra = Extra.ignore
+
     color: str
     visibility: str
     actionids: list[str] = []

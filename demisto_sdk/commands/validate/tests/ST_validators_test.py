@@ -1165,6 +1165,36 @@ def test_SchemaValidator_isArray_marketplace_suffixes_in_argument__valid(pack: P
     assert len(results) == 0
 
 
+def test_SchemaValidator_agentix_action_with_unknown_field__valid(pack: Pack):
+    """
+    Given:
+        - An agentix action with a top-level field not defined in the strict schema.
+    When:
+        - Running the SchemaValidator (ST110 validation).
+    Then:
+        - The validation should pass, as unknown fields are ignored for agentix actions.
+    """
+    from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+        AgentixActionParser,
+    )
+
+    # given
+    agentix_action_data = load_yaml("agentix_action.yml")
+    agentix_action_data["someunknownfield"] = "value"
+    agentix_action = pack.create_agentix_action(
+        "TestAgentixActionUnknownField", agentix_action_data
+    )
+    parser = AgentixActionParser(
+        Path(agentix_action.path), list(MarketplaceVersions), pack_supported_modules=[]
+    )
+
+    # when
+    results = SchemaValidator().obtain_invalid_content_items([parser])
+
+    # then
+    assert len(results) == 0
+
+
 class TestStandardizedIdAndNameFields:
     """
     Test class to validate the existence of standardized 'id' and 'name' fields

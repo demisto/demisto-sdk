@@ -1,0 +1,4 @@
+changes:
+- description: Updated the **ST110** validation to ignore unknown top-level fields in AgentixAction, AgentixAgent, AgentixSkill and Knowledge content items instead of failing on them.
+  type: feature
+pr_number: 5552

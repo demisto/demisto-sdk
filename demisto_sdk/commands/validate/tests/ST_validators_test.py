@@ -344,7 +344,7 @@ def test_pack_parser_errors_check(pack: Pack):
             "name": "name",
             "description": "here be description",
             # invalid str for 'support' key ->
-            # should contain one of those options ["xsoar", "partner", "community", "developer"]
+            # should contain one of those options ["xsoar", "partner", "community", "developer", "preview"]
             "support": "aaa",
             "url": "https://paloaltonetworks.com",
             "author": "Cortex XSOAR",
@@ -365,7 +365,7 @@ def test_pack_parser_errors_check(pack: Pack):
 
     assert {
         "value could not be parsed to a boolean",
-        "value is not a valid enumeration member; permitted: 'xsoar', 'partner', 'community', 'developer'",
+        "value is not a valid enumeration member; permitted: 'xsoar', 'partner', 'community', 'developer', 'preview'",
     } == error_messages
     assert {"type_error.bool", "type_error.enum"} == error_types
 

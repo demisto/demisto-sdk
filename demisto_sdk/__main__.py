@@ -153,7 +153,9 @@ def register_commands(_args: list[str] = []):  # noqa: C901
 
     is_test = not _args
     is_help = "-h" in _args or "--help" in _args
-    register_all = any([is_test, is_help])
+    # export-api dumps the API of every registered command, so all commands must be registered.
+    is_export_api = command_name == "export-api"
+    register_all = any([is_test, is_help, is_export_api])
 
     # Pre-commit runs a few commands as hooks.
     is_pre_commit = "pre-commit" == command_name

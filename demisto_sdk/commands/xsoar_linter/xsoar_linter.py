@@ -3,6 +3,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Optional
@@ -34,6 +35,11 @@ from demisto_sdk.commands.pre_commit.resources.pylint_plugins.xsoar_level_checke
 )
 
 ENV = os.environ
+PYLINT_ENGINE = "pylint"
+AST_ENGINE = "ast"
+ENGINES = (PYLINT_ENGINE, AST_ENGINE)
+DEFAULT_ENGINE = PYLINT_ENGINE
+ENGINE_ENV_VAR = "DEMISTO_SDK_XSOAR_LINTER_ENGINE"
 ERROR_AND_WARNING_CODE_PATTERN = re.compile(
     r"^(?P<path>/[^:\n]+):(?P<line>\d+):(?P<col>\d+): (?P<error_code>(?P<type>[EW])\d+)(?P<error_message> .*)$",
     re.MULTILINE,
@@ -207,11 +213,60 @@ def process_file(file_path: Path) -> ProcessResults:
     return results
 
 
-def xsoar_linter_manager(file_paths: Optional[List[Path]]):
+def process_file_ast(file_path: Path) -> ProcessResults:
+    """
+    Runs the ast-based xsoar-linter on a given path, in the current process (no pylint).
+
+    Args:
+        file_path: the file path to run xsoar-linter on.
+
+    Returns:
+        A ProcessResults data class, filled the same way as `process_file` fills it.
+    """
+    from demisto_sdk.commands.xsoar_linter.checkers.runner import (
+        format_finding,
+        lint_file,
+        settings_from_integration_script,
+    )
+
+    results = ProcessResults()
+    try:
+        integration_script = BaseContent.from_path(file_path)
+        if not isinstance(integration_script, IntegrationScript):
+            return results
+        file = integration_script.path.parent / f"{integration_script.path.stem}.py"
+        if not file.exists():
+            return results
+
+        lint_result = lint_file(
+            file, settings_from_integration_script(integration_script)
+        )
+        results.return_code = int(lint_result.fails)
+        lines = [format_finding(file, finding) for finding in lint_result.findings]
+        results.errors_and_warnings = "\n".join(lines)
+        for line in lines:
+            if error_or_warning := ERROR_AND_WARNING_CODE_PATTERN.match(line):
+                if error_or_warning["type"] == "E":
+                    results.errors.append(line)
+                else:
+                    results.warnings.append(line)
+    except Exception as e:
+        results.errors.append(
+            f"Failed processing the following file: {str(file_path)}: {e}"
+        )
+        results.return_code = 1
+
+    return results
+
+
+def xsoar_linter_manager(
+    file_paths: Optional[List[Path]], engine: str = DEFAULT_ENGINE
+):
     """
     Manages the xsoar linter command multiprocessing pool.
     Args:
         file_paths: List of files to run xsoar-linter on.
+        engine: "pylint" (default) runs the pylint plugins, "ast" runs the ast-based checkers.
 
     Returns:
         0 status code if all runs were successful, 1 otherwise.
@@ -221,12 +276,26 @@ def xsoar_linter_manager(file_paths: Optional[List[Path]]):
     warning = []
     errors_and_warnings = []
 
+    if engine not in ENGINES:
+        logger.error(
+            f"[xsoar-lint] Unknown engine '{engine}'. Known engines: {', '.join(ENGINES)}."
+        )
+        return 1
+
     if not file_paths:
+        logger.info(f"[xsoar-lint] engine={engine}: no files to lint.")
         return 0
 
+    worker = process_file_ast if engine == AST_ENGINE else process_file
+    logger.info(
+        f"[xsoar-lint] engine={engine}: starting on {len(file_paths)} file(s) "
+        f"with {cpu_count()} process(es)."
+    )
+    start_time = time.perf_counter()
     with multiprocessing.Pool(processes=cpu_count()) as pool:
-        # Map the file_paths to the process_file function using the pool
-        results = pool.map(process_file, file_paths)
+        # Map the file_paths to the worker function using the pool
+        results = pool.map(worker, file_paths)
+    duration = time.perf_counter() - start_time
 
     # Extracting and parsing return_codes, errors and warnings form the processes results.
     for result in results:
@@ -236,6 +305,11 @@ def xsoar_linter_manager(file_paths: Optional[List[Path]]):
         errors_and_warnings.append(result.errors_and_warnings)
     errors_and_warnings_concat = "\n".join(elem for elem in errors_and_warnings if elem)
     logger.info(errors_and_warnings_concat)
+    logger.info(
+        f"[xsoar-lint] engine={engine}: finished {len(file_paths)} file(s) in {duration:.2f}s. "
+        f"errors={len(list(filter(None, errors)))}, warnings={len(list(filter(None, warning)))}, "
+        f"failed files={sum(1 for code in return_codes if code)}."
+    )
 
     if any(return_codes):  # An error was found
         errors, warnings = list(filter(None, errors)), list(filter(None, warning))

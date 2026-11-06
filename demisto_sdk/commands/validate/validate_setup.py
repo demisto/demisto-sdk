@@ -204,7 +204,12 @@ def validate(
     run_connectors_validation: bool = typer.Option(
         False,
         "--run-connectors-validation",
-        help="Parse only integrations and connectors and match them for easier connector-specific validators (CO category).",
+        help=(
+            "Additionally validate connectors: cross-match integrations and "
+            "connectors and run connector-specific (CO) validators. Items pulled "
+            "in from the content graph are validated by CO validators only. "
+            "Without this flag, CO validators do not run."
+        ),
     ),
     create_graph_from_scratch: bool = typer.Option(
         False,

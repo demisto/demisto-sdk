@@ -19,6 +19,7 @@ class PackSupportOption(StrEnum):
     PARTNER_SUPPORT = "partner"
     COMMUNITY_SUPPORT = "community"
     DEVELOPER_SUPPORT = "developer"
+    PREVIEW_SUPPORT = "preview"
 
 
 class StrictPackMetadata(BaseStrictModel):

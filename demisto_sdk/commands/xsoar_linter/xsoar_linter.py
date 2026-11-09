@@ -59,6 +59,7 @@ def build_xsoar_linter_command(
         "base": ["base_checker"],
         "community": ["base_checker", "community_level_checker"],
         "developer": ["base_checker", "community_level_checker"],
+        "preview": ["base_checker", "community_level_checker"],
         "partner": ["base_checker", "community_level_checker", "partner_level_checker"],
         "certified partner": [
             "base_checker",

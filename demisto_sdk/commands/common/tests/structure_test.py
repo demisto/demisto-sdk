@@ -866,7 +866,9 @@ class TestXSIAMStructureValidator(TestStructureValidator):
                 },
             }
         }
-        modeling_rule = pack.create_modeling_rule("modeling_rule_desc", schema=schema_content)
+        modeling_rule = pack.create_modeling_rule(
+            "modeling_rule_desc", schema=schema_content
+        )
         validator = StructureValidator(modeling_rule.schema.path)
         assert validator.is_valid_scheme()
 

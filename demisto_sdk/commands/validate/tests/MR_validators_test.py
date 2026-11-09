@@ -1,6 +1,9 @@
+import pytest
+
 from demisto_sdk.commands.common.constants import (
     MODELING_RULE_ID_SUFFIX,
     MODELING_RULE_NAME_SUFFIX,
+    ExecutionMode,
 )
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_modeling_rule_object,
@@ -19,6 +22,9 @@ from demisto_sdk.commands.validate.validators.MR_validators.MR108_invalid_modeli
 )
 from demisto_sdk.commands.validate.validators.MR_validators.MR109_user_field_missing_identity import (
     UserFieldMissingIdentityValidator,
+)
+from demisto_sdk.commands.validate.validators.MR_validators.MR110_modeling_rule_schema_descriptions import (
+    ModelingRuleSchemaDescriptionsValidator,
 )
 
 
@@ -359,4 +365,175 @@ def test_UserFieldMissingIdentityValidator_equal_counts_valid():
     modeling_rule = create_modeling_rule_object(rules=rules)
     assert not UserFieldMissingIdentityValidator().obtain_invalid_content_items(
         [modeling_rule]
+    )
+
+
+def test_ModelingRuleSchemaDescriptionsValidator_valid():
+    """
+    Given:
+        - A modeling rule whose schema has a dataset_description for every dataset
+          and a field_description for every field.
+    When:
+        - run ModelingRuleSchemaDescriptionsValidator().obtain_invalid_content_items method
+    Then:
+        - Ensure no ValidationResult is returned.
+    """
+    modeling_rule = create_modeling_rule_object()
+    modeling_rule.schema_file.file_content = {
+        "test_raw": {
+            "dataset_description": "Audit logs.",
+            "field1": {
+                "type": "string",
+                "is_array": False,
+                "field_description": "First field.",
+            },
+            "field2": {
+                "type": "int",
+                "is_array": False,
+                "field_description": "Second field.",
+            },
+        }
+    }
+    assert not ModelingRuleSchemaDescriptionsValidator().obtain_invalid_content_items(
+        [modeling_rule]
+    )
+
+
+@pytest.mark.parametrize(
+    "schema, expected_in_message, expected_not_in_message",
+    [
+        pytest.param(
+            {
+                "test_raw": {
+                    "field1": {
+                        "type": "string",
+                        "is_array": False,
+                        "field_description": "First field.",
+                    },
+                }
+            },
+            ["Datasets without dataset_description: test_raw."],
+            ["Fields without field_description"],
+            id="missing dataset_description",
+        ),
+        pytest.param(
+            {
+                "test_raw": {
+                    "dataset_description": "Audit logs.",
+                    "field1": {"type": "string", "is_array": False},
+                    "field2": {
+                        "type": "string",
+                        "is_array": False,
+                        "field_description": "Second field.",
+                    },
+                }
+            },
+            ["Fields without field_description: test_raw.field1."],
+            ["Datasets without dataset_description", "test_raw.field2"],
+            id="missing field_description",
+        ),
+        pytest.param(
+            {
+                "test_raw": {
+                    "dataset_description": "",
+                    "field1": {
+                        "type": "string",
+                        "is_array": False,
+                        "field_description": "   ",
+                    },
+                }
+            },
+            [
+                "Datasets without dataset_description: test_raw.",
+                "Fields without field_description: test_raw.field1.",
+            ],
+            [],
+            id="empty and whitespace-only descriptions",
+        ),
+        pytest.param(
+            {
+                "first_raw": {
+                    "field1": {"type": "string", "is_array": False},
+                },
+                "second_raw": {
+                    "dataset_description": "Second dataset.",
+                    "field2": {"type": "string", "is_array": False},
+                },
+            },
+            [
+                "Datasets without dataset_description: first_raw.",
+                "Fields without field_description: first_raw.field1, second_raw.field2.",
+            ],
+            [],
+            id="multiple datasets, all affected items listed",
+        ),
+    ],
+)
+def test_ModelingRuleSchemaDescriptionsValidator_invalid(
+    schema, expected_in_message, expected_not_in_message
+):
+    """
+    Given:
+        - A modeling rule whose schema is missing, or has empty, descriptions.
+    When:
+        - run ModelingRuleSchemaDescriptionsValidator().obtain_invalid_content_items method
+    Then:
+        - Ensure a single ValidationResult is returned, on the schema file,
+          listing all the affected datasets and fields.
+    """
+    modeling_rule = create_modeling_rule_object()
+    modeling_rule.schema_file.file_content = schema
+    results = ModelingRuleSchemaDescriptionsValidator().obtain_invalid_content_items(
+        [modeling_rule]
+    )
+    assert len(results) == 1
+    assert results[0].path == modeling_rule.schema_file.file_path
+    for text in expected_in_message:
+        assert text in results[0].message
+    for text in expected_not_in_message:
+        assert text not in results[0].message
+
+
+@pytest.mark.parametrize("schema_content", [None, {}, ["not", "a", "dict"]])
+def test_ModelingRuleSchemaDescriptionsValidator_no_usable_schema(schema_content):
+    """
+    Given:
+        - A modeling rule whose schema file is missing, empty or not a JSON object.
+    When:
+        - run ModelingRuleSchemaDescriptionsValidator().obtain_invalid_content_items method
+    Then:
+        - Ensure no ValidationResult is returned (a missing schema is reported by MR100).
+    """
+    modeling_rule = create_modeling_rule_object()
+    modeling_rule.schema_file.file_content = schema_content
+    assert not ModelingRuleSchemaDescriptionsValidator().obtain_invalid_content_items(
+        [modeling_rule]
+    )
+
+
+@pytest.mark.parametrize(
+    "execution_mode, expected_should_run",
+    [
+        (ExecutionMode.USE_GIT, True),
+        (ExecutionMode.ALL_FILES, False),
+        (ExecutionMode.SPECIFIC_FILES, False),
+    ],
+)
+def test_ModelingRuleSchemaDescriptionsValidator_runs_only_in_git_mode(
+    execution_mode, expected_should_run
+):
+    """
+    Given:
+        - A modeling rule.
+    When:
+        - calling should_run with the different execution modes.
+    Then:
+        - Ensure the validation runs only in use-git mode, and not with -a or -i.
+    """
+    modeling_rule = create_modeling_rule_object()
+    assert (
+        ModelingRuleSchemaDescriptionsValidator().should_run(
+            modeling_rule, [], {}, execution_mode
+        )
+        is expected_should_run
     )

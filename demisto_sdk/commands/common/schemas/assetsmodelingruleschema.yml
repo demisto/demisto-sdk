@@ -3,6 +3,9 @@ mapping:
   regex;(.+assets_raw):
     type: map
     mapping:
+      dataset_description:
+        type: str
+        required: false
       regex;(.+):
         type: map
         mapping:
@@ -13,3 +16,6 @@ mapping:
           is_array:
             type: bool
             required: true
+          field_description:
+            type: str
+            required: false

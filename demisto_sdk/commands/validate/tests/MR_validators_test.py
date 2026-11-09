@@ -151,6 +151,31 @@ def test_ModelingRuleSchemaTypesValidator_valid():
     )
 
 
+def test_ModelingRuleSchemaTypesValidator_with_descriptions():
+    """
+    Given:
+        - A modeling rule whose schema contains dataset_description and field_description fields.
+    When:
+        - run ModelingRuleSchemaTypesValidator().obtain_invalid_content_items method
+    Then:
+        - Ensure the descriptions are ignored and no ValidationResult is returned.
+    """
+    modeling_rule = create_modeling_rule_object()
+    modeling_rule.schema_file.file_content = {
+        "test": {
+            "dataset_description": "Audit logs.",
+            "test_attribute": {
+                "type": "string",
+                "is_array": False,
+                "field_description": "A description.",
+            },
+        }
+    }
+    assert not ModelingRuleSchemaTypesValidator().obtain_invalid_content_items(
+        [modeling_rule]
+    )
+
+
 def test_IsSchemaMatchXIFValidator_obtain_invalid_content_items():
     """
     Given:

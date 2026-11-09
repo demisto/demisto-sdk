@@ -44,8 +44,9 @@ class ModelingRuleSchemaTypesValidator(BaseValidator[ContentTypes]):
             [
                 f'"{attribute.get("type")}"'
                 for attributes in schema_content.values()
-                for attribute in attributes.values()
-                if attribute.get("type") not in SCHEMA_FILE_VALID_ATTRIBUTES_TYPE
+                for attribute_name, attribute in attributes.items()
+                if attribute_name != "dataset_description"
+                and attribute.get("type") not in SCHEMA_FILE_VALID_ATTRIBUTES_TYPE
             ]
             if schema_content
             else []

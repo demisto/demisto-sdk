@@ -854,6 +854,24 @@ class TestXSIAMStructureValidator(TestStructureValidator):
         validator = StructureValidator(modeling_rule_schema.path)
         assert validator.is_valid_scheme()
 
+    def test_valid_modeling_rule_schema_with_descriptions(self, pack: Pack):
+        """Given a valid modeling rule schema with descriptions, make sure its schema is valid."""
+        schema_content = {
+            "test_audit_raw": {
+                "dataset_description": "Audit logs.",
+                "name": {
+                    "type": "string",
+                    "is_array": False,
+                    "field_description": "User name",
+                },
+            }
+        }
+        modeling_rule = pack.create_modeling_rule(
+            "modeling_rule_desc", schema=schema_content
+        )
+        validator = StructureValidator(modeling_rule.schema.path)
+        assert validator.is_valid_scheme()
+
     def test_invalid_modeling_rule_schema_bad_type(self, pack: Pack):
         """
         Given:

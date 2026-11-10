@@ -436,7 +436,15 @@ def validate_schema_aligned_with_test_data(
     results: List[Result] = []
 
     for dataset, event_logs in schema_dataset_to_events.items():
-        all_schema_dataset_mappings = schema[dataset]
+        # compare only type and is_array, descriptions are not relevant for test data
+        all_schema_dataset_mappings = {
+            field_name: {
+                "type": field_mapping.get("type"),
+                "is_array": field_mapping.get("is_array"),
+            }
+            for field_name, field_mapping in schema[dataset].items()
+            if field_name != "dataset_description"
+        }
         test_data_mappings: Dict = {}
         error_logs = set()
         for event_log in event_logs:

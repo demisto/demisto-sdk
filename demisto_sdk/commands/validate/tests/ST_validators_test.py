@@ -311,6 +311,108 @@ def test_modeling_rule_parser_errors_check(pack: Pack):
     assert {"value_error.missing", "type_error.bool"} == error_types
 
 
+VALID_MODELING_RULE_YML = {
+    "id": "Tanium_ModelingRule",
+    "name": "Tanium",
+    "fromversion": "8.2.0",
+    "toversion": "6.99.99",
+    "tags": "",
+    "rules": "",
+    "schema": "",
+}
+
+
+def test_modeling_rule_parser_schema_with_descriptions(pack: Pack):
+    """
+    Given:
+        - a modeling rule whose schema contains dataset_description and field_description fields
+    When:
+        - execute the ModelingRuleParser
+    Then:
+        - Ensure there are no structure errors
+    """
+    modeling_rule = pack.create_modeling_rule(
+        yml=VALID_MODELING_RULE_YML,
+        schema={
+            "tanium_integrity_monitor_raw": {
+                "dataset_description": "Audit logs collected from Tanium.",
+                "_raw_log": {
+                    "type": "string",
+                    "is_array": False,
+                    "field_description": "The raw log.",
+                },
+            }
+        },
+    )
+    modeling_rule_parser = ModelingRuleParser(
+        path=modeling_rule.yml.obj_path,
+        pack_marketplaces=[MarketplaceVersions.XSOAR],
+        pack_supported_modules=[],
+    )
+    assert modeling_rule_parser.structure_errors == []
+
+
+@pytest.mark.parametrize(
+    "schema, expected_error_type",
+    [
+        pytest.param(
+            {
+                "tanium_integrity_monitor_raw": {
+                    "_raw_log": {
+                        "type": "string",
+                        "is_array": False,
+                        "field_description": "  ",
+                    }
+                }
+            },
+            "value_error.any_str.min_length",
+            id="empty field_description",
+        ),
+        pytest.param(
+            {
+                "tanium_integrity_monitor_raw": {
+                    "dataset_description": "",
+                    "_raw_log": {"type": "string", "is_array": False},
+                }
+            },
+            "value_error",
+            id="empty dataset_description",
+        ),
+        pytest.param(
+            {
+                "tanium_integrity_monitor_raw": {
+                    "dataset_description": 5,
+                    "_raw_log": {"type": "string", "is_array": False},
+                }
+            },
+            "value_error",
+            id="non string dataset_description",
+        ),
+    ],
+)
+def test_modeling_rule_parser_schema_with_empty_descriptions(
+    pack: Pack, schema: dict, expected_error_type: str
+):
+    """
+    Given:
+        - a modeling rule whose schema contains an empty or invalid description field
+    When:
+        - execute the ModelingRuleParser
+    Then:
+        - Ensure a single structure error of the expected type is returned
+    """
+    modeling_rule = pack.create_modeling_rule(
+        yml=VALID_MODELING_RULE_YML, schema=schema
+    )
+    modeling_rule_parser = ModelingRuleParser(
+        path=modeling_rule.yml.obj_path,
+        pack_marketplaces=[MarketplaceVersions.XSOAR],
+        pack_supported_modules=[],
+    )
+    assert len(modeling_rule_parser.structure_errors) == 1
+    assert modeling_rule_parser.structure_errors[0].error_type == expected_error_type
+
+
 def test_pack_parser_sanity_check(pack: Pack):
     """
     Given:

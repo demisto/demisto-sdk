@@ -1,4 +1,12 @@
 # Changelog
+## 1.39.14 (2026-11-10)
+### Feature
+* Added the **IN172** validation, which ensures an integration does not contain duplicate command names. [#5546](https://github.com/demisto/demisto-sdk/pull/5546)
+* Added support for the optional `dataset_description` and `field_description` fields in the modeling rules schema file (`_schema.json`), including in the strict schema model, the legacy structure schemas, **MR106** and **test-modeling-rule**. [#5558](https://github.com/demisto/demisto-sdk/pull/5558)
+* Added the **MR110** validation, requiring a non-empty `dataset_description` for every dataset and a non-empty `field_description` for every field in the schema file of a changed modeling rule. The validation runs only in use-git mode. [#5558](https://github.com/demisto/demisto-sdk/pull/5558)
+* Updated **CO161** to require the `fetch_history` action on `threat-intelligence-and-enrichment` capabilities, so feed connectors expose View Fetch History in the ConnectUs UI. [#5549](https://github.com/demisto/demisto-sdk/pull/5549)
+
+
 ## 1.39.13 (2026-10-20)
 ### Breaking
 * Removed the defaultDataSource field from the pack metadata schema, along with its validators PA131 (IsDefaultDataSourceProvidedValidator) and PA132 (IsValidDefaultDataSourceNameValidator), as all integrations are now shown in the Data Sources screen. [#5513](https://github.com/demisto/demisto-sdk/pull/5513)

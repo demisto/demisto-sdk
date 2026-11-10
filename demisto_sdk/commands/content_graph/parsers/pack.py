@@ -120,6 +120,7 @@ class PackContentItems:
         )
         self.agentix_agent = ContentItemsList(content_type=ContentType.AGENTIX_AGENT)
         self.agentix_skill = ContentItemsList(content_type=ContentType.AGENTIX_SKILL)
+        self.agentix_flow = ContentItemsList(content_type=ContentType.AGENTIX_FLOW)
         self.knowledge = ContentItemsList(content_type=ContentType.KNOWLEDGE)
 
     def iter_lists(self) -> Iterator[ContentItemsList]:

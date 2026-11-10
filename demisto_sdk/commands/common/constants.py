@@ -141,6 +141,7 @@ CASE_FIELDS_DIR = "CaseFields"
 AGENTIX_ACTIONS_DIR = "AgentixActions"
 AGENTIX_AGENTS_DIR = "AgentixAgents"
 AGENTIX_SKILLS_DIR = "AgentixSkills"
+AGENTIX_FLOWS_DIR = "AgentixFlows"
 KNOWLEDGE_DIR = "Knowledge"
 
 # NAMES OF ENTITIES
@@ -302,6 +303,7 @@ class FileType(StrEnum):
     AGENTIX_AGENT = "agentixagent"
     AGENTIX_ACTION = "agentixaction"
     AGENTIX_SKILL = "agentixskill"
+    AGENTIX_FLOW = "agentixflow"
     KNOWLEDGE = "knowledge"
 
 
@@ -346,6 +348,7 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.AGENTIX_AGENT: "Agents",
     FileType.AGENTIX_ACTION: "Actions",
     FileType.AGENTIX_SKILL: "Skills",
+    FileType.AGENTIX_FLOW: "Flows",
     FileType.KNOWLEDGE: "Knowledge",
 }
 
@@ -458,6 +461,7 @@ CONTENT_ENTITIES_DIRS = [
     AGENTIX_ACTIONS_DIR,
     AGENTIX_AGENTS_DIR,
     AGENTIX_SKILLS_DIR,
+    AGENTIX_FLOWS_DIR,
     KNOWLEDGE_DIR,
 ]
 
@@ -1671,6 +1675,7 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.AGENTIX_ACTION: "8.12.0",
     FileType.AGENTIX_AGENT: "8.12.0",
     FileType.AGENTIX_SKILL: "8.15.0",
+    FileType.AGENTIX_FLOW: "8.17.0",
     FileType.KNOWLEDGE: "8.15.0",
 }
 

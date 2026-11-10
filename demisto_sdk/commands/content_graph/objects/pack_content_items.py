@@ -9,6 +9,7 @@ from demisto_sdk.commands.content_graph.objects.agentix_action_test import (
     AgentixActionTest,
 )
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
+from demisto_sdk.commands.content_graph.objects.agentix_flow import AgentixFlow
 from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
 from demisto_sdk.commands.content_graph.objects.assets_modeling_rule import (
     AssetsModelingRule,
@@ -118,6 +119,7 @@ class PackContentItems(BaseModel):
         [], alias=ContentType.AGENTIX_ACTION_TEST.value
     )
     agentix_skill: List[AgentixSkill] = Field([], alias=ContentType.AGENTIX_SKILL.value)
+    agentix_flow: List[AgentixFlow] = Field([], alias=ContentType.AGENTIX_FLOW.value)
     knowledge: List[Knowledge] = Field([], alias=ContentType.KNOWLEDGE.value)
 
     def __iter__(self) -> Generator[ContentItem, Any, Any]:  # type: ignore

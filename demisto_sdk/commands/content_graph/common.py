@@ -119,6 +119,7 @@ class ContentType(StrEnum):
     AGENTIX_ACTION = "AgentixAction"
     AGENTIX_ACTION_TEST = "AgentixActionTest"
     AGENTIX_SKILL = "AgentixSkill"
+    AGENTIX_FLOW = "AgentixFlow"
     KNOWLEDGE = "Knowledge"
     CONNECTOR = "Connector"
 
@@ -415,6 +416,8 @@ class ContentType(StrEnum):
             return "Actions"
         elif self == ContentType.AGENTIX_SKILL:
             return "Skills"
+        elif self == ContentType.AGENTIX_FLOW:
+            return "Flows"
         elif self == ContentType.KNOWLEDGE:
             return "Knowledge"
         separated_str = pascalToSpace(self)
@@ -445,6 +448,8 @@ class ContentType(StrEnum):
             return ContentType.AGENTIX_ACTION
         elif header == "Skills":
             return ContentType.AGENTIX_SKILL
+        elif header == "Flows":
+            return ContentType.AGENTIX_FLOW
         elif header == "Knowledge":
             return ContentType.KNOWLEDGE
         normalized_header = header.rstrip("s").replace(" ", "_").upper()

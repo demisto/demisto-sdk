@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import Any, Optional
 
+from pydantic import Field
+
 from demisto_sdk.commands.common.constants import AGENTIX_FLOWS_DIR
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.agentix_base import AgentixBase
@@ -14,7 +16,9 @@ class AgentixFlow(AgentixBase, content_type=ContentType.AGENTIX_FLOW):
     ``definition`` block.
     """
 
-    definition: Optional[Any] = None
+    # Nested map: excluded from graph nodes (Neo4j properties must be primitives).
+    # Packaging re-reads the YAML from disk, so it is still shipped in artifacts.
+    definition: Optional[Any] = Field(None, exclude=True)
     supportedModules: Optional[list[str]] = None
 
     @staticmethod

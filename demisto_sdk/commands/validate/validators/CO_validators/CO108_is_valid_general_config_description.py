@@ -33,6 +33,8 @@ class IsValidGeneralConfigDescriptionValidator(ConnectorsValidator[ContentTypes]
     related_field = "general_configurations"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.CONNECTOR_CAPABILITIES]
+    # Runs only from the current Connectus dev version (v4.0.x), skipped on master/stable (v3.0.x).
+    min_connectus_version = "4.0"
 
     def obtain_invalid_content_items(
         self,

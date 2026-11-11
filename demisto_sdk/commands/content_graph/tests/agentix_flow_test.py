@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.content_graph.objects import base_content
 from demisto_sdk.commands.content_graph.objects.agentix_flow import AgentixFlow
 from demisto_sdk.commands.content_graph.parsers.agentix_flow import (
@@ -24,15 +23,6 @@ FLOW_DATA = {
 }
 
 
-def _create_flow(pack: Pack) -> Path:
-    flow_dir = Path(pack.path) / "AgentixFlows" / "PhishingTriage"
-    flow_dir.mkdir(parents=True)
-    flow_path = flow_dir / "PhishingTriage.yml"
-    with flow_path.open("w") as f:
-        yaml.dump(FLOW_DATA, f)
-    return flow_path
-
-
 def _is_neo4j_property_value(value) -> bool:
     """Neo4j node properties must be primitives or (homogeneous) lists of primitives."""
     primitives = (str, int, float, bool, type(None))
@@ -53,7 +43,7 @@ def test_agentix_flow_to_dict_has_only_neo4j_compatible_values(pack: Pack, monke
         - ``definition`` is not part of the node, and every value is a type Neo4j
           accepts as a node property (regression: CypherTypeError in graph update).
     """
-    flow_path = _create_flow(pack)
+    flow_path = Path(pack.create_agentix_flow("PhishingTriage", FLOW_DATA).path)
     monkeypatch.setattr(base_content, "CONTENT_PATH", Path(pack.path).parent.parent)
     parser = AgentixFlowParser(
         flow_path, list(MarketplaceVersions), pack_supported_modules=[]
@@ -78,7 +68,7 @@ def test_agentix_flow_definition_kept_on_model_and_in_file_data(pack: Pack):
     Then:
         - ``definition`` is still available on the model and in the uploaded data.
     """
-    flow_path = _create_flow(pack)
+    flow_path = Path(pack.create_agentix_flow("PhishingTriage", FLOW_DATA).path)
     parser = AgentixFlowParser(
         flow_path, list(MarketplaceVersions), pack_supported_modules=[]
     )

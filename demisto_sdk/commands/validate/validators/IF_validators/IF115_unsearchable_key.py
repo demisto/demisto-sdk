@@ -26,7 +26,7 @@ class UnsearchableKeyValidator(BaseValidator[ContentTypes]):
         "To suppress this validation, use the .pack-ignore file."
     )
     related_field = "unsearchable"
-    expected_git_statuses = [GitStatuses.ADDED]
+    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

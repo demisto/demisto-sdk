@@ -1,0 +1,6 @@
+changes:
+- description: Added support for the optional `dataset_description` and `field_description` fields in the modeling rules schema file (`_schema.json`), including in the strict schema model, the legacy structure schemas, **MR106** and **test-modeling-rule**.
+  type: feature
+- description: Added the **MR110** validation, requiring a non-empty `dataset_description` for every dataset and a non-empty `field_description` for every field in the schema file of a changed modeling rule. The validation runs only in use-git mode.
+  type: feature
+pr_number: 5558

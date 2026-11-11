@@ -55,6 +55,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
     get_all_validators,
     is_error_ignored,
+    should_run_on_connectus_version,
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backwards_subtype import (
     BreakingBackwardsSubtypeValidator,
@@ -158,6 +159,70 @@ def test_filter_validators(
         ):
             results = validate_manager.filter_validators()
             assert results == expected_results
+
+
+@pytest.mark.parametrize(
+    "min_version, running_version, expected",
+    [
+        pytest.param(None, "3.0.33", True, id="no minimum"),
+        pytest.param("4.0", None, True, id="unknown running version"),
+        pytest.param("4.0", "3.0.98", False, id="lower major"),
+        pytest.param("4.0", "4.0.0", True, id="equal major.minor"),
+        pytest.param("4.0", "v4.0.42", True, id="equal with v prefix and patch"),
+        pytest.param("4.1", "4.0.99", False, id="lower minor, patch ignored"),
+        pytest.param("4.0", "5.0.1", True, id="higher major"),
+        pytest.param("4", "4.0.1", True, id="minimum without minor"),
+        pytest.param("4.0", "not-a-version", True, id="invalid running version"),
+    ],
+)
+def test_should_run_on_connectus_version(min_version, running_version, expected):
+    """
+    Given
+        - A validator minimal Connectus version and a detected Connectus version.
+    When
+        - Calling should_run_on_connectus_version.
+    Then
+        - Only major.minor are compared, missing or invalid versions do not block the validation.
+    """
+    assert should_run_on_connectus_version(min_version, running_version) is expected
+
+
+@pytest.mark.parametrize(
+    "connectus_version, expected_codes",
+    [
+        pytest.param(None, ["BA101", "BC100"], id="no version - run all"),
+        pytest.param("3.0.33", ["BA101"], id="lower version - skip gated"),
+        pytest.param("4.0.42", ["BA101", "BC100"], id="equal version - run all"),
+    ],
+)
+def test_filter_validators_by_connectus_version(
+    mocker: MockerFixture, connectus_version, expected_codes
+):
+    """
+    Given
+        - BC100 requires Connectus version 4.0 and BA101 has no requirement, both are selected.
+    When
+        - Calling filter_validators with different detected Connectus versions.
+    Then
+        - BC100 is skipped only when the detected version is lower than 4.0.
+    """
+    validate_manager = get_validate_manager(mocker)
+    validate_manager.connectus_version = connectus_version
+    mocker.patch.object(ConfiguredValidations, "select", ["BA101", "BC100"])
+    mocker.patch.object(
+        BreakingBackwardsSubtypeValidator, "min_connectus_version", "4.0"
+    )
+    with patch.object(
+        BaseValidator,
+        "__subclasses__",
+        return_value=[IDNameAllStatusesValidator, BreakingBackwardsSubtypeValidator],
+    ):
+        with patch(
+            "demisto_sdk.commands.validate.validators.base_validator.get_all_validators_specific_validation",
+            return_value=[],
+        ):
+            results = validate_manager.filter_validators()
+    assert [validator.error_code for validator in results] == expected_codes
 
 
 @pytest.mark.parametrize(

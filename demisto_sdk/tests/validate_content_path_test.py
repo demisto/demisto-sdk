@@ -5,6 +5,7 @@ import pytest
 from demisto_sdk.commands.common.constants import (
     AGENTIX_ACTIONS_DIR,
     AGENTIX_AGENTS_DIR,
+    AGENTIX_FLOWS_DIR,
     AGENTIX_SKILLS_DIR,
     CLASSIFIERS_DIR,
     CONTENT_ENTITIES_DIRS,
@@ -31,6 +32,7 @@ from demisto_sdk.scripts.validate_content_path import (
     ZERO_DEPTH_FILES,
     InvalidAgentixActionFileName,
     InvalidAgentixAgentFileName,
+    InvalidAgentixFlowFileName,
     InvalidAgentixSkillFileName,
     InvalidClassifier,
     InvalidCorrelationRuleFileName,
@@ -247,6 +249,7 @@ folders_not_allowed_to_contain_files = (
 ).difference(DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES) - {
     AGENTIX_ACTIONS_DIR,
     AGENTIX_AGENTS_DIR,
+    AGENTIX_FLOWS_DIR,
     AGENTIX_SKILLS_DIR,
     KNOWLEDGE_DIR,
 }
@@ -323,6 +326,7 @@ def test_depth_one_pass(folder: str):
         InvalidAgentixAgentFileName,
         InvalidAgentixActionFileName,
         InvalidAgentixSkillFileName,
+        InvalidAgentixFlowFileName,
         InvalidKnowledgeFileName,
     ):
         # In Integration/script, InvalidIntegrationScriptFileType will be raised but is irrelevant for this test.
@@ -331,6 +335,7 @@ def test_depth_one_pass(folder: str):
         # InvalidAgentixAgentFileName will be raised but it is irrelevant for this test.
         # InvalidAgentixActionFileName will be raised but it is irrelevant for this test.
         # InvalidAgentixSkillFileName will be raised but it is irrelevant for this test.
+        # InvalidAgentixFlowFileName will be raised but it is irrelevant for this test.
         pass
 
 

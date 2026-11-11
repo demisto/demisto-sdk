@@ -1,0 +1,4 @@
+changes:
+- description: Added the `--connectus-version` option (or the `DEMISTO_SDK_CONNECTUS_VERSION` environment variable) to the **validate** command. Validators that set `min_connectus_version` are skipped when the given Connectus version is lower (compared on major.minor). When no version is given, all validators run.
+  type: feature
+pr_number: CIAC-18472

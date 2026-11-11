@@ -211,6 +211,13 @@ def validate(
         "--create-graph-from-scratch",
         help="If set, creates the content graph from scratch instead of downloading it from the bucket.",
     ),
+    connectus_version: str = typer.Option(
+        None,
+        "--connectus-version",
+        envvar="DEMISTO_SDK_CONNECTUS_VERSION",
+        help="The Connectus (unified-connectors-content) version, e.g. 4.0.42. Validators requiring a higher "
+        "Connectus version (compared on major.minor) are skipped. If not given, all validators run.",
+    ),
     ignore: list[str] = typer.Option(
         None, help="An error code to not run. Can be repeated."
     ),
@@ -520,5 +527,6 @@ def run_new_validation(file_path, execution_mode, **kwargs):
         ignore_support_level=kwargs["ignore_support_level"],
         ignore=kwargs["ignore"],
         create_graph_from_scratch=kwargs.get("create_graph_from_scratch", False),
+        connectus_version=kwargs.get("connectus_version"),
     )
     return validator_v2.run_validations()

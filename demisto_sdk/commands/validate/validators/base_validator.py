@@ -15,6 +15,7 @@ from typing import (
     get_args,
 )
 
+from packaging.version import InvalidVersion, Version
 from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.common.constants import (
@@ -100,6 +101,8 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     private_content_path: (ClassVar[Optional[Path]]): Path to private content repository for graph building.
         When set, this path is passed to update_content_graph() which handles the PrivateContentManager internally.
     dockerhub_api_client (ClassVar[DockerHubClient): the docker hub api client.
+    min_connectus_version: (ClassVar[Optional[str]]): The minimal Connectus (unified-connectors-content) version
+        the validation should run from (compared on major.minor). None means the validation always runs.
     """
 
     error_code: ClassVar[str]
@@ -116,6 +119,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     related_file_type: ClassVar[Optional[List[RelatedFileType]]] = None
     expected_execution_mode: ClassVar[Optional[List[ExecutionMode]]] = None
     create_graph_from_scratch: ClassVar[bool] = False
+    min_connectus_version: ClassVar[Optional[str]] = None
 
     def get_content_types(self):
         args = (get_args(self.__orig_bases__[0]) or get_args(self.__orig_bases__[1]))[0]  # type: ignore
@@ -690,3 +694,35 @@ def should_run_on_execution_mode(
     if running_execution_mode in expected_execution_mode:
         return True
     return False
+
+
+def _major_minor(version: str) -> tuple:
+    """Return the (major, minor) of a version string such as '4.0.42' or 'v4.0'."""
+    return (Version(version).release + (0,))[:2]
+
+
+def should_run_on_connectus_version(
+    min_connectus_version: Optional[str],
+    running_connectus_version: Optional[str],
+) -> bool:
+    """
+    Check if a validation should run according to the detected Connectus version.
+    Only major.minor are compared, since the patch is auto-incremented per branch in the Connectus repo.
+    Args:
+        min_connectus_version (Optional[str]): The validation's minimal Connectus version, None means no restriction.
+        running_connectus_version (Optional[str]): The detected Connectus version, None means unknown.
+    Returns:
+        bool: True if the validation should run. When either version is missing or invalid, return True.
+    """
+    if not min_connectus_version or not running_connectus_version:
+        return True
+    try:
+        return _major_minor(running_connectus_version) >= _major_minor(
+            min_connectus_version
+        )
+    except InvalidVersion:
+        logger.warning(
+            f"Could not compare Connectus versions (running: '{running_connectus_version}', "
+            f"minimal: '{min_connectus_version}'), running the validation."
+        )
+        return True

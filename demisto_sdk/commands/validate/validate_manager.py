@@ -22,6 +22,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationCaughtExceptionResult,
     ValidationResult,
     get_all_validators,
+    should_run_on_connectus_version,
 )
 
 
@@ -36,8 +37,10 @@ class ValidateManager:
         ignore_support_level=False,
         ignore: Optional[List[str]] = None,
         create_graph_from_scratch: bool = False,
+        connectus_version: Optional[str] = None,
     ):
         self.ignore_support_level = ignore_support_level
+        self.connectus_version = connectus_version
         self.file_path = file_path
         self.allow_autofix = allow_autofix
         self.validation_results = validation_results
@@ -192,17 +195,30 @@ class ValidateManager:
     def filter_validators(self) -> List[BaseValidator]:
         """
         Filter the validations by their error code
-        according to the validations supported by the given flags according to the config file.
+        according to the validations supported by the given flags according to the config file,
+        and by the detected Connectus version (validators with a higher min_connectus_version are skipped).
 
         Returns:
             List[BaseValidator]: the list of the filtered validators
         """
-        return [
-            validator
-            for validator in get_all_validators()
-            if validator.error_code
-            in self.configured_validations.select + self.configured_validations.warning
-        ]
+        validators = []
+        for validator in get_all_validators():
+            if (
+                validator.error_code
+                not in self.configured_validations.select
+                + self.configured_validations.warning
+            ):
+                continue
+            if not should_run_on_connectus_version(
+                validator.min_connectus_version, self.connectus_version
+            ):
+                logger.info(
+                    f"Skipping {validator.error_code}: requires Connectus version >= "
+                    f"{validator.min_connectus_version}, detected {self.connectus_version}."
+                )
+                continue
+            validators.append(validator)
+        return validators
 
     def add_invalid_content_items(self):
         """Create results for all the invalid_content_items.

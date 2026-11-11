@@ -1,12 +1,21 @@
+from pathlib import Path
+
 import pytest
 
+from demisto_sdk.commands.common.constants import GitStatuses, MarketplaceVersions
+from demisto_sdk.commands.content_graph.objects.agentix_flow import AgentixFlow
+from demisto_sdk.commands.content_graph.parsers.agentix_flow import (
+    AgentixFlowParser,
+)
 from demisto_sdk.commands.validate.tests.test_tools import create_playbook_object
 from demisto_sdk.commands.validate.tools import (
     collect_all_inputs_from_inputs_section,
     collect_all_inputs_in_use,
     compare_lists,
     is_indicator_pb,
+    should_skip_rn_check,
 )
+from TestSuite.pack import Pack
 
 
 @pytest.mark.parametrize(
@@ -139,6 +148,30 @@ def test_is_indicator_pb_positive_case():
         ],
     )
     assert is_indicator_pb(playbook)
+
+
+@pytest.mark.parametrize(
+    "git_status", [GitStatuses.ADDED, GitStatuses.MODIFIED, GitStatuses.DELETED]
+)
+def test_should_skip_rn_check_agentix_flow(pack: Pack, git_status: GitStatuses):
+    """
+    Given:
+        - An AgentixFlow content item that was added / modified / deleted in git.
+    When:
+        - Running should_skip_rn_check.
+    Then:
+        - It returns True, like the other Agentix content types
+          (AgentixAction, AgentixAgent, AgentixSkill, Knowledge), so RN106/RN107
+          don't require release notes for flows.
+    """
+    flow = pack.create_agentix_flow("PhishingTriage")
+    parser = AgentixFlowParser(
+        Path(flow.path), list(MarketplaceVersions), pack_supported_modules=[]
+    )
+    content_item = AgentixFlow.from_orm(parser)
+    content_item.git_status = git_status
+
+    assert should_skip_rn_check(content_item)
 
 
 def test_is_indicator_pb_negative_case():

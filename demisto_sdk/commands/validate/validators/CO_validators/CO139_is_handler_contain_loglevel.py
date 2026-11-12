@@ -13,17 +13,17 @@ Standard vs grouped scoping:
 **Standard connectors** (``settings.grouped != true``)
     - Exactly ONE ``general_configurations.configurations[]``
       field-group carries the ``integrationLogLevel`` field.
-    - Either the group has no ``required_for_capabilities`` (shared
-      across every handler) OR its ``required_for_capabilities`` list
-      is a **superset** of every capability id the handler subscribes
-      to. The looser "any intersection" semantics of
+    - The group MUST declare a non-empty ``required_for_capabilities``
+      list that **exactly equals** the union of every capability id
+      subscribed to by the connector's XSOAR handlers: no missing ids
+      and no extras. The looser "any intersection" semantics of
       :func:`general_configurations_field_group_visible_for_handler`
       is not enough here: a handler that subscribes to
       ``[cap-a, cap-b]`` under a group gated by
       ``required_for_capabilities: [cap-a]`` would have the log-level
       field hidden the moment the user disables cap-a while cap-b
-      stays on. The superset rule ensures the log-level UI stays
-      visible for every subscribed cap.
+      stays on. Conversely, ids no XSOAR handler subscribes to would
+      show the field when only a non-XSOAR capability is enabled.
     - Duplicates (two field-groups both carrying the field) are a
       bug.
 
@@ -194,8 +194,7 @@ def _check_log_level_field_shape(field: HandlerVisibleField, where: str) -> List
     actual_type = field.field.field_type
     if actual_type != EXPECTED_FIELD_TYPE:
         issues.append(
-            f"{prefix}: field_type='{actual_type}' but must be "
-            f"'{EXPECTED_FIELD_TYPE}'"
+            f"{prefix}: field_type='{actual_type}' but must be '{EXPECTED_FIELD_TYPE}'"
         )
 
     actual_ct = field.xsoar_config_type
@@ -217,8 +216,7 @@ def _check_log_level_field_shape(field: HandlerVisibleField, where: str) -> List
         )
     if options.get("clearable") is not True:
         issues.append(
-            f"{prefix}: options.clearable={options.get('clearable')!r} "
-            f"but must be True"
+            f"{prefix}: options.clearable={options.get('clearable')!r} but must be True"
         )
 
     values = options.get("values")
@@ -250,8 +248,9 @@ class IsHandlerContainLoglevelValidator(ConnectorsValidator[ContentTypes]):
         "`integrationLogLevel` (select, config_type=backend) field "
         "under `configurations.yaml` `general_configurations`. Standard "
         "connectors: one field-group carries the field, and its "
-        "`required_for_capabilities` (if set) must be a superset of "
-        "every capability id the handler subscribes to. Grouped "
+        "`required_for_capabilities` must be present, non-empty and "
+        "exactly equal to the union of XSOAR handler capability ids "
+        "(no missing ids, no extras). Grouped "
         "connectors: one field-group per view_group with `advanced: "
         "true`. Namespaced field ids are canonicalized via "
         "serializer.yaml `field_mappings` before matching (walker-"
@@ -260,17 +259,19 @@ class IsHandlerContainLoglevelValidator(ConnectorsValidator[ContentTypes]):
     rationale = (
         "The backend cannot honor per-handler log-level controls "
         "without the `integrationLogLevel` backend-managed field. "
-        "Standard connectors expose one field-group covering every "
-        "handler capability so the UI knob is never gated off; grouped "
+        "Standard connectors must declare `required_for_capabilities` "
+        "on the log-level group, exactly equal to the XSOAR handlers' "
+        "capabilities, so the Log Level field only appears when an "
+        "XSOAR capability is enabled and is never gated off for one; "
+        "grouped "
         "connectors expose one advanced field-group per integration "
         "tile so each tile's runtime debug/verbose controls surface "
-        "under its own view_group. Duplicates or under-scoped "
-        "`required_for_capabilities` leave subscribers unable to set "
-        "log level for at least one of their capabilities."
+        "under its own view_group. Duplicates, missing or extra "
+        "`required_for_capabilities` ids leave the field hidden for an "
+        "XSOAR capability or shown when none is enabled."
     )
     error_message = (
-        "Connector '{connector_id}': integrationLogLevel wiring is "
-        "incomplete: {issues}"
+        "Connector '{connector_id}': integrationLogLevel wiring is incomplete: {issues}"
     )
     related_field = "integrationLogLevel"
     is_auto_fixable = False
@@ -312,6 +313,10 @@ class IsHandlerContainLoglevelValidator(ConnectorsValidator[ContentTypes]):
         is_grouped = bool(connector.settings and connector.settings.grouped)
 
         issues: List[str] = []
+        # Distinct raw log-level groups seen on standard connectors,
+        # keyed by identity so the connector-level required-caps check
+        # runs once per group rather than once per handler.
+        standard_groups: Dict[int, Dict[str, Any]] = {}
         # Field-shape sub-rules can trigger from multiple handlers
         # observing the same field; dedupe per raw id to avoid
         # spamming the aggregated message.
@@ -366,6 +371,12 @@ class IsHandlerContainLoglevelValidator(ConnectorsValidator[ContentTypes]):
                 issues.extend(self._check_grouped_group_attrs(handler, group))
             else:
                 issues.extend(self._check_standard_group_coverage(handler, group))
+                standard_groups[id(group)] = group
+
+        for std_group in standard_groups.values():
+            issues.extend(
+                self._check_standard_required_caps_declared(xsoar_handlers, std_group)
+            )
 
         # Duplicate detection at the file level (grouped OR standard).
         # A field-group that carries the log-level field but is NOT
@@ -430,18 +441,17 @@ class IsHandlerContainLoglevelValidator(ConnectorsValidator[ContentTypes]):
     def _check_standard_group_coverage(
         handler: HandlerData, group: Dict[str, Any]
     ) -> List[str]:
-        """Standard-connector rule: ``required_for_capabilities`` must
-        be either absent/empty OR a superset of every capability id
-        ``handler`` subscribes to.
+        """Standard-connector per-handler rule: ``required_for_capabilities``
+        must be a list covering every capability id ``handler``
+        subscribes to.
 
-        The looser "any intersection" semantics of the visibility
-        predicate is not enough here — the user could enable a
-        capability that the required_for_capabilities list omits, at
-        which point the log-level field disappears from the UI.
+        An absent/empty list is reported once per connector by
+        :meth:`_check_standard_required_caps_declared`, so it yields
+        no per-handler message here (avoids duplicate findings).
         """
         rfc = group.get("required_for_capabilities")
         if rfc is None or (isinstance(rfc, list) and len(rfc) == 0):
-            return []  # unrestricted — always visible.
+            return []  # reported at connector level.
         if not isinstance(rfc, list):
             return [
                 f"XSOAR handler '{handler.id}': "
@@ -460,6 +470,50 @@ class IsHandlerContainLoglevelValidator(ConnectorsValidator[ContentTypes]):
                 f"handler '{handler.id}' capabilities "
                 f"{sorted(missing)!r} - the field must remain visible "
                 f"for every capability the handler subscribes to"
+            ]
+        return []
+
+    @staticmethod
+    def _check_standard_required_caps_declared(
+        xsoar_handlers: List[HandlerData], group: Dict[str, Any]
+    ) -> List[str]:
+        """Standard-connector connector-level rule: the group must
+        declare a non-empty ``required_for_capabilities`` and it must
+        not contain ids outside the union of XSOAR handler capability
+        ids. Missing ids are reported per handler by
+        :meth:`_check_standard_group_coverage`.
+        """
+        rfc = group.get("required_for_capabilities")
+        if rfc is not None and not isinstance(rfc, list):
+            return []  # type error already reported per handler.
+
+        expected: Set[str] = set()
+        for handler in xsoar_handlers:
+            expected |= set(handler.capability_ids)
+        handlers_summary = "; ".join(
+            f"{handler.id}: {sorted(handler.capability_ids)!r}"
+            for handler in xsoar_handlers
+        )
+
+        if not rfc:
+            if not expected:
+                return []  # nothing to require.
+            return [
+                f"standard connector: integrationLogLevel group must "
+                f"declare `required_for_capabilities` covering "
+                f"{sorted(expected)!r} (XSOAR handlers: "
+                f"{handlers_summary})"
+            ]
+
+        declared = {c for c in rfc if isinstance(c, str)}
+        extra = declared - expected
+        if extra:
+            return [
+                f"standard connector: integrationLogLevel group's "
+                f"`required_for_capabilities` contains {sorted(extra)!r} "
+                f"but no XSOAR handler subscribes to them - it must "
+                f"exactly equal the XSOAR handlers' capabilities "
+                f"(XSOAR handlers: {handlers_summary})"
             ]
         return []
 

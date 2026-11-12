@@ -10490,9 +10490,9 @@ class TestCO139IsHandlerContainLoglevel:
     ``configurations.yaml.general_configurations``.
 
     - Standard connectors: one field-group carries the field, its
-      ``required_for_capabilities`` (if set) must be a **superset** of
-      every capability id the handler subscribes to. Duplicates are a
-      bug.
+      ``required_for_capabilities`` is required, non-empty and must
+      **exactly equal** the union of XSOAR handler capability ids (no
+      missing, no extras). Duplicates are a bug.
     - Grouped connectors: one field-group per view_group with
       ``advanced: true``. Walker resolves view_group ownership via
       ``connection.yaml.profiles[].view_group``.
@@ -10624,6 +10624,171 @@ class TestCO139IsHandlerContainLoglevel:
         msg = results[0].message
         assert "does not cover" in msg
         assert "fetch-issues" in msg
+
+    def test_standard_missing_required_for_capabilities_fails(self):
+        """Standard connector: group without ``required_for_capabilities``
+        is invalid - the log-level field must be gated on the XSOAR caps."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
+            IsHandlerContainLoglevelValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_xsoar_handler_with_caps(connector, ["automation-and-remediation"])
+        _write_configurations_with_log_level(
+            connector,
+            general_config_entries=[{"fields": [_valid_log_level_field()]}],
+        )
+        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "must declare" in msg
+        assert "required_for_capabilities" in msg
+        assert "automation-and-remediation" in msg
+
+    def test_standard_empty_required_for_capabilities_fails(self):
+        """Standard connector: an empty ``required_for_capabilities``
+        list is treated the same as a missing one."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
+            IsHandlerContainLoglevelValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_xsoar_handler_with_caps(connector, ["automation-and-remediation"])
+        _write_configurations_with_log_level(
+            connector,
+            general_config_entries=_standard_log_level_configurations([]),
+        )
+        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "required_for_capabilities" in msg
+        assert "automation-and-remediation" in msg
+
+    def test_standard_extra_capability_in_rfc_fails(self):
+        """Standard connector: ids in ``required_for_capabilities`` that
+        no XSOAR handler subscribes to are flagged."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
+            IsHandlerContainLoglevelValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_xsoar_handler_with_caps(connector, ["automation-and-remediation"])
+        _write_configurations_with_log_level(
+            connector,
+            general_config_entries=_standard_log_level_configurations(
+                required_for_capabilities=[
+                    "automation-and-remediation",
+                    "fetch-issues",
+                ]
+            ),
+        )
+        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "fetch-issues" in msg
+        assert "no XSOAR handler subscribes" in msg
+        assert "xsoar-test" in msg
+        assert "does not cover" not in msg
+
+    def test_standard_multi_handler_union_passes_and_extra_fails(self):
+        """Extras are computed against the UNION of all XSOAR handlers'
+        capabilities, and reported once (not once per handler)."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
+            IsHandlerContainLoglevelValidator,
+        )
+
+        connector = create_connector_object(
+            handlers=[{"id": "xsoar-a"}, {"id": "xsoar-b"}]
+        )
+        _wire_xsoar_handler_with_caps(connector, ["cap-a"], handler_index=0)
+        _wire_xsoar_handler_with_caps(connector, ["cap-b"], handler_index=1)
+
+        _write_configurations_with_log_level(
+            connector,
+            general_config_entries=_standard_log_level_configurations(
+                ["cap-a", "cap-b"]
+            ),
+        )
+        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+        connector = create_connector_object(
+            handlers=[{"id": "xsoar-a"}, {"id": "xsoar-b"}]
+        )
+        _wire_xsoar_handler_with_caps(connector, ["cap-a"], handler_index=0)
+        _wire_xsoar_handler_with_caps(connector, ["cap-b"], handler_index=1)
+        _write_configurations_with_log_level(
+            connector,
+            general_config_entries=_standard_log_level_configurations(
+                ["cap-a", "cap-b", "cap-c"]
+            ),
+        )
+        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert msg.count("no XSOAR handler subscribes") == 1
+        assert "['cap-c']" in msg
+
+    def test_standard_multi_handler_missing_other_handler_cap_fails(self):
+        """rfc covering only one handler's capabilities is flagged,
+        naming the handler left without a visible log-level field."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
+            IsHandlerContainLoglevelValidator,
+        )
+
+        connector = create_connector_object(
+            handlers=[{"id": "xsoar-a"}, {"id": "xsoar-b"}]
+        )
+        _wire_xsoar_handler_with_caps(connector, ["cap-a"], handler_index=0)
+        _wire_xsoar_handler_with_caps(connector, ["cap-b"], handler_index=1)
+        _write_configurations_with_log_level(
+            connector,
+            general_config_entries=_standard_log_level_configurations(["cap-a"]),
+        )
+        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "xsoar-b" in msg
+        assert "xsoar-a" not in msg
+
+    def test_standard_non_list_rfc_reports_type_error_once(self):
+        """A non-list ``required_for_capabilities`` yields only the type
+        error, not an additional missing/extras finding."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO139_is_handler_contain_loglevel import (
+            IsHandlerContainLoglevelValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_xsoar_handler_with_caps(connector, ["automation-and-remediation"])
+        _write_configurations_with_log_level(
+            connector,
+            general_config_entries=[
+                {
+                    "required_for_capabilities": "automation-and-remediation",
+                    "fields": [_valid_log_level_field()],
+                }
+            ],
+        )
+        results = IsHandlerContainLoglevelValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert msg.count("expected list") == 1
+        assert "no XSOAR handler subscribes" not in msg
+        assert "must declare" not in msg
 
     def test_standard_two_general_config_groups_carrying_log_level_fails(self):
         """Walker migration behavior (§3.7 uniqueness): TWO field-

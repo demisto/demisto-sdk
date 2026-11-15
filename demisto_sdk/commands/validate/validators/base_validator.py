@@ -696,7 +696,7 @@ def should_run_on_execution_mode(
     return False
 
 
-def _major_minor(version: str) -> tuple:
+def _major_minor(version: str) -> tuple[int, ...]:
     """Return the (major, minor) of a version string such as '4.0.42' or 'v4.0'."""
     return (Version(version).release + (0,))[:2]
 

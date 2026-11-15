@@ -211,7 +211,7 @@ def validate(
         "--create-graph-from-scratch",
         help="If set, creates the content graph from scratch instead of downloading it from the bucket.",
     ),
-    connectus_version: str = typer.Option(
+    connectus_version: Optional[str] = typer.Option(
         None,
         "--connectus-version",
         envvar="DEMISTO_SDK_CONNECTUS_VERSION",

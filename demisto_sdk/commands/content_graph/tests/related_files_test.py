@@ -25,6 +25,7 @@ def integration_dir(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def mock_git(monkeypatch) -> MagicMock:
+    monkeypatch.delenv("CONTRIB_BRANCH", raising=False)
     git_util = MagicMock()
     git_util.get_current_git_branch_or_hash.return_value = CURRENT_BRANCH
     git_util.is_file_exist_in_commit_or_branch.return_value = False
@@ -35,18 +36,24 @@ def mock_git(monkeypatch) -> MagicMock:
 
 
 @pytest.fixture
+def contribution_flow(monkeypatch, mock_git) -> None:
+    monkeypatch.setenv("CONTRIB_BRANCH", "true")
+
+
+@pytest.fixture
 def read_from_git(monkeypatch) -> MagicMock:
     mock = MagicMock(return_value=GIT_README)
     monkeypatch.setattr(related_files.TextFile, "read_from_git_path", mock)
     return mock
 
 
-def test_readme_is_read_from_local_tree_when_git_sha_is_current_branch(
-    mock_git, read_from_git, integration_dir: Path
+def test_readme_is_read_from_local_tree_in_contribution_flow(
+    contribution_flow, mock_git, read_from_git, integration_dir: Path
 ):
     """
     Given:
-        - An integration whose README is staged locally (contribution flow).
+        - The contribution flow (CONTRIB_BRANCH is set).
+        - An integration whose README is staged locally.
         - A git_sha equal to the currently checked out branch, whose
           remote README is stale.
     When:
@@ -65,11 +72,36 @@ def test_readme_is_read_from_local_tree_when_git_sha_is_current_branch(
     read_from_git.assert_not_called()
 
 
-def test_readme_is_read_from_git_when_git_sha_is_not_current_branch(
+def test_readme_is_read_from_git_outside_contribution_flow(
     mock_git, read_from_git, integration_dir: Path
 ):
     """
     Given:
+        - A regular flow (CONTRIB_BRANCH is not set).
+        - A git_sha equal to the currently checked out branch.
+    When:
+        - Reading the README content.
+    Then:
+        - The content is read from git, as before.
+    """
+    mock_git.is_file_exist_in_commit_or_branch.return_value = True
+
+    readme = ReadmeRelatedFile(
+        integration_dir / "MyInt.yml",
+        is_pack_readme=False,
+        git_sha=CURRENT_BRANCH,
+    )
+
+    assert readme.file_content == GIT_README
+    read_from_git.assert_called_once()
+
+
+def test_readme_is_read_from_git_when_git_sha_is_not_current_branch(
+    contribution_flow, mock_git, read_from_git, integration_dir: Path
+):
+    """
+    Given:
+        - The contribution flow (CONTRIB_BRANCH is set).
         - A git_sha that is not the currently checked out branch.
     When:
         - Reading the README content.
@@ -88,11 +120,12 @@ def test_readme_is_read_from_git_when_git_sha_is_not_current_branch(
     read_from_git.assert_called_once()
 
 
-def test_file_deleted_locally_is_missing_for_current_branch(
-    mock_git, read_from_git, integration_dir: Path
+def test_file_deleted_locally_is_missing_in_contribution_flow(
+    contribution_flow, mock_git, read_from_git, integration_dir: Path
 ):
     """
     Given:
+        - The contribution flow (CONTRIB_BRANCH is set).
         - A README deleted by the contribution (removed from the working tree)
           that still exists on the remote branch.
         - A git_sha equal to the currently checked out branch.
@@ -114,11 +147,12 @@ def test_file_deleted_locally_is_missing_for_current_branch(
     mock_git.is_file_exist_in_commit_or_branch.assert_not_called()
 
 
-def test_release_notes_are_listed_from_local_tree_for_current_branch(
-    mock_git, tmp_path: Path
+def test_release_notes_are_listed_from_local_tree_in_contribution_flow(
+    contribution_flow, mock_git, tmp_path: Path
 ):
     """
     Given:
+        - The contribution flow (CONTRIB_BRANCH is set).
         - A pack with a release note staged locally.
         - A git_sha equal to the currently checked out branch.
     When:

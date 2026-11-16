@@ -1,5 +1,6 @@
 import ast
 import base64
+import os
 import re
 from abc import ABC
 from collections import Counter
@@ -91,14 +92,15 @@ class RelatedFile(ABC):
     def file_content(self) -> Any:
         raise NotImplementedError
 
-    def is_current_git_ref(self, git_sha: Optional[str]) -> bool:
-        """Whether the given git sha is the currently checked out branch / commit.
+    def is_staged_contribution_ref(self, git_sha: Optional[str]) -> bool:
+        """Whether the files of the given git sha are staged locally.
 
-        Files of the current ref may be staged / modified locally
-        (e.g. in the contribution flow), so the local working tree is the
-        source of truth for them rather than git (and its remote).
+        True in the external contribution flow (`CONTRIB_BRANCH` is set) when
+        the git sha is the currently checked out branch / commit. In this flow
+        the contribution files are only staged (never committed), so the local
+        working tree is the source of truth for them rather than git.
         """
-        if not git_sha:
+        if not git_sha or not os.getenv("CONTRIB_BRANCH"):
             return False
         try:
             git_util = GitUtil.from_content_path()
@@ -109,7 +111,7 @@ class RelatedFile(ABC):
 
     def is_file_exist(self, file_path: Path, git_sha: Optional[str]) -> bool:
         if git_sha:
-            if self.is_current_git_ref(git_sha):
+            if self.is_staged_contribution_ref(git_sha):
                 # The working tree is the source of truth for the current ref
                 # (e.g. files deleted by a contribution still exist remotely).
                 return file_path.exists()
@@ -139,7 +141,7 @@ class TextFiles(RelatedFile):
                 if (
                     self.git_sha
                     and not self.prev_ver
-                    and not self.is_current_git_ref(self.git_sha)
+                    and not self.is_staged_contribution_ref(self.git_sha)
                 ):
                     self.file_content_str = TextFile.read_from_git_path(
                         path=self.file_path,
@@ -185,7 +187,7 @@ class RNRelatedFile(TextFiles):
     def all_rns(self) -> List[str]:
         if not self.rns_list:
             rns_dir_path = self.main_file_path / RELEASE_NOTES_DIR
-            if self.git_sha and not self.is_current_git_ref(self.git_sha):
+            if self.git_sha and not self.is_staged_contribution_ref(self.git_sha):
                 git_util = GitUtil.from_content_path()
                 if not git_util.is_file_exist_in_commit_or_branch(
                     rns_dir_path, self.git_sha

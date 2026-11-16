@@ -198,7 +198,9 @@ class RNRelatedFile(TextFiles):
                         rns_dir_path, self.git_sha
                     )
             else:
-                self.rns_list = get_child_files(rns_dir_path)
+                self.rns_list = [
+                    Path(p).name for p in get_child_files(rns_dir_path)
+                ]
         return self.rns_list
 
 

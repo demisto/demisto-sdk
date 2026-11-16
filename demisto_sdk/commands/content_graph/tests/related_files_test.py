@@ -168,5 +168,5 @@ def test_release_notes_are_listed_from_local_tree_in_contribution_flow(
     rn = RNRelatedFile(pack_path, latest_rn="1.0.1", git_sha=CURRENT_BRANCH)
 
     assert rn.exist
-    assert [Path(p).name for p in rn.all_rns] == ["1_0_1.md"]
+    assert rn.all_rns == ["1_0_1.md"]
     mock_git.list_files_in_dir.assert_not_called()

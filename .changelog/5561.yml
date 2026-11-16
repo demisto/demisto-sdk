@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where ***validate*** in the external contribution flow (`CONTRIB_BRANCH` is set) read related files (such as the README and release notes) of the current branch from git instead of the locally staged contribution files, which caused false failures (e.g. RM110).
+  type: fix
+pr_number: 5561

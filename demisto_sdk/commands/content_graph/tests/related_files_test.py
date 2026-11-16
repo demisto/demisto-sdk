@@ -88,6 +88,32 @@ def test_readme_is_read_from_git_when_git_sha_is_not_current_branch(
     read_from_git.assert_called_once()
 
 
+def test_file_deleted_locally_is_missing_for_current_branch(
+    mock_git, read_from_git, integration_dir: Path
+):
+    """
+    Given:
+        - A README deleted by the contribution (removed from the working tree)
+          that still exists on the remote branch.
+        - A git_sha equal to the currently checked out branch.
+    When:
+        - Resolving the README related file.
+    Then:
+        - The file is reported as missing, and git is not consulted.
+    """
+    (integration_dir / "README.md").unlink()
+    mock_git.is_file_exist_in_commit_or_branch.return_value = True
+
+    readme = ReadmeRelatedFile(
+        integration_dir / "MyInt.yml",
+        is_pack_readme=False,
+        git_sha=CURRENT_BRANCH,
+    )
+
+    assert not readme.exist
+    mock_git.is_file_exist_in_commit_or_branch.assert_not_called()
+
+
 def test_release_notes_are_listed_from_local_tree_for_current_branch(
     mock_git, tmp_path: Path
 ):

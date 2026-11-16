@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where ***validate*** read related files (such as the README and release notes) of the current branch from git instead of the local working tree, which caused false failures (e.g. RM110) in the external contribution flow when the contribution files were only staged.
+  type: fix
+pr_number: 5561

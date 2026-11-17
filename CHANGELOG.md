@@ -1,4 +1,15 @@
 # Changelog
+## 1.39.15 (2026-11-15)
+### Feature
+* Updated the **ST110** validation to ignore unknown top-level fields in AgentixAction, AgentixAgent, AgentixSkill and Knowledge content items instead of failing on them. [#5552](https://github.com/demisto/demisto-sdk/pull/5552)
+
+### Fix
+* Fixed an issue where the ***export-api*** command produced an almost empty output file containing only the `export-api` command itself. The output now includes the full API of all demisto-sdk commands. [#5557](https://github.com/demisto/demisto-sdk/pull/5557)
+
+### Internal
+* Removed the temporary **GR117** validation. **GR105** now reports duplicate AgentixAction and AgentixAgent IDs again. [#5554](https://github.com/demisto/demisto-sdk/pull/5554)
+
+
 ## 1.39.14 (2026-11-10)
 ### Feature
 * Added the **IN172** validation, which ensures an integration does not contain duplicate command names. [#5546](https://github.com/demisto/demisto-sdk/pull/5546)

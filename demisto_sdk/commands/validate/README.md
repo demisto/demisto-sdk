@@ -51,6 +51,9 @@ Use this to validate an external UCC checkout together with a plain content chec
 UCC connectors are temporarily synced into the main content repo for the duration of the run
 (and automatically cleaned up on exit).
 This flag works with both `-a/--validate-all` (all synced connectors are validated) and `-g/--use-git` (only the connectors changed in the UCC repo's own git diff are validated).
+* **--connectus-version**
+The Connectus (unified-connectors-content) version, e.g. `4.0.42`. Alternatively, you can configure the DEMISTO_SDK_CONNECTUS_VERSION env variable.
+Validators that set a higher `min_connectus_version` (compared on major.minor) are skipped. If not given, all validators run.
 
 ### Validation Error Codes
 Each error found by validate has an error code attached to it. The code can be found in brackets preceding the error itself.  

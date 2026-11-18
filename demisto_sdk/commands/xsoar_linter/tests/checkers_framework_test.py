@@ -271,10 +271,11 @@ def test_unknown_support_level_fails_without_findings():
 def test_format_finding_matches_hook_pattern(tmp_path):
     """
     Given:
-        - A finding.
+        - A finding in a file under the content root.
     When:
         - Formatting it as an output line.
     Then:
+        - Ensure the path is relative to the content root (no runner path like /builds/...).
         - Ensure the hook's error/warning regex can parse it.
     """
     from demisto_sdk.commands.xsoar_linter.checkers.models import Finding
@@ -282,12 +283,80 @@ def test_format_finding_matches_hook_pattern(tmp_path):
         ERROR_AND_WARNING_CODE_PATTERN,
     )
 
+    file_path = tmp_path / "Packs" / "MyPack" / "Integrations" / "MyInt" / "MyInt.py"
     line = format_finding(
-        tmp_path / "a.py", Finding(3, 4, "E9003", "helper", "Sleep is found")
+        file_path,
+        Finding(3, 4, "E9003", "helper", "Sleep is found"),
+        content_root=tmp_path,
+    )
+    assert line == (
+        "Packs/MyPack/Integrations/MyInt/MyInt.py:3:4: E9003 helper: Sleep is found"
     )
     match = ERROR_AND_WARNING_CODE_PATTERN.match(line)
     assert match
-    assert (match["line"], match["col"], match["error_code"]) == ("3", "4", "E9003")
+    assert (match["path"], match["line"], match["col"], match["error_code"]) == (
+        "Packs/MyPack/Integrations/MyInt/MyInt.py",
+        "3",
+        "4",
+        "E9003",
+    )
+
+
+def test_format_finding_outside_content_root_keeps_absolute_path(tmp_path):
+    """
+    Given:
+        - A finding in a file that is not under the content root.
+    When:
+        - Formatting it as an output line.
+    Then:
+        - Ensure the absolute path is kept, as before.
+    """
+    from demisto_sdk.commands.xsoar_linter.checkers.models import Finding
+
+    file_path = tmp_path / "elsewhere" / "a.py"
+    line = format_finding(
+        file_path,
+        Finding(3, 4, "E9003", "helper", "Sleep is found"),
+        content_root=tmp_path / "content",
+    )
+    assert line.startswith(f"{file_path.resolve()}:3:4: E9003 ")
+
+
+@pytest.mark.parametrize(
+    "line, expected_path",
+    [
+        pytest.param(
+            "Packs/A/Integrations/A/A.py:1:0: W9010 main: msg",
+            "Packs/A/Integrations/A/A.py",
+            id="relative path",
+        ),
+        pytest.param(
+            "/builds/content/Packs/A/Integrations/A/A.py:1:0: W9010 main: msg",
+            "/builds/content/Packs/A/Integrations/A/A.py",
+            id="absolute path (pylint engine)",
+        ),
+    ],
+)
+def test_hook_pattern_matches_relative_and_absolute_paths(line, expected_path):
+    """
+    Given:
+        - An output line with a relative or an absolute path.
+    When:
+        - Matching it with the hook's error/warning regex.
+    Then:
+        - Ensure both are parsed, with the path as written.
+    """
+    from demisto_sdk.commands.xsoar_linter.xsoar_linter import (
+        ERROR_AND_WARNING_CODE_PATTERN,
+    )
+
+    match = ERROR_AND_WARNING_CODE_PATTERN.match(line)
+    assert match
+    assert (match["path"], match["type"], match["error_code"]) == (
+        expected_path,
+        "W",
+        "W9010",
+    )
 
 
 def test_checkers_do_not_import_pylint_or_astroid():

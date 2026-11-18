@@ -4,6 +4,7 @@ import ast
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.xsoar_linter.checkers.checker import run_checkers
 from demisto_sdk.commands.xsoar_linter.checkers.context import (
     FileContext,
@@ -70,10 +71,21 @@ def lint_file(file_path: Path, settings: LintSettings) -> LintResult:
     return lint_source(source, file_path.stem, settings)
 
 
-def format_finding(file_path: Path, finding: Finding) -> str:
+def display_path(file_path: Path, content_root: Path = CONTENT_PATH) -> Path:
+    """The file path relative to the content root, or the absolute path if the file is outside it."""
+    absolute_path = file_path.resolve()
+    try:
+        return absolute_path.relative_to(content_root.resolve())
+    except ValueError:
+        return absolute_path
+
+
+def format_finding(
+    file_path: Path, finding: Finding, content_root: Path = CONTENT_PATH
+) -> str:
     """The same line format the hook and GitHub annotations parse: path:line:col: CODE obj: message"""
     return (
-        f"{file_path.resolve()}:{finding.line}:{finding.col}: "
+        f"{display_path(file_path, content_root)}:{finding.line}:{finding.col}: "
         f"{finding.code} {finding.obj}: {finding.message}"
     )
 

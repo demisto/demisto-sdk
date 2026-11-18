@@ -41,7 +41,7 @@ ENGINES = (PYLINT_ENGINE, AST_ENGINE)
 DEFAULT_ENGINE = PYLINT_ENGINE
 ENGINE_ENV_VAR = "DEMISTO_SDK_XSOAR_LINTER_ENGINE"
 ERROR_AND_WARNING_CODE_PATTERN = re.compile(
-    r"^(?P<path>/[^:\n]+):(?P<line>\d+):(?P<col>\d+): (?P<error_code>(?P<type>[EW])\d+)(?P<error_message> .*)$",
+    r"^(?P<path>[^:\n]+):(?P<line>\d+):(?P<col>\d+): (?P<error_code>(?P<type>[EW])\d+)(?P<error_message> .*)$",
     re.MULTILINE,
 )
 

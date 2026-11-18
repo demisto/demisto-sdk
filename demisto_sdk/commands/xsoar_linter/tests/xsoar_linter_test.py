@@ -44,6 +44,11 @@ class MockProcessValid:
             "base_checker,community_level_checker",
             id="Developer support",
         ),
+        pytest.param(
+            "preview",
+            "base_checker,community_level_checker",
+            id="Preview support",
+        ),
     ],
 )
 def test_build_xsoar_linter_command_valid_support_level(

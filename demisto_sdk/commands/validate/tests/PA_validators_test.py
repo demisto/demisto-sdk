@@ -838,9 +838,9 @@ def test_IsURLOrEmailExistsValidator_obtain_invalid_content_items(
             ],
             3,
             [
-                "The pack's support type (Developer) is invalid.\nThe pack support type can only be one of the following xsoar, partner, developer, community.",
-                "The pack's support type (developerr) is invalid.\nThe pack support type can only be one of the following xsoar, partner, developer, community.",
-                "The pack's support type (someone) is invalid.\nThe pack support type can only be one of the following xsoar, partner, developer, community.",
+                "The pack's support type (Developer) is invalid.\nThe pack support type can only be one of the following xsoar, partner, developer, community, preview.",
+                "The pack's support type (developerr) is invalid.\nThe pack support type can only be one of the following xsoar, partner, developer, community, preview.",
+                "The pack's support type (someone) is invalid.\nThe pack support type can only be one of the following xsoar, partner, developer, community, preview.",
             ],
         ),
     ],

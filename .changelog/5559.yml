@@ -1,0 +1,4 @@
+changes:
+- description: Added the AgentixFlow content type, with graph parsing and preparation for upload.
+  type: feature
+pr_number: 5559

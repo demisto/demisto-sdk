@@ -12,6 +12,7 @@ from demisto_sdk.commands.common.constants import (
     BASE_PACK,
     DEPRECATED_DESC_REGEX,
     DEPRECATED_NO_REPLACE_DESC_REGEX,
+    IS_CONTENT_PRIVATE_ONLY_KEY,
     PACK_DEFAULT_MARKETPLACES,
     PACK_NAME_DEPRECATED_REGEX,
     MarketplaceVersions,
@@ -40,7 +41,10 @@ from demisto_sdk.commands.content_graph.common import (
     is_deprecated_pack,
     resolve_derived_pack_source,
 )
-from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
+from demisto_sdk.commands.content_graph.parsers.base_content import (
+    BaseContentParser,
+    remove_ci_injected_keys,
+)
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
     InvalidContentItemException,
@@ -214,6 +218,10 @@ class PackMetadataParser:
         self.source: str = metadata.get("source", "")
         self.managed: bool = metadata.get("managed", False)
         self.internal: bool = metadata.get("internal", False)
+        # Strict: only a real JSON ``true`` counts (e.g. the string "false" must not become True).
+        self.is_content_private_only: bool = (
+            metadata.get(IS_CONTENT_PRIVATE_ONLY_KEY) is True
+        )
         # Per-pack override of the derived twin's source; see ``resolve_derived_pack_source()``.
         self.derived_source: Optional[str] = metadata.get("derivedSource")
 
@@ -630,7 +638,7 @@ def validate_structure(file: Path, pydantic_error_list: list) -> None:
     """
     try:
         if file.stem == "pack_metadata":
-            StrictPackMetadata.parse_obj(get_file(file))
+            StrictPackMetadata.parse_obj(remove_ci_injected_keys(get_file(file)))
         else:
             StrictReleaseNotesConfig.parse_obj(get_file(file))
     except pydantic.error_wrappers.ValidationError as e:
@@ -686,6 +694,8 @@ class DerivedPackParser:
         self.disable_monthly = original_parser.disable_monthly
         self.content_commit_hash = original_parser.content_commit_hash
         self.hybrid = original_parser.hybrid
+        # A twin of a private-only pack is private-only too.
+        self.is_content_private_only = original_parser.is_content_private_only
         self.pack_metadata_dict = original_parser.pack_metadata_dict.copy()
         self.supportedModules = original_parser.supportedModules
 

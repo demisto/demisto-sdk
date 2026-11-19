@@ -4,6 +4,10 @@ from typing import Any, Dict, Optional, Union
 from wcmatch.pathlib import Path
 
 import demisto_sdk.commands.common.content.errors as exc
+from demisto_sdk.commands.common.constants import (
+    CI_INJECTED_KEYS,
+    IS_CONTENT_PRIVATE_KEY,
+)
 from demisto_sdk.commands.common.tools import get_id
 
 from .general_object import GeneralObject
@@ -17,6 +21,25 @@ class DictionaryBasedObject(GeneralObject):
     @abstractmethod
     def _deserialize(self):
         pass
+
+    def _contains_ci_injected_keys(self) -> bool:
+        """Whether the file holds a CI-injected key at its top level (checked on raw bytes first, to avoid parsing)."""
+        if IS_CONTENT_PRIVATE_KEY.encode() not in self._path.read_bytes():
+            return False
+        try:
+            data = self.to_dict()
+        except Exception:  # each format raises its own parse errors: keep the raw copy
+            return False
+        return isinstance(data, dict) and not CI_INJECTED_KEYS.isdisjoint(data)
+
+    def _dict_without_ci_injected_keys(self) -> Any:
+        """The object's dictionary, without the CI-injected keys."""
+        data = self.to_dict()
+        if isinstance(data, dict):
+            return {
+                key: value for key, value in data.items() if key not in CI_INJECTED_KEYS
+            }
+        return data
 
     def to_dict(self) -> dict:
         """Parse object file content to dictionary."""

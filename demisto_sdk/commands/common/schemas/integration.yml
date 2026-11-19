@@ -34,6 +34,8 @@ mapping:
     type: bool
   excludefromtightlycoupled:
     type: bool
+  is_content_private:
+    type: bool
   beta:
     type: bool
   category:

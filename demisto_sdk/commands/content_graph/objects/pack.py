@@ -16,6 +16,7 @@ from demisto_sdk.commands.common.constants import (
     BASE_PACK,
     CONTRIBUTORS_README_TEMPLATE,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
+    IS_CONTENT_PRIVATE_ONLY_KEY,
     KNOWLEDGE_DIR,
     MANDATORY_PACK_METADATA_FIELDS,
     MARKETPLACE_MIN_VERSION,
@@ -156,6 +157,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         PackContentItems(), alias="contentItems", exclude=True
     )
     pack_metadata_dict: Optional[dict] = Field({}, exclude=True)
+
+    # Injected by the CI when all of the pack's items come from content-private.
+    is_content_private_only: bool = False
 
     # Split-pack / derived-pack fields
     is_derived: bool = False
@@ -476,6 +480,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         When ``strip_internal`` is true, the ``internal`` field is also removed so
         the uploaded pack will be visible to the user.
 
+        The CI-injected ``is_content_private_only`` field is always removed,
+        regardless of ``strip_internal``.
+
         Falls back to a plain copy if the source cannot be parsed as JSON.
 
         Args:
@@ -510,6 +517,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
 
         if strip_internal and pack_metadata.pop("internal", None):
             logger.debug(f"Removed 'internal' field from {source} before upload")
+        # CI-injected flag - must never be uploaded or written to artifacts.
+        pack_metadata.pop(IS_CONTENT_PRIVATE_ONLY_KEY, None)
         write_dict(destination, data=pack_metadata, indent=4)
 
     def dump_metadata(
@@ -539,6 +548,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             "url",
             "email",
             "database_id",
+            IS_CONTENT_PRIVATE_ONLY_KEY,
         }
         if strip_internal:
             # Strip `internal` so the uploaded pack will be visible to the user.

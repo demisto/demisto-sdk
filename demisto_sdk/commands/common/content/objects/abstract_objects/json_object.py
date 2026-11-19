@@ -56,11 +56,12 @@ class JSONObject(DictionaryBasedObject):
     def _serialize(self, dest_dir: Path):
         """Dump dictionary to json file"""
         dest_file = self._create_target_dump_dir(dest_dir) / self.normalize_file_name()
-        write_dict(dest_file, data=self.to_dict())
+        write_dict(dest_file, data=self._dict_without_ci_injected_keys())
         return [dest_file]
 
     def dump(self, dest_dir: Optional[Union[Path, str]] = None):
-        if self.modified:
+        # A raw copy would leak the CI-injected flags, so such files are re-serialized without them.
+        if self.modified or self._contains_ci_injected_keys():
             return self._serialize(dest_dir)  # type: ignore
         else:
             return super().dump(dest_dir)

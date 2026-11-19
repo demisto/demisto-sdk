@@ -492,6 +492,8 @@ mapping:
     type: str
   id:xsoar_on_prem:
     type: str
+  is_content_private:
+    type: bool
 schema;task_schema:
   type: map
   allowempty: true

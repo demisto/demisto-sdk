@@ -5,7 +5,10 @@ from typing import Optional
 import demisto_client
 from pydantic import Field
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    IS_CONTENT_PRIVATE_KEY,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
@@ -47,11 +50,12 @@ class List(ContentItem, content_type=ContentType.LIST):  # type: ignore[call-arg
         current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
         **kwargs,
     ) -> dict:
-        data = (
-            self.data
-            if kwargs.get("unify_only")
-            else super().prepare_for_upload(current_marketplace)
-        )
+        if kwargs.get("unify_only"):
+            # ``super().prepare_for_upload`` is bypassed, so strip the CI-injected flag here, on a copy.
+            data = dict(self.data)
+            data.pop(IS_CONTENT_PRIVATE_KEY, None)
+        else:
+            data = super().prepare_for_upload(current_marketplace)
         if self.is_unified:
             return data
         return ListUnifier.unify(self.path, data, marketplace=current_marketplace)

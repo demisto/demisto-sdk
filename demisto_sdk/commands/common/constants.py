@@ -2433,3 +2433,10 @@ REATTACH_ITEM_TYPE_TO_ENDPOINT: dict[str, str] = {
     DetachableItemType.PLAYBOOKS.value: "/playbook/attach/:id",
     DetachableItemType.SCRIPTS.value: "/automation/attach/:id",
 }
+
+# Keys injected into files on disk by the CI for content-private items and packs (snake_case in yml and json).
+IS_CONTENT_PRIVATE_KEY: str = "is_content_private"
+IS_CONTENT_PRIVATE_ONLY_KEY: str = "is_content_private_only"
+CI_INJECTED_KEYS: frozenset[str] = frozenset(
+    {IS_CONTENT_PRIVATE_KEY, IS_CONTENT_PRIVATE_ONLY_KEY}
+)

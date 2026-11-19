@@ -10,6 +10,8 @@ from pytest import MonkeyPatch
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    IS_CONTENT_PRIVATE_KEY,
+    IS_CONTENT_PRIVATE_ONLY_KEY,
     PACKS_DIR,
     XSOAR_AUTHOR,
     XSOAR_SUPPORT,
@@ -690,3 +692,55 @@ def test_get_valid_data_source_integrations(
         content_items, support_level, include_name
     )
     assert result == expected_output
+
+
+def test_dump_does_not_leak_ci_injected_keys(tmp_path):
+    """
+    Given:
+        - A pack_metadata.json carrying the CI-injected ``is_content_private_only`` (and, defensively, ``is_content_private``).
+    When:
+        - Dumping the PackMetaData object, as ``create-artifacts`` does for the artifact copy.
+    Then:
+        - The copy has neither key and keeps the other fields.
+    """
+    from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+
+    source = tmp_path / "src" / "pack_metadata.json"
+    source.parent.mkdir()
+    source.write_text(
+        json.dumps(
+            {
+                "name": "TestPack",
+                IS_CONTENT_PRIVATE_ONLY_KEY: True,
+                IS_CONTENT_PRIVATE_KEY: True,
+            }
+        )
+    )
+
+    dumped = PackMetaData(source).dump(tmp_path / "out")[0]
+
+    assert json.loads(dumped.read_text()) == {"name": "TestPack"}
+
+
+def test_dump_metadata_file_does_not_contain_ci_injected_keys(tmp_path):
+    """
+    Given:
+        - A PackMetaData whose pack_metadata.json carries the CI-injected pack flag.
+    When:
+        - Generating ``metadata.json`` with ``dump_metadata_file`` (a whitelist of fields).
+    Then:
+        - The flag is not in the output.
+    """
+    pack_dir = tmp_path / "TestPack"
+    pack_dir.mkdir()
+    (pack_dir / "pack_metadata.json").write_text(
+        f'{{"name": "TestPack", "{IS_CONTENT_PRIVATE_ONLY_KEY}": true}}'
+    )
+    obj = PackMetaData(pack_dir / "pack_metadata.json")
+    obj.name = "TestPack"
+
+    out = tmp_path / "out"
+    out.mkdir()
+    dumped = obj.dump_metadata_file(out)[0]
+
+    assert IS_CONTENT_PRIVATE_ONLY_KEY not in dumped.read_text()

@@ -1,4 +1,4 @@
 changes:
 - description: Added support for the CI-injected `is_content_private` (content items) and `is_content_private_only` (pack_metadata.json) flags. They are parsed into the content graph, accepted by schema validation, and always stripped from uploaded packs and created artifacts. As a side effect, legacy artifacts of files that carry these flags are re-serialized (formatting may change) instead of being copied as is.
   type: feature
-pr_number: 0000
+pr_number: 5567

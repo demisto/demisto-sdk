@@ -1,6 +1,11 @@
 import pytest
 
-from demisto_sdk.commands.common.constants import INDICATOR_TYPES_DIR, PACKS_DIR
+from demisto_sdk.commands.common.constants import (
+    INDICATOR_TYPES_DIR,
+    IS_CONTENT_PRIVATE_KEY,
+    IS_CONTENT_PRIVATE_ONLY_KEY,
+    PACKS_DIR,
+)
 from demisto_sdk.commands.common.content.errors import (
     ContentInitializeError,
     ContentSerializeError,
@@ -65,3 +70,95 @@ class TestInvalidJSON:
     def test_malformed_json_path(self):
         with pytest.raises(ContentInitializeError):
             JSONObject("Not valid path")
+
+
+class TestDumpStripsCIInjectedKeys:
+    def test_dump_strips_flag_from_unmodified_file(self, tmp_path):
+        """
+        Given:
+            - An unmodified JSON file carrying the CI-injected ``is_content_private`` key.
+        When:
+            - Dumping the object (which used to be a raw file copy).
+        Then:
+            - The output has no CI-injected key and keeps every other key.
+        """
+        source = tmp_path / "src" / "classifier-flagged.json"
+        source.parent.mkdir()
+        source.write_text(json.dumps({"id": "flagged", IS_CONTENT_PRIVATE_KEY: True}))
+
+        dumped = JSONObject(source).dump(tmp_path / "out")[0]
+
+        assert IS_CONTENT_PRIVATE_KEY not in dumped.read_text()
+        assert json.loads(dumped.read_text()) == {"id": "flagged"}
+        # The source file is never touched.
+        assert IS_CONTENT_PRIVATE_KEY in source.read_text()
+
+    def test_dump_strips_pack_flag_from_unmodified_file(self, tmp_path):
+        """
+        Given:
+            - An unmodified JSON file carrying the CI-injected ``is_content_private_only`` key.
+        When:
+            - Dumping the object.
+        Then:
+            - The output has no CI-injected key.
+        """
+        source = tmp_path / "pack_metadata.json"
+        source.write_text(json.dumps({"name": "P", IS_CONTENT_PRIVATE_ONLY_KEY: True}))
+
+        dumped = JSONObject(source).dump(tmp_path / "out")[0]
+
+        assert json.loads(dumped.read_text()) == {"name": "P"}
+
+    def test_dump_strips_flag_from_modified_file(self, tmp_path):
+        """
+        Given:
+            - A modified JSON object carrying the CI-injected key.
+        When:
+            - Dumping the object (the serialize path).
+        Then:
+            - The key is not written.
+        """
+        source = tmp_path / "classifier-flagged.json"
+        source.write_text(json.dumps({"id": "flagged", IS_CONTENT_PRIVATE_KEY: True}))
+        obj = JSONObject(source)
+        obj.modified = True
+
+        dumped = obj.dump(tmp_path / "out")[0]
+
+        assert json.loads(dumped.read_text()) == {"id": "flagged"}
+
+    def test_dump_of_file_without_flag_is_a_byte_identical_copy(self, tmp_path):
+        """
+        Given:
+            - An unmodified JSON file without the CI-injected keys, with formatting that a re-serialization would change.
+        When:
+            - Dumping the object.
+        Then:
+            - The output is a byte-identical copy (the previous behavior is kept).
+        """
+        source = tmp_path / "src" / "classifier-plain.json"
+        source.parent.mkdir()
+        raw = '{\n  "id":   "plain",\n\n  "type": "classification"\n}\n'
+        source.write_text(raw)
+
+        dumped = JSONObject(source).dump(tmp_path / "out")[0]
+
+        assert dumped.read_text() == raw
+
+    def test_malformed_file_with_flag_name_is_copied_raw(self, tmp_path):
+        """
+        Given:
+            - A malformed JSON file that contains the flag name as a substring.
+        When:
+            - Dumping the object.
+        Then:
+            - No error is raised and the file is copied byte for byte.
+        """
+        raw = f'{{"id": "a", "{IS_CONTENT_PRIVATE_KEY}": true,'
+        source = tmp_path / "src" / "classifier-malformed.json"
+        source.parent.mkdir()
+        source.write_bytes(raw.encode())
+
+        dumped = JSONObject(source).dump(tmp_path / "out")[0]
+
+        assert dumped.read_bytes() == raw.encode()

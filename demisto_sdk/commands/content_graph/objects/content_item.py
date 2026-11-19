@@ -21,7 +21,11 @@ if TYPE_CHECKING:
 
 from pydantic import DirectoryPath, Field, fields, validator
 
-from demisto_sdk.commands.common.constants import PACKS_FOLDER, MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    IS_CONTENT_PRIVATE_KEY,
+    PACKS_FOLDER,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
@@ -60,6 +64,7 @@ class ContentItem(BaseContent):
     support: str = ""
     is_silent: bool = False
     exclude_from_tightly_coupled: bool = False
+    is_content_private: bool = False
     upload_path: Optional[Path] = None
 
     @validator("path", always=True)
@@ -290,7 +295,8 @@ class ContentItem(BaseContent):
     ) -> dict:
         if not self.path.exists():
             raise FileNotFoundError(f"Could not find file {self.path}")
-        data = self.data
+        # ``self.data`` is cached: pop from a copy.
+        data = dict(self.data)
         # Replace incorrect marketplace references
         data = replace_marketplace_references(data, current_marketplace, str(self.path))
         if current_marketplace == MarketplaceVersions.PLATFORM:
@@ -302,6 +308,8 @@ class ContentItem(BaseContent):
                 del data["supportedModules"]
         # SDK-only build-time flag - must never be uploaded to the server.
         data.pop(EXCLUDE_FROM_TIGHTLY_COUPLED_KEY, None)
+        # CI-injected flag - must never be uploaded or written to artifacts.
+        data.pop(IS_CONTENT_PRIVATE_KEY, None)
         return MarketplaceSuffixPreparer.prepare(data, current_marketplace)
 
     def summary(

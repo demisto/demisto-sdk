@@ -6,6 +6,7 @@ from packaging.version import Version
 from pydantic import Field
 
 from demisto_sdk.commands.common.constants import (
+    IS_CONTENT_PRIVATE_KEY,
     MARKETPLACE_MIN_VERSION,
     PACK_DEFAULT_MARKETPLACES,
     MarketplaceVersions,
@@ -257,6 +258,12 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     def exclude_from_tightly_coupled(self) -> bool:
         """True when the item opts out of tight coupling; read generically from the raw data."""
         return bool(get_value(self.raw_data, EXCLUDE_FROM_TIGHTLY_COUPLED_KEY, False))
+
+    @property
+    def is_content_private(self) -> bool:
+        """True when the CI injected the content-private flag into the item file."""
+        # Strict: only a real ``true`` counts (e.g. the string "false" must not become True).
+        return get_value(self.raw_data, IS_CONTENT_PRIVATE_KEY, False) is True
 
     def get_marketplaces(self, data: dict) -> List[MarketplaceVersions]:
         if file_marketplaces := [

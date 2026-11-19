@@ -6,7 +6,10 @@ from typing import List, Optional, Type
 import pydantic
 from pydantic import Field
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    CI_INJECTED_KEYS,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.content_constant_paths import (
     CONTENT_PATH,
 )
@@ -15,6 +18,16 @@ from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import 
     StructureError,
 )
 from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel
+
+
+def remove_ci_injected_keys(raw_data):
+    """Returns the raw data without the CI injected keys (non-dict data is returned as is).
+
+    The keys are parsed from the raw data, so strict validation must ignore them.
+    """
+    if not isinstance(raw_data, dict):
+        return raw_data
+    return {k: v for k, v in raw_data.items() if k not in CI_INJECTED_KEYS}
 
 
 class BaseContentParser(ABC):
@@ -87,7 +100,7 @@ def validate_structure(
     which will be read during the ST110 validation run.
     """
     try:
-        strict_object(**raw_data)
+        strict_object(**remove_ci_injected_keys(raw_data))
     except pydantic.error_wrappers.ValidationError as e:
         return [StructureError(path=path, **error) for error in e.errors()]
     return []

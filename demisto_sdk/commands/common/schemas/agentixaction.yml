@@ -71,6 +71,8 @@ mapping:
     - type: str
   excludefromtightlycoupled:
     type: bool
+  is_content_private:
+    type: bool
   fewshots:
     type: seq
     sequence:

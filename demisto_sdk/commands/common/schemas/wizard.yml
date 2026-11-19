@@ -112,6 +112,8 @@ mapping:
     type: seq
     sequence:
     - type: str
+  is_content_private:
+    type: bool
 schema;integrations_schema:
   type: map
   mapping:

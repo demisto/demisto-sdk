@@ -1,4 +1,5 @@
 import os
+import pickle
 import re
 from copy import deepcopy
 from pathlib import Path
@@ -18,6 +19,8 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.tools import get_file
 from demisto_sdk.commands.prepare_content import markdown_images_handler
 from demisto_sdk.commands.prepare_content.markdown_images_handler import (
+    MarkdownImagesCollector,
+    collect_markdown_images,
     init_json_file,
     update_markdown_images_file_links,
 )
@@ -353,6 +356,108 @@ def test_update_markdown_images_reads_latest_file_state(
 
     result = markdown_images_handler.json.loads(images_file_path.read_text())
     assert set(result) == {"PackA", "PackB", "PackC"}
+
+
+def _images_update_calls(image_data_one, image_data_two) -> list:
+    """A serial sequence of update calls: a new pack, a README overwrite (last wins), and a description append."""
+    readme = ImagesFolderNames.README_IMAGES
+    description = ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES
+    return [
+        ({"PackA": {readme: image_data_one}}, "PackA", readme),
+        ({"PackA": {description: image_data_two}}, "PackA", description),
+        ({"PackB": {readme: image_data_two}}, "PackB", readme),
+        ({"PackA": {readme: image_data_two}}, "PackA", readme),
+        ({"PackA": {description: image_data_one}}, "PackA", description),
+    ]
+
+
+def _run_serially(artifacts_dir: Path, calls: list, monkeypatch) -> bytes:
+    """Apply ``calls`` without a collector (today's read-modify-write) and return the file bytes."""
+    monkeypatch.setenv("ARTIFACTS_FOLDER", str(artifacts_dir))
+    init_json_file(MARKDOWN_IMAGES_ARTIFACT_FILE_NAME)
+    for images_dict, pack_name, file_type in calls:
+        update_markdown_images_file_links(deepcopy(images_dict), pack_name, file_type)
+    return (artifacts_dir / MARKDOWN_IMAGES_ARTIFACT_FILE_NAME).read_bytes()
+
+
+def test_collector_mode_does_not_write_file_and_final_write_matches_serial(
+    monkeypatch, tmp_path, image_data_one, image_data_two
+):
+    """
+    Given:
+        - A markdown images file that already holds an entry, and a sequence of update calls.
+    When:
+        - Running the calls inside collect_markdown_images(), then calling write_files.
+    Then:
+        - The file is untouched until write_files, and its final bytes equal those of the same calls
+          run without a collector on the same pre-existing file.
+    """
+    calls = _images_update_calls(image_data_one, image_data_two)
+    pre_existing_content = '{"OldPack": {"readme_images": []}}'
+    serial_dir, collector_dir = tmp_path / "serial", tmp_path / "collector"
+    for artifacts_dir in (serial_dir, collector_dir):
+        artifacts_dir.mkdir()
+        (artifacts_dir / MARKDOWN_IMAGES_ARTIFACT_FILE_NAME).write_text(
+            pre_existing_content
+        )
+    serial_bytes = _run_serially(serial_dir, calls, monkeypatch)
+
+    monkeypatch.setenv("ARTIFACTS_FOLDER", str(collector_dir))
+    collector_file = collector_dir / MARKDOWN_IMAGES_ARTIFACT_FILE_NAME
+    with collect_markdown_images() as collector:
+        init_json_file(MARKDOWN_IMAGES_ARTIFACT_FILE_NAME)
+        for images_dict, pack_name, file_type in calls:
+            update_markdown_images_file_links(
+                deepcopy(images_dict), pack_name, file_type
+            )
+        assert collector_file.read_text() == pre_existing_content
+    assert markdown_images_handler.get_active_markdown_images_collector() is None
+    collector.write_files()
+
+    assert collector_file.read_bytes() == serial_bytes
+
+
+def test_collector_merge_of_exported_batches_matches_serial_order(
+    monkeypatch, tmp_path, image_data_one, image_data_two
+):
+    """
+    Given:
+        - The serial call sequence split into two batches, each recorded by its own collector
+          (as in two workers), with overlapping keys across the batches.
+    When:
+        - Merging the pickled exports in serial order into a parent collector and writing the files.
+    Then:
+        - The file bytes equal those of the calls applied serially, including the last-wins
+          README overwrite and the appended description images.
+    """
+    calls = _images_update_calls(image_data_one, image_data_two)
+    serial_dir, merged_dir = tmp_path / "serial", tmp_path / "merged"
+    serial_dir.mkdir()
+    merged_dir.mkdir()
+    serial_bytes = _run_serially(serial_dir, calls, monkeypatch)
+
+    exported_batches = []
+    for batch_calls in (calls[:2], calls[2:]):
+        with collect_markdown_images() as worker_collector:
+            init_json_file(MARKDOWN_IMAGES_ARTIFACT_FILE_NAME)
+            for images_dict, pack_name, file_type in batch_calls:
+                update_markdown_images_file_links(
+                    deepcopy(images_dict), pack_name, file_type
+                )
+        exported_batches.append(pickle.loads(pickle.dumps(worker_collector.export())))
+
+    monkeypatch.setenv("ARTIFACTS_FOLDER", str(merged_dir))
+    parent_collector = MarkdownImagesCollector()
+    parent_collector.merge(exported_batches)
+    parent_collector.write_files()
+
+    merged_file = merged_dir / MARKDOWN_IMAGES_ARTIFACT_FILE_NAME
+    assert merged_file.read_bytes() == serial_bytes
+    merged_data = markdown_images_handler.json.loads(merged_file.read_text())
+    assert merged_data["PackA"][ImagesFolderNames.README_IMAGES.value] == image_data_two
+    assert merged_data["PackA"][
+        ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES.value
+    ] == [*image_data_two, image_data_one]
 
 
 @pytest.mark.parametrize(

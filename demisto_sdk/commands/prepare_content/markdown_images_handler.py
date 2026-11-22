@@ -1,7 +1,10 @@
 import os
 import re
+from contextlib import contextmanager
+from contextvars import ContextVar
+from copy import deepcopy
 from pathlib import Path
-from typing import List, Tuple
+from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple
 from urllib.parse import urlparse
 
 from demisto_sdk.commands.common.constants import (
@@ -23,6 +26,205 @@ from demisto_sdk.commands.common.tools import (
 )
 
 json = JSON_Handler()
+
+# One recorded ``update_markdown_images_file_links`` call, as plain picklable data:
+# (markdown_images_file_name, images_dict, pack_name, file_type value).
+MarkdownImagesUpdate = Tuple[str, dict, str, str]
+
+
+class MarkdownImagesCollector:
+    """Records markdown images file updates in memory instead of writing the shared JSON files.
+
+    Used during a content dump: workers record, export the records as plain data, and the parent
+    merges the exports in the serial dump order and writes each file once (``write_files``).
+    Replaying the records in that order reproduces the serial read-modify-write output byte for byte.
+    """
+
+    def __init__(self) -> None:
+        self.initialized_file_names: List[str] = []
+        self.updates: List[MarkdownImagesUpdate] = []
+
+    def record_init(self, markdown_images_file_name: str) -> None:
+        if markdown_images_file_name not in self.initialized_file_names:
+            self.initialized_file_names.append(markdown_images_file_name)
+
+    def record_update(
+        self,
+        images_dict: dict,
+        pack_name: str,
+        file_type: ImagesFolderNames,
+        markdown_images_file_name: str,
+    ) -> None:
+        # A JSON round trip, as in the serial write-then-read: plain types, and no aliasing with the caller's dict.
+        normalized_images_dict = json.loads(json.dumps(images_dict))
+        self.updates.append(
+            (
+                markdown_images_file_name,
+                normalized_images_dict,
+                pack_name,
+                ImagesFolderNames(file_type).value,
+            )
+        )
+
+    def export(self) -> Dict[str, Any]:
+        """The recorded data as plain picklable data, e.g. to return it from a forked worker."""
+        return {
+            "initialized_file_names": list(self.initialized_file_names),
+            "updates": list(self.updates),
+        }
+
+    def merge(self, exported_batches: Iterable[Dict[str, Any]]) -> None:
+        """Append exported batches, in the given order (the caller passes the serial dump order)."""
+        for exported_batch in exported_batches:
+            for markdown_images_file_name in exported_batch["initialized_file_names"]:
+                self.record_init(markdown_images_file_name)
+            self.updates.extend(
+                (file_name, images_dict, pack_name, file_type)
+                for file_name, images_dict, pack_name, file_type in exported_batch[
+                    "updates"
+                ]
+            )
+
+    def write_files(self) -> None:
+        """Write every recorded file once, under its lock, as the serial path would have left it.
+
+        A recorded init creates the file with ``{}`` if it does not exist (as ``init_json_file``).
+        Then the file is read once (pre-existing content included), the file's updates are applied
+        in recording order with the same merge rule, and the result is written once with the same
+        serialization (``write_dict(..., indent=4)``).
+        """
+        file_names = set(self.initialized_file_names)
+        file_names.update(update[0] for update in self.updates)
+        for markdown_images_file_name in sorted(file_names):
+            file_updates = [
+                (images_dict, pack_name, ImagesFolderNames(file_type))
+                for file_name, images_dict, pack_name, file_type in self.updates
+                if file_name == markdown_images_file_name
+            ]
+            _run_with_file_lock(
+                markdown_images_file_name,
+                _write_collected_file,
+                {
+                    "markdown_images_file_name": markdown_images_file_name,
+                    "should_init": markdown_images_file_name
+                    in self.initialized_file_names,
+                    "file_updates": file_updates,
+                },
+            )
+
+
+_ACTIVE_MARKDOWN_IMAGES_COLLECTOR: ContextVar[Optional[MarkdownImagesCollector]] = (
+    ContextVar("active_markdown_images_collector", default=None)
+)
+
+
+def get_active_markdown_images_collector() -> Optional[MarkdownImagesCollector]:
+    return _ACTIVE_MARKDOWN_IMAGES_COLLECTOR.get()
+
+
+@contextmanager
+def collect_markdown_images(
+    collector: Optional[MarkdownImagesCollector] = None,
+) -> Iterator[MarkdownImagesCollector]:
+    """While active, markdown images file inits and updates are recorded in ``collector`` instead of written."""
+    if collector is None:
+        collector = MarkdownImagesCollector()
+    token = _ACTIVE_MARKDOWN_IMAGES_COLLECTOR.set(collector)
+    try:
+        yield collector
+    finally:
+        _ACTIVE_MARKDOWN_IMAGES_COLLECTOR.reset(token)
+
+
+def _get_artifacts_file_path(markdown_images_file_name: str) -> Optional[Path]:
+    """``$ARTIFACTS_FOLDER/<file name>``, or None when ``ARTIFACTS_FOLDER`` is unset or missing."""
+    if (artifacts_folder := os.getenv("ARTIFACTS_FOLDER")) and Path(
+        artifacts_folder
+    ).exists():
+        return Path(f"{artifacts_folder}/{markdown_images_file_name}")
+    return None
+
+
+def _run_with_file_lock(
+    markdown_images_file_name: str, exclusive_function, exclusive_function_kwargs: dict
+) -> None:
+    if (artifacts_folder := os.getenv("ARTIFACTS_FOLDER")) and Path(
+        artifacts_folder
+    ).exists():
+        run_sync(
+            f"{artifacts_folder}/{markdown_images_file_name.replace('json', 'lock')}",
+            exclusive_function,
+            exclusive_function_kwargs,
+        )
+
+
+def _init_json_file_on_disk(markdown_images_file_name: str) -> None:
+    artifacts_markdown_images_path = _get_artifacts_file_path(markdown_images_file_name)
+    if artifacts_markdown_images_path and not artifacts_markdown_images_path.exists():
+        with open(artifacts_markdown_images_path, "w") as f:
+            # If this is the first pack init the file with an empty dict.
+            json.dump({}, f)
+
+
+def _apply_markdown_images_update(
+    markdown_images_data_dict: dict,
+    images_dict: dict,
+    pack_name: str,
+    file_type: ImagesFolderNames,
+) -> None:
+    """Merge one pack's images dict into the file data, in place (the single merge rule)."""
+    if pack_name in markdown_images_data_dict:
+        integration_desc = ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES.value
+        if (
+            file_type == ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES
+            and markdown_images_data_dict.get(pack_name, {}).get(integration_desc, {})
+        ):
+            # There is already an entry for the integration_description_images.
+            markdown_images_data_dict[pack_name][integration_desc].append(
+                images_dict[pack_name][integration_desc]
+            )
+        else:
+            # No entry for the readme images of the integration_description_images.
+            markdown_images_data_dict[pack_name].update(images_dict[pack_name])
+    else:
+        markdown_images_data_dict.update(images_dict)
+
+
+def _apply_updates_on_disk(
+    markdown_images_file_name: str,
+    file_updates: List[Tuple[dict, str, ImagesFolderNames]],
+) -> None:
+    """Read the file once, apply ``file_updates`` in order, and write it once."""
+    artifacts_markdown_images_path = _get_artifacts_file_path(markdown_images_file_name)
+    if not artifacts_markdown_images_path or not file_updates:
+        return
+    # Read the file directly (not through the cached ``get_file``): this is a
+    # read-modify-write under a cross-process lock, so a cached read could be
+    # stale and overwrite entries written by another process.
+    markdown_images_data_dict = json.loads(
+        artifacts_markdown_images_path.read_text() or "{}"
+    )
+    for images_dict, pack_name, file_type in file_updates:
+        # A copy, so the merged data never aliases (and later mutates) a caller's or a recorded dict.
+        # The serial path gets the same isolation from writing and re-reading the file between updates.
+        _apply_markdown_images_update(
+            markdown_images_data_dict, deepcopy(images_dict), pack_name, file_type
+        )
+    write_dict(
+        artifacts_markdown_images_path,
+        data=markdown_images_data_dict,
+        indent=4,
+    )
+
+
+def _write_collected_file(
+    markdown_images_file_name: str,
+    should_init: bool,
+    file_updates: List[Tuple[dict, str, ImagesFolderNames]],
+) -> None:
+    if should_init:
+        _init_json_file_on_disk(markdown_images_file_name)
+    _apply_updates_on_disk(markdown_images_file_name, file_updates)
 
 
 def update_markdown_images_with_urls_and_rel_paths(
@@ -46,6 +248,9 @@ def safe_init_json_file(file_path: str):
     Args:
         file_path (str): The json file path to init
     """
+    if collector := get_active_markdown_images_collector():
+        collector.record_init(file_path)
+        return
     if (artifacts_folder := os.getenv("ARTIFACTS_FOLDER")) and Path(
         artifacts_folder
     ).exists():
@@ -143,6 +348,9 @@ def safe_update_markdown_images_file_links(
         file_type (ImagesFolderNames): The markdown file the pics was obtained from.
         image_file_path (str): The json file path to update
     """
+    if collector := get_active_markdown_images_collector():
+        collector.record_update(images_dict, pack_name, file_type, image_file_path)
+        return
     if (artifacts_folder := os.getenv("ARTIFACTS_FOLDER")) and Path(
         artifacts_folder
     ).exists():
@@ -161,19 +369,15 @@ def safe_update_markdown_images_file_links(
 def init_json_file(markdown_images_file_name: str):
     """Initialize a json file at with the given file name if doesn't exist.
 
+    With an active ``MarkdownImagesCollector``, the init is recorded instead (done by ``write_files``).
+
     Args:
         markdown_images_file_name (str): The file name to create.
     """
-    if (artifacts_folder := os.getenv("ARTIFACTS_FOLDER")) and Path(
-        artifacts_folder
-    ).exists():
-        artifacts_markdown_images_path = Path(
-            f"{artifacts_folder}/{markdown_images_file_name}"
-        )
-        if not artifacts_markdown_images_path.exists():
-            with open(artifacts_markdown_images_path, "w") as f:
-                # If this is the first pack init the file with an empty dict.
-                json.dump({}, f)
+    if collector := get_active_markdown_images_collector():
+        collector.record_init(markdown_images_file_name)
+        return
+    _init_json_file_on_disk(markdown_images_file_name)
 
 
 def update_markdown_images_file_links(
@@ -184,48 +388,22 @@ def update_markdown_images_file_links(
 ):
     """Update the markdown_images.json file containing all the modified links.
 
+    With an active ``MarkdownImagesCollector``, the update is recorded instead of written.
+
     Args:
         images_dict (dict): The dict contains all the images info for the current pack.
         pack_name (str): The name of the pack to update.
         file_type (ImagesFolderNames): The markdown file the pics was obtained from.
         markdown_images_file_name (str): The file to write the results into. The default is markdown_images.json
     """
-    if (artifacts_folder := os.getenv("ARTIFACTS_FOLDER")) and Path(
-        artifacts_folder
-    ).exists():
-        artifacts_markdown_images_path = Path(
-            f"{artifacts_folder}/{markdown_images_file_name}"
+    if collector := get_active_markdown_images_collector():
+        collector.record_update(
+            images_dict, pack_name, file_type, markdown_images_file_name
         )
-
-        # Read the file directly (not through the cached ``get_file``): this is a
-        # read-modify-write under a cross-process lock, so a cached read could be
-        # stale and overwrite entries written by another process.
-        markdown_images_data_dict = json.loads(
-            artifacts_markdown_images_path.read_text() or "{}"
-        )
-        if pack_name in markdown_images_data_dict:
-            integration_desc = ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES.value
-            if (
-                file_type == ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES
-                and markdown_images_data_dict.get(pack_name, {}).get(
-                    integration_desc, {}
-                )
-            ):
-                # There is already an entry for the integration_description_images.
-                markdown_images_data_dict[pack_name][integration_desc].append(
-                    images_dict[pack_name][integration_desc]
-                )
-            else:
-                # No entry for the readme images of the integration_description_images.
-                markdown_images_data_dict[pack_name].update(images_dict[pack_name])
-        else:
-            markdown_images_data_dict.update(images_dict)
-
-        write_dict(
-            artifacts_markdown_images_path,
-            data=markdown_images_data_dict,
-            indent=4,
-        )
+        return
+    _apply_updates_on_disk(
+        markdown_images_file_name, [(images_dict, pack_name, file_type)]
+    )
 
 
 def process_markdown_images(

@@ -20,7 +20,11 @@ in the fixed matrix.
 to keep tests isolated.
 """
 
+import os
+import shutil
+import zipfile
 from pathlib import Path
+from typing import Dict, Optional
 from unittest.mock import MagicMock
 
 import pytest
@@ -28,7 +32,9 @@ import pytest
 from demisto_sdk.commands.content_graph.objects import repository as repository_module
 from demisto_sdk.commands.content_graph.objects.repository import (
     ContentDTO,
+    OrderedPackZipWriter,
     from_path,
+    write_deterministic_zip,
 )
 
 
@@ -172,3 +178,116 @@ class TestFromPathNarrowing:
         assert mock_repo_parser.iter_packs.call_args.args == (("MyPack",),)
         assert mock_repo_parser.iter_connectors.call_count == 1
         assert mock_repo_parser.iter_connectors.call_args.args == (("datadog",),)
+
+
+# Deterministic zip writer (``OrderedPackZipWriter`` / ``write_deterministic_zip``)
+
+
+def _create_pack_tree(
+    root: Path, file_mode: int = 0o644, mtime: float = 1_000_000_000
+) -> Path:
+    """Create a small dump-like tree: two packs, nested files, and an empty directory."""
+    files = {
+        "PackB/metadata.json": b'{"name": "B"}',
+        "PackB/Integrations/integration-B.yml": b"name: B\n",
+        "PackA/metadata.json": b'{"name": "A"}',
+        "PackA/Scripts/script-A.yml": b"name: A\n" * 50,
+        "PackA/README.md": b"# A\n",
+    }
+    for relative_path, content in files.items():
+        file_path = root / relative_path
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        file_path.write_bytes(content)
+        file_path.chmod(file_mode)
+    (root / "PackA" / "EmptyDir").mkdir()
+    for path in [*root.rglob("*"), root]:
+        os.utime(path, (mtime, mtime))
+    return root
+
+
+def _read_tree(root: Path) -> Dict[str, Optional[bytes]]:
+    """``{relative POSIX path: bytes}`` for files and ``{relative POSIX path/: None}`` for directories."""
+    tree: Dict[str, Optional[bytes]] = {}
+    for path in root.rglob("*"):
+        relative_path = path.relative_to(root).as_posix()
+        if path.is_dir():
+            tree[f"{relative_path}/"] = None
+        else:
+            tree[relative_path] = path.read_bytes()
+    return tree
+
+
+def _extract(zip_path: Path, destination: Path) -> Path:
+    with zipfile.ZipFile(zip_path) as zip_file:
+        zip_file.extractall(destination)
+    return destination
+
+
+def test_deterministic_zip_bytes_do_not_depend_on_mtimes_or_permissions(tmp_path):
+    """
+    Given:
+        - Two trees with the same paths and contents, but different mtimes and file permissions.
+    When:
+        - Zipping each tree with write_deterministic_zip.
+    Then:
+        - The two zip files are byte-identical.
+    """
+    first_tree = _create_pack_tree(
+        tmp_path / "first", file_mode=0o644, mtime=1_000_000_000
+    )
+    second_tree = _create_pack_tree(
+        tmp_path / "second", file_mode=0o600, mtime=1_700_000_000
+    )
+
+    write_deterministic_zip(first_tree, tmp_path / "first.zip")
+    write_deterministic_zip(second_tree, tmp_path / "second.zip")
+
+    assert (tmp_path / "first.zip").read_bytes() == (
+        tmp_path / "second.zip"
+    ).read_bytes()
+
+
+def test_ordered_pack_zip_writer_out_of_order_equals_in_order(tmp_path):
+    """
+    Given:
+        - A dump-like tree with the top-level pack directories PackA and PackB.
+    When:
+        - Marking the packs as done in reverse order, and, separately, zipping in order (write_deterministic_zip).
+    Then:
+        - Nothing is written before PackA is done, and both zips are byte-identical.
+    """
+    tree = _create_pack_tree(tmp_path / "tree")
+    out_of_order_zip = tmp_path / "out_of_order.zip"
+
+    with OrderedPackZipWriter(tree, out_of_order_zip, ["PackB", "PackA"]) as writer:
+        writer.mark_pack_done("PackB")
+        assert writer._next_index == 0  # PackB stays pending until PackA is done
+        writer.mark_pack_done("PackA")
+    write_deterministic_zip(tree, tmp_path / "in_order.zip")
+
+    assert out_of_order_zip.read_bytes() == (tmp_path / "in_order.zip").read_bytes()
+
+
+def test_deterministic_zip_extracts_to_the_source_tree_like_make_archive(tmp_path):
+    """
+    Given:
+        - A dump-like tree that includes an empty directory.
+    When:
+        - Zipping it with write_deterministic_zip and with shutil.make_archive, and extracting both.
+    Then:
+        - Both extracted trees equal the source tree (paths and contents, including the empty directory).
+    """
+    tree = _create_pack_tree(tmp_path / "tree")
+    write_deterministic_zip(tree, tmp_path / "deterministic.zip")
+    shutil.make_archive(str(tmp_path / "make_archive"), "zip", tree)
+
+    source_tree = _read_tree(tree)
+    assert "PackA/EmptyDir/" in source_tree
+    deterministic_tree = _read_tree(
+        _extract(tmp_path / "deterministic.zip", tmp_path / "extracted_deterministic")
+    )
+    make_archive_tree = _read_tree(
+        _extract(tmp_path / "make_archive.zip", tmp_path / "extracted_make_archive")
+    )
+    assert deterministic_tree == source_tree
+    assert make_archive_tree == source_tree

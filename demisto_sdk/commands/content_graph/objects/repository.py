@@ -1,9 +1,11 @@
+import os
 import shutil
 import time
+import zipfile
 from functools import lru_cache
 from multiprocessing.pool import Pool
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 import tqdm
 from pydantic import BaseModel, DirectoryPath
@@ -24,6 +26,161 @@ from demisto_sdk.commands.content_graph.parsers.repository import RepositoryPars
 json = JSON_Handler()
 
 USE_MULTIPROCESSING = False  # toggle this for better debugging
+
+# Fixed zip member metadata, so the zip bytes depend only on file paths and contents.
+_ZIP_FIXED_DATE_TIME = (1980, 1, 1, 0, 0, 0)
+_ZIP_COMPRESS_LEVEL = (
+    6  # the zlib default, made explicit so the bytes never depend on a library default
+)
+_ZIP_CREATE_SYSTEM = 3  # Unix
+_ZIP_FILE_EXTERNAL_ATTR = 0o644 << 16
+_ZIP_DIR_EXTERNAL_ATTR = (0o755 << 16) | 0x10  # 0x10 is the MS-DOS directory flag
+
+
+def _fixed_zip_info(arcname: str, external_attr: int) -> zipfile.ZipInfo:
+    """A ``ZipInfo`` whose metadata does not depend on the file system (mtime, mode, OS)."""
+    zip_info = zipfile.ZipInfo(arcname, date_time=_ZIP_FIXED_DATE_TIME)
+    zip_info.create_system = _ZIP_CREATE_SYSTEM
+    zip_info.external_attr = external_attr
+    return zip_info
+
+
+def _list_tree_entries(src_dir: Path, top_level_name: str) -> List[Tuple[str, Path]]:
+    """Return sorted ``(arcname, path)`` pairs for ``src_dir/top_level_name`` and everything below it.
+
+    Arcnames use POSIX separators and are relative to ``src_dir``; directory arcnames end with "/".
+    Directory entries are included, so empty directories survive extraction, as with
+    ``shutil.make_archive``. A directory arcname is a prefix of its children's, so it sorts first.
+    """
+    top_level_path = src_dir / top_level_name
+    if not top_level_path.is_dir():
+        return [(top_level_name, top_level_path)]
+    entries = [(f"{top_level_name}/", top_level_path)]
+    for dir_path, dir_names, file_names in os.walk(top_level_path):
+        relative_dir = Path(dir_path).relative_to(src_dir).as_posix()
+        entries.extend(
+            (f"{relative_dir}/{name}/", Path(dir_path, name)) for name in dir_names
+        )
+        entries.extend(
+            (f"{relative_dir}/{name}", Path(dir_path, name)) for name in file_names
+        )
+    return sorted(entries)
+
+
+def _top_level_sort_key(top_level_name: str) -> str:
+    """Sort pack directories by their arcname (``name/``), so the whole zip is in sorted arcname order."""
+    return f"{top_level_name}/"
+
+
+class OrderedPackZipWriter:
+    """Byte-reproducible zip of the top-level entries (one directory per pack) of ``src_dir``.
+
+    ``mark_pack_done`` may be called in any order. Entries are appended strictly in sorted
+    top-level arcname order: every call flushes the longest prefix of that order whose entries are
+    all done, and keeps the rest pending. Inside an entry, members are sorted by arcname, so all
+    members of the zip are in sorted arcname order. Every member has fixed metadata, so the bytes
+    depend only on paths and contents.
+    """
+
+    def __init__(
+        self,
+        src_dir: Path,
+        zip_path: Path,
+        top_level_names: Iterable[str],
+        delete_after_write: bool = False,
+    ) -> None:
+        self.src_dir = Path(src_dir)
+        self.zip_path = Path(zip_path)
+        self.delete_after_write = delete_after_write
+        self._ordered_names: List[str] = sorted(
+            set(top_level_names), key=_top_level_sort_key
+        )
+        self._expected_names: Set[str] = set(self._ordered_names)
+        self._done_names: Set[str] = set()
+        self._next_index = 0
+        self._zip_file = zipfile.ZipFile(
+            self.zip_path,
+            "w",
+            compression=zipfile.ZIP_DEFLATED,
+            compresslevel=_ZIP_COMPRESS_LEVEL,
+        )
+
+    def __enter__(self) -> "OrderedPackZipWriter":
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
+        if exc_type is not None:
+            self._zip_file.close()
+            return
+        self.close()
+
+    def mark_pack_done(self, top_level_name: str) -> None:
+        """Record that ``src_dir/top_level_name`` is complete, then write every entry that is ready in order."""
+        if top_level_name not in self._expected_names:
+            raise ValueError(
+                f"Unexpected zip entry {top_level_name!r}: it is not one of the expected top-level names"
+            )
+        if top_level_name in self._done_names:
+            raise ValueError(f"Zip entry {top_level_name!r} was already marked as done")
+        self._done_names.add(top_level_name)
+        self._flush_ready_prefix()
+
+    def close(self) -> None:
+        """Close the zip; raise if any expected top-level entry was never marked as done."""
+        try:
+            missing_names = [
+                name for name in self._ordered_names if name not in self._done_names
+            ]
+            if missing_names:
+                raise ValueError(
+                    f"Zip {self.zip_path} is incomplete, entries never marked as done: {missing_names}"
+                )
+        finally:
+            self._zip_file.close()
+
+    def _flush_ready_prefix(self) -> None:
+        while (
+            self._next_index < len(self._ordered_names)
+            and self._ordered_names[self._next_index] in self._done_names
+        ):
+            self._write_top_level_entry(self._ordered_names[self._next_index])
+            self._next_index += 1
+
+    def _write_top_level_entry(self, top_level_name: str) -> None:
+        for arcname, path in _list_tree_entries(self.src_dir, top_level_name):
+            if arcname.endswith("/"):
+                self._zip_file.writestr(
+                    _fixed_zip_info(arcname, _ZIP_DIR_EXTERNAL_ATTR),
+                    b"",
+                    compress_type=zipfile.ZIP_STORED,
+                )
+            else:
+                self._zip_file.writestr(
+                    _fixed_zip_info(arcname, _ZIP_FILE_EXTERNAL_ATTR),
+                    path.read_bytes(),
+                    compress_type=zipfile.ZIP_DEFLATED,
+                    compresslevel=_ZIP_COMPRESS_LEVEL,
+                )
+        if self.delete_after_write:
+            top_level_path = self.src_dir / top_level_name
+            if top_level_path.is_dir() and not top_level_path.is_symlink():
+                shutil.rmtree(top_level_path)
+            else:
+                top_level_path.unlink()
+
+
+def write_deterministic_zip(src_dir: Path, zip_path: Path) -> None:
+    """Zip the whole ``src_dir`` tree into ``zip_path``; the bytes depend only on paths and contents."""
+    src_dir = Path(src_dir)
+    zip_path = Path(zip_path)
+    if zip_path.resolve().is_relative_to(src_dir.resolve()):
+        raise ValueError(
+            f"Zip path {zip_path} must not be inside the zipped directory {src_dir}"
+        )
+    top_level_names = sorted(os.listdir(src_dir), key=_top_level_sort_key)
+    with OrderedPackZipWriter(src_dir, zip_path, top_level_names) as writer:
+        for top_level_name in top_level_names:
+            writer.mark_pack_done(top_level_name)
 
 
 @lru_cache

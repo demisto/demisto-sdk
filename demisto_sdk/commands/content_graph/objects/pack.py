@@ -530,7 +530,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 Should only be set by the ``demisto-sdk upload`` flow.
         """
         self.server_min_version = self.server_min_version or MARKETPLACE_MIN_VERSION
-        self._enhance_pack_properties(marketplace, self.object_id, self.content_items)
+        # Computed without mutating ``self`` so the dump does not depend on (or change) object state.
+        enhanced_properties = self._enhance_pack_properties(
+            marketplace, self.object_id, self.content_items
+        )
 
         excluded_fields_from_metadata = {
             "path",
@@ -558,6 +561,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             excluded_fields_from_metadata.add("derived_source")
 
         metadata = self.dict(exclude=excluded_fields_from_metadata, by_alias=True)
+        metadata.update(enhanced_properties)
         # Resolve marketplace-suffixed managed/source fields into the plain
         # managed/source fields for the current marketplace.
         metadata = MarketplaceSuffixPreparer.prepare_managed_and_source(

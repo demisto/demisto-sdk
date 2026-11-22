@@ -1,3 +1,4 @@
+import copy
 from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -113,7 +114,9 @@ class IntegrationScript(ContentItem):
     ) -> dict:
         if kwargs.get("unify_only"):
             # ``super().prepare_for_upload`` is bypassed, so strip the SDK-only flag here, on a copy (``self.data`` may be shared).
-            data = dict(self.data)
+            # Deep copy: when unification is skipped (LLM scripts), ``replace_marketplace_references``
+            # below rewrites nested values in place, which would mutate the cached dict.
+            data = copy.deepcopy(self.data)
             data.pop(EXCLUDE_FROM_TIGHTLY_COUPLED_KEY, None)
         else:
             data = super().prepare_for_upload(current_marketplace)

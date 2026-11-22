@@ -2379,6 +2379,122 @@ class TestParsersAndModels:
                 if "supportedFeatures" in str(error)
             ], f"{content_item.content_type} rejected supportedFeatures"
 
+    def test_prepare_for_upload_does_not_mutate_cached_data(self, pack: Pack):
+        """
+        Given:
+            - A classifier with a `description:marketplacev2` suffix key.
+        When:
+            - Calling prepare_for_upload for marketplacev2.
+        Then:
+            - The prepared data has the suffix resolved.
+            - The cached `data` dict still contains the suffix key (not mutated).
+        """
+        from demisto_sdk.commands.content_graph.objects.classifier import Classifier
+        from demisto_sdk.commands.content_graph.parsers.classifier import (
+            ClassifierParser,
+        )
+
+        classifier_data = load_json("classifier.json")
+        classifier_data["description:marketplacev2"] = "XSIAM description"
+        classifier = pack.create_classifier("TestClassifier", classifier_data)
+        model = Classifier.from_orm(
+            ClassifierParser(
+                Path(classifier.path),
+                list(MarketplaceVersions),
+                pack_supported_modules=[],
+            )
+        )
+
+        prepared = model.prepare_for_upload(MarketplaceVersions.MarketplaceV2)
+
+        assert prepared["description"] == "XSIAM description"
+        assert "description:marketplacev2" in model.data
+
+    def test_dump_metadata_tags_are_sorted(self, repo: Repo):
+        """
+        Given:
+            - A pack with unsorted tags and use cases (which adds the "Use Case" tag).
+        When:
+            - Dumping the pack metadata.
+        Then:
+            - The `tags` in metadata.json are sorted.
+        """
+        pack = repo.create_pack("HelloWorld")
+        pack.set_data(
+            tags=["Zeta", "Alpha", "Mid"],
+            useCases=["Phishing"],
+            firstCreated="2020-01-01T00:00:00Z",  # avoids the date-based "New" tag
+        )
+        model = PackModel.from_orm(PackParser(Path(pack.path)))
+        metadata_path = Path(pack.path) / "metadata.json"
+
+        model.dump_metadata(metadata_path, MarketplaceVersions.XSOAR)
+
+        assert tools.get_json(metadata_path)["tags"] == [
+            "Alpha",
+            "Mid",
+            "Use Case",
+            "Zeta",
+        ]
+
+    def test_dump_metadata_does_not_mutate_pack(self, repo: Repo, tmp_path: Path):
+        """
+        Given:
+            - A pack with author "Cortex XSOAR" and marketplace-specific tags.
+        When:
+            - Dumping the pack metadata twice for the platform marketplace.
+        Then:
+            - Both dumps are identical and metadata.json has the platform author "Cortex".
+            - The pack's `author`, `tags` and `version_info` attributes are unchanged.
+        """
+        pack = repo.create_pack("HelloWorld")
+        pack.set_data(
+            tags=["platform:PlatformTag", "Common"],
+            firstCreated="2020-01-01T00:00:00Z",  # avoids the date-based "New" tag
+        )
+        model = PackModel.from_orm(PackParser(Path(pack.path)))
+        original_author = model.author
+        original_tags = list(model.tags)
+        original_version_info = model.version_info
+        first_path = tmp_path / "first_metadata.json"
+        second_path = tmp_path / "second_metadata.json"
+
+        model.dump_metadata(first_path, MarketplaceVersions.PLATFORM)
+        model.dump_metadata(second_path, MarketplaceVersions.PLATFORM)
+
+        first_metadata = tools.get_json(first_path)
+        assert first_metadata == tools.get_json(second_path)
+        assert first_metadata["author"] == "Cortex"
+        assert first_metadata["tags"] == ["Common", "PlatformTag"]
+        assert original_author == "Cortex XSOAR"
+        assert model.author == original_author
+        assert model.tags == original_tags
+        assert model.version_info == original_version_info
+
+    def test_from_path_restores_marketplace_min_version_on_error(
+        self, mocker, tmp_path: Path
+    ):
+        """
+        Given:
+            - ContentItemParser.from_path raises an unexpected exception.
+        When:
+            - Calling BaseContent.from_path on a content item path.
+        Then:
+            - The exception propagates and the module global
+              `MARKETPLACE_MIN_VERSION` is restored to its original value.
+        """
+        from demisto_sdk.commands.common.constants import MARKETPLACE_MIN_VERSION
+        from demisto_sdk.commands.content_graph.parsers import content_item
+
+        mocker.patch.object(
+            ContentItemParser, "from_path", side_effect=RuntimeError("boom")
+        )
+
+        with pytest.raises(RuntimeError, match="boom"):
+            BaseContent.from_path(tmp_path / "restore_min_version_item.yml")
+
+        assert content_item.MARKETPLACE_MIN_VERSION == MARKETPLACE_MIN_VERSION
+
 
 class TestFindContentType:
     def test_integration_outside_content_path(self, git_repo):

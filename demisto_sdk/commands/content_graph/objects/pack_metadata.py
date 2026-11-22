@@ -89,9 +89,10 @@ class PackMetadata(BaseModel):
         marketplace: MarketplaceVersions,
         pack_id: str,
         content_items: PackContentItems,
-    ):
+    ) -> dict:
         """
-        Enhancing the Pack object properties before dumping into a dictionary.
+        Computes the enhanced Pack properties to override in the dumped metadata dictionary.
+        Does not mutate the Pack object, so dumping is independent of previous dumps.
         - Adding tags considering the pack content items and marketplace.
         - Replacing the `author` property from XSOAR to XSIAM if the prepare is to marketplacev2.
         - Getting into the `version_info` property the pipeline_id variable.
@@ -100,13 +101,20 @@ class PackMetadata(BaseModel):
             marketplace (MarketplaceVersions): The marketplace to which the pack should belong to.
             pack_id (str): The pack ID.
             content_items (PackContentItems): The pack content items object.
+
+        Returns:
+            dict: The enhanced properties, keyed by their metadata (alias) names.
         """
-        self.tags = self._get_pack_tags(marketplace, pack_id, content_items)
-        self.author = self._get_author(self.author, marketplace)
-        # We want to add the pipeline_id only if this is called within our repo.
-        self.version_info = (
-            "" if is_external_repository() else os.environ.get("CI_PIPELINE_ID", "")
-        )
+        return {
+            "tags": self._get_pack_tags(marketplace, pack_id, content_items),
+            "author": self._get_author(self.author, marketplace),
+            # We want to add the pipeline_id only if this is called within our repo.
+            "versionInfo": (
+                ""
+                if is_external_repository()
+                else os.environ.get("CI_PIPELINE_ID", "")
+            ),
+        }
 
     def _format_metadata(
         self,
@@ -355,7 +363,8 @@ class PackMetadata(BaseModel):
             else:
                 tags -= {PackTags.NEW}
 
-        return list(tags)
+        # Sorted so that the dumped metadata is deterministic (set order is not).
+        return sorted(tags)
 
     def _get_tags_by_marketplace(self, marketplace: str):
         """Returns tags in according to the current marketplace"""

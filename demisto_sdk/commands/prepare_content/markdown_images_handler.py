@@ -18,7 +18,6 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
-    get_file,
     run_sync,
     write_dict,
 )
@@ -198,8 +197,11 @@ def update_markdown_images_file_links(
             f"{artifacts_folder}/{markdown_images_file_name}"
         )
 
-        markdown_images_data_dict = get_file(
-            artifacts_markdown_images_path, raise_on_error=True
+        # Read the file directly (not through the cached ``get_file``): this is a
+        # read-modify-write under a cross-process lock, so a cached read could be
+        # stale and overwrite entries written by another process.
+        markdown_images_data_dict = json.loads(
+            artifacts_markdown_images_path.read_text() or "{}"
         )
         if pack_name in markdown_images_data_dict:
             integration_desc = ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES.value

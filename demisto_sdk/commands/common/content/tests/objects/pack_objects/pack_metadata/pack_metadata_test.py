@@ -437,12 +437,12 @@ def test__enhance_pack_properties__internal_and_external(
         return_value=is_external,
     )
     monkeypatch.setenv("CI_PIPELINE_ID", "123")
-    my_instance._enhance_pack_properties(
+    enhanced_properties = my_instance._enhance_pack_properties(
         marketplace=MarketplaceVersions.XSOAR,
         pack_id="9",
         content_items=PackContentItems(),  # type: ignore
     )
-    assert my_instance.version_info == expected
+    assert enhanced_properties["versionInfo"] == expected
 
 
 @pytest.mark.parametrize(

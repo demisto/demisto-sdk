@@ -363,8 +363,13 @@ class BaseContent(BaseNode):
                 return None
         try:
             content_item.MARKETPLACE_MIN_VERSION = "0.0.0"
-            content_item_parser = ContentItemParser.from_path(path, git_sha=git_sha)
-            content_item.MARKETPLACE_MIN_VERSION = MARKETPLACE_MIN_VERSION
+            try:
+                content_item_parser = ContentItemParser.from_path(
+                    path, git_sha=git_sha
+                )
+            finally:
+                # Restore the module global even when parsing raises.
+                content_item.MARKETPLACE_MIN_VERSION = MARKETPLACE_MIN_VERSION
 
         except (NotAContentItemException, InvalidContentItemException) as e:
             if raise_on_exception:

@@ -320,6 +320,41 @@ def test_dump_more_than_one_description_file(
     assert res == excepted_res
 
 
+def test_update_markdown_images_reads_latest_file_state(
+    monkeypatch, tmp_path, image_data_one, image_data_two
+):
+    """
+    Given:
+        - The markdown images file was updated for pack A, and then pack B's entry was
+          written directly to the file (simulating another process).
+    When:
+        - Updating the file for pack C.
+    Then:
+        - Validate that the entries of A, B and C are all kept (no stale cached read).
+    """
+    readme_images = ImagesFolderNames.README_IMAGES.value
+    monkeypatch.setenv("ARTIFACTS_FOLDER", str(tmp_path))
+    images_file_path = tmp_path / MARKDOWN_IMAGES_ARTIFACT_FILE_NAME
+    init_json_file(MARKDOWN_IMAGES_ARTIFACT_FILE_NAME)
+
+    update_markdown_images_file_links(
+        {"PackA": {readme_images: image_data_one}},
+        "PackA",
+        ImagesFolderNames.README_IMAGES,
+    )
+    file_data = markdown_images_handler.json.loads(images_file_path.read_text())
+    file_data["PackB"] = {readme_images: image_data_two}
+    images_file_path.write_text(markdown_images_handler.json.dumps(file_data))
+    update_markdown_images_file_links(
+        {"PackC": {readme_images: image_data_one}},
+        "PackC",
+        ImagesFolderNames.README_IMAGES,
+    )
+
+    result = markdown_images_handler.json.loads(images_file_path.read_text())
+    assert set(result) == {"PackA", "PackB", "PackC"}
+
+
 @pytest.mark.parametrize(
     "line, expected_result",
     [

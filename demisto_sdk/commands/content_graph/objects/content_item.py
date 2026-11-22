@@ -1,3 +1,4 @@
+import copy
 from abc import abstractmethod
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -290,7 +291,9 @@ class ContentItem(BaseContent):
     ) -> dict:
         if not self.path.exists():
             raise FileNotFoundError(f"Could not find file {self.path}")
-        data = self.data
+        # Work on a deep copy: ``self.data`` is the dict cached by ``get_file``,
+        # so mutating it would leak into later reads of the same file.
+        data = copy.deepcopy(self.data)
         # Replace incorrect marketplace references
         data = replace_marketplace_references(data, current_marketplace, str(self.path))
         if current_marketplace == MarketplaceVersions.PLATFORM:

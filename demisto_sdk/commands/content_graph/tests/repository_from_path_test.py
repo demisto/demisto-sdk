@@ -20,22 +20,35 @@ in the fixed matrix.
 to keep tests isolated.
 """
 
+import multiprocessing
 import os
 import shutil
 import zipfile
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 from unittest.mock import MagicMock
 
 import pytest
 
+from demisto_sdk.commands.common.constants import (
+    MARKDOWN_IMAGES_ARTIFACT_FILE_NAME,
+    MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.content_graph.objects import repository as repository_module
+from demisto_sdk.commands.content_graph.objects.pack import Pack as PackModel
 from demisto_sdk.commands.content_graph.objects.repository import (
     ContentDTO,
+    DumpOutput,
     OrderedPackZipWriter,
+    PackDumpError,
     from_path,
     write_deterministic_zip,
 )
+from demisto_sdk.commands.content_graph.parsers.pack import PackParser
+from TestSuite.repo import Repo
+
+FORK_UNAVAILABLE = "fork" not in multiprocessing.get_all_start_methods()
 
 
 @pytest.fixture(autouse=True)
@@ -291,3 +304,168 @@ def test_deterministic_zip_extracts_to_the_source_tree_like_make_archive(tmp_pat
     )
     assert deterministic_tree == source_tree
     assert make_archive_tree == source_tree
+
+
+# ContentDTO.dump / ContentDTO.dump_many
+
+
+def _build_content_dto(repo: Repo) -> ContentDTO:
+    """Three packs with a script each; PackA and PackC have README images (a URL and a doc_files path)."""
+    readme_with_images = (
+        "# Title\n"
+        "![url image](https://raw.githubusercontent.com/demisto/content/master/Packs/X/doc_files/url_image.png)\n"
+        "![relative image](../doc_files/relative_image.png)\n"
+    )
+    models: List[PackModel] = []
+    for pack_name in ("PackA", "PackB", "PackC"):
+        pack = repo.create_pack(pack_name)
+        pack.set_data(marketplaces=["xsoar"], firstCreated="2020-01-01T00:00:00Z")
+        pack.create_script(f"{pack_name}Script")
+        if pack_name != "PackB":
+            pack.readme.write_text(readme_with_images)
+        models.append(PackModel.from_orm(PackParser(Path(pack.path))))
+    return ContentDTO(packs=models)
+
+
+def _dump_two_outputs(
+    content_dto: ContentDTO, base_dir: Path, workers: int, monkeypatch
+) -> Path:
+    """Dump PackA+PackB to ``content_packs`` and PackC to ``content_packs_managed``, as infra does on platform."""
+    artifacts_folder = base_dir / "artifacts"
+    artifacts_folder.mkdir(parents=True)
+    monkeypatch.setenv("ARTIFACTS_FOLDER", str(artifacts_folder))
+    ContentDTO.dump_many(
+        [
+            DumpOutput(
+                content_dto,
+                base_dir / "content_packs",
+                packs_to_dump=["PackA", "PackB"],
+            ),
+            DumpOutput(
+                content_dto,
+                base_dir / "content_packs_managed",
+                packs_to_dump=["PackC"],
+                output_stem="content_packs_managed",
+            ),
+        ],
+        MarketplaceVersions.XSOAR,
+        workers=workers,
+    )
+    return artifacts_folder
+
+
+@pytest.mark.skipif(FORK_UNAVAILABLE, reason="the 'fork' start method is unavailable")
+def test_dump_many_with_two_workers_equals_serial(repo: Repo, tmp_path, monkeypatch):
+    """
+    Given:
+        - A repository with 3 packs, two of them with README images.
+    When:
+        - Dumping it into two zipped outputs with dump_many, once with workers=1 and once with workers=2.
+    Then:
+        - Both zips and both markdown images files are byte-identical, the images files are populated,
+          and the dump directories are removed.
+    """
+    content_dto = _build_content_dto(repo)
+
+    serial_artifacts = _dump_two_outputs(
+        content_dto, tmp_path / "serial", 1, monkeypatch
+    )
+    parallel_artifacts = _dump_two_outputs(
+        content_dto, tmp_path / "parallel", 2, monkeypatch
+    )
+
+    for zip_name in ("content_packs.zip", "content_packs_managed.zip"):
+        serial_zip = tmp_path / "serial" / zip_name
+        assert (
+            serial_zip.read_bytes() == (tmp_path / "parallel" / zip_name).read_bytes()
+        )
+    with zipfile.ZipFile(tmp_path / "serial" / "content_packs.zip") as zip_file:
+        assert {name.split("/")[0] for name in zip_file.namelist()} == {
+            "PackA",
+            "PackB",
+        }
+    for images_file_name in (
+        MARKDOWN_IMAGES_ARTIFACT_FILE_NAME,
+        MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME,
+    ):
+        serial_images = (serial_artifacts / images_file_name).read_text()
+        assert "PackA" in serial_images and "PackC" in serial_images
+        assert serial_images == (parallel_artifacts / images_file_name).read_text()
+    assert not (tmp_path / "serial" / "content_packs").exists()
+    assert not (tmp_path / "parallel" / "content_packs_managed").exists()
+    assert repository_module._DUMP_STATE is None
+
+
+def test_dump_zip_extracts_to_the_unzipped_dump(repo: Repo, tmp_path, monkeypatch):
+    """
+    Given:
+        - A repository with 3 packs.
+    When:
+        - Dumping it with ContentDTO.dump, once with zip=False and once with zip=True.
+    Then:
+        - The zip is written to dir.parent / "<output_stem>.zip", the dump directory is removed,
+          and the extracted zip equals the unzipped dump tree.
+    """
+    monkeypatch.delenv("ARTIFACTS_FOLDER", raising=False)
+    content_dto = _build_content_dto(repo)
+
+    content_dto.dump(
+        tmp_path / "unzipped" / "out", MarketplaceVersions.XSOAR, zip=False
+    )
+    content_dto.dump(
+        tmp_path / "zipped" / "out", MarketplaceVersions.XSOAR, output_stem="stem"
+    )
+
+    assert not (tmp_path / "zipped" / "out").exists()
+    extracted_tree = _read_tree(
+        _extract(tmp_path / "zipped" / "stem.zip", tmp_path / "extracted")
+    )
+    assert extracted_tree == _read_tree(tmp_path / "unzipped" / "out")
+
+
+@pytest.mark.parametrize(
+    "workers",
+    [
+        1,
+        pytest.param(
+            2,
+            marks=pytest.mark.skipif(
+                FORK_UNAVAILABLE, reason="the 'fork' start method is unavailable"
+            ),
+        ),
+    ],
+)
+def test_dump_many_pack_failure_raises_with_pack_id(
+    repo: Repo, tmp_path, mocker, workers
+):
+    """
+    Given:
+        - A repository with 3 packs, where dumping PackB raises.
+    When:
+        - Dumping it with dump_many and zip=True.
+    Then:
+        - PackDumpError names PackB and carries its traceback, no zip is written, and _DUMP_STATE is cleared.
+    """
+    content_dto = _build_content_dto(repo)
+    original_dump = PackModel.dump
+
+    def dump_or_fail(pack, *args, **kwargs):
+        if pack.object_id == "PackB":
+            raise ValueError("PackB dump failure")
+        return original_dump(pack, *args, **kwargs)
+
+    mocker.patch.object(PackModel, "dump", autospec=True, side_effect=dump_or_fail)
+
+    with pytest.raises(PackDumpError) as error_info:
+        ContentDTO.dump_many(
+            [DumpOutput(content_dto, tmp_path / "out")],
+            MarketplaceVersions.XSOAR,
+            workers=workers,
+        )
+
+    assert error_info.value.pack_id == "PackB"
+    assert "PackB" in str(error_info.value)
+    assert "PackB dump failure" in error_info.value.traceback_text
+    assert not (tmp_path / "content_packs.zip").exists()
+    assert not list(tmp_path.glob(".content_packs.zip*"))
+    assert repository_module._DUMP_STATE is None

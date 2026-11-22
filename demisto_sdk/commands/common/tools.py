@@ -3121,16 +3121,25 @@ def get_pack_metadata(file_path: str) -> dict:
         file_path(str): file path
 
     Returns: pack_metadata of the pack, that source_file related to,
-        on failure returns {}
+        on failure (or when the path is not inside a `Packs` directory) returns {}
 
     """
-    pack_path = file_path if PACKS_DIR in file_path else os.path.realpath(__file__)
-    match = re.search(rf".*{PACKS_DIR}[/\\]([^/\\]+)[/\\]?", pack_path)
-    directory = match.group() if match else ""
+    path = Path(file_path)
+    # Relative paths that start with `Packs/` keep resolving against the content root (via `get_file`).
+    if not path.is_absolute() and path.parts[:1] != (PACKS_DIR,):
+        path = path.resolve()
+    parts = path.parts
+    if PACKS_DIR not in parts:
+        # Not inside a pack: no metadata to read, so do no I/O (and no content-root / git lookup).
+        return {}
+    # The innermost `Packs` segment, as the previous greedy regex matched.
+    pack_name_index = len(parts) - parts[::-1].index(PACKS_DIR)
+    if len(parts) <= pack_name_index:
+        return {}
+    metadata_path = Path(*parts[: pack_name_index + 1], PACKS_PACK_META_FILE_NAME)
 
     try:
-        metadata_path = os.path.join(directory, PACKS_PACK_META_FILE_NAME)
-        pack_metadata, _ = get_dict_from_file(metadata_path)
+        pack_metadata, _ = get_dict_from_file(str(metadata_path))
         return pack_metadata
     except Exception:
         return {}

@@ -361,11 +361,48 @@ class BaseContent(BaseNode):
             except InvalidContentItemException:
                 logger.error(f"Could not parse content from {path}")
                 return None
+        return BaseContent._parse_content_item(
+            path, git_sha=git_sha, raise_on_exception=raise_on_exception
+        )
+
+    @staticmethod
+    def from_upload_path(
+        path: Path,
+        pack_marketplaces: List[MarketplaceVersions],
+        pack_supported_modules: Optional[List[str]] = None,
+        raise_on_exception: bool = False,
+    ) -> Optional["BaseContent"]:
+        """Re-parses a dumped (prepared) content item with an explicit pack context.
+
+        Deliberately not cached: each dumped path is unique, so an LRU entry would
+        never be hit. Passing ``pack_marketplaces`` means the parser does not look
+        up ``pack_metadata.json`` (and does not reach ``get_content_path`` / git).
+        """
+        logger.debug(f"Loading dumped content item from {path}")
+        return BaseContent._parse_content_item(
+            path,
+            raise_on_exception=raise_on_exception,
+            pack_marketplaces=pack_marketplaces,
+            pack_supported_modules=pack_supported_modules,
+        )
+
+    @staticmethod
+    def _parse_content_item(
+        path: Path,
+        git_sha: Optional[str] = None,
+        raise_on_exception: bool = False,
+        pack_marketplaces: Optional[List[MarketplaceVersions]] = None,
+        pack_supported_modules: Optional[List[str]] = None,
+    ) -> Optional["BaseContent"]:
+        """Parses a single content item into its model (shared by ``from_path`` and ``from_upload_path``)."""
         try:
             content_item.MARKETPLACE_MIN_VERSION = "0.0.0"
             try:
                 content_item_parser = ContentItemParser.from_path(
-                    path, git_sha=git_sha
+                    path,
+                    pack_marketplaces=pack_marketplaces,
+                    pack_supported_modules=pack_supported_modules,
+                    git_sha=git_sha,
                 )
             finally:
                 # Restore the module global even when parsing raises.

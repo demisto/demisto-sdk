@@ -445,6 +445,31 @@ def test__enhance_pack_properties__internal_and_external(
     assert enhanced_properties["versionInfo"] == expected
 
 
+def test__enhance_pack_properties__uses_passed_version_info(mocker):
+    """
+    Given:
+        - A precomputed version_info.
+    When:
+        - Calling the _enhance_pack_properties method with it.
+    Then:
+        - The passed value is used and is_external_repository is not called.
+    """
+    my_instance = PackMetadata(name="test", display_name="")  # type: ignore
+    is_external_repository_mock = mocker.patch(
+        "demisto_sdk.commands.content_graph.objects.pack_metadata.is_external_repository"
+    )
+
+    enhanced_properties = my_instance._enhance_pack_properties(
+        marketplace=MarketplaceVersions.XSOAR,
+        pack_id="9",
+        content_items=PackContentItems(),  # type: ignore
+        version_info="777",
+    )
+
+    assert enhanced_properties["versionInfo"] == "777"
+    is_external_repository_mock.assert_not_called()
+
+
 @pytest.mark.parametrize(
     "marketplace_version, current_fromversion, new_fromversion, current_toversion, new_toversion, expected_toversion",
     [

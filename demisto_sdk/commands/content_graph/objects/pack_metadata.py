@@ -34,6 +34,11 @@ MINIMAL_ALLOWED_SKIP_VALIDATION_VERSION = Version("6.6.0")
 json = JSON_Handler()
 
 
+def get_version_info() -> str:
+    """The `versionInfo` metadata value: the CI pipeline id, only when running within our repo (git lookup)."""
+    return "" if is_external_repository() else os.environ.get("CI_PIPELINE_ID", "")
+
+
 class PackMetadata(BaseModel):
     name: str
     display_name: str
@@ -89,6 +94,7 @@ class PackMetadata(BaseModel):
         marketplace: MarketplaceVersions,
         pack_id: str,
         content_items: PackContentItems,
+        version_info: Optional[str] = None,
     ) -> dict:
         """
         Computes the enhanced Pack properties to override in the dumped metadata dictionary.
@@ -101,6 +107,8 @@ class PackMetadata(BaseModel):
             marketplace (MarketplaceVersions): The marketplace to which the pack should belong to.
             pack_id (str): The pack ID.
             content_items (PackContentItems): The pack content items object.
+            version_info (Optional[str]): A precomputed `versionInfo` (e.g. once per repository dump).
+                When None, it is computed here.
 
         Returns:
             dict: The enhanced properties, keyed by their metadata (alias) names.
@@ -110,9 +118,7 @@ class PackMetadata(BaseModel):
             "author": self._get_author(self.author, marketplace),
             # We want to add the pipeline_id only if this is called within our repo.
             "versionInfo": (
-                ""
-                if is_external_repository()
-                else os.environ.get("CI_PIPELINE_ID", "")
+                version_info if version_info is not None else get_version_info()
             ),
         }
 
@@ -201,7 +207,14 @@ class PackMetadata(BaseModel):
             )
             new_content_item = None
             try:
-                new_content_item = BaseContent.from_path(content_item.upload_path)  # type: ignore[assignment]
+                # Uncached re-parse with the pack's marketplaces, so the parser does not
+                # look up ``pack_metadata.json`` (which reaches ``get_content_path`` / git per item).
+                # ``pack_supported_modules`` is intentionally not passed: it becomes the item's
+                # ``supportedModules`` default, which would add that key to the item summary.
+                new_content_item = BaseContent.from_upload_path(  # type: ignore[assignment]
+                    content_item.upload_path,  # type: ignore[arg-type]
+                    pack_marketplaces=self.marketplaces,  # type: ignore[attr-defined]
+                )
             except Exception as e:
                 logger.error(
                     f"Failed to generate content item for {content_item.upload_path}, will use original content item: {str(e)}"

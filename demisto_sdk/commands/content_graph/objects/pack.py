@@ -517,6 +517,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         path: Path,
         marketplace: MarketplaceVersions,
         strip_internal: bool = False,
+        version_info: Optional[str] = None,
     ) -> None:
         """Dumps the pack metadata file.
 
@@ -528,11 +529,13 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 visible to users, and scripts marked with ``isInternal: true``
                 are still listed in ``metadata.json``'s content items.
                 Should only be set by the ``demisto-sdk upload`` flow.
+            version_info (Optional[str]): A precomputed ``versionInfo`` (computed once per
+                repository dump). When None, it is computed for this pack.
         """
         self.server_min_version = self.server_min_version or MARKETPLACE_MIN_VERSION
         # Computed without mutating ``self`` so the dump does not depend on (or change) object state.
         enhanced_properties = self._enhance_pack_properties(
-            marketplace, self.object_id, self.content_items
+            marketplace, self.object_id, self.content_items, version_info=version_info
         )
 
         excluded_fields_from_metadata = {
@@ -659,8 +662,12 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                   set by the ``demisto-sdk upload`` flow so that uploaded
                   content is visible to users; other flows (prepare-content,
                   artifact builds) keep the fields intact.
+                - ``version_info`` (Optional[str]): A precomputed ``versionInfo`` for
+                  ``metadata.json`` (computed once per repository dump). Not
+                  forwarded to the content items.
         """
         tpb: bool = kwargs.pop("tpb", False)
+        version_info: Optional[str] = kwargs.pop("version_info", None)
         strip_internal: bool = kwargs.get("strip_internal", False)
 
         if not self.path.exists():
@@ -723,7 +730,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                     **kwargs,
                 )
             self.dump_metadata(
-                path / "metadata.json", marketplace, strip_internal=strip_internal
+                path / "metadata.json",
+                marketplace,
+                strip_internal=strip_internal,
+                version_info=version_info,
             )
             self.dump_readme(path / "README.md", marketplace)
             self._dump_pack_metadata(

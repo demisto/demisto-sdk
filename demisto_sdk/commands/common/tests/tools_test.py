@@ -1495,6 +1495,27 @@ def test_get_pack_metadata(repo):
     assert metadata_json == result
 
 
+def test_get_pack_metadata_outside_packs_returns_empty_without_io(
+    mocker: MockerFixture, tmp_path: Path
+):
+    """
+    Given
+    - A path that has no `Packs` segment (e.g. a dumped artifact).
+
+    When
+    - Running get_pack_metadata.
+
+    Then:
+    - Ensure {} is returned without reading any file.
+    """
+    get_dict_from_file_mock = mocker.patch.object(tools, "get_dict_from_file")
+
+    result = get_pack_metadata(str(tmp_path / "content_packs" / "X" / "a.yml"))
+
+    assert result == {}
+    get_dict_from_file_mock.assert_not_called()
+
+
 def test_get_last_remote_release_version(requests_mock):
     """
     When

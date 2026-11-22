@@ -2495,6 +2495,87 @@ class TestParsersAndModels:
 
         assert content_item.MARKETPLACE_MIN_VERSION == MARKETPLACE_MIN_VERSION
 
+    @staticmethod
+    def _dump_pack_with_script(repo: Repo, tmp_path: Path) -> PackModel:
+        """Creates a pack with one script and dumps it, so its items have an ``upload_path``."""
+        pack = repo.create_pack("HelloWorld")
+        pack.set_data(marketplaces=["xsoar"], firstCreated="2020-01-01T00:00:00Z")
+        pack.create_script("MyScript")
+        model = PackModel.from_orm(PackParser(Path(pack.path)))
+        ContentDTO(packs=[model]).dump(
+            tmp_path / "out", MarketplaceVersions.XSOAR, zip=False
+        )
+        return model
+
+    def test_dump_metadata_reparse_does_not_resolve_pack_metadata(
+        self, mocker, repo: Repo, tmp_path: Path
+    ):
+        """
+        Given:
+            - A dumped pack (its content items have an ``upload_path``).
+        When:
+            - Dumping the pack metadata again.
+        Then:
+            - The dumped items are re-parsed without looking up ``pack_metadata.json``.
+            - The script is still listed in ``contentItems``.
+        """
+        model = self._dump_pack_with_script(repo, tmp_path)
+        get_pack_metadata_mock = mocker.patch.object(tools, "get_pack_metadata")
+        metadata_path = tmp_path / "metadata.json"
+
+        model.dump_metadata(metadata_path, MarketplaceVersions.XSOAR)
+
+        get_pack_metadata_mock.assert_not_called()
+        scripts = tools.get_json(metadata_path)["contentItems"]["automation"]
+        assert [script["id"] for script in scripts] == ["MyScript"]
+
+    def test_dump_metadata_reparse_uses_pack_marketplaces(
+        self, mocker, repo: Repo, tmp_path: Path
+    ):
+        """
+        Given:
+            - A dumped pack whose ``marketplaces`` is only xsoar.
+        When:
+            - Dumping the pack metadata again.
+        Then:
+            - The re-parsed item gets the pack's marketplaces (not all marketplaces).
+        """
+        model = self._dump_pack_with_script(repo, tmp_path)
+        from_upload_path_spy = mocker.spy(BaseContent, "from_upload_path")
+
+        model.dump_metadata(tmp_path / "metadata.json", MarketplaceVersions.XSOAR)
+
+        assert from_upload_path_spy.call_count == 1
+        reparsed_marketplaces = from_upload_path_spy.spy_return.marketplaces
+        assert reparsed_marketplaces == sorted(model.marketplaces)
+        assert MarketplaceVersions.PLATFORM not in reparsed_marketplaces
+
+    def test_repository_dump_evaluates_external_repository_once(
+        self, mocker, repo: Repo, tmp_path: Path
+    ):
+        """
+        Given:
+            - A repository with two packs.
+        When:
+            - Dumping the repository.
+        Then:
+            - ``is_external_repository`` (a git lookup) runs once per dump, not once per pack.
+        """
+        models = [
+            PackModel.from_orm(PackParser(Path(repo.create_pack(name).path)))
+            for name in ("PackA", "PackB")
+        ]
+        is_external_repository_mock = mocker.patch(
+            "demisto_sdk.commands.content_graph.objects.pack_metadata.is_external_repository",
+            return_value=False,
+        )
+
+        ContentDTO(packs=models).dump(
+            tmp_path / "out", MarketplaceVersions.XSOAR, zip=False
+        )
+
+        assert is_external_repository_mock.call_count == 1
+
 
 class TestFindContentType:
     def test_integration_outside_content_path(self, git_repo):

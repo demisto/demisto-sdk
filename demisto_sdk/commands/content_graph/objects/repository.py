@@ -18,6 +18,7 @@ from demisto_sdk.commands.content_graph.common import (
 )
 from demisto_sdk.commands.content_graph.objects.connector import Connector
 from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.content_graph.objects.pack_metadata import get_version_info
 from demisto_sdk.commands.content_graph.parsers.repository import RepositoryParser
 
 json = JSON_Handler()
@@ -135,6 +136,8 @@ class ContentDTO(BaseModel):
             f"Starting repository dump for packs: {[pack.object_id for pack in packs_to_dump]}"
         )
         start_time = time.time()
+        # Evaluated once per dump instead of once per pack (it needs a git lookup).
+        kwargs.setdefault("version_info", get_version_info())
         if USE_MULTIPROCESSING:
             # Pool.starmap can't forward **kwargs, so we rebuild the args
             # tuple including only positional arguments. ``Pack.dump`` accepts

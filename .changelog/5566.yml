@@ -1,0 +1,4 @@
+changes:
+- description: Removed support for the `forceUpdate` object (`breakingChangesNotesLoosely` and `breakingChangesNotesTightly`) in release notes config files (`ReleaseNotes/x_x_x.json`). Config files that contain `forceUpdate` now fail schema validation.
+  type: breaking
+pr_number: 5566

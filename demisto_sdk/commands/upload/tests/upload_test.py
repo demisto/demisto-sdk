@@ -30,10 +30,6 @@ def test_upload_called_for_each_input(mocker):
         "demisto_sdk.commands.upload.upload.parse_marketplace_kwargs",
         return_value="marketplace",
     )
-    mocker.patch(
-        "demisto_sdk.commands.upload.upload.update_command_args_from_config_file"
-    )
-
     mock_uploader_instance = mocker.MagicMock()
     mock_uploader_instance.upload.return_value = SUCCESS_RETURN_CODE
     mocker.patch(

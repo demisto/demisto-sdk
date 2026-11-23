@@ -160,7 +160,17 @@ This can be done by entering the following structure into the file:
 flag_name=flag_default_value
 ```
 
-Note: Make sure to use the flag's full name and input `_` instead of a `-` if it exists in the flag name (e.g. instead of `no-docker-checks` use `no_docker_checks`).
+The configuration file only provides defaults, so a value in it is used when the flag was passed neither on the command line nor through an environment variable:
+
+```
+command line flag > environment variable > .demisto-sdk-conf > the flag's own default
+```
+
+Notes:
+
+- Make sure to use the flag's full name and input `_` instead of a `-` if it exists in the flag name (e.g. instead of `no-docker-checks` use `no_docker_checks`).
+- Flags that may be passed more than once (such as `--input` of the **pre-commit** command) take a comma separated list.
+- Boolean flags take `true` or `false`. For a flag with an explicit off switch (e.g. `--docker/--no-docker`), use the name of the on switch - `docker=false`.
 
 Here are a few examples:
 
@@ -176,6 +186,14 @@ Here are a few examples:
    ```INI
    [update-release-notes]
    update_type=minor
+   ```
+
+- As a user, I would like the `pre-commit` command to always skip the Docker based hooks and run on all files. In the `.demisto-sdk-conf` file I'll enter:
+
+   ```INI
+   [pre-commit]
+   docker=false
+   all_files=true
    ```
 
 ---

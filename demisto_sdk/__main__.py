@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.tools import (
     get_release_note_entries,
     is_sdk_defined_working_offline,
 )
+from demisto_sdk.utils.config_file import apply_config_file_defaults
 
 app = typer.Typer(pretty_exceptions_enable=False)
 
@@ -49,6 +50,10 @@ def main(
         None, "--log-file-path", help="Path to save log files."
     ),
 ):
+    # Must run before the subcommand context is created, so that Click can use
+    # the configuration file as a source of defaults for the invoked command.
+    apply_config_file_defaults(ctx)
+
     sdk = DemistoSDK()  # Initialize your SDK class
     sdk.configuration = Configuration()  # Initialize the configuration
     ctx.obj = sdk  # Pass sdk instance to context

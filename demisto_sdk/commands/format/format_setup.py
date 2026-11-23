@@ -7,7 +7,6 @@ from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.common.tools import is_sdk_defined_working_offline
 from demisto_sdk.commands.format.format_module import format_manager
-from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 
 @logging_setup_decorator
@@ -113,7 +112,6 @@ def format(
         typer.echo(SDK_OFFLINE_ERROR_MESSAGE, err=True)
         raise typer.Exit(1)
 
-    update_command_args_from_config_file("format", ctx.params)
     _input = input if input else ",".join(map(str, file_paths)) if file_paths else None
 
     with ReadMeValidator.start_mdx_server():

@@ -9,7 +9,6 @@ from demisto_sdk.commands.common.tools import find_type
 from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import (
     PlaybookTestsGenerator,
 )
-from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 
 @logging_setup_decorator
@@ -69,7 +68,6 @@ def generate_test_playbook(
     """
     Generate a test playbook from integration/script YAML arguments.
     """
-    update_command_args_from_config_file("generate-test-playbook", ctx.params)
     file_type: FileType = find_type(str(input), ignore_sub_categories=True)
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         typer.echo(

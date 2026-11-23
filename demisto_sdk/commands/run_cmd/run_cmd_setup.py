@@ -3,7 +3,6 @@ from typing import Optional, TypedDict
 import typer
 
 from demisto_sdk.commands.common.logger import logging_setup_decorator
-from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 
 class RunnerArgs(TypedDict):
@@ -109,6 +108,5 @@ def run(
         "raw_response": raw_response,
     }
 
-    update_command_args_from_config_file("run", kwargs)
     runner = Runner(**kwargs)
     return runner.run()

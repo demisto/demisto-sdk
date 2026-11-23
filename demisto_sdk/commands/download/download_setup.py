@@ -5,7 +5,6 @@ from typing import List
 import typer
 
 from demisto_sdk.commands.common.logger import logging_setup_decorator
-from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 
 class ItemType(str, Enum):
@@ -145,5 +144,4 @@ def download(
         "file_log_threshold": file_log_threshold,
         "log_file_path": log_file_path,
     }
-    update_command_args_from_config_file("download", kwargs)
     Downloader(**kwargs).download()  # type: ignore[arg-type]

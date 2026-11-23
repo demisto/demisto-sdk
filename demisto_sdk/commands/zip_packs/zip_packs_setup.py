@@ -4,7 +4,6 @@ import typer
 
 from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.common.tools import parse_marketplace_kwargs
-from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 
 @logging_setup_decorator
@@ -51,8 +50,6 @@ def zip_packs(
         EX_SUCCESS,
         PacksZipper,
     )
-
-    update_command_args_from_config_file("zip-packs", locals())
 
     should_upload = upload
     zip_all = zip_all or should_upload

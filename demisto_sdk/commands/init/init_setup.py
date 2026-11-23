@@ -4,7 +4,6 @@ import typer
 
 from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.common.tools import parse_marketplace_kwargs
-from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 
 @logging_setup_decorator
@@ -79,8 +78,6 @@ def init(
     """
     from demisto_sdk.commands.init.initiator import Initiator
 
-    # Update args from configuration file
-    update_command_args_from_config_file("init", ctx.params)
     marketplace = parse_marketplace_kwargs(ctx.params)
 
     # Initialize the initiator

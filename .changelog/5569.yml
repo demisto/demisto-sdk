@@ -1,0 +1,8 @@
+changes:
+- description: Fixed an issue where the `.demisto-sdk-conf` configuration file was ignored by the **pre-commit** command, and had no effect on the **format**, **zip-packs**, **update-release-notes** and **error-code** commands. The configuration file is now applied to every command.
+  type: fix
+- description: Values from the `.demisto-sdk-conf` configuration file no longer override options that were explicitly passed on the command line or set through an environment variable. The precedence is now command line, then environment variable, then configuration file, then the option's default.
+  type: breaking
+- description: The `.demisto-sdk-conf` configuration file is now applied once, through Click's `default_map`, instead of by each command separately. Multi-value options can be set to a comma separated list, and options may be referenced either by their flag name or by their parameter name.
+  type: internal
+pr_number: '5569'

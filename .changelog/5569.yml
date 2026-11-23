@@ -5,4 +5,4 @@ changes:
   type: breaking
 - description: The `.demisto-sdk-conf` configuration file is now applied once, through Click's `default_map`, instead of by each command separately. Multi-value options can be set to a comma separated list, and options may be referenced either by their flag name or by their parameter name.
   type: internal
-pr_number: '5562'
+pr_number: '5569'

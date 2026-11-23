@@ -1113,6 +1113,100 @@ def test_IsValidFromversionOnModifiedValidator_obtain_invalid_content_items_fail
     )
 
 
+@pytest.mark.parametrize(
+    "old_paths, old_values, pack_info, new_fromversion, expected_failures",
+    [
+        pytest.param(
+            [],
+            [],
+            {"serverMinVersion": "8.15.0"},
+            "8.15.0",
+            0,
+            id="implicit -> equal to pack min",
+        ),
+        pytest.param(
+            [],
+            [],
+            {"serverMinVersion": "8.15.0"},
+            "8.13.0",
+            0,
+            id="implicit -> below pack min",
+        ),
+        pytest.param(
+            [],
+            [],
+            {"serverMinVersion": "8.15.0"},
+            "8.16.0",
+            1,
+            id="implicit -> above pack min",
+        ),
+        pytest.param(
+            ["fromversion"],
+            ["8.12.0"],
+            {"serverMinVersion": "8.15.0"},
+            "8.15.0",
+            1,
+            id="explicit -> changed",
+        ),
+        pytest.param([], [], None, "8.15.0", 1, id="implicit -> no pack min"),
+    ],
+)
+def test_IsValidFromversionOnModifiedValidator_implicit_fromversion(
+    old_paths, old_values, pack_info, new_fromversion, expected_failures
+):
+    """
+    Given:
+        - An old agentix action, with or without a `fromversion` line, in a pack with or without `serverMinVersion`.
+        - A new version of the action with an explicit `fromversion`.
+    When:
+        - Calling the `IsValidFromversionOnModifiedValidator` validator.
+    Then:
+        - Writing the implicit `fromversion` explicitly passes while it does not exceed the old pack's `serverMinVersion`.
+        - Changing an explicit `fromversion`, raising above `serverMinVersion`, or no `serverMinVersion`, fails.
+    """
+    old_item = create_agentix_action_object(
+        paths=old_paths, values=old_values, pack_info=pack_info
+    )
+    new_item = create_agentix_action_object(
+        paths=["fromversion"], values=[new_fromversion]
+    )
+    create_old_file_pointers([new_item], [old_item])
+
+    result = IsValidFromversionOnModifiedValidator().obtain_invalid_content_items(
+        [new_item]
+    )
+
+    assert len(result) == expected_failures
+
+
+def test_IsValidFromversionOnModifiedValidator_implicit_fromversion_mixed():
+    """
+    Given:
+        - Two old agentix actions with no `fromversion` line, in packs with `serverMinVersion` 8.15.0.
+        - New versions: one writes 8.15.0 explicitly, the other raises to 8.16.0.
+    When:
+        - Calling the `IsValidFromversionOnModifiedValidator` validator.
+    Then:
+        - Only the raised item fails.
+    """
+    pack_info = {"serverMinVersion": "8.15.0"}
+    old_items = [
+        create_agentix_action_object(pack_info=pack_info),
+        create_agentix_action_object(pack_info=pack_info),
+    ]
+    new_items = [
+        create_agentix_action_object(paths=["fromversion"], values=["8.15.0"]),
+        create_agentix_action_object(paths=["fromversion"], values=["8.16.0"]),
+    ]
+    create_old_file_pointers(new_items, old_items)
+
+    result = IsValidFromversionOnModifiedValidator().obtain_invalid_content_items(
+        new_items
+    )
+
+    assert [r.content_object for r in result] == [new_items[1]]
+
+
 def create_dummy_integration_with_context_path(
     command_name: str, context_path: str
 ) -> Integration:

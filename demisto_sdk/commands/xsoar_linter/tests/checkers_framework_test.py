@@ -262,6 +262,61 @@ def test_w9005_trailing_line_1_comment_is_reported():
     assert "W9005" not in [finding.code for finding in own_line.findings]
 
 
+# Invalid on every Python version, so the tests do not depend on the Python running them.
+UNPARSABLE_CODE = "def broken(:\n    pass\n"
+
+
+@pytest.mark.parametrize(
+    "comment",
+    [
+        "# xsoar-lint: skip-parse-file\n",
+        "#xsoar-lint:skip-parse-file\n",
+        "    # xsoar-lint: skip-parse-file  # uses Python 3.12 syntax\n",
+    ],
+)
+def test_skip_parse_file_skips_unparsable_file(comment):
+    """
+    Given:
+        - A file that cannot be parsed, with a `# xsoar-lint: skip-parse-file` comment on its own line.
+    When:
+        - Linting the file with the ast engine.
+    Then:
+        - Ensure the file is skipped: no E0001, no findings, and the run does not fail.
+    """
+    result = lint_source(comment + UNPARSABLE_CODE, "sample", LintSettings())
+    assert result.findings == []
+    assert not result.fails
+
+
+@pytest.mark.parametrize(
+    "comment",
+    [
+        pytest.param("# xsoar-lint: skip-file\n", id="skip-file needs a parsable file"),
+        pytest.param("# pylint: skip-parse-file\n", id="pylint prefix is not accepted"),
+        pytest.param(
+            "x = 1  # xsoar-lint: skip-parse-file\n", id="trailing comment is ignored"
+        ),
+        pytest.param(
+            'x = "# xsoar-lint: skip-parse-file"\n',
+            id="text inside a string is ignored",
+        ),
+    ],
+)
+def test_skip_parse_file_only_for_own_line_xsoar_lint_comment(comment):
+    """
+    Given:
+        - A file that cannot be parsed, with skip-file, a pylint-prefixed skip-parse-file,
+          or skip-parse-file that is not a comment on its own line.
+    When:
+        - Linting the file with the ast engine.
+    Then:
+        - Ensure the file is still reported with E0001 and the run fails (same as pylint).
+    """
+    result = lint_source(comment + UNPARSABLE_CODE, "sample", LintSettings())
+    assert [finding.code for finding in result.findings] == ["E0001"]
+    assert result.fails
+
+
 def test_scope_name_and_position():
     """
     Given:

@@ -6,7 +6,11 @@ Two prefixes are accepted and behave the same:
     # pylint: disable=E9003        (kept so existing content keeps working)
 
 Supported keywords: disable, enable, disable-next, disable-msg, enable-msg, skip-file.
-`disable=all` and `skip-file` ignore the whole file.
+`disable=all` and `skip-file` ignore the whole file. The file must still parse (same as pylint).
+
+`# xsoar-lint: skip-parse-file` (only with the xsoar-lint prefix, on its own line) skips the
+file before it is parsed. Use it only for files that use syntax newer than the Python
+demisto-sdk runs on, which would otherwise fail with E0001.
 Rules can be named by code (E9003) or symbol (sleep-exists). Unknown names are ignored.
 
 Where a comment applies:
@@ -36,6 +40,10 @@ DISABLE_KEYWORDS = {"disable", "disable-msg"}
 ENABLE_KEYWORDS = {"enable", "enable-msg"}
 NEXT_LINE_KEYWORDS = {"disable-next"}
 SKIP_FILE_KEYWORDS = {"skip-file", "disable-all"}
+# Found with a plain text search, because the file may not parse. A reason may follow after `#`.
+SKIP_PARSE_FILE_PATTERN = re.compile(
+    r"^[ \t]*#[ \t]*xsoar-lint[ \t]*:[ \t]*skip-parse-file[ \t]*(?:#.*)?$", re.MULTILINE
+)
 
 # Block statements whose header line can carry a comment that covers the whole block.
 DEFINITION_NODES = (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
@@ -86,6 +94,11 @@ def _latest_is_disabled(ranges: List[Tuple[int, int, bool]], line: int) -> bool:
         if first <= line <= last:
             return not enabled
     return False
+
+
+def has_skip_parse_file(source: str) -> bool:
+    """Whether the source has a `# xsoar-lint: skip-parse-file` comment on its own line."""
+    return bool(SKIP_PARSE_FILE_PATTERN.search(source))
 
 
 def read_pragmas(source: str, known_names: Dict[str, str]) -> Tuple[List[Pragma], bool]:

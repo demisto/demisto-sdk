@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.xsoar_linter.checkers.checker import run_checkers
 from demisto_sdk.commands.xsoar_linter.checkers.context import (
     FileContext,
@@ -15,7 +16,10 @@ from demisto_sdk.commands.xsoar_linter.checkers.models import (
     LintResult,
     LintSettings,
 )
-from demisto_sdk.commands.xsoar_linter.checkers.pragmas import build_suppressions
+from demisto_sdk.commands.xsoar_linter.checkers.pragmas import (
+    build_suppressions,
+    has_skip_parse_file,
+)
 from demisto_sdk.commands.xsoar_linter.checkers.registry import (
     all_rule_names,
     checkers_for_support_level,
@@ -43,6 +47,10 @@ def lint_source(source: str, module_name: str, settings: LintSettings) -> LintRe
     checker_classes = checkers_for_support_level(settings.support)
     if not checker_classes:
         return LintResult(findings=[], fails=True)
+
+    if has_skip_parse_file(source):
+        logger.debug(f"{module_name}: skipped by '# xsoar-lint: skip-parse-file'")
+        return LintResult()
 
     try:
         tree = ast.parse(source)

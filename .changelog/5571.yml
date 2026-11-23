@@ -1,0 +1,6 @@
+changes:
+- description: Fixed an issue where **BC106** failed when an existing content item with no `fromversion` line got an explicit `fromversion` that does not exceed the pack's `serverMinVersion`.
+  type: fix
+- description: Changed the default `fromversion` of an **AgentixSkill** with no `fromversion` from 8.12.0 to 8.15.0.
+  type: fix
+pr_number: 5571

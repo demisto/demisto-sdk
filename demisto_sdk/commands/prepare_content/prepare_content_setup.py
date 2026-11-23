@@ -18,7 +18,6 @@ from demisto_sdk.commands.prepare_content.generic_module_unifier import (
 from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
     PrepareUploadManager,
 )
-from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 
 @logging_setup_decorator
@@ -153,9 +152,6 @@ def prepare_content(
         ctx.params["output"] = (
             str(output_path / Path(input_content).name) if len(inputs) > 1 else output
         )
-
-        # Update command args with additional configurations
-        update_command_args_from_config_file("unify", ctx.params)
 
         file_type = find_type(input_content)
         if marketplace:

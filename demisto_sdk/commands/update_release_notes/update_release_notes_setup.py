@@ -11,7 +11,6 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.common.tools import is_sdk_defined_working_offline
-from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 
 def validate_version(value: Optional[str]) -> Optional[str]:
@@ -129,8 +128,6 @@ def update_release_notes(
     if is_sdk_defined_working_offline():
         typer.echo(SDK_OFFLINE_ERROR_MESSAGE, err=True)
         raise typer.Exit(1)
-
-    update_command_args_from_config_file("update-release-notes", locals())
 
     if force and input is None:
         typer.echo(

@@ -5,7 +5,6 @@ from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.find_dependencies.find_dependencies import (
     remove_dependencies_from_id_set,
 )
-from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 
 @logging_setup_decorator
@@ -60,8 +59,6 @@ def create_id_set(
         "fail_duplicates": fail_duplicates,
         "marketplace": marketplace,
     }
-
-    update_command_args_from_config_file("create-id-set", kwargs)
 
     id_set_creator = IDSetCreator(**kwargs)  # type: ignore[arg-type]
     id_set, excluded_items_by_pack, excluded_items_by_type = (

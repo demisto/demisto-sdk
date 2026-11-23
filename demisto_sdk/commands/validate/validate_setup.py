@@ -31,7 +31,6 @@ from demisto_sdk.commands.validate.unified_connector_content_manager import (
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.commands.validate.validation_results import ResultWriter
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
-from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 
 def validate_paths(
@@ -247,7 +246,6 @@ def validate(
     validate_paths(input, private_content_path, connectors_content_path)
 
     run_with_mp = not no_multiprocessing
-    update_command_args_from_config_file("validate", ctx.params)
     sdk = ctx.obj
     sys.path.append(sdk.configuration.env_dir)
 

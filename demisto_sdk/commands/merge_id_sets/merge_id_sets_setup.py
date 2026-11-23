@@ -39,7 +39,6 @@ def merge_id_sets(
     Merge two id_sets.
     """
     from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
-    from demisto_sdk.utils.utils import update_command_args_from_config_file
 
     kwargs = {
         "id_set1": id_set1,
@@ -47,8 +46,6 @@ def merge_id_sets(
         "output": output,
         "fail_duplicates": fail_duplicates,
     }
-
-    update_command_args_from_config_file("merge-id-sets", kwargs)
 
     first = kwargs["id_set1"]
     second = kwargs["id_set2"]

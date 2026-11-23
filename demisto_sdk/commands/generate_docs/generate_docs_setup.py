@@ -19,7 +19,6 @@ from demisto_sdk.commands.generate_docs.generate_readme_template import (
 from demisto_sdk.commands.generate_docs.generate_script_doc import (
     generate_script_doc,
 )
-from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 
 @logging_setup_decorator
@@ -120,7 +119,6 @@ def generate_docs(
     To generate command examples, set up the required environment variables prior to running this command in order to establish a connection between the Demisto SDK and the server, as well as create a file containing command examples to be run for the documentation.
     >Note: This command is not supported in Cortex XSIAM."""
     try:
-        update_command_args_from_config_file("generate-docs", ctx.params)
         input_path_str: str = ctx.params.get("input", "")
         if not (input_path := Path(input_path_str)).exists():
             raise Exception(f"Input {input_path_str} does not exist.")

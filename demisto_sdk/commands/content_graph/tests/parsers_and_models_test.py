@@ -3716,6 +3716,39 @@ class TestAgentixBaseParser:
         )
         assert parser.fromversion == "8.15.0"
 
+    @pytest.mark.parametrize(
+        "fromversion, expected",
+        [(None, "8.15.0"), ("8.16.0", "8.16.0")],
+        ids=["default", "explicit"],
+    )
+    def test_agentix_skill_parser_fromversion(
+        self, pack: Pack, fromversion: Optional[str], expected: str
+    ):
+        """
+        Given:
+            - An agentix skill without / with an explicit fromversion.
+        When:
+            - Creating the content item's parser.
+        Then:
+            - The default is DEFAULT_AGENTIX_SKILL_FROM_VERSION (8.15.0), not the generic agentix 8.12.0.
+            - An explicit fromversion wins.
+        """
+        from demisto_sdk.commands.content_graph.parsers.agentix_skill import (
+            AgentixSkillParser,
+        )
+
+        metadata = load_yaml("agentix_skill.yml")
+        metadata.pop("fromversion", None)
+        if fromversion:
+            metadata["fromversion"] = fromversion
+        agentix_skill = pack.create_agentix_skill("TestAgentixSkill", metadata)
+        parser = AgentixSkillParser(
+            Path(agentix_skill.path),
+            list(MarketplaceVersions),
+            pack_supported_modules=[],
+        )
+        assert parser.fromversion == expected
+
     def test_agentix_action_parser_supported_marketplaces(self, pack: Pack):
         """
         Given:

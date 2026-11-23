@@ -2,8 +2,12 @@ from functools import cached_property
 from pathlib import Path
 from typing import List, Optional
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_AGENTIX_SKILL_FROM_VERSION,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.agentix_base import (
     AgentixBaseParser,
@@ -51,6 +55,17 @@ class AgentixSkillParser(AgentixBaseParser, content_type=ContentType.AGENTIX_SKI
     def field_mapping(self):
         super().field_mapping.update({"display": "name"})
         return super().field_mapping
+
+    @property
+    def fromversion(self) -> str:
+        """Skills need 8.15.0 (their BA106 floor), so that is the implicit default."""
+        return str(
+            get_value(
+                self.yml_data,
+                self.field_mapping.get("fromversion", ""),
+                DEFAULT_AGENTIX_SKILL_FROM_VERSION,
+            )
+        )
 
     def connect_to_dependencies(self) -> None:
         """Registers the actions referenced in the skill body as optional dependencies.

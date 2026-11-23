@@ -8,6 +8,7 @@ from packaging.version import parse
 
 import demisto_sdk.commands.pre_commit.pre_commit_command as pre_commit_command
 import demisto_sdk.commands.pre_commit.pre_commit_context as context
+from demisto_sdk.commands.common.constants import DEFAULT_PYTHON_VERSION
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
@@ -24,6 +25,7 @@ from demisto_sdk.commands.pre_commit.pre_commit_command import (
     GitUtil,
     PreCommitContext,
     PreCommitRunner,
+    add_related_files,
     group_by_language,
     pre_commit_manager,
     preprocess_files,
@@ -215,7 +217,7 @@ def test_config_files(mocker, repo: Repo, native_image_config):
     )
     assert all(
         Path(obj.path).relative_to(repo.path)
-        in pre_commit_context.python_version_to_files["3.10"]
+        in pre_commit_context.python_version_to_files[DEFAULT_PYTHON_VERSION]
         for obj in (incident_field, classifier)
     )
     assert (
@@ -260,6 +262,77 @@ def test_handle_api_modules(mocker, git_repo: Repo):
         Path(integration.yml.path).relative_to(git_repo.path),
         integration.object.path.relative_to(git_repo.path),
     ) in files_to_run
+
+
+def test_api_module_readme_is_preserved(mocker, git_repo: Repo):
+    """
+    Given:
+        - A repository with an ApiModules pack containing an API module that
+          ships with a README.md, and a downstream pack with an integration
+          that imports the API module.
+
+    When:
+        - Calling ``group_by_language`` with the API module's README.md as the
+          only input file (mirroring ``demisto-sdk pre-commit -i <README>``).
+
+    Then:
+        - The README.md must end up in the returned ``language_to_files``
+          mapping (under the default Python version bucket, with
+          ``IntegrationScript=None``) instead of being silently dropped before
+          pre-commit is invoked. Without this, the markdownlint-cli2 hook (and
+          any other ``.md``-targeting hook) is "Skipped: no files to check".
+    """
+    pack1 = git_repo.create_pack("ApiModules")
+    script = pack1.create_script("TestApiModule")
+    pack2 = git_repo.create_pack("Pack2")
+    pack2.create_integration("integration1", code="from TestApiModule import *")
+
+    readme_path = Path(script.readme.path).relative_to(git_repo.path)
+
+    mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(git_repo.path))
+    with ChangeCWD(git_repo.path):
+        git_repo.create_graph()
+        language_to_files, _ = group_by_language({readme_path})
+
+    # The README should reach the per-language bucket with no IntegrationScript
+    # attached (it is an infra/doc file from the ApiModule folder).
+    bucket_paths = {
+        path for path, _ in language_to_files.get(DEFAULT_PYTHON_VERSION, set())
+    }
+    assert readme_path in bucket_paths
+
+
+def test_yml_change_pulls_readme(tmp_path):
+    """
+    Given:
+        - An integration folder on disk containing both a ``.yml`` manifest and
+          a sibling ``README.md`` file.
+
+    When:
+        - Calling ``add_related_files`` on the ``.yml`` file (as happens when
+          the user runs ``demisto-sdk pre-commit -i Foo.yml`` or when the
+          API-module-expansion block rebuilds the per-integration file set).
+
+    Then:
+        - The sibling ``README.md`` must be included in the returned set so
+          that README-targeting hooks (e.g. markdownlint-cli2 with
+          ``files: "^(.*/)?README\\.md$"``) actually fire instead of being
+          reported as Skipped.
+    """
+    integration_dir = tmp_path / "Foo"
+    integration_dir.mkdir()
+    yml_file = integration_dir / "Foo.yml"
+    yml_file.write_text("name: Foo\n")
+    py_file = integration_dir / "Foo.py"
+    py_file.write_text("# code\n")
+    readme_file = integration_dir / "README.md"
+    readme_file.write_text("# Foo\n")
+
+    related = add_related_files(yml_file)
+
+    assert readme_file in related
+    assert yml_file in related
+    assert py_file in related
 
 
 @pytest.mark.parametrize("github_actions", [True, False])
@@ -393,6 +466,9 @@ class TestPreprocessFiles:
             - Running demisto-sdk pre-commit -i file1.yml.
         Then:
             - Check that the associated python file was gathered correctly.
+            - Check that the sibling README.md is also gathered, so that
+              README-targeting hooks (e.g. markdownlint-cli2) fire whenever
+              the integration manifest is touched.
         """
         pack1 = repo.create_pack("Pack1")
         mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(repo.path))
@@ -408,6 +484,7 @@ class TestPreprocessFiles:
             Path(integration.yml.rel_path),
             Path(integration.code.rel_path),
             Path(integration.test.rel_path),
+            Path(integration.readme.rel_path),
         }
         mocker.patch.object(GitUtil, "get_all_files", return_value=relative_paths)
         output = preprocess_files(input_files=input_files)

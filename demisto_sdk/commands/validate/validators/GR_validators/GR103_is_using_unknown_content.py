@@ -3,7 +3,9 @@ from __future__ import annotations
 from abc import ABC
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.tools import get_relative_path_from_packs_dir
+from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
+from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
 from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
@@ -43,6 +45,8 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 )
 
 ContentTypes = Union[
+    AgentixAgent,
+    AgentixSkill,
     Integration,
     Script,
     Playbook,
@@ -91,7 +95,7 @@ class IsUsingUnknownContentValidator(BaseValidator[ContentTypes], ABC):
         results: List[ValidationResult] = []
         file_paths_to_validate = (
             [
-                str(content_item.path.relative_to(CONTENT_PATH))
+                get_relative_path_from_packs_dir(str(content_item.path))
                 for content_item in content_items
             ]
             if not validate_all_files

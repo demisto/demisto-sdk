@@ -21,24 +21,21 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
         super().__init__(
             path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
         )
-        self.underlying_content_item_id: str = self.yml_data.get(
-            "underlyingcontentitem"
-        ).get("id")  # type: ignore
-        self.underlying_content_item_name: str = self.yml_data.get(
-            "underlyingcontentitem"
-        ).get("name")  # type: ignore
-        self.underlying_content_item_type: str = self.yml_data.get(
-            "underlyingcontentitem"
-        ).get("type")  # type: ignore
-        self.underlying_content_item_command: str = self.yml_data.get(
-            "underlyingcontentitem"
-        ).get("command")  # type: ignore
-        self.underlying_content_item_version: int = self.yml_data.get(
-            "underlyingcontentitem"
-        ).get("version")  # type: ignore
+        underlying = self.yml_data.get("underlyingcontentitem") or {}
+        self.underlying_content_item_id: str = underlying.get("id", "")
+        self.underlying_content_item_name: str = underlying.get("name", "")
+        self.underlying_content_item_type: str = underlying.get("type", "")
+        self.underlying_content_item_command: str = underlying.get("command", "")
+        self.underlying_content_item_version: int = underlying.get("version", 0)
         self.requires_user_approval: Optional[bool] = self.yml_data.get(
             "requiresuserapproval"
         )
+        self.is_long_running: bool = bool(self.yml_data.get("islongrunning", False))
+        self.long_running_timeout_seconds: Optional[int] = self.yml_data.get(
+            "longrunningtimeoutseconds"
+        )
+        self.is_test: bool = False
+        self.connect_to_dependencies()
 
     @cached_property
     def field_mapping(self):
@@ -60,3 +57,29 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
     @property
     def few_shots(self) -> Optional[list[str]]:
         return self.yml_data.get("fewshots", [])
+
+    def connect_to_dependencies(self) -> None:
+        """Create USES relationship to the underlying content item."""
+        # Determine the target content type based on underlying item type
+        if self.underlying_content_item_type == "command":
+            # For commands, use USES_COMMAND_OR_SCRIPT with the command name
+            if self.underlying_content_item_command:
+                self.add_command_or_script_dependency(
+                    self.underlying_content_item_command, is_mandatory=True
+                )
+        elif self.underlying_content_item_type == "script":
+            # For scripts, use USES_BY_ID with the script ID
+            self.add_dependency_by_id(
+                self.underlying_content_item_id, ContentType.SCRIPT, is_mandatory=True
+            )
+        elif self.underlying_content_item_type == "playbook":
+            # For playbooks, use USES_BY_ID with the playbook ID
+            self.add_dependency_by_id(
+                self.underlying_content_item_id, ContentType.PLAYBOOK, is_mandatory=True
+            )
+        elif self.underlying_content_item_type == "prompt":
+            # For prompt scripts (isllm=True scripts), use USES_BY_ID with the script ID
+            self.add_dependency_by_id(
+                self.underlying_content_item_id, ContentType.SCRIPT, is_mandatory=True
+            )
+        # "internal" type has no external content item dependency — nothing to register

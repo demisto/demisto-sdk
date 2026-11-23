@@ -5,7 +5,11 @@ from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
+from demisto_sdk.commands.content_graph.objects.agentix_action_test import (
+    AgentixActionTest,
+)
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
+from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
 from demisto_sdk.commands.content_graph.objects.assets_modeling_rule import (
     AssetsModelingRule,
 )
@@ -28,6 +32,7 @@ from demisto_sdk.commands.content_graph.objects.indicator_field import Indicator
 from demisto_sdk.commands.content_graph.objects.indicator_type import IndicatorType
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.job import Job
+from demisto_sdk.commands.content_graph.objects.knowledge import Knowledge
 from demisto_sdk.commands.content_graph.objects.layout import Layout
 from demisto_sdk.commands.content_graph.objects.layout_rule import LayoutRule
 from demisto_sdk.commands.content_graph.objects.list import List as ListObject
@@ -109,6 +114,11 @@ class PackContentItems(BaseModel):
         [], alias=ContentType.AGENTIX_ACTION.value
     )
     agentix_agent: List[AgentixAgent] = Field([], alias=ContentType.AGENTIX_AGENT.value)
+    agentix_action_test: List[AgentixActionTest] = Field(
+        [], alias=ContentType.AGENTIX_ACTION_TEST.value
+    )
+    agentix_skill: List[AgentixSkill] = Field([], alias=ContentType.AGENTIX_SKILL.value)
+    knowledge: List[Knowledge] = Field([], alias=ContentType.KNOWLEDGE.value)
 
     def __iter__(self) -> Generator[ContentItem, Any, Any]:  # type: ignore
         """Defines the iteration of the object. Each iteration yields a single content item."""

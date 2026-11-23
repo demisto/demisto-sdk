@@ -7,6 +7,7 @@ from pydantic import Field
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+from demisto_sdk.commands.upload.tools import parse_upload_response
 
 
 class Job(ContentItem, content_type=ContentType.JOB):  # type: ignore[call-arg]
@@ -21,12 +22,16 @@ class Job(ContentItem, content_type=ContentType.JOB):  # type: ignore[call-arg]
             dir_path = Path(f)
             self.dump(dir_path, marketplace=marketplace)
 
-            return client.generic_request(
+            response = client.generic_request(
                 method="POST",
                 path="jobs/import",
                 files={"file": str(self.path)},
                 content_type="multipart/form-data",
             )
+            parse_upload_response(
+                response, path=self.path, content_type=self.content_type
+            )  # raises on error
+            return response
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:

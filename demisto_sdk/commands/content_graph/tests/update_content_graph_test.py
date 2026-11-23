@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Any, Callable, Dict, List
+from unittest.mock import MagicMock, PropertyMock
 from zipfile import ZipFile
 
 import pytest
@@ -11,6 +12,10 @@ from demisto_sdk.commands.content_graph.commands.create import (
     create_content_graph,
 )
 from demisto_sdk.commands.content_graph.commands.update import (
+    _changed_connectors_from_git,
+    extract_connector_ids_from_diff_files,
+    extract_pack_ids_from_diff_files,
+    should_update_graph,
     update_content_graph,
 )
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
@@ -63,6 +68,13 @@ def setup_method(mocker, tmp_path_factory):
                 }
             }
         },
+    )
+    # Prevent downloading the real content graph from the bucket during tests
+    mocker.patch(
+        "demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph.download_content_graph",
+        side_effect=Exception(
+            "Mocked: download_content_graph should not be called in tests"
+        ),
     )
 
 
@@ -193,7 +205,9 @@ def repository(mocker) -> ContentDTO:
     pack3.content_items.script.append(mock_script("SampleScript2"))
     repository.packs.extend([pack1, pack2, pack3])
 
-    def mock__create_content_dto(packs_to_update: List[str]) -> ContentDTO:
+    def mock__create_content_dto(packs_to_update: List[str], **kwargs) -> ContentDTO:
+        # **kwargs absorbs the keyword-only ``connectors`` parameter that
+        # ContentGraphBuilder._create_content_dto now accepts.
         if not packs_to_update:
             return repository
         repo_copy = repository.copy()
@@ -217,7 +231,10 @@ def external_repository(mocker) -> ContentDTO:
     pack1 = mock_pack("ExternalPack")
     repository.packs.extend([pack1])
 
-    def mock__create_content_dto(packs_to_update: List[str]) -> List[ContentDTO]:
+    def mock__create_content_dto(
+        packs_to_update: List[str], **kwargs
+    ) -> List[ContentDTO]:
+        # **kwargs absorbs the keyword-only ``connectors`` parameter.
         if not packs_to_update:
             return [repository]
         repo_copy = repository.copy()
@@ -229,7 +246,8 @@ def external_repository(mocker) -> ContentDTO:
         side_effect=mock__create_content_dto,
     )
 
-    def mock__create_content_dto(packs_to_update: List[str]) -> ContentDTO:
+    def mock__create_content_dto(packs_to_update: List[str], **kwargs) -> ContentDTO:
+        # **kwargs absorbs the keyword-only ``connectors`` parameter.
         if not packs_to_update:
             return repository
         repo_copy = repository.copy()
@@ -846,3 +864,546 @@ class TestUpdateContentGraph:
                 all_level_dependencies=True,
             )
             assert len(packs_from_graph) == 3
+
+
+class TestShouldUpdateGraph:
+    """Tests for the should_update_graph function."""
+
+    def test_should_update_graph_with_commit_and_changed_packs(self):
+        """
+        Given:
+            - A content graph interface with a valid commit hash.
+            - Git utility that returns changed pack IDs.
+        When:
+            - Calling should_update_graph with use_git=True.
+        Then:
+            - Returns True because there are changed packs.
+        """
+        mock_interface = MagicMock()
+        type(mock_interface).commit = PropertyMock(return_value="abc123def456")
+        mock_interface.is_alive.return_value = True
+        type(mock_interface).content_parser_latest_hash = PropertyMock(
+            return_value="hash1"
+        )
+        mock_interface._get_latest_content_parser_hash.return_value = "hash1"
+
+        mock_git = MagicMock()
+        mock_git.get_all_changed_pack_ids.return_value = {"NewPack", "ModifiedPack"}
+
+        result = should_update_graph(mock_interface, use_git=True, git_util=mock_git)
+        assert result is True
+
+    def test_should_update_graph_no_commit_no_changes(self):
+        """
+        Given:
+            - A content graph interface with no commit (None).
+            - No packs to update, no imported path.
+        When:
+            - Calling should_update_graph with use_git=True.
+        Then:
+            - Returns based on other conditions (is_alive, parser hash).
+            - Does not raise NameError for changed_pack_ids.
+        """
+        mock_interface = MagicMock()
+        type(mock_interface).commit = PropertyMock(return_value=None)
+        mock_interface.is_alive.return_value = True
+        type(mock_interface).content_parser_latest_hash = PropertyMock(
+            return_value="hash1"
+        )
+        mock_interface._get_latest_content_parser_hash.return_value = "hash1"
+
+        mock_git = MagicMock()
+
+        result = should_update_graph(mock_interface, use_git=True, git_util=mock_git)
+        assert result is False
+
+    def test_should_update_graph_not_alive(self):
+        """
+        Given:
+            - A content graph interface that is not alive.
+        When:
+            - Calling should_update_graph.
+        Then:
+            - Returns True because the service is not alive.
+        """
+        mock_interface = MagicMock()
+        type(mock_interface).commit = PropertyMock(return_value=None)
+        mock_interface.is_alive.return_value = False
+        type(mock_interface).content_parser_latest_hash = PropertyMock(
+            return_value="hash1"
+        )
+        mock_interface._get_latest_content_parser_hash.return_value = "hash1"
+
+        mock_git = MagicMock()
+
+        result = should_update_graph(mock_interface, use_git=False, git_util=mock_git)
+        assert result is True
+
+    def test_should_update_graph_with_packs_to_update(self):
+        """
+        Given:
+            - A content graph interface with packs_to_update provided.
+        When:
+            - Calling should_update_graph.
+        Then:
+            - Returns True because there are packs to update.
+        """
+        mock_interface = MagicMock()
+        type(mock_interface).commit = PropertyMock(return_value=None)
+        mock_interface.is_alive.return_value = True
+        type(mock_interface).content_parser_latest_hash = PropertyMock(
+            return_value="hash1"
+        )
+        mock_interface._get_latest_content_parser_hash.return_value = "hash1"
+
+        mock_git = MagicMock()
+
+        result = should_update_graph(
+            mock_interface,
+            use_git=False,
+            git_util=mock_git,
+            packs_to_update=["NewPack"],
+        )
+        assert result is True
+
+    def test_should_update_graph_git_failure_returns_true(self):
+        """
+        Given:
+            - A content graph interface with a valid commit.
+            - Git utility that raises an exception when getting changed packs.
+        When:
+            - Calling should_update_graph.
+        Then:
+            - Returns True because git failure means we can't trust the graph.
+        """
+        mock_interface = MagicMock()
+        type(mock_interface).commit = PropertyMock(return_value="abc123def456")
+        mock_interface.is_alive.return_value = True
+
+        mock_git = MagicMock()
+        mock_git.get_all_changed_pack_ids.side_effect = Exception("git error")
+
+        result = should_update_graph(mock_interface, use_git=True, git_util=mock_git)
+        assert result is True
+
+
+class TestUpdateContentGraphCommitHandling:
+    """Tests for the commit hash handling in _update_content_graph_inner."""
+
+    def test_commit_is_passed_as_string_not_boolean(self, mocker):
+        """
+        Given:
+            - A content graph interface with a valid commit hash string.
+            - use_git=True and not an external repo.
+        When:
+            - _update_content_graph_inner processes the git-based pack detection.
+        Then:
+            - get_all_changed_pack_ids is called with the actual commit hash string,
+              not a boolean value.
+            - This verifies the walrus operator fix on the if condition.
+        """
+        commit_hash = "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"
+        mock_interface = MagicMock()
+        type(mock_interface).commit = PropertyMock(return_value=commit_hash)
+        mock_interface.is_alive.return_value = True
+        type(mock_interface).content_parser_latest_hash = PropertyMock(
+            return_value="hash1"
+        )
+        mock_interface._get_latest_content_parser_hash.return_value = "hash1"
+        mock_interface.import_graph.return_value = True
+
+        mock_git_util = MagicMock()
+        mock_git_util.get_all_changed_pack_ids.return_value = {"NewBrandNewPack"}
+
+        mocker.patch(
+            "demisto_sdk.commands.content_graph.commands.update.GitUtil",
+            return_value=mock_git_util,
+        )
+        mocker.patch(
+            "demisto_sdk.commands.content_graph.commands.update.is_external_repository",
+            return_value=False,
+        )
+        mocker.patch(
+            "demisto_sdk.commands.content_graph.commands.update.ContentGraphBuilder"
+        )
+
+        from demisto_sdk.commands.content_graph.commands.update import (
+            _update_content_graph_inner,
+        )
+
+        _update_content_graph_inner(
+            content_graph_interface=mock_interface,
+            use_git=True,
+        )
+
+        calls = mock_git_util.get_all_changed_pack_ids.call_args_list
+        commit_args = [call.args[0] for call in calls if call.args]
+        assert commit_hash in commit_args, (
+            f"Expected get_all_changed_pack_ids to be called with commit hash '{commit_hash}', "
+            f"but was called with: {commit_args}"
+        )
+        assert (
+            True not in commit_args
+        ), "get_all_changed_pack_ids should not be called with boolean True"
+
+
+class TestExtractPackIdsFromDiffFiles:
+    """Tests for the extract_pack_ids_from_diff_files function."""
+
+    def test_extract_pack_ids_space_separated(self):
+        """
+        Given:
+            - A space-separated string of file paths under Packs/ folder.
+        When:
+            - Calling extract_pack_ids_from_diff_files.
+        Then:
+            - Returns a set of unique pack IDs extracted from the paths.
+        """
+        diff_files = "Packs/ApiModules/ReleaseNotes/2_4_1.md Packs/ApiModules/Scripts/ContentClientApiModule/ContentClientApiModule.py Packs/Halcyon/Integrations/Halcyon/Halcyon.yml"
+        result = extract_pack_ids_from_diff_files(diff_files)
+        assert result == {"ApiModules", "Halcyon"}
+
+    def test_extract_pack_ids_newline_separated(self):
+        """
+        Given:
+            - A newline-separated string of file paths under Packs/ folder.
+        When:
+            - Calling extract_pack_ids_from_diff_files.
+        Then:
+            - Returns a set of unique pack IDs extracted from the paths.
+        """
+        diff_files = """Packs/ApiModules/ReleaseNotes/2_4_1.md
+Packs/ApiModules/Scripts/ContentClientApiModule/ContentClientApiModule.py
+Packs/Halcyon/Integrations/Halcyon/Halcyon.yml
+Packs/Halcyon/ReleaseNotes/1_0_1.md"""
+        result = extract_pack_ids_from_diff_files(diff_files)
+        assert result == {"ApiModules", "Halcyon"}
+
+    def test_extract_pack_ids_mixed_separators(self):
+        """
+        Given:
+            - A string with mixed space and newline separators.
+        When:
+            - Calling extract_pack_ids_from_diff_files.
+        Then:
+            - Returns a set of unique pack IDs extracted from the paths.
+        """
+        diff_files = "Packs/Pack1/file.py\nPacks/Pack2/file.yml Packs/Pack3/file.json"
+        result = extract_pack_ids_from_diff_files(diff_files)
+        assert result == {"Pack1", "Pack2", "Pack3"}
+
+    def test_extract_pack_ids_non_packs_files_ignored(self):
+        """
+        Given:
+            - A string containing file paths, some under Packs/ and some not.
+        When:
+            - Calling extract_pack_ids_from_diff_files.
+        Then:
+            - Only returns pack IDs from files under Packs/ folder.
+        """
+        diff_files = (
+            "Packs/MyPack/file.py .github/workflows/ci.yml README.md Tests/test_file.py"
+        )
+        result = extract_pack_ids_from_diff_files(diff_files)
+        assert result == {"MyPack"}
+
+    def test_extract_pack_ids_empty_string(self):
+        """
+        Given:
+            - An empty string.
+        When:
+            - Calling extract_pack_ids_from_diff_files.
+        Then:
+            - Returns an empty set.
+        """
+        result = extract_pack_ids_from_diff_files("")
+        assert result == set()
+
+    def test_extract_pack_ids_no_packs_files(self):
+        """
+        Given:
+            - A string with file paths that are not under Packs/ folder.
+        When:
+            - Calling extract_pack_ids_from_diff_files.
+        Then:
+            - Returns an empty set.
+        """
+        diff_files = ".github/workflows/ci.yml README.md Tests/test_file.py"
+        result = extract_pack_ids_from_diff_files(diff_files)
+        assert result == set()
+
+    def test_extract_pack_ids_packs_folder_only(self):
+        """
+        Given:
+            - A string with just "Packs/" without a pack name.
+        When:
+            - Calling extract_pack_ids_from_diff_files.
+        Then:
+            - Returns an empty set (no valid pack ID).
+        """
+        diff_files = "Packs/"
+        result = extract_pack_ids_from_diff_files(diff_files)
+        assert result == set()
+
+    def test_extract_pack_ids_deduplication(self):
+        """
+        Given:
+            - A string with multiple files from the same pack.
+        When:
+            - Calling extract_pack_ids_from_diff_files.
+        Then:
+            - Returns a set with the pack ID appearing only once.
+        """
+        diff_files = """Packs/MyPack/file1.py
+Packs/MyPack/file2.py
+Packs/MyPack/Integrations/MyIntegration/MyIntegration.py
+Packs/MyPack/pack_metadata.json"""
+        result = extract_pack_ids_from_diff_files(diff_files)
+        assert result == {"MyPack"}
+        assert len(result) == 1
+
+
+class TestExtractConnectorIdsFromDiffFiles:
+    """Tests for the extract_connector_ids_from_diff_files function."""
+
+    def test_extract_connector_ids_space_separated(self):
+        """
+        Given:
+            - A space-separated string of file paths under connectors/ folder.
+        When:
+            - Calling extract_connector_ids_from_diff_files.
+        Then:
+            - Returns a set of unique connector directory names extracted from the paths.
+        """
+        diff_files = (
+            "connectors/salesforce/connector.yaml "
+            "connectors/okta/handler.yaml "
+            "connectors/salesforce/connection.yaml"
+        )
+        result = extract_connector_ids_from_diff_files(diff_files)
+        assert result == {"salesforce", "okta"}
+
+    def test_extract_connector_ids_newline_separated(self):
+        """
+        Given:
+            - A newline-separated string of file paths under connectors/ folder.
+        When:
+            - Calling extract_connector_ids_from_diff_files.
+        Then:
+            - Returns a set of unique connector directory names.
+        """
+        diff_files = """connectors/salesforce/connector.yaml
+connectors/salesforce/handler.yaml
+connectors/okta/connection.yaml"""
+        result = extract_connector_ids_from_diff_files(diff_files)
+        assert result == {"salesforce", "okta"}
+
+    def test_extract_connector_ids_mixed_separators(self):
+        """
+        Given:
+            - A string with mixed space and newline separators.
+        When:
+            - Calling extract_connector_ids_from_diff_files.
+        Then:
+            - Returns a set of unique connector directory names.
+        """
+        diff_files = (
+            "connectors/c1/file.yaml\nconnectors/c2/file.yaml connectors/c3/file.yaml"
+        )
+        result = extract_connector_ids_from_diff_files(diff_files)
+        assert result == {"c1", "c2", "c3"}
+
+    def test_extract_connector_ids_non_connector_files_ignored(self):
+        """
+        Given:
+            - A string containing file paths, some under connectors/ and some not.
+        When:
+            - Calling extract_connector_ids_from_diff_files.
+        Then:
+            - Only returns connector dir names from files under connectors/ folder.
+        """
+        diff_files = (
+            "connectors/salesforce/connector.yaml "
+            "Packs/MyPack/file.py "
+            ".github/workflows/ci.yml "
+            "README.md"
+        )
+        result = extract_connector_ids_from_diff_files(diff_files)
+        assert result == {"salesforce"}
+
+    def test_extract_connector_ids_empty_string(self):
+        """
+        Given:
+            - An empty string.
+        When:
+            - Calling extract_connector_ids_from_diff_files.
+        Then:
+            - Returns an empty set.
+        """
+        result = extract_connector_ids_from_diff_files("")
+        assert result == set()
+
+    def test_extract_connector_ids_no_connector_files(self):
+        """
+        Given:
+            - A string with file paths that are not under connectors/ folder.
+        When:
+            - Calling extract_connector_ids_from_diff_files.
+        Then:
+            - Returns an empty set.
+        """
+        diff_files = "Packs/MyPack/file.py .github/workflows/ci.yml README.md"
+        result = extract_connector_ids_from_diff_files(diff_files)
+        assert result == set()
+
+    def test_extract_connector_ids_folder_only(self):
+        """
+        Given:
+            - A string with just "connectors/" without a connector name.
+        When:
+            - Calling extract_connector_ids_from_diff_files.
+        Then:
+            - Returns an empty set (no valid connector dir name).
+        """
+        result = extract_connector_ids_from_diff_files("connectors/")
+        assert result == set()
+
+    def test_extract_connector_ids_deduplication(self):
+        """
+        Given:
+            - A string with multiple files from the same connector.
+        When:
+            - Calling extract_connector_ids_from_diff_files.
+        Then:
+            - Returns a set with the connector dir name appearing only once.
+        """
+        diff_files = """connectors/salesforce/connector.yaml
+connectors/salesforce/handler.yaml
+connectors/salesforce/connection.yaml
+connectors/salesforce/capabilities.yaml"""
+        result = extract_connector_ids_from_diff_files(diff_files)
+        assert result == {"salesforce"}
+        assert len(result) == 1
+
+    def test_extract_connector_ids_case_sensitive_folder(self):
+        """
+        Given:
+            - File paths under capital-C ``Connectors/`` (wrong case).
+        When:
+            - Calling extract_connector_ids_from_diff_files.
+        Then:
+            - Returns an empty set - the helper is case-sensitive and the
+              canonical folder name is lowercase ``connectors``.
+        """
+        diff_files = "Connectors/salesforce/connector.yaml"
+        result = extract_connector_ids_from_diff_files(diff_files)
+        assert result == set()
+
+
+class TestChangedConnectorsFromGit:
+    """Tests for the _changed_connectors_from_git helper."""
+
+    def test_changed_connectors_basic(self, mocker):
+        """
+        Given:
+            - A git_util whose ``get_all_changed_files`` returns a mix of
+              pack and connector file paths.
+        When:
+            - Calling _changed_connectors_from_git with a commit hash.
+        Then:
+            - Returns only the connector directory names, deduplicated.
+        """
+        # The helper short-circuits when the connectors/ folder is absent
+        # from the checkout; pretend it exists so the git scan runs.
+        mocker.patch("pathlib.Path.is_dir", return_value=True)
+        mock_git_util = MagicMock()
+        mock_git_util.get_all_changed_files.return_value = {
+            Path("Packs/MyPack/file.py"),
+            Path("connectors/salesforce/connector.yaml"),
+            Path("connectors/salesforce/handler.yaml"),
+            Path("connectors/okta/connection.yaml"),
+            Path("README.md"),
+        }
+
+        result = _changed_connectors_from_git(mock_git_util, "abc123")
+
+        assert result == {"salesforce", "okta"}
+        mock_git_util.get_all_changed_files.assert_called_once_with("abc123")
+
+    def test_changed_connectors_no_connector_changes(self):
+        """
+        Given:
+            - A git_util that reports only non-connector file changes.
+        When:
+            - Calling _changed_connectors_from_git.
+        Then:
+            - Returns an empty set.
+        """
+        mock_git_util = MagicMock()
+        mock_git_util.get_all_changed_files.return_value = {
+            Path("Packs/MyPack/file.py"),
+            Path("README.md"),
+        }
+
+        result = _changed_connectors_from_git(mock_git_util, "abc123")
+
+        assert result == set()
+
+    def test_changed_connectors_empty_diff(self):
+        """
+        Given:
+            - A git_util that reports no changed files.
+        When:
+            - Calling _changed_connectors_from_git.
+        Then:
+            - Returns an empty set.
+        """
+        mock_git_util = MagicMock()
+        mock_git_util.get_all_changed_files.return_value = set()
+
+        result = _changed_connectors_from_git(mock_git_util, "abc123")
+
+        assert result == set()
+
+    def test_changed_connectors_git_failure_swallowed(self, caplog):
+        """
+        Given:
+            - A git_util whose ``get_all_changed_files`` raises an exception
+              (e.g. shallow clone, commit unreachable).
+        When:
+            - Calling _changed_connectors_from_git.
+        Then:
+            - Returns an empty set instead of propagating the exception,
+              so the broader update flow can proceed best-effort.
+        """
+        mock_git_util = MagicMock()
+        mock_git_util.get_all_changed_files.side_effect = Exception(
+            "fatal: commit not found"
+        )
+
+        result = _changed_connectors_from_git(mock_git_util, "abc123")
+
+        assert result == set()
+
+    def test_changed_connectors_ignores_root_level_connectors_path(self, mocker):
+        """
+        Given:
+            - A changed file path that is literally ``connectors/`` with no
+              connector directory beneath it.
+        When:
+            - Calling _changed_connectors_from_git.
+        Then:
+            - That path is skipped (no valid connector dir name).
+        """
+        # The helper short-circuits when the connectors/ folder is absent
+        # from the checkout; pretend it exists so the git scan runs.
+        mocker.patch("pathlib.Path.is_dir", return_value=True)
+        mock_git_util = MagicMock()
+        mock_git_util.get_all_changed_files.return_value = {
+            Path("connectors"),
+            Path("connectors/real_one/file.yaml"),
+        }
+
+        result = _changed_connectors_from_git(mock_git_util, "abc123")
+
+        assert result == {"real_one"}

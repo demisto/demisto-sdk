@@ -37,6 +37,7 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
         self.compliantpolicies: Optional[List[str]] = self.yml_data.get(
             "compliantpolicies", []
         )
+        self.spec: Optional[str] = self.yml_data.get("spec")
         self.connect_to_dependencies()
         self.connect_to_tests()
 

@@ -289,7 +289,9 @@ def repository(mocker, repo) -> ContentDTO:
     )
     repository.packs.extend([pack1, pack2])
 
-    def mock__create_content_dto(packs_to_update: List[str]) -> ContentDTO:
+    def mock__create_content_dto(packs_to_update: List[str], **kwargs) -> ContentDTO:
+        # **kwargs absorbs the keyword-only ``connectors`` parameter that
+        # ContentGraphBuilder._create_content_dto now accepts.
         if not packs_to_update:
             return repository
         repo_copy = repository.copy()

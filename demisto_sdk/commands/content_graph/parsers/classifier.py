@@ -40,6 +40,7 @@ class ClassifierParser(JSONContentItemParser, content_type=ContentType.CLASSIFIE
             raise IncorrectParserException(correct_parser=MapperParser)
 
         self.definition_id = self.json_data.get("definitionId")
+        self.feed = bool(self.json_data.get("feed", False))
         self.connect_to_dependencies()
 
     @cached_property

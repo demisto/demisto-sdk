@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from pydantic import Field
 
@@ -9,11 +9,13 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
     NAME_DYNAMIC_MODEL,
     BaseStrictModel,
+    SupportedFeaturesList,
     create_model,
 )
 
 
 class _StrictCorrelationRule(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     global_rule_id: str
     name: str  # not included in NAME_DYNAMIC_MODEL
     alert_name: str
@@ -36,6 +38,7 @@ class _StrictCorrelationRule(BaseStrictModel):
     xql_query: str
     investigation_query_link: Optional[str] = None
     mapping_strategy: Optional[str] = None
+    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 
 
 StrictCorrelationRule = create_model(

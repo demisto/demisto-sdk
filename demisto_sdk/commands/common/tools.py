@@ -29,6 +29,7 @@ from typing import (
     Any,
     Callable,
     Dict,
+    FrozenSet,
     Iterable,
     Iterator,
     List,
@@ -56,11 +57,13 @@ from requests.exceptions import HTTPError
 from demisto_sdk.commands.common.constants import (
     AGENTIX_ACTIONS_DIR,
     AGENTIX_AGENTS_DIR,
+    AGENTIX_SKILLS_DIR,
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,
     API_MODULES_PACK,
     ASSETS_MODELING_RULES_DIR,
     CLASSIFIERS_DIR,
     CONF_JSON_FILE_NAME,
+    CONNECTORS_FOLDER,
     CONTENT_ENTITIES_DIRS,
     CORRELATION_RULES_DIR,
     DASHBOARDS_DIR,
@@ -84,6 +87,7 @@ from demisto_sdk.commands.common.constants import (
     INTEGRATIONS_DIR,
     ISO_TIMESTAMP_FORMAT,
     JOBS_DIR,
+    KNOWLEDGE_DIR,
     LAYOUT_RULES_DIR,
     LAYOUTS_DIR,
     LISTS_DIR,
@@ -135,6 +139,7 @@ from demisto_sdk.commands.common.constants import (
     IdSetKeys,
     MarketplaceVersions,
     PathLevel,
+    PlatformSupportedModules,
     urljoin,
 )
 from demisto_sdk.commands.common.cpu_count import cpu_count
@@ -146,6 +151,9 @@ from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.handlers import (
     XSOAR_Handler,
     YAML_Handler,
+)
+from demisto_sdk.commands.common.handlers.xsoar_handler import (
+    JSONDecodeError,
 )
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.string_to_bool import (
@@ -482,14 +490,60 @@ def get_local_remote_file(
     tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
     return_content: bool = False,
 ):
+    """
+    Fetch a file from either local or remote repository.
+
+    For private repositories, tries local first then remote.
+    For public repositories, tries remote first then local.
+
+    Args:
+        full_file_path: Path to the file to fetch
+        tag: Git tag/branch to fetch from
+        return_content: Whether to return raw content or parsed file details
+
+    Returns:
+        File content (encoded bytes if return_content=True) or parsed file details (dict)
+    """
+    logger.debug(f"[get_local_remote_file] Fetching {full_file_path} (tag={tag})")
+
     repo_git_util = GitUtil()
-    git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag)
-    file_content = repo_git_util.get_local_remote_file_content(git_path)
-    if return_content:
+
+    # Check if handling private repositories
+    is_handling_private_repo = string_to_bool(
+        os.getenv("DEMISTO_SDK_PRIVATE_REPO_MODE", ""), default_when_empty=False
+    )
+
+    # Determine the order: private repos try local first, public repos try remote first
+    try_remote_first = not is_handling_private_repo
+
+    # Define the two sources to try in order
+    sources = ("remote", "local") if try_remote_first else ("local", "remote")
+
+    file_content = None
+    for source_name in sources:
+        git_path = repo_git_util.get_local_remote_file_path(
+            full_file_path, tag, from_remote=source_name == "remote"
+        )
+        logger.debug(
+            f"[get_local_remote_file] Trying {source_name}, git_path={git_path}"
+        )
+
+        file_content = repo_git_util.get_local_remote_file_content(git_path)
+
         if file_content:
-            return file_content.encode()
-        return file_content
-    return get_file_details(file_content, full_file_path)
+            logger.debug(f"[get_local_remote_file] File found in {source_name}")
+            break
+
+    logger.debug(
+        f"[get_local_remote_file] File content retrieved: {bool(file_content)} (length={len(file_content) if file_content else 0})"
+    )
+
+    if return_content:
+        return file_content.encode() if file_content else file_content
+
+    result = get_file_details(file_content, full_file_path)
+
+    return result
 
 
 def get_remote_file_from_api(
@@ -588,8 +642,14 @@ def get_file_details(
     file_content,
     full_file_path: str,
 ) -> Dict:
+    if not file_content:
+        return {}
     if full_file_path.endswith("json"):
-        file_details = json.loads(file_content)
+        try:
+            file_details = json.loads(file_content)
+        except JSONDecodeError:
+            logger.warning(f"{full_file_path} not valid json, trying YAML file types")
+            file_details = yaml.load(file_content)
     elif full_file_path.endswith(("yml", "yaml")):
         file_details = yaml.load(file_content)
     elif full_file_path.endswith(".pack-ignore"):
@@ -965,8 +1025,12 @@ def get_yaml(
 ):
     if cache_clear:
         get_file.cache_clear()
+
     return get_file(
-        file_path, clear_cache=cache_clear, keep_order=keep_order, git_sha=git_sha
+        file_path,
+        clear_cache=cache_clear,
+        keep_order=keep_order,
+        git_sha=git_sha,
     )
 
 
@@ -1675,7 +1739,7 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
     if path.suffix == ".json":
         if RELEASE_NOTES_DIR in path.parts:
             return FileType.RELEASE_NOTES_CONFIG
-        elif LISTS_DIR in os.path.dirname(path):
+        elif LISTS_DIR in os.path.dirname(path) and not path.stem.endswith("_data"):
             return FileType.LISTS
         elif path.parent.name == JOBS_DIR:
             return FileType.JOB
@@ -1781,10 +1845,22 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
             return FileType.CORRELATION_RULE
 
         elif AGENTIX_ACTIONS_DIR in path.parts:
+            # Skip test files under AgentixActions - they are not content items
+            if path.stem.endswith("_test"):
+                return None
             return FileType.AGENTIX_ACTION
 
         elif AGENTIX_AGENTS_DIR in path.parts:
+            # Skip test files under AgentixAgents - they are not content items
+            if path.stem.endswith("_test"):
+                return None
             return FileType.AGENTIX_AGENT
+
+        elif AGENTIX_SKILLS_DIR in path.parts:
+            return FileType.AGENTIX_SKILL
+
+        elif KNOWLEDGE_DIR in path.parts:
+            return FileType.KNOWLEDGE
 
     elif path.name == FileType.PACK_IGNORE:
         return FileType.PACK_IGNORE
@@ -1848,6 +1924,7 @@ def find_type(
     from demisto_sdk.commands.content_graph.objects import (
         AgentixAction,
         AgentixAgent,
+        AgentixSkill,
         CaseField,
         CaseLayout,
         CaseLayoutRule,
@@ -1864,6 +1941,7 @@ def find_type(
         IndicatorType,
         Integration,
         Job,
+        Knowledge,
         Layout,
         LayoutRule,
         Mapper,
@@ -2047,6 +2125,12 @@ def find_type(
 
     if AgentixAction.match(_dict, Path(path)):
         return FileType.AGENTIX_ACTION
+
+    if AgentixSkill.match(_dict, Path(path)):
+        return FileType.AGENTIX_SKILL
+
+    if Knowledge.match(_dict, Path(path)):
+        return FileType.KNOWLEDGE
 
     return None
 
@@ -2650,9 +2734,9 @@ def open_id_set_file(id_set_path):
             id_set = json.load(id_set_file)
     except OSError:
         logger.info("<yellow>Could not open id_set file</yellow>")
-        raise
-    finally:
-        return id_set
+    except Exception:
+        pass
+    return id_set
 
 
 def get_demisto_version(client: demisto_client) -> Version:
@@ -3093,6 +3177,28 @@ def get_relative_path_from_packs_dir(file_path: str) -> str:
     return file_path[file_path.find(PACKS_DIR) :]
 
 
+def get_relative_path_from_connectors_dir(file_path: str) -> Optional[str]:
+    """Get the relative path for a given file_path starting in the connectors directory.
+
+    Args:
+        file_path (str): The (possibly relative or absolute) path to normalize.
+
+    Returns:
+        Optional[str]: The path starting from the ``connectors/`` segment (e.g.
+            ``connectors/foo/connector.yaml``), or None if the path is not a
+            connectors path.
+    """
+    connectors_segment = f"{CONNECTORS_FOLDER}/"
+    if file_path.startswith(connectors_segment) or file_path == CONNECTORS_FOLDER:
+        return file_path
+
+    idx = file_path.find(f"/{connectors_segment}")
+    if idx != -1:
+        return file_path[idx + 1 :]
+
+    return None
+
+
 def is_uuid(s: str) -> Optional[Match]:
     """Checks whether given string is a UUID
 
@@ -3220,6 +3326,22 @@ def suppress_stdout():
             yield
         finally:
             sys.stdout = old_stdout
+
+
+@contextmanager
+def chdir(path: Path):
+    """
+    Temporarily changes the current working directory.
+    """
+    if not path:
+        yield
+        return
+    prev_cwd = Path.cwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(prev_cwd)
 
 
 def get_definition_name(path: str, pack_path: str) -> Optional[str]:
@@ -4012,11 +4134,20 @@ def is_epoch_datetime(string: str) -> bool:
         return False
 
 
+def parse_ignore_list(value: str) -> List[str]:
+    """Parse a comma-separated `ignore=` value from a `.pack-ignore` section.
+    Args:
+        value: the raw string value of an `ignore=` key.
+    Returns: the list of error codes.
+    """
+    return [code.strip() for code in str(value).split(",") if code.strip()]
+
+
 def extract_error_codes_from_file(pack_name: str) -> Set[str]:
     """
     Args:
         pack_name: a pack name from which to get the pack ignore errors.
-    Returns: error codes set  that in pack.ignore file
+    Returns: error codes set that in pack.ignore file
     """
     error_codes_list = []
     if pack_name and (config := get_pack_ignore_content(pack_name)):
@@ -4030,6 +4161,12 @@ def extract_error_codes_from_file(pack_name: str) -> Set[str]:
                     # group ignore codes to a list
                     error_codes = str(config[section][key]).split(",")
                     error_codes_list.extend(error_codes)
+
+        # extract pack-level ignored error codes
+        if config.has_section("pack"):
+            for key in config["pack"]:
+                if key == "ignore":
+                    error_codes_list.extend(parse_ignore_list(config["pack"][key]))
 
     return set(error_codes_list)
 
@@ -4568,7 +4705,16 @@ def get_relative_path(file_path: Union[str, Path], relative_to: Path) -> Path:
     """
     file_path = Path(file_path)
     if file_path.is_absolute():
-        file_path = file_path.relative_to(relative_to)
+        try:
+            file_path = file_path.relative_to(relative_to)
+        except ValueError:
+            if CONNECTORS_FOLDER in file_path.parts:
+                return file_path
+            # The path is absolute but not under ``relative_to`` - e.g. content
+            # that lives in a separate repository (connectors in
+            # unified-connectors-content). Return the path unchanged rather than
+            # raising, so callers degrade gracefully.
+            raise
     return file_path
 
 
@@ -4710,3 +4856,114 @@ def should_disable_multiprocessing():
         "DEMISTO_SDK_DISABLE_MULTIPROCESSING", "false"
     ).lower() in ["true", "yes", "1"]
     return disable_multiprocessing
+
+
+def is_private_content_file(file, private_content_path: Path | None = None) -> bool:
+    if not private_content_path:
+        return False
+
+    file_path = Path(file)
+    if file_path.is_file() and file_path.is_relative_to(private_content_path):
+        return True
+
+    if not file_path.exists() and private_content_path:
+        return (private_content_path / file).is_file()
+
+    return False
+
+
+def get_content_item_supported_modules(item) -> set[str]:
+    """
+    Resolves the definitive list of supported modules for an item,
+    falling back to its pack's modules or the platform defaults.
+
+    An explicit empty list ([]) on the item is honored as "no modules" and is
+    not inherited from the pack; the platform defaults are used only when the
+    field is unset (None).
+
+    Args:
+        item: A content item object that has marketplaces, supportedModules,
+              and optionally pack attributes.
+
+    Returns:
+        A set of supported module names, or empty set if not a platform item.
+    """
+    # Import here to avoid circular imports
+    from demisto_sdk.commands.content_graph.objects.pack import Pack
+
+    if MarketplaceVersions.PLATFORM not in item.marketplaces:
+        return set()
+
+    default_modules = [sm.value for sm in PlatformSupportedModules]
+
+    modules = item.supportedModules
+    if modules is None and not isinstance(item, Pack):
+        pack = getattr(item, "pack", None)
+        if pack is not None:
+            modules = pack.supportedModules
+
+    return set(default_modules if modules is None else modules)
+
+
+def get_parameter_supported_modules(param, item) -> set[str]:
+    """
+    Resolves the definitive supported modules for an integration configuration
+    parameter, following the resolution chain:
+    parameter -> integration (item) -> pack -> platform defaults.
+
+    The parameter's own 'supportedModules' takes precedence. An explicit empty
+    list ([]) on the parameter is honored as "no modules" and is NOT inherited
+    from the integration/pack. Only when the parameter does not declare the
+    field at all (None) is the value inherited from the integration, which in
+    turn falls back to its pack and finally to the platform defaults (all
+    modules), via get_content_item_supported_modules.
+
+    Args:
+        param: An integration configuration parameter that has a
+               supportedModules attribute.
+        item: The integration the parameter belongs to (has marketplaces,
+              supportedModules, and optionally a pack attribute).
+
+    Returns:
+        A set of supported module names, or an empty set if the integration is
+        not a platform item (no 'platform' in its marketplaces), since
+        supportedModules are only meaningful for platform items.
+    """
+    if MarketplaceVersions.PLATFORM not in item.marketplaces:
+        return set()
+
+    param_modules = getattr(param, "supportedModules", None)
+    if param_modules is not None:
+        return set(param_modules)
+
+    return get_content_item_supported_modules(item)
+
+
+def get_content_item_supported_features(item) -> Optional[FrozenSet[str]]:
+    """Resolves a content item's effective `supportedFeatures`: its own value,
+    else its pack's, else `None` meaning "supported everywhere".
+
+    Use this when you need the effective value. Validators checking what the
+    author actually wrote should read `.supportedFeatures` directly.
+
+    Returns:
+        A frozenset of feature names, or `None` for "supported everywhere",
+        which is what an absent value means at both the item and the pack level.
+    """
+    # Imported here to avoid a circular import, as in the supportedModules resolver.
+    from demisto_sdk.commands.content_graph.objects.pack import Pack
+
+    features = getattr(item, "supportedFeatures", None)
+
+    if features is None and not isinstance(item, Pack):
+        # `in_pack`, not the `pack` field: the latter is a lazily-filled cache
+        # that is None until something resolves it, so reading it directly
+        # would silently skip inheritance and report the item as unrestricted.
+        pack = getattr(item, "in_pack", None)
+        if pack is not None:
+            features = getattr(pack, "supportedFeatures", None)
+
+    if features is None:
+        return None
+
+    return frozenset(features)

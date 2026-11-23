@@ -10,11 +10,13 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     NAME_DYNAMIC_MODEL,
     SUFFIXED_ID_DYNAMIC_MODEL,
     BaseStrictModel,
+    SupportedFeaturesList,
     create_model,
 )
 
 
 class _StrictList(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     all_read: Optional[bool] = Field(None, alias="allRead")
     all_read_write: Optional[bool] = Field(None, alias="allReadWrite")
     data: Optional[str] = None
@@ -38,6 +40,8 @@ class _StrictList(BaseStrictModel):
     truncated: Optional[bool] = None
     type_: str = Field(alias="type")
     version: int
+    internal: Optional[bool] = None
+    source: Optional[str] = None
     marketplaces: Optional[List[MarketplaceVersions]] = None
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 

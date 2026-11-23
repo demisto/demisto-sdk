@@ -1,0 +1,12 @@
+metadata:
+  title: "Capabilities"
+  description: "Test capabilities"
+
+capabilities:
+  - id: "test-capability"
+    title: "Test Capability"
+    description: "A test capability"
+    default_enabled: true
+    config:
+      required_license:
+        - "xsiam"

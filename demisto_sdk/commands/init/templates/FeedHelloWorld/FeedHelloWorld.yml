@@ -2,6 +2,7 @@ category: Data Enrichment & Threat Intelligence
 commonfields:
   id: HelloWorld Feed
   version: -1
+provider: HelloWorld Feed
 configuration:
 - defaultvalue: 'true'
   display: Fetch indicators
@@ -106,7 +107,7 @@ script:
     description: Gets indicators from the feed.
     execution: false
     name: helloworld-get-indicators
-  dockerimage: demisto/python3:3.9.8.24399
+  dockerimage: demisto/python3:3.12.13.10116658
   feed: true
   isfetch: false
   longRunning: false

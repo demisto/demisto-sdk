@@ -5,6 +5,7 @@ name: TestIntegration
 display: TestIntegration
 fromversion: 5.0.0
 category: Forensics & Malware Analysis
+provider: TestProvider
 description: Analyze files using the malwr sandbox
 detaileddescription: This integration uses the Marlwr sandbox API to submit, analyze and detonate files.
 sectionorder:

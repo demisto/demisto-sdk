@@ -4,6 +4,7 @@ commonfields:
 name: Signal Sciences WAF
 display: Signal Sciences WAF
 category: Network Security
+provider: Signal Sciences
 description: Protect your web application using Signal Sciences.
 configuration:
 - display: Email

@@ -23,6 +23,9 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM101_is_image_path_
 from demisto_sdk.commands.validate.validators.RM_validators.RM102_is_missing_context_output import (
     IsMissingContextOutputValidator,
 )
+from demisto_sdk.commands.validate.validators.RM_validators.RM103_no_readme_internal_scripts import (
+    NoReadmeInternalScripts,
+)
 from demisto_sdk.commands.validate.validators.RM_validators.RM104_empty_readme import (
     EmptyReadmeValidator,
 )
@@ -479,6 +482,28 @@ def test_IsReadmeExistsValidator_obtain_invalid_content_items(
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+    for result in results:
+        assert result.path == result.content_object.readme.file_path
+
+
+def test_IsReadmeExistsValidator_excludes_autonomous_playbooks():
+    """
+    Given:
+        - An autonomous playbook without a README file
+    When:
+        - run obtain_invalid_content_items method from IsReadmeExistsValidator
+    Then:
+        - Ensure that no ValidationResult is returned (autonomous playbooks are excluded)
+    """
+    pack = create_pack_object(
+        paths=["managed", "source"],
+        values=[True, "autonomous"],
+    )
+    playbook = create_playbook_object()
+    playbook.pack = pack
+    playbook.readme.exist = False
+    results = IsReadmeExistsValidator().obtain_invalid_content_items([playbook])
+    assert len(results) == 0
 
 
 def test_ImagePathIntegrationValidator_obtain_invalid_content_items_valid_case():
@@ -1177,3 +1202,47 @@ def test_ImagePathIntegrationValidator_content_assets():
         content_items
     )
     assert result[0].message == expected
+
+
+def test_NoReadmeInternalScriptsValidator_readme_exists():
+    """
+    Given:
+        - Internal script object with existing readme file
+    When:
+        - run obtain_invalid_content_items method from NoReadmeInternalScriptsValidator
+    Then:
+        - The internal script returns a ValidationResult with the correct message
+    """
+    internal_script = create_script_object(
+        paths=["isInternal"], values=["true"], readme_content="readme"
+    )
+    normal_script = create_script_object(readme_content="readme")
+    expected_message = "The script 'myScript' is an internal script. Please remove the README.md file in the content item's directory."
+
+    results = NoReadmeInternalScripts().obtain_invalid_content_items(
+        [internal_script, normal_script]
+    )
+    assert len(results) == 1
+    assert results[0].message == expected_message
+
+
+def test_NoReadmeInternalScriptsValidator_no_readme():
+    """
+    Given:
+        - Internal script with no readme file
+    When:
+        - run obtain_invalid_content_items method from NoReadmeInternalScriptsValidator
+    Then:
+        - No error is returned for either script
+    """
+    internal_script = create_script_object(
+        paths=["isInternal"], values=["true"], readme_content="readme"
+    )
+    internal_script.readme.exist = False
+
+    normal_script = create_script_object(readme_content="readme")
+
+    results = NoReadmeInternalScripts().obtain_invalid_content_items(
+        [internal_script, normal_script]
+    )
+    assert len(results) == 0

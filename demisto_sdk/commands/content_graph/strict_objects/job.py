@@ -7,6 +7,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     NAME_DYNAMIC_MODEL,
     SUFFIXED_ID_DYNAMIC_MODEL,
     BaseStrictModel,
+    SupportedFeaturesList,
     create_model,
 )
 
@@ -17,6 +18,7 @@ class HumanCron(BaseStrictModel):
 
 
 class _StrictJob(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     id_: str = Field(alias="id")
     custom_fields: Optional[Any] = Field(None, alias="CustomFields")
     account: Optional[str] = None
@@ -107,6 +109,7 @@ class _StrictJob(BaseStrictModel):
     is_all_feeds: bool = Field(alias="isAllFeeds")
     locked: Optional[bool] = None
     system: Optional[bool] = None
+    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 
 
 StrictJob = create_model(

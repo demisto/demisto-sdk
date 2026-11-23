@@ -1,5 +1,6 @@
 import pytest
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.objects.base_playbook import TaskConfig
 from demisto_sdk.commands.content_graph.objects.pack_content_items import (
     PackContentItems,
@@ -85,6 +86,9 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB133_playbook_tests
 )
 from demisto_sdk.commands.validate.validators.PB_validators.PB134_playbook_test_use_case_config import (
     PlaybookTestUseCaseConfigValidator,
+)
+from demisto_sdk.commands.validate.validators.PB_validators.PB135_ai_task_platform_only import (
+    AITaskPlatformOnlyValidator,
 )
 from TestSuite.pack import Pack as TestSuitePack
 from TestSuite.repo import Repo
@@ -2779,3 +2783,138 @@ def test_PlaybookTestUseCaseConfigValidator_invalid(
     )
     expected_message = f"Invalid configuration in test use case: {test_use_case_name}. {expected_invalid_reason}."
     assert validation_results[0].message == expected_message
+
+
+@pytest.mark.parametrize(
+    "tasks, pack_marketplaces, expected_result",
+    [
+        # Case 1: No AI tasks, any marketplace - valid
+        (
+            {
+                "0": {
+                    "id": "0",
+                    "taskid": "task-0",
+                    "type": "regular",
+                    "task": {"id": "task-0"},
+                }
+            },
+            [MarketplaceVersions.XSOAR],
+            [],
+        ),
+        # Case 2: AI task with platform marketplace only - valid
+        (
+            {
+                "0": {
+                    "id": "0",
+                    "taskid": "task-0",
+                    "type": "aiTask",
+                    "task": {"id": "task-0", "aiTaskId": "ai-task-123"},
+                }
+            },
+            [MarketplaceVersions.PLATFORM],
+            [],
+        ),
+        # Case 3: AI task with XSOAR marketplace - invalid
+        (
+            {
+                "0": {
+                    "id": "0",
+                    "taskid": "task-0",
+                    "type": "aiTask",
+                    "task": {"id": "task-0", "aiTaskId": "ai-task-123"},
+                }
+            },
+            [MarketplaceVersions.XSOAR],
+            "The playbook contains AI tasks but is not restricted to the platform marketplace. Playbooks with AI tasks must have marketplaces set to ['platform'] in the pack_metadata.json. Found AI tasks in the following task IDs: 0",
+        ),
+        # Case 4: AI task with multiple marketplaces including platform - invalid
+        (
+            {
+                "0": {
+                    "id": "0",
+                    "taskid": "task-0",
+                    "type": "aiTask",
+                    "task": {"id": "task-0", "aiTaskId": "ai-task-123"},
+                }
+            },
+            [MarketplaceVersions.PLATFORM, MarketplaceVersions.XSOAR],
+            "The playbook contains AI tasks but is not restricted to the platform marketplace. Playbooks with AI tasks must have marketplaces set to ['platform'] in the pack_metadata.json. Found AI tasks in the following task IDs: 0",
+        ),
+        # Case 5: Multiple AI tasks with XSOAR marketplace - invalid
+        (
+            {
+                "0": {
+                    "id": "0",
+                    "taskid": "task-0",
+                    "type": "aiTask",
+                    "task": {"id": "task-0", "aiTaskId": "ai-task-123"},
+                },
+                "1": {
+                    "id": "1",
+                    "taskid": "task-1",
+                    "type": "aiTask",
+                    "task": {"id": "task-1", "aiTaskId": "ai-task-456"},
+                },
+            },
+            [MarketplaceVersions.XSOAR],
+            "The playbook contains AI tasks but is not restricted to the platform marketplace. Playbooks with AI tasks must have marketplaces set to ['platform'] in the pack_metadata.json. Found AI tasks in the following task IDs: 0, 1",
+        ),
+        # Case 6: Mixed task types with AI task and platform marketplace - valid
+        (
+            {
+                "0": {
+                    "id": "0",
+                    "taskid": "task-0",
+                    "type": "regular",
+                    "task": {"id": "task-0"},
+                },
+                "1": {
+                    "id": "1",
+                    "taskid": "task-1",
+                    "type": "aiTask",
+                    "task": {"id": "task-1", "aiTaskId": "ai-task-123"},
+                },
+            },
+            [MarketplaceVersions.PLATFORM],
+            [],
+        ),
+    ],
+)
+def test_PB135_ai_task_platform_only_validator(
+    tasks, pack_marketplaces, expected_result
+):
+    """
+    Given:
+    - A playbook with various task configurations and pack marketplace settings
+        Case 1: No AI tasks with XSOAR marketplace
+        Case 2: AI task with platform marketplace only
+        Case 3: AI task with XSOAR marketplace
+        Case 4: AI task with multiple marketplaces including platform
+        Case 5: Multiple AI tasks with XSOAR marketplace
+        Case 6: Mixed task types with AI task and platform marketplace
+
+    When:
+    - Calling AITaskPlatformOnlyValidator.obtain_invalid_content_items
+
+    Then:
+    - The results should be as expected:
+        Case 1: Valid - no AI tasks
+        Case 2: Valid - AI task with platform marketplace only
+        Case 3: Invalid - AI task requires platform marketplace
+        Case 4: Invalid - AI task requires platform marketplace only (not multiple)
+        Case 5: Invalid - multiple AI tasks require platform marketplace
+        Case 6: Valid - AI task with platform marketplace
+    """
+    playbook = create_playbook_object(
+        paths=["tasks"],
+        values=[tasks],
+    )
+    playbook.marketplaces = pack_marketplaces
+
+    result = AITaskPlatformOnlyValidator().obtain_invalid_content_items([playbook])
+
+    assert (
+        result == expected_result
+        if isinstance(expected_result, list)
+        else result[0].message == expected_result
+    )

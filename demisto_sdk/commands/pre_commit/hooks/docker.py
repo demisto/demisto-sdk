@@ -23,10 +23,12 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.docker_helper import (
+    EXTENDED_REPOSITORY_SEGMENT,
     DockerBase,
     docker_login,
     get_docker,
     get_pip_requirements_from_file,
+    get_python_version_or_default,
     init_global_docker_client,
 )
 from demisto_sdk.commands.common.files.errors import FileReadError
@@ -228,6 +230,14 @@ def devtest_image(
                 stderr=subprocess.DEVNULL,
             )
         return image
+    # Locally, skip a GAR image that can't be prepared (no credentials, daemon issues)
+    # instead of failing the run. In CI the image must be available, so still raise.
+    if not os.getenv("CONTENT_GITLAB_CI") and EXTENDED_REPOSITORY_SEGMENT in image_tag:
+        logger.warning(
+            f"<yellow>Could not prepare GAR image {image_tag} locally - "
+            f"skipping its docker hook.</yellow>"
+        )
+        return ""
     raise DockerException(errors)
 
 
@@ -332,6 +342,10 @@ class DockerHook(Hook):
             self.context.dry_run,
             mypy_additional_dependencies,
         )
+        if not dev_image:
+            # devtest_image skipped this GAR image locally; no hook to generate.
+            logger.debug(f"No dev image for {image}, skipping hook generation")
+            return []
         hooks = self.generate_hooks(dev_image, image, object_to_files, config_arg)
         logger.debug(f"Generated {len(hooks)} hooks for image {image}")
         return hooks
@@ -459,7 +473,15 @@ class DockerHook(Hook):
             hook = deepcopy(new_hook)
             if new_hook["name"].startswith("mypy-in-docker"):  # see CIAC-11832
                 for obj in objects_:
-                    python_version = Version(obj.python_version)
+                    python_version = (
+                        Version(obj.python_version)
+                        if obj.python_version
+                        else get_python_version_or_default(
+                            obj.docker_image,
+                            context="mypy-in-docker",
+                            identifier=str(obj.path),
+                        )
+                    )
                     hook["args"].append(
                         f"--python-version={python_version.major}.{python_version.minor}"
                     )  # mypy expects only the major and minor version (e.g., 3.10)

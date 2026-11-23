@@ -1,0 +1,11 @@
+commonfields:
+  id: sample-agentix-skill
+  version: -1
+name: Sample Agentix Skill
+description: A sample skill for testing purposes.
+fromversion: 8.15.0
+internal: false
+supportedModules:
+  - agentix
+marketplaces:
+  - platform

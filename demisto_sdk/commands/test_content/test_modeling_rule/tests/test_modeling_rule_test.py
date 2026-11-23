@@ -278,6 +278,56 @@ class TestValidateSchemaAlignedWithTestData:
 
         validate_schema_aligned_with_test_data(test_data=test_data, schema=schema_file)
 
+    def test_validate_schema_aligned_with_test_data_with_descriptions(self, mocker):
+        """
+        Given:
+            - a schema file with dataset_description and field_description fields.
+
+        When:
+            - running validate_schema_aligned_with_test_data.
+
+        Then:
+            - verify the schema is considered aligned with the test data.
+            - verify dataset_description is not reported as a field missing from the test data.
+        """
+        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
+            validate_schema_aligned_with_test_data,
+        )
+        from demisto_sdk.commands.test_content.xsiam_tools.test_data import (
+            EventLog,
+            TestData,
+        )
+
+        test_data = TestData(
+            data=[
+                EventLog(
+                    test_data_event_id=DEFAULT_TEST_EVENT_ID,
+                    vendor="vendor",
+                    product="product",
+                    dataset="dataset",
+                    event_data={"int": 1, "string": "2"},
+                    expected_values={},
+                )
+            ]
+        )
+
+        success, results = validate_schema_aligned_with_test_data(
+            test_data=test_data,
+            schema={
+                "dataset": {
+                    "dataset_description": "Audit logs.",
+                    "int": {
+                        "type": "int",
+                        "is_array": False,
+                        "field_description": "An int field.",
+                    },
+                    "string": {"type": "string", "is_array": False},
+                }
+            },
+        )
+        assert success
+        assert not any("dataset_description" in str(result) for result in results)
+
     def test_validate_schema_aligned_with_test_data_missing_fields_in_test_data(
         self, mocker
     ):

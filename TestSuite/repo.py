@@ -1,7 +1,7 @@
 import os
-import shutil
 from pathlib import Path
 from typing import List, Optional
+from unittest.mock import MagicMock
 
 from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -87,17 +87,13 @@ class Repo:
                 "GenericDefinitions": [],
                 "Jobs": [],
                 "Wizards": [],
+                "AgentixActions": [],
             }
         )
         self.graph_interface: Optional[ContentGraphInterface] = None
         self.git_util: Optional[GitUtil] = None
         if init_git:
             self.init_git()
-
-    def __del__(self):
-        shutil.rmtree(self.path, ignore_errors=True)
-        if self.graph_interface:
-            self.graph_interface.close()
 
     def setup_one_pack(
         self, name: Optional[str] = None, marketplaces: List[str] = DEFAULT_MARKETPLACES
@@ -114,6 +110,12 @@ class Repo:
         """
         pack = self.create_pack(name)
         pack.pack_metadata.update({"marketplaces": marketplaces})
+
+        agentix_action = pack.create_agentix_action(f"{name}_agentix_action")
+        agentix_action.create_default_agentix_action()
+        agentix_action.yml.update({"commonfields": {"id": f"{name}_agentix_action"}})
+        agentix_action.yml.update({"name": f"{name}_agentix_action"})
+        agentix_action.yml.update({"display": f"{name}_agentix_action"})
 
         script = pack.create_script(f"{name}_script")
         script.create_default_script()
@@ -320,6 +322,7 @@ class Repo:
         return self.graph_interface
 
     def create_pack(self, name: Optional[str] = None):
+        GitUtil.get_file_creation_date = MagicMock(return_value="2024-12-19T11:49:45Z")  # type: ignore[assignment]
         if name is None:
             name = f"pack_{len(self.packs)}"
         pack = Pack(self._packs_path, name, repo=self)

@@ -1918,6 +1918,7 @@ class TestIntegrationValidator:
             "display": name,
             "description": name,
             "category": "category",
+            "provider": name,
             "script": {
                 "type": "python",
                 "subtype": "python3",

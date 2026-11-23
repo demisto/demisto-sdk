@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import Field
+from pydantic import Extra, Field
 
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     AgentixBase,
@@ -17,7 +17,7 @@ class AgentixActionArgument(BaseStrictModel):
     hidden: bool = False
     disabled: bool = False
     content_item_arg_name: str = Field(..., alias="underlyingargname")
-    generatable: bool = False
+    isgeneratable: bool = False
 
 
 class AgentixActionOutput(BaseStrictModel):
@@ -37,10 +37,23 @@ class UnderlyingContentItem(BaseStrictModel):
 
 
 class AgentixAction(AgentixBase):
+    class Config:
+        """
+        Unknown top-level fields are ignored (not forbidden), so an action carrying
+        a field not yet defined in this schema does not fail ST110.
+        """
+
+        extra = Extra.ignore
+
+    display: str
     args: Optional[list[AgentixActionArgument]] = None
     outputs: Optional[list[AgentixActionOutput]] = None
     underlying_content_item: UnderlyingContentItem = Field(
         ..., alias="underlyingcontentitem"
     )
     requires_user_approval: bool = Field(False, alias="requiresuserapproval")
+    is_long_running: bool = Field(False, alias="islongrunning")
+    long_running_timeout_seconds: Optional[int] = Field(
+        None, alias="longrunningtimeoutseconds"
+    )
     few_shots: Optional[list[str]] = Field(None, alias="fewshots")

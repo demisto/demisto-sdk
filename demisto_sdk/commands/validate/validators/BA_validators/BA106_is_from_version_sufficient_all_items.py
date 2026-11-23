@@ -5,6 +5,9 @@ from typing import Dict, Iterable, List, Union
 from packaging.version import Version
 
 from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
+from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
+from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
 from demisto_sdk.commands.content_graph.objects.assets_modeling_rule import (
     AssetsModelingRule,
 )
@@ -24,6 +27,7 @@ from demisto_sdk.commands.content_graph.objects.generic_type import GenericType
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.content_graph.objects.incident_type import IncidentType
 from demisto_sdk.commands.content_graph.objects.job import Job
+from demisto_sdk.commands.content_graph.objects.knowledge import Knowledge
 from demisto_sdk.commands.content_graph.objects.layout import Layout
 from demisto_sdk.commands.content_graph.objects.layout_rule import LayoutRule
 from demisto_sdk.commands.content_graph.objects.list import List as ListObject
@@ -73,6 +77,10 @@ ContentTypes = Union[
     CaseField,
     CaseLayout,
     CaseLayoutRule,
+    AgentixAction,
+    AgentixAgent,
+    AgentixSkill,
+    Knowledge,
 ]
 
 FROM_VERSION_DICT: Dict[ContentType, str] = {
@@ -104,6 +112,10 @@ FROM_VERSION_DICT: Dict[ContentType, str] = {
     ContentType.CASE_FIELD: "8.7.0",
     ContentType.CASE_LAYOUT: "8.7.0",
     ContentType.CASE_LAYOUT_RULE: "8.7.0",
+    ContentType.AGENTIX_ACTION: "8.12.0",
+    ContentType.AGENTIX_AGENT: "8.12.0",
+    ContentType.AGENTIX_SKILL: "8.15.0",
+    ContentType.KNOWLEDGE: "8.15.0",
 }
 
 

@@ -694,7 +694,7 @@ class TestCommandGeneration:
             {
                 "arguments": [],
                 "deprecated": False,
-                "description": "Some funky command\n    Some interesting details and stuff",
+                "description": "Some funky command\nSome interesting details and stuff",
                 "name": "funky-command",
                 "outputs": [],
             }
@@ -1189,7 +1189,7 @@ class TestCommandGeneration:
                 "\n        some_out_arg (dict): some interesting\n very long description.\n",
                 {
                     "contextPath": "some_name.some_out_arg",
-                    "description": "some interesting\n very long description.",
+                    "description": "some interesting\nvery long description.",
                     "type": "Unknown",
                 },
             ),

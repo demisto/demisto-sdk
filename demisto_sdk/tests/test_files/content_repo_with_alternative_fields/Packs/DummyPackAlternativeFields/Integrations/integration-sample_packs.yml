@@ -1,6 +1,7 @@
 fromversion: "6.0.0"
 category: "test"
 name: name
+provider: test
 name:marketplacev2: name_x2
 commonfields:
   id: Sample Integration

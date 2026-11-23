@@ -78,6 +78,7 @@ from demisto_sdk.commands.common.tools import (
     get_marketplace_to_core_packs,
     get_pack_metadata,
     get_pack_names_from_files,
+    get_relative_path_from_connectors_dir,
     get_relative_path_from_packs_dir,
     get_release_note_entries,
     get_release_notes_file_path,
@@ -560,31 +561,32 @@ class TestGetRemoteFile:
         assert hello_world_yml
         assert hello_world_yml["commonfields"]["id"] == "HelloWorld"
 
-    def test_get_remote_file_tag(self):
-        gmail_yml = tools.get_remote_file(
-            "Integrations/Gmail/Gmail.yml",
-            "19.10.0",
-            git_content_config=GitContentConfig(repo_name=self.content_repo),
-        )
-        assert gmail_yml
-        assert gmail_yml["commonfields"]["id"] == "Gmail"
+    # The 19.10.0 branch has been deleted.
+    # def test_get_remote_file_tag(self):
+    #     gmail_yml = tools.get_remote_file(
+    #         "Integrations/Gmail/Gmail.yml",
+    #         "19.10.0",
+    #         git_content_config=GitContentConfig(repo_name=self.content_repo),
+    #     )
+    #     assert gmail_yml
+    #     assert gmail_yml["commonfields"]["id"] == "Gmail"
 
-    def test_get_remote_file_origin_tag(self):
-        gmail_yml = tools.get_remote_file(
-            "Integrations/Gmail/Gmail.yml",
-            "origin/19.10.0",
-            git_content_config=GitContentConfig(repo_name=self.content_repo),
-        )
-        assert gmail_yml
-        assert gmail_yml["commonfields"]["id"] == "Gmail"
+    # def test_get_remote_file_origin_tag(self):
+    #     gmail_yml = tools.get_remote_file(
+    #         "Integrations/Gmail/Gmail.yml",
+    #         "origin/19.10.0",
+    #         git_content_config=GitContentConfig(repo_name=self.content_repo),
+    #     )
+    #     assert gmail_yml
+    #     assert gmail_yml["commonfields"]["id"] == "Gmail"
 
-    def test_get_remote_file_invalid(self):
-        invalid_yml = tools.get_remote_file(
-            "Integrations/File/File.yml",
-            "19.10.0",
-            git_content_config=GitContentConfig(repo_name=self.content_repo),
-        )
-        assert not invalid_yml
+    # def test_get_remote_file_invalid(self):
+    #     invalid_yml = tools.get_remote_file(
+    #         "Integrations/File/File.yml",
+    #         "19.10.0",
+    #         git_content_config=GitContentConfig(repo_name=self.content_repo),
+    #     )
+    #     assert not invalid_yml
 
     def test_get_remote_file_invalid_branch(self):
         invalid_yml = tools.get_remote_file(
@@ -1585,6 +1587,32 @@ def test_get_relative_path_from_packs_dir():
     assert get_relative_path_from_packs_dir(abs_path) == rel_path
     assert get_relative_path_from_packs_dir(rel_path) == rel_path
     assert get_relative_path_from_packs_dir(unrelated_path) == unrelated_path
+
+
+def test_get_relative_path_from_connectors_dir():
+    """
+    Given:
+        - 'input_path': Path to some connector file or directory.
+
+    When:
+        - Running get_relative_path_from_connectors_dir
+
+    Then:
+        - Ensure that:
+          - An absolute path to a connectors object returns the relative path
+            from the connectors dir.
+          - A relative path starting at connectors/ is returned unchanged.
+          - The bare 'connectors' segment is returned unchanged.
+          - An unrelated (non-connectors) path returns None.
+    """
+    abs_path = "/Users/who/dev/demisto/unified-connectors-content/connectors/foo/connector.yaml"
+    rel_path = "connectors/foo/connector.yaml"
+    unrelated_path = "Packs/Accessdata/Integrations/Accessdata/Accessdata.yml"
+
+    assert get_relative_path_from_connectors_dir(abs_path) == rel_path
+    assert get_relative_path_from_connectors_dir(rel_path) == rel_path
+    assert get_relative_path_from_connectors_dir("connectors") == "connectors"
+    assert get_relative_path_from_connectors_dir(unrelated_path) is None
 
 
 def test_get_release_note_entries_found(mocker: MockerFixture):

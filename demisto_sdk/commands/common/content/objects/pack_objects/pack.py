@@ -114,6 +114,8 @@ class Pack:
             patterns=[f"*.{suffix}", f"*/*.{suffix}"]
         )
         for object_path in objects_path:
+            if dir_name == LISTS_DIR and object_path.stem.endswith("_data"):
+                continue
             content_object = path_to_pack_object(object_path)
             # skip content items that are not displayed in the id set, if the corresponding flag is used,
             # We excluding ReleaseNotes and TestPlaybooks, because they missing from the id set

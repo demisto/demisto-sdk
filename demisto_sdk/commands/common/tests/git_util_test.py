@@ -1,8 +1,10 @@
 import stat
+from datetime import datetime
 from pathlib import Path
 
 from git import Blob
 
+from demisto_sdk.commands.common.constants import ISO_TIMESTAMP_FORMAT
 from TestSuite.repo import Repo
 
 
@@ -144,3 +146,23 @@ def test_git_util_with_repo():
     git_util = GitUtil(repo)
     assert git_util.repo is not None
     assert git_util.repo.working_dir == repo.working_dir
+
+
+def test_get_file_creation_date(git_repo: Repo):
+    """
+    Given:
+    - A git repo and a file in it.
+
+    When:
+    - Retrieving the creation time of the given file.
+
+    Then:
+    - The creation time of the file is returned.
+    """
+    file = Path("pack_metadata.json")
+    git_repo.make_file(str(file), "{}")
+    git_repo.git_util.commit_files(f"added {file}", str(file))
+
+    file_creation_date = git_repo.git_util.get_file_creation_date(file)
+
+    datetime.strptime(file_creation_date, ISO_TIMESTAMP_FORMAT)  # raises if invalid

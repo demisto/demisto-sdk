@@ -45,6 +45,24 @@ DOCKER_REGISTRY_URL = os.getenv(
     "DEMISTO_SDK_CONTAINER_REGISTRY",
     os.getenv("DOCKER_IO", DEFAULT_DOCKER_REGISTRY_URL),
 )
+DEMISTO_REPOSITORY = "demisto"
+DEVTEST_DEMISTO_REPOSITORY = "devtestdemisto"
+DEMISTO_EXTENDED_REPOSITORY = "demistoextended"
+DEVTEST_DEMISTO_EXTENDED_REPOSITORY = "devtestdemistoextended"
+DEMISTO_SDK_EXTENDED_REGISTRY_ENV = "DEMISTO_SDK_EXTENDED_REGISTRY"
+DEFAULT_EXTENDED_REGISTRY = "gcr.io/xsoar-registry"
+# TEMPORARY (CIAC-17352): the raw host prefix content currently emits on images.
+# To be removed once content stops prefixing images with the gcr.io host.
+CR_REGISTRY_PREFIX = f"{DEFAULT_EXTENDED_REGISTRY}/"
+
+
+def strip_cr_registry_prefix(image: str) -> str:
+    """Strip the CR host prefix back to the canonical "demistoextended/" form.
+
+    TEMPORARY (CIAC-17352): remove once content stops prefixing images with the
+    gcr.io host.
+    """
+    return image.removeprefix(CR_REGISTRY_PREFIX)
 
 
 # Authentication
@@ -122,6 +140,8 @@ CASE_LAYOUTS_DIR = "CaseLayouts"
 CASE_FIELDS_DIR = "CaseFields"
 AGENTIX_ACTIONS_DIR = "AgentixActions"
 AGENTIX_AGENTS_DIR = "AgentixAgents"
+AGENTIX_SKILLS_DIR = "AgentixSkills"
+KNOWLEDGE_DIR = "Knowledge"
 
 # NAMES OF ENTITIES
 
@@ -281,6 +301,8 @@ class FileType(StrEnum):
     VERSION_CONFIG = "version_config"
     AGENTIX_AGENT = "agentixagent"
     AGENTIX_ACTION = "agentixaction"
+    AGENTIX_SKILL = "agentixskill"
+    KNOWLEDGE = "knowledge"
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -321,6 +343,10 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.CASE_LAYOUT_RULE: "Case Layout Rules",
     FileType.CASE_FIELD: "Case Fields",
     FileType.CASE_LAYOUT: "Case Layouts",
+    FileType.AGENTIX_AGENT: "Agents",
+    FileType.AGENTIX_ACTION: "Actions",
+    FileType.AGENTIX_SKILL: "Skills",
+    FileType.KNOWLEDGE: "Knowledge",
 }
 
 FILE_TYPE_BY_RN_HEADER = {
@@ -365,6 +391,7 @@ ENTITY_TYPE_TO_DIR = {
     FileType.CASE_FIELD.value: CASE_FIELDS_DIR,
     FileType.CASE_LAYOUT.value: CASE_LAYOUTS_DIR,
     FileType.CASE_LAYOUT_RULE.value: CASE_LAYOUT_RULES_DIR,
+    FileType.KNOWLEDGE.value: KNOWLEDGE_DIR,
 }
 
 SIEM_ONLY_ENTITIES = [
@@ -430,6 +457,8 @@ CONTENT_ENTITIES_DIRS = [
     CASE_LAYOUTS_DIR,
     AGENTIX_ACTIONS_DIR,
     AGENTIX_AGENTS_DIR,
+    AGENTIX_SKILLS_DIR,
+    KNOWLEDGE_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -946,6 +975,7 @@ ASSETS_MODELING_RULE_ID_SUFFIX = "AssetsModelingRule"
 # Pack Unique Files
 PACKS_WHITELIST_FILE_NAME = ".secrets-ignore"
 PACKS_PACK_IGNORE_FILE_NAME = ".pack-ignore"
+CONNECTOR_IGNORE_FILE_NAME = ".connector-ignore"
 PACKS_PACK_META_FILE_NAME = "pack_metadata.json"
 PACKS_README_FILE_NAME = INTEGRATIONS_README_FILE_NAME = SCRIPTS_README_FILE_NAME = (
     "README.md"
@@ -953,9 +983,18 @@ PACKS_README_FILE_NAME = INTEGRATIONS_README_FILE_NAME = SCRIPTS_README_FILE_NAM
 PACKS_CONTRIBUTORS_FILE_NAME = "CONTRIBUTORS.json"
 PACKS_VERSION_CONFIG_FILE_NAME = "version_config.json"
 AUTHOR_IMAGE_FILE_NAME = "Author_image.png"
+DEPLOYMENT_JSON_FILENAME = "deployment.json"
 PACKS_FOLDER = "Packs"
 PRIVATE_PACKS_FOLDER = "PrivatePacks"
+CONNECTORS_FOLDER = "connectors"
 GIT_IGNORE_FILE_NAME = ".gitignore"
+
+# Private Repository Status Files
+PRIVATE_REPO_STATUS_FILE_PRIVATE = "content_private_files_relative_paths.txt"
+PRIVATE_REPO_STATUS_FILE_TEST_CONF = "content_test_conf_files_relative_paths.txt"
+PRIVATE_REPO_STATUS_FILE_CONFIGURATION = (
+    "content_configuration_files_relative_paths.txt"
+)
 
 CONF_JSON_FILE_NAME = "conf.json"
 VERSION_CONFIG_FILE_NAME = "version_config.json"
@@ -1168,7 +1207,7 @@ IGNORED_TYPES_REGEXES = [
     SCHEMA_REGEX,
 ]
 
-IGNORED_PACK_NAMES = ["Legacy", "NonSupported", "ApiModules"]
+IGNORED_PACK_NAMES = ["Legacy", "NonSupported"]
 
 PACK_IGNORE_TEST_FLAG = "auto-test"
 
@@ -1289,7 +1328,7 @@ VALIDATION_USING_GIT_IGNORABLE_DATA = (
 
 # A list of validation error codes that must always execute, regardless of ignore settings.
 # This addresses unique cases where validation must run first, then filter the relevant results afterward.
-ALWAYS_RUN_ON_ERROR_CODE = ["GR107"]
+ALWAYS_RUN_ON_ERROR_CODE = ["GR107", "GR109"]
 
 
 class GitStatuses(StrEnum):
@@ -1574,6 +1613,15 @@ PACK_SUPPORT_OPTIONS = [
     DEVELOPER_SUPPORT,
     COMMUNITY_SUPPORT,
 ]
+
+
+class SupportLevelHeader(StrEnum):
+    XSOAR = XSOAR_SUPPORT
+    PARTNER = PARTNER_SUPPORT
+    DEVELOPER = DEVELOPER_SUPPORT
+    COMMUNITY = COMMUNITY_SUPPORT
+
+
 CONTRIBUTORS_LIST = [PARTNER_SUPPORT, DEVELOPER_SUPPORT, COMMUNITY_SUPPORT]
 SUPPORTED_CONTRIBUTORS_LIST = [DEVELOPER_SUPPORT, PARTNER_SUPPORT]
 XSOAR_AUTHOR = "Cortex XSOAR"
@@ -1620,9 +1668,13 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.CASE_LAYOUT_RULE: "8.7.0",
     FileType.CASE_FIELD: "8.7.0",
     FileType.CASE_LAYOUT: "8.7.0",
+    FileType.AGENTIX_ACTION: "8.12.0",
+    FileType.AGENTIX_AGENT: "8.12.0",
+    FileType.AGENTIX_SKILL: "8.15.0",
+    FileType.KNOWLEDGE: "8.15.0",
 }
 
-DEFAULT_PYTHON_VERSION = "3.10"
+DEFAULT_PYTHON_VERSION = "3.11"
 DEFAULT_PYTHON2_VERSION = "2.7"
 
 # This constant below should always be two versions before the latest server version
@@ -1632,6 +1684,7 @@ DEFAULT_CONTENT_ITEM_FROM_VERSION = "0.0.0"
 DEFAULT_CONTENT_ITEM_TO_VERSION = "99.99.99"
 MARKETPLACE_MIN_VERSION = "6.0.0"
 MINIMUM_XSOAR_SAAS_VERSION = "8.0.0"
+DEFAULT_AGENTIX_ITEM_FROM_VERSION = "8.12.0"
 
 OLDEST_SUPPORTED_VERSION = "5.0.0"
 OLDEST_INCIDENT_FIELD_SUPPORTED_VERSION = GENERAL_DEFAULT_FROMVERSION
@@ -1990,6 +2043,14 @@ class MarketplaceVersions(StrEnum):
     PLATFORM = "platform"
 
 
+MARKETPLACES_NO_AGENTIC_ASSISTANT = {
+    MarketplaceVersions.XSOAR,
+    MarketplaceVersions.XSOAR_ON_PREM,
+    MarketplaceVersions.XSOAR_SAAS,
+    MarketplaceVersions.MarketplaceV2,
+    MarketplaceVersions.XPANSE,
+}
+
 MarketplaceVersionToMarketplaceName: Dict[str, str] = {
     MarketplaceVersions.XSOAR.value: DEMISTO_SDK_MARKETPLACE_XSOAR_DIST,
     MarketplaceVersions.MarketplaceV2.value: DEMISTO_SDK_MARKETPLACE_XSIAM_DIST,
@@ -2009,14 +2070,6 @@ MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
 
 
 class PlatformSupportedModules(StrEnum):
-    C1 = "C1"
-    C3 = "C3"
-    XO = "X0"
-    X1 = "X1"
-    X3 = "X3"
-    X5 = "X5"
-    ENT_PLUS = "ENT_PLUS"
-    # new licenses - TODO all values above this line needs to be removed as part of batch 4.
     CLOUD_POSTURE = "cloud_posture"
     CLOUD = "cloud"
     CLOUD_RUNTIME_SECURITY = "cloud_runtime_security"
@@ -2026,7 +2079,29 @@ class PlatformSupportedModules(StrEnum):
     ASM = "asm"
     XSIAM = "xsiam"
     EXPOSURE_MANAGEMENT = "exposure_management"
-    AGENTIX_XSIAM = "agentix_xsiam"
+    TIM = "tim"
+    EMAIL_SECURITY = "email_security"
+    XTI = "xti"
+    DATA_SECURITY = "data_security"
+
+
+# The complete set of platform supported modules.
+ALL_SUPPORTED_MODULES: set = {module.value for module in PlatformSupportedModules}
+
+# The 'xsiam' and 'agentix' modules.
+XSIAM_AND_AGENTIX_MODULES: set = {
+    PlatformSupportedModules.XSIAM.value,
+    PlatformSupportedModules.AGENTIX.value,
+}
+
+# The 'xsiam' module only.
+XSIAM_ONLY_MODULES: set = {PlatformSupportedModules.XSIAM.value}
+
+# The 'xsiam' and 'exposure_management' modules.
+XSIAM_AND_EXPOSURE_MANAGEMENT_MODULES: set = {
+    PlatformSupportedModules.XSIAM.value,
+    PlatformSupportedModules.EXPOSURE_MANAGEMENT.value,
+}
 
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {
@@ -2273,6 +2348,27 @@ class PlaybookTaskType(StrEnum):
     SECTION = "section"
     STANDARD = "standard"
     COLLECTION = "collection"
+    AI_TASK = "aiTask"
+
+
+# Autonomous playbook section headers
+AUTONOMOUS_PLAYBOOK_SECTIONS_ORDER = (
+    "Data Collection",
+    "Early Containment",
+    "Investigation",
+    "Verdict",
+    "Remediation",
+    "Playbook Completed",
+)
+AUTONOMOUS_PLAYBOOK_MANDATORY_SECTIONS = frozenset(
+    {"Data Collection", "Investigation", "Verdict", "Remediation", "Playbook Completed"}
+)
+AUTONOMOUS_PLAYBOOK_ALLOWED_SECTIONS = frozenset(AUTONOMOUS_PLAYBOOK_SECTIONS_ORDER)
+# Sections that may appear more than once in a playbook (e.g. one per branch)
+AUTONOMOUS_PLAYBOOK_DUPLICATABLE_SECTIONS = frozenset({"Playbook Completed"})
+# Pack sources whose playbooks must have 'adopted: true'.
+# To require adoption for a new source, simply add its name here.
+MANAGED_PACK_SOURCE_REQUIRING_ADOPTED: frozenset = frozenset({"autonomous"})
 
 
 # Used to format the writing of the yml/json file
@@ -2315,3 +2411,25 @@ MIRRORING_COMMANDS: list[str] = [
     "get-modified-remote-data",
     "update-remote-system",
 ]
+
+
+class DetachableItemType(StrEnum):
+    INCIDENT_TYPES = "IncidentTypes"
+    LAYOUTS = "Layouts"
+    PLAYBOOKS = "Playbooks"
+    SCRIPTS = "Scripts"
+
+
+DETACH_ITEM_TYPE_TO_ENDPOINT: dict[str, str] = {
+    DetachableItemType.INCIDENT_TYPES.value: "/incidenttype/detach/:id",
+    DetachableItemType.LAYOUTS.value: "/layout/:id/detach",
+    DetachableItemType.PLAYBOOKS.value: "/playbook/detach/:id",
+    DetachableItemType.SCRIPTS.value: "/automation/detach/:id",
+}
+
+REATTACH_ITEM_TYPE_TO_ENDPOINT: dict[str, str] = {
+    DetachableItemType.INCIDENT_TYPES.value: "/incidenttype/attach/:id",
+    DetachableItemType.LAYOUTS.value: "/layout/:id/attach",
+    DetachableItemType.PLAYBOOKS.value: "/playbook/attach/:id",
+    DetachableItemType.SCRIPTS.value: "/automation/attach/:id",
+}

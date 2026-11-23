@@ -3,10 +3,14 @@ from __future__ import annotations
 from typing import Iterable, List, Union, cast
 
 from demisto_sdk.commands.common.constants import GitStatuses
+from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
+from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
+from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.content_graph.objects.incident_type import IncidentType
 from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.knowledge import Knowledge
 from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -15,7 +19,16 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 )
 
 ContentTypes = Union[
-    Integration, Script, Mapper, IncidentType, IncidentField, CaseField
+    Integration,
+    Script,
+    Mapper,
+    IncidentType,
+    IncidentField,
+    CaseField,
+    AgentixAction,
+    AgentixAgent,
+    AgentixSkill,
+    Knowledge,
 ]
 
 

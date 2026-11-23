@@ -6,6 +6,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     NAME_DYNAMIC_MODEL,
     SUFFIXED_ID_DYNAMIC_MODEL,
     BaseStrictModel,
+    SupportedFeaturesList,
     create_model,
 )
 
@@ -30,6 +31,7 @@ class View(BaseStrictModel):
 
 
 class _StrictGenericModule(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     id_: str = Field(alias="id")
     version: int
     locked: Optional[bool] = None

@@ -5,6 +5,7 @@ import re
 import shutil
 import tarfile
 import tempfile
+import time
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
@@ -18,14 +19,21 @@ from requests.exceptions import RequestException
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_DOCKER_REGISTRY_URL,
+    DEFAULT_EXTENDED_REGISTRY,
     DEFAULT_PYTHON2_VERSION,
     DEFAULT_PYTHON_VERSION,
+    DEMISTO_EXTENDED_REPOSITORY,
+    DEMISTO_REPOSITORY,
+    DEMISTO_SDK_EXTENDED_REGISTRY_ENV,
+    DEVTEST_DEMISTO_EXTENDED_REPOSITORY,
+    DEVTEST_DEMISTO_REPOSITORY,
     DOCKER_REGISTRY_URL,
     DOCKERFILES_INFO_REPO,
     TYPE_PWSH,
     TYPE_PYTHON,
     TYPE_PYTHON2,
     TYPE_PYTHON3,
+    strip_cr_registry_prefix,
 )
 from demisto_sdk.commands.common.docker_images_metadata import DockerImagesMetadata
 from demisto_sdk.commands.common.logger import logger
@@ -50,6 +58,7 @@ DEMISTO_PYTHON_BASE_IMAGE_REGEX = re.compile(
 
 TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "pre_commit" / "resources"
 DOCKER_CONTAINER_TIMEOUT = int(os.getenv("DOCKER_CONTAINER_TIMEOUT") or 300)
+EXTENDED_REPOSITORY_SEGMENT = f"{DEMISTO_EXTENDED_REPOSITORY}/"
 
 
 class DockerException(Exception):
@@ -201,6 +210,54 @@ def docker_login(docker_client) -> bool:
 
 
 @functools.lru_cache
+def gar_daemon_login(docker_client, registry: str) -> bool:
+    """Log the Docker daemon into a GAR host so it can ``pull`` demistoextended
+    images, using ``oauth2accesstoken`` + a gcloud access token. Returns True on
+    success. (``docker_login`` only handles Docker Hub / custom user registries.)
+    """
+    # Imported lazily to avoid any import-time coupling with the HTTP client.
+    from demisto_sdk.commands.common.docker.dockerhub_client import (
+        get_gcloud_access_token,
+    )
+
+    token = get_gcloud_access_token()
+    if not token:
+        logger.warning(
+            f"gar_daemon_login | no gcloud access token available, cannot log the "
+            f"docker daemon in to {registry}"
+        )
+        return False
+    try:
+        docker_client.login(
+            username="oauth2accesstoken",
+            password=token,
+            registry=registry,
+        )
+        logger.debug(
+            f"gar_daemon_login | successfully logged the daemon in to {registry}"
+        )
+        return True
+    except docker.errors.DockerException as e:
+        logger.debug(
+            f"gar_daemon_login | could not log the docker daemon in to {registry}: {e}"
+        )
+        return False
+
+
+def _gar_registry_host(image: str) -> Optional[str]:
+    """Return the image's GCR host (``gcr.io`` / ``*.gcr.io``) when it targets
+    the extended registry and the Docker daemon needs a gcloud login before pull,
+    or None otherwise. Matches on the exact host so lookalikes like
+    ``gcr.io.evil.com`` are not misclassified.
+
+    (The CI ``*.pkg.dev`` proxy is intentionally excluded: there the daemon is
+    already logged in, so no extra ``gar_daemon_login`` is needed.)
+    """
+    host = image.split("/", 1)[0].lower()
+    return host if host == "gcr.io" or host.endswith(".gcr.io") else None
+
+
+@functools.lru_cache
 def get_pip_requirements_from_file(requirements_file: Path) -> List[str]:
     """
     Get the pip requirements from a requirements file.
@@ -306,14 +363,64 @@ class DockerBase:
 
         except docker.errors.ImageNotFound:
             logger.debug(f"docker {image=} not found locally, pulling")
+            # The daemon has no gcloud credentials for GAR hosts, so log it in first.
+            if gar_host := _gar_registry_host(image):
+                gar_daemon_login(docker_client, gar_host)
             ret = docker_client.images.pull(image)
             logger.debug(f"pulled docker {image=} successfully")
             return ret
 
     @staticmethod
+    def _is_image_available_on_registry(repo: str, tag: str) -> bool:
+        """Check whether an image manifest exists on DockerHub via the Registry API.
+
+        This queries the DockerHub Registry API directly, bypassing the local
+        Docker daemon and any proxy/virtual registry configured in it.
+
+        Args:
+            repo (str): The repository name, e.g. ``devtestdemisto/python3``.
+            tag (str): The image tag, e.g. ``3.10.0.12345-abcdef``.
+
+        Returns:
+            bool: True if the image manifest is available on DockerHub.
+
+        Raises:
+            RuntimeError: If the token or digest could not be obtained.
+        """
+        token = _get_docker_hub_token(repo)
+        return bool(_get_image_digest(repo, tag, token))
+
+    @staticmethod
     def is_image_available(
         image: str,
+        use_registry_prefix: bool = False,
     ) -> bool:
+        """Check whether an image is available.
+
+        By default, this checks the local Docker daemon and falls back to the
+        DockerHub Registry API. For images that live in a non-DockerHub registry
+        (e.g. GAR-hosted ``devtestdemistoextended`` images), set
+        ``use_registry_prefix=True`` to resolve the image through the configured
+        registry (via :meth:`get_image_registry`) and pull it, instead of
+        querying the DockerHub API which cannot see such images.
+
+        Args:
+            image (str): The image name, e.g. ``devtestdemisto/python3:1.0.0``.
+            use_registry_prefix (bool): When True, verify availability by pulling
+                the registry-qualified image instead of using the DockerHub API.
+
+        Returns:
+            bool: True if the image is available.
+        """
+        if use_registry_prefix:
+            registry_image = DockerBase.get_image_registry(image)
+            try:
+                DockerBase.pull_image(registry_image)
+                return True
+            except (docker.errors.NotFound, docker.errors.ImageNotFound):
+                logger.debug(f"Image {registry_image} not found in registry")
+                return False
+
         docker_client = init_global_docker_client(log_prompt="get_image")
         try:
             docker_client.images.get(image)
@@ -327,8 +434,7 @@ class DockerBase:
             else:
                 try:
                     repo, tag = image.split(":")
-                    token = _get_docker_hub_token(repo)
-                    if _get_image_digest(repo, tag, token):
+                    if DockerBase._is_image_available_on_registry(repo, tag):
                         return True
                 except RuntimeError as e:
                     logger.debug(f"Error getting image data {image}: {e}")
@@ -410,6 +516,7 @@ class DockerBase:
         logger.info(
             f"{log_prompt} - Trying to push Image {test_image_name_to_push} to repository."
         )
+        push_succeeded = False
         for attempt in range(2):
             try:
                 docker_push_output = init_global_docker_client().images.push(
@@ -426,13 +533,14 @@ class DockerBase:
                     logger.error(
                         f"{log_prompt} - Error pushing image {test_image_name_to_push}: {error_line}"
                     )
-                    raise Exception(
+                    raise DockerException(
                         f"Failed to push image {test_image_name_to_push} to repository."
                     )
                 else:
                     logger.success(
                         f"{log_prompt} - Attempt {attempt + 1}: Successfully pushed image {test_image_name_to_push} to repository."
                     )
+                push_succeeded = True
                 break
             except (
                 requests.exceptions.ConnectionError,
@@ -443,6 +551,105 @@ class DockerBase:
                     f"{log_prompt} - Attempt {attempt + 1}: Failed to push image {test_image_name_to_push} to repository due to {type(e).__name__}",
                     exc_info=True,
                 )
+
+        if not push_succeeded:
+            raise DockerException(
+                f"{log_prompt} - All push attempts failed for image {test_image_name_to_push}."
+            )
+
+        # After a successful push, verify the image is pullable from the registry.
+        # Registry propagation can take a few minutes, so we retry with delays.
+        self._verify_image_available_after_push(
+            test_image_name_to_push, log_prompt=log_prompt
+        )
+
+    @staticmethod
+    def _verify_image_available_after_push(
+        image: str,
+        log_prompt: str = "",
+        max_retries: int = 10,
+        delay_seconds: int = 30,
+    ) -> None:
+        """Verify a pushed image is available in its registry.
+
+        After pushing, the registry may take a few minutes to propagate the image.
+        For DockerHub-hosted images this queries the DockerHub Registry API
+        directly (bypassing any proxy/virtual registry configured in the Docker
+        daemon). For images hosted in a non-DockerHub registry (e.g. GAR-hosted
+        ``devtestdemistoextended`` images), the DockerHub API cannot see them, so
+        verification is done by resolving and pulling the registry-qualified
+        image via :meth:`is_image_available`.
+
+        Args:
+            image (str): The image name (without registry prefix), e.g.
+                ``devtestdemisto/python3:3.10.0.12345-abcdef``.
+            log_prompt (str): Log prompt prefix for messages.
+            max_retries (int): Maximum number of verification attempts. Defaults to 10.
+            delay_seconds (int): Seconds to wait between retries. Defaults to 30.
+        """
+        if ":" not in image:
+            repo, tag = image, "latest"
+        elif image.count(":") > 1:
+            raise ValueError(f"Invalid docker image: {image}")
+        else:
+            repo, tag = image.split(":")
+
+        # ``devtestdemistoextended/*`` images live on GCR and are verified via a daemon
+        # pull; all other images are verified via the DockerHub Registry API.
+        is_gar_image = DEVTEST_DEMISTO_EXTENDED_REPOSITORY in repo.split("/")
+        registry_name = "the registry (GAR)" if is_gar_image else "DockerHub"
+
+        logger.info(
+            f"{log_prompt} - Verifying pushed image {image} is available on "
+            f"{registry_name} (up to {max_retries} attempts, {delay_seconds}s apart)."
+        )
+
+        for attempt in range(1, max_retries + 1):
+            try:
+                if is_gar_image:
+                    if not DockerBase.is_image_available(
+                        image, use_registry_prefix=True
+                    ):
+                        raise RuntimeError(
+                            f"Image {image} not yet available in registry"
+                        )
+                elif not DockerBase._is_image_available_on_registry(repo, tag):
+                    raise RuntimeError(
+                        f"Image {image} not yet available on {registry_name}"
+                    )
+                logger.success(
+                    f"{log_prompt} - Image verification succeeded for {image} "
+                    f"on attempt {attempt}."
+                )
+                return
+            except RuntimeError:
+                logger.info(
+                    f"{log_prompt} - Verification attempt {attempt}/{max_retries}: "
+                    f"image {image} not yet available on {registry_name}. "
+                    f"Retrying in {delay_seconds}s..."
+                )
+            except (
+                requests.exceptions.ConnectionError,
+                requests.exceptions.Timeout,
+                RequestException,
+                docker.errors.APIError,
+            ) as e:
+                logger.warning(
+                    f"{log_prompt} - Verification attempt {attempt}/{max_retries}: "
+                    f"failed due to {type(e).__name__}. Retrying in {delay_seconds}s...",
+                    exc_info=True,
+                )
+
+            if attempt < max_retries:
+                time.sleep(delay_seconds)
+
+        raise DockerException(
+            f"{log_prompt} - Image verification failed: {image} was not found on {registry_name} "
+            f"after {max_retries} attempts "
+            f"(~{(max_retries - 1) * delay_seconds}s of delay between attempts, "
+            f"excluding request time). "
+            f"The registry may not have propagated the image in time."
+        )
 
     def create_image(
         self,
@@ -502,13 +709,54 @@ class DockerBase:
 
     @staticmethod
     def get_image_registry(image: str) -> str:
-        if DOCKER_REGISTRY_URL not in image:
-            logger.debug(
-                f"get_image_registry | returned: {DOCKER_REGISTRY_URL}/{image}"
-            )
-            return f"{DOCKER_REGISTRY_URL}/{image}"
-        logger.debug(f"get_image_registry | returned: {image}")
+        # TEMPORARY (CIAC-17352): content may currently send images already prefixed
+        # with the CR host; strip it back to the canonical form so we re-add the
+        # correct registry below. Remove this line once content stops prefixing.
+        image = strip_cr_registry_prefix(image)
+        # "demistoextended" images -> extended (GAR) registry; everything else -> Docker.
+        registry = (
+            os.getenv(DEMISTO_SDK_EXTENDED_REGISTRY_ENV, DEFAULT_EXTENDED_REGISTRY)
+            if DEMISTO_EXTENDED_REPOSITORY in image
+            else DOCKER_REGISTRY_URL
+        )
+        if registry and registry not in image:
+            return f"{registry}/{image}"
         return image
+
+    @staticmethod
+    def get_test_image_registry(image: str) -> str:
+        """Resolve the registry for a *dev/test* image that we build, push and then
+        immediately pull back.
+
+        Unlike base images (which are pre-existing and may safely be pulled through
+        a Docker Hub pull-through proxy), a dev/test image is created seconds before
+        it is consumed. It must therefore be pulled from the exact registry it was
+        pushed to, otherwise a pull-through proxy - which has not yet fetched the
+        brand-new tag - answers ``manifest unknown`` and the docker hooks fail on
+        first-time pushes (they only succeed on a later retry, once the proxy has
+        caught up).
+
+        ``devtestdemistoextended/*`` images live only in the extended (GAR) registry,
+        so they keep their registry prefix. Regular ``devtestdemisto/*`` images are
+        pushed to Docker Hub, so they are left unqualified and pulled straight from
+        Docker Hub - keeping the push target and the pull target identical.
+        """
+        image = strip_cr_registry_prefix(image)
+        if DEMISTO_EXTENDED_REPOSITORY not in image:
+            return image
+        # Extended images resolve to the same registry as any other extended image.
+        return DockerBase.get_image_registry(image)
+
+    @staticmethod
+    def build_test_image_name(base_image: str, identifier: str) -> str:
+        """Build the dev/test image name, mapping extended images to devtestdemistoextended/."""
+        if base_image.startswith(EXTENDED_REPOSITORY_SEGMENT):
+            renamed = base_image.replace(
+                DEMISTO_EXTENDED_REPOSITORY, DEVTEST_DEMISTO_EXTENDED_REPOSITORY
+            )
+        else:
+            renamed = base_image.replace(DEMISTO_REPOSITORY, DEVTEST_DEMISTO_REPOSITORY)
+        return f"{renamed}-{identifier}"
 
     def get_or_create_test_image(
         self,
@@ -530,12 +778,13 @@ class DockerBase:
             The test image name and errors to create it if any
         """
         errors = ""
-        if (
-            not python_version
-            and container_type != TYPE_PWSH
-            and (version := get_python_version(base_image))
-        ):
-            python_version = version.major
+        if not python_version and container_type != TYPE_PWSH:
+            # Fall back to the default major when the version can't be resolved,
+            # so the python3 dev-requirements still get installed instead of
+            # building an empty tool-less dev image.
+            python_version = get_python_version_or_default(
+                base_image, context="the dev/test image"
+            ).major
         python3_requirements = get_pip_requirements_from_file(
             TEST_REQUIREMENTS_DIR / "python3_requirements" / "dev-requirements.txt"
         )
@@ -554,23 +803,28 @@ class DockerBase:
             "\n".join(sorted(set(pip_requirements))).encode("utf-8")
         ).hexdigest()
 
-        test_docker_image = (
-            f'{base_image.replace("demisto", "devtestdemisto")}-{identifier}'
-        )
+        test_docker_image = self.build_test_image_name(base_image, identifier)
         if is_custom_registry():
             # if we use a custom registry, we need to have to pull the image and we can't use dockerhub api
             should_pull = True
         if not should_pull and self.is_image_available(test_docker_image):
             return test_docker_image, errors
+        # The base image already exists, so it may safely be pulled through the
+        # configured (proxy) registry. The dev/test image, however, is pushed and
+        # then immediately pulled back, so it must resolve to the same registry it
+        # was pushed to - see get_test_image_registry.
         base_image = self.get_image_registry(base_image)
-        test_docker_image = self.get_image_registry(test_docker_image)
+        test_docker_image = self.get_test_image_registry(test_docker_image)
 
         try:
             logger.debug(
                 f"{log_prompt} - Trying to pull existing image {test_docker_image}"
             )
             self.pull_image(test_docker_image)
-        except (docker.errors.APIError, docker.errors.ImageNotFound):
+        except docker.errors.DockerException:
+            # DockerException is the base class (APIError, ImageNotFound, and
+            # credential-store failures such as a missing docker-credential-gcloud),
+            # so a failed GAR pull falls back to building instead of crashing.
             logger.info(
                 f"{log_prompt} - Unable to find image {test_docker_image}. Creating image based on {base_image} - Could take 2-3 minutes at first"
             )
@@ -584,9 +838,17 @@ class DockerBase:
                 )
             except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
                 errors = str(e)
-                logger.exception(  # noqa: PLE1205
-                    "{}", f"<red>{log_prompt} - Build errors occurred: {errors}</red>"
-                )
+                if EXTENDED_REPOSITORY_SEGMENT in base_image:
+                    # GAR images may legitimately fail (e.g. no credentials); log at
+                    # debug and return `errors` for the caller to skip or fail.
+                    logger.debug(
+                        f"{log_prompt} - could not prepare {base_image}: {errors}"
+                    )
+                else:
+                    logger.exception(  # noqa: PLE1205
+                        "{}",
+                        f"<red>{log_prompt} - Build errors occurred: {errors}</red>",
+                    )
         return test_docker_image, errors
 
 
@@ -767,6 +1029,21 @@ def get_python_version(image: Optional[str]) -> Optional[Version]:
         return python_version
     logger.debug(f"Could not get python version for {image=} from regex")
 
+    if EXTENDED_REPOSITORY_SEGMENT in image:
+        try:
+            from demisto_sdk.commands.common.docker.docker_image import DockerImage
+
+            if python_version := DockerImage(image).python_version:
+                return python_version
+            logger.warning(
+                f"get_python_version | extended {image=} returned no python version"
+            )
+        except Exception as e:
+            logger.warning(
+                f"Could not get python version for extended {image=} from its registry: {e}"
+            )
+        return None
+
     if IS_CONTENT_GITLAB_CI:
         try:
             logger.debug(
@@ -786,6 +1063,35 @@ def get_python_version(image: Optional[str]) -> Optional[Version]:
             f"Getting python version from {image=} by pulling its image and query its env"
         )
         return _get_python_version_from_image_client(image)
+
+
+def get_python_version_or_default(
+    image: Optional[str],
+    context: str,
+    identifier: Optional[str] = None,
+) -> Version:
+    """
+    Resolve the python version of a docker image, falling back to
+    DEFAULT_PYTHON_VERSION (with a warning) when it cannot be determined.
+
+    Args:
+        image: the docker image to resolve the python version from.
+        context: short description of the caller, included in the warning
+            (e.g. "pre-commit", "mypy-in-docker", "the dev/test image").
+        identifier: optional extra identifier for the warning (e.g. a yml path).
+
+    Returns:
+        Version: the resolved python version, or DEFAULT_PYTHON_VERSION.
+    """
+    if python_version := get_python_version(image):
+        return python_version
+    default = Version(DEFAULT_PYTHON_VERSION)
+    subject = f"{identifier} (docker image {image!r})" if identifier else repr(image)
+    logger.warning(
+        f"Could not resolve the python version for {subject}; "
+        f"assuming {DEFAULT_PYTHON_VERSION} for {context}."
+    )
+    return default
 
 
 def _get_python_version_from_image_client(image: str) -> Version:

@@ -4,7 +4,6 @@ import re
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.constants import (
-    MARKETPLACE_LIST_PATTERN,
     VALID_MARKETPLACE_TAGS,
 )
 from demisto_sdk.commands.common.tools import get_relative_path_from_packs_dir
@@ -17,6 +16,9 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 )
 
 ContentTypes = Union[Pack, Integration]
+
+TAG_FINDING_PATTERN = r"[^>]*"
+MARKETPLACE_LIST_PATTERN = re.compile(r"^[A-Z_]+(?:,[A-Z_]+)*$")
 
 
 class MarketplaceTagsValidator(BaseValidator[ContentTypes]):
@@ -79,19 +81,21 @@ class MarketplaceTagsValidator(BaseValidator[ContentTypes]):
         Checks for unmatched, mismatched, or improperly nested <~...> and </~...> tags.
         Returns an error message if there’s an issue, or None if all tags are matched correctly.
         """
-        tag_pattern = re.compile(
-            rf"<(?P<closing>/)?~(?P<name>{MARKETPLACE_LIST_PATTERN})>"
-        )
+        tag_pattern = re.compile(rf"<(?P<closing>/)?~(?P<name>{TAG_FINDING_PATTERN})>")
         stack: List[str] = []
 
         for match in tag_pattern.finditer(text):
             tag_name = match.group("name")
             is_closing = bool(match.group("closing"))
 
-            invalid_tags = [
+            if not MARKETPLACE_LIST_PATTERN.match(tag_name):
+                if tag_name == "":
+                    return "Invalid tag format: Tag name cannot be empty."
+                return f"Invalid tag format: '{tag_name}'. Tag must be a comma-separated list of uppercase tags (A-Z, _)."
+
+            if invalid_tags := [
                 tag for tag in tag_name.split(",") if tag not in VALID_MARKETPLACE_TAGS
-            ]
-            if invalid_tags:
+            ]:
                 return f"Invalid marketplace tag(s) found: {', '.join(invalid_tags)}. Allowed tags: {', '.join(VALID_MARKETPLACE_TAGS)}"
 
             if not is_closing:

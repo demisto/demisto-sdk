@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Annotated, Any, List, Literal, Optional, Tuple, Union
+from typing import Any, List, Literal, Optional, Tuple, Union
 
 import more_itertools
 from pydantic import BaseModel, Field
@@ -10,7 +10,6 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON,
     Auto,
     MarketplaceVersions,
-    PlatformSupportedModules,
 )
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.content_graph.strict_objects.common import (
@@ -18,9 +17,12 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     DEPRECATED_DYNAMIC_MODEL,
     DESCRIPTION_DYNAMIC_MODEL,
     ID_DYNAMIC_MODEL,
+    IS_ARRAY_DYNAMIC_MODEL,
     NAME_DYNAMIC_MODEL,
     REQUIRED_DYNAMIC_MODEL,
     BaseStrictModel,
+    SupportedFeaturesList,
+    SupportedModulesList,
     create_dynamic_model,
     create_model,
 )
@@ -53,9 +55,7 @@ class _Argument(BaseStrictModel):
     deprecated: Optional[bool] = None
     type: Optional[str] = None
     hidden: Optional[bool] = None
-    supportedModules: Optional[
-        Annotated[List[PlatformSupportedModules], Field(min_length=1, max_length=7)]
-    ]
+    supportedModules: Optional[SupportedModulesList] = None
 
 
 HIDDEN_MARKETPLACE_V2_DYNAMIC_MODEL = create_dynamic_model(
@@ -75,6 +75,7 @@ Argument = create_model(
         DEPRECATED_DYNAMIC_MODEL,
         DEFAULT_DYNAMIC_MODEL,
         HIDDEN_MARKETPLACE_V2_DYNAMIC_MODEL,
+        IS_ARRAY_DYNAMIC_MODEL,
     ),
 )
 
@@ -139,9 +140,13 @@ class StructureError(BaseStrictModel):
 
 
 class _BaseIntegrationScript(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     name: str
     deprecated: Optional[bool] = None
     system: Optional[bool] = None
+    exclude_from_tightly_coupled: Optional[bool] = Field(
+        None, alias="excludefromtightlycoupled"
+    )
     tests: Optional[List[str]] = None
     auto_update_docker_image: Optional[bool] = Field(
         None, alias="autoUpdateDockerImage"
@@ -171,6 +176,7 @@ class ExtractSettings(BaseStrictModel):
 
 
 class _StrictGenericIncidentType(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     vc_should_ignore: Optional[bool] = Field(None, alias="vcShouldIgnore")
     sort_values: Optional[Any] = Field(None, alias="sortValues")
     locked: Optional[bool] = None
@@ -240,12 +246,18 @@ class AlertsFilter(BaseStrictModel):
 
 
 class AgentixBase(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     common_fields: CommonFields = Field(..., alias="commonfields")  # type:ignore[valid-type]
     tags: Optional[list[str]] = None
     category: Optional[str] = None
     name: str
-    display: str
     description: str
     disabled: bool = False
+    internal: Optional[bool] = None
+    exclude_from_tightly_coupled: Optional[bool] = Field(
+        None, alias="excludefromtightlycoupled"
+    )
+    from_version: Optional[str] = Field(None, alias="fromversion")
+    to_version: Optional[str] = Field(None, alias="toversion")
     marketplaces: Optional[Union[MarketplaceVersions, List[MarketplaceVersions]]] = None
     supportedModules: Optional[List[str]] = None

@@ -63,12 +63,19 @@ class ResultWriter:
         failing_error_codes: Set[str] = set()
         warning_error_codes: Set[str] = set()
         for result in validation_results:
+            # Escape any bare '<' in the runtime message before handing it to
+            # the colors-enabled logger; loguru's colorizer treats every '<tag>'
+            # as a color directive and raises ValueError on unknown tags like
+            # '<normalized_integration_id>'. Same pattern used elsewhere in the
+            # SDK (see run_cmd/runner.py and content_graph/interface/neo4j/
+            # queries/common.py).
+            readable_message = result.format_readable_message.replace("<", "\\<")
             if result.validator.error_code in config_file_content.warning:
                 warning_error_codes.add(result.validator.error_code)
-                logger.warning(f"<yellow>{result.format_readable_message}</yellow>")
+                logger.warning(f"<yellow>{readable_message}</yellow>")
             else:
                 failing_error_codes.add(result.validator.error_code)
-                logger.error(f"<red>{result.format_readable_message}</red>")
+                logger.error(f"<red>{readable_message}</red>")
                 exit_code = 1
         return exit_code, failing_error_codes, warning_error_codes
 
@@ -94,12 +101,18 @@ class ResultWriter:
             fixed_objects_set.add(fixing_result.content_object)
             if fixing_result.validator.error_code not in config_file_content.warning:
                 exit_code = 1
-            logger.warning(f"{fixing_result.format_readable_message}")
+            # See comment in post_validation_results: escape bare '<' so the
+            # colors-enabled logger's colorizer does not parse runtime message
+            # payloads like '<normalized_integration_id>' as color tags.
+            fix_message = fixing_result.format_readable_message.replace("<", "\\<")
+            logger.warning(f"{fix_message}")
         for result in self.invalid_content_item_results:
-            logger.error(f"{result.format_readable_message}")
+            invalid_message = result.format_readable_message.replace("<", "\\<")
+            logger.error(f"{invalid_message}")
             exit_code = 1
         for result in self.validation_caught_exception_results:
-            logger.error(f"{result.format_readable_message}")
+            exception_message = result.format_readable_message.replace("<", "\\<")
+            logger.error(f"{exception_message}")
             exit_code = 1
         if not exit_code:
             logger.info("<green>All validations passed.</green>")

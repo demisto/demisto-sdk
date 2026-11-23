@@ -1,12 +1,11 @@
-from typing import Annotated, Any, List, Optional
+from typing import Any, List, Optional
 
 from pydantic import Field, conlist, validator
 
 from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON2,
     TYPE_PYTHON3,
-    MarketplaceVersions,
-    PlatformSupportedModules,
+    SupportLevelHeader,
 )
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
@@ -22,8 +21,13 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     DEFAULT_DYNAMIC_MODEL_LOWER_CASE,
     DEPRECATED_DYNAMIC_MODEL,
     DESCRIPTION_DYNAMIC_MODEL,
+    HIDDEN_DYNAMIC_MODEL,
+    HYBRID_DYNAMIC_MODEL,
     NAME_DYNAMIC_MODEL,
+    QUICK_ACTION_DYNAMIC_MODEL,
     REQUIRED_DYNAMIC_MODEL,
+    SupportedFeaturesList,
+    SupportedModulesList,
     create_dynamic_model,
     create_model,
 )
@@ -46,9 +50,11 @@ class SectionOrderValues(StrEnum):
     OPTIMIZE = "Optimize"
     MIRRORING = "Mirroring"
     RESULT = "Result"
+    AGENTIC_ASSISTANT = "Agentic Assistant"
 
 
 class _Configuration(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     display: Optional[str] = None
     section: Optional[str] = None
     advanced: Optional[str] = None
@@ -63,6 +69,7 @@ class _Configuration(BaseStrictModel):
     hidden_username: Optional[bool] = Field(None, alias="hiddenusername")
     hidden_password: Optional[bool] = Field(None, alias="hiddenpassword")
     from_license: Optional[str] = Field(None, alias="fromlicense")
+    supportedModules: Optional[SupportedModulesList] = None
 
 
 Configuration = create_model(
@@ -82,6 +89,7 @@ class IntegrationOutput(Output):  # type:ignore[misc,valid-type]
 
 
 class _Command(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     name: str
     execution: Optional[bool] = None
     description: str
@@ -91,17 +99,15 @@ class _Command(BaseStrictModel):
     outputs: Optional[List[IntegrationOutput]] = None
     important: Optional[List[Important]] = None  # type:ignore[valid-type]
     timeout: Optional[int] = None
-    hidden: Optional[bool] = None
     polling: Optional[bool] = None
     prettyname: Optional[str] = None
-    quickaction: Optional[bool] = None
     compliantpolicies: Optional[List[str]] = None
-    supportedModules: Optional[
-        Annotated[
-            List[PlatformSupportedModules],
-            Field(min_length=1, max_length=len(PlatformSupportedModules)),
-        ]
-    ]
+    # `hidden` may be a bool, or a list of marketplace names where the command
+    # should be hidden. Mirrors the same shape allowed on integration parameters
+    # (see `_Configuration.hidden`). The explicit declaration here overrides the
+    # `hidden: Optional[bool]` that HIDDEN_DYNAMIC_MODEL would otherwise add.
+    hidden: Optional[Any] = None
+    supportedModules: Optional[SupportedModulesList] = None
 
 
 Command = create_model(
@@ -111,6 +117,8 @@ Command = create_model(
         DEPRECATED_DYNAMIC_MODEL,
         DESCRIPTION_DYNAMIC_MODEL,
         NAME_DYNAMIC_MODEL,
+        QUICK_ACTION_DYNAMIC_MODEL,
+        HIDDEN_DYNAMIC_MODEL,
     ),
 )
 
@@ -124,6 +132,8 @@ class _Script(BaseStrictModel):
     is_fetch: Optional[bool] = Field(None, alias="isfetch")
     is_fetch_events: Optional[bool] = Field(None, alias="isfetchevents")
     is_fetch_assets: Optional[bool] = Field(None, alias="isfetchassets")
+    is_fetch_credentials: Optional[bool] = Field(None, alias="isfetchcredentials")
+    mcp: Optional[bool] = Field(None, alias="mcp")
     long_running: Optional[bool] = Field(None, alias="longRunning")
     long_running_port: Optional[bool] = Field(None, alias="longRunningPort")
     is_mappable: Optional[bool] = Field(None, alias="ismappable")
@@ -135,6 +145,7 @@ class _Script(BaseStrictModel):
     feed: Optional[bool] = None
     is_fetch_samples: Optional[bool] = Field(None, alias="isFetchSamples")
     reset_context: Optional[bool] = Field(None, alias="resetContext")
+    spec: Optional[str] = None
 
 
 Script = create_model(
@@ -185,37 +196,38 @@ class Trigger(BaseStrictModel):
 
 
 class _StrictIntegration(BaseStrictModel):
+    supportedFeatures: Optional[SupportedFeaturesList] = None
     common_fields: CommonFieldsIntegration = Field(..., alias="commonfields")  # type:ignore[valid-type]
     display: str
     beta: Optional[bool] = None
     category: str
-    section_order: Optional[conlist(SectionOrderValues, min_items=1, max_items=5)] = (  # type:ignore[valid-type]
+    section_order: Optional[conlist(SectionOrderValues, min_items=1, max_items=6)] = (  # type:ignore[valid-type]
         Field(alias="sectionorder")
     )
     configurations: List[Configuration] = Field(..., alias="configuration")  # type:ignore[valid-type]
     image: Optional[str] = None
     description: str
+    provider: Optional[str] = None
     default_mapper_in: Optional[str] = Field(None, alias="defaultmapperin")
     default_mapper_out: Optional[str] = Field(None, alias="defaultmapperout")
     default_classifier: Optional[str] = Field(None, alias="defaultclassifier")
     detailed_description: Optional[str] = Field(None, alias="detaileddescription")
     auto_config_instance: Optional[bool] = Field(None, alias="autoconfiginstance")
-    support_level_header: MarketplaceVersions = Field(None, alias="supportlevelheader")
+    support_level_header: SupportLevelHeader = Field(None, alias="supportlevelheader")
     script: Script  # type:ignore[valid-type]
     hidden: Optional[bool] = None
+    internal: Optional[bool] = None
+    source: Optional[str] = None
     videos: Optional[List[str]] = None
     versioned_fields: dict = Field(None, alias="versionedfields")
     default_enabled: Optional[bool] = Field(None, alias="defaultEnabled")
     script_not_visible: Optional[bool] = Field(None, alias="scriptNotVisible")
-    hybrid: Optional[bool] = None
     supports_quick_actions: Optional[bool] = Field(None, alias="supportsquickactions")
     is_cloud_provider_integration: Optional[bool] = Field(
         False, alias="isCloudProviderIntegration"
     )
     triggers: Optional[List[Trigger]] = None
-    supportedModules: Optional[
-        Annotated[List[PlatformSupportedModules], Field(min_length=1, max_length=7)]
-    ]
+    supportedModules: Optional[SupportedModulesList] = None
 
     def __init__(self, **data):
         """
@@ -261,5 +273,6 @@ StrictIntegration = create_model(
         IS_FETCH_DYNAMIC_MODEL,
         IS_FETCH_EVENTS_DYNAMIC_MODEL,
         DESCRIPTION_DYNAMIC_MODEL,
+        HYBRID_DYNAMIC_MODEL,
     ),
 )

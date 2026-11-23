@@ -34,12 +34,13 @@ runs:
         python-version: ${{ inputs.python-version }}
 
     - name: Set up Node.js
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
         node-version: ${{ inputs.node-version }}
+        cache: 'npm'
 
     - name: Install npm
       run: |
-        npm install
+        npm ci
         echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}') > ${{ inputs.artifacts-dir }}/node_versions_info.json
       shell: bash

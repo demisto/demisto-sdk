@@ -1,0 +1,4 @@
+changes:
+- description: Added the `preview` pack support level. Integrations in preview packs have "(Preview)" appended to their display name, and the XSOAR linter runs the same checkers as for developer packs.
+  type: feature
+pr_number: '5544'

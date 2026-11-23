@@ -5,7 +5,7 @@ import os
 import re
 import tempfile
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Set, Union
 
 from inflection import dasherize, underscore
 from ruamel.yaml.scalarstring import (  # noqa: TID251 - only importing FoldedScalarString is OK
@@ -515,7 +515,10 @@ class IntegrationScriptUnifier(Unifier):
 
     @staticmethod
     def insert_module_code(
-        script_code: str, import_to_name: Dict[str, str], content_path: Path
+        script_code: str,
+        import_to_name: Dict[str, str],
+        content_path: Path,
+        inserted_modules: Optional[Set[str]] = None,
     ) -> str:
         """
         Inserts API module in place of an import to the module according to the module name
@@ -523,9 +526,24 @@ class IntegrationScriptUnifier(Unifier):
         :param import_to_name: A dictionary where the keys are The module import string to replace
         and the values are The module name
         :param content_path: The path to the content repo
+        :param inserted_modules: Names of the API modules that were already inserted, so each module is inserted only once
         :return: The integration script with the module code appended in place of the import
         """
+        if inserted_modules is None:
+            inserted_modules = set()
         for module_import, module_name in import_to_name.items():
+            if module_name in inserted_modules:
+                # the module code was already inserted, replace only the import line itself
+                # (not the "### GENERATED CODE ###: <import>" header of the inserted code)
+                script_code = re.sub(
+                    rf"^{re.escape(module_import)}",
+                    f"# {module_name} was already inserted above.",
+                    script_code,
+                    flags=re.MULTILINE,
+                )
+                continue
+            inserted_modules.add(module_name)
+
             module_path = Path(
                 content_path,
                 "Packs",
@@ -543,7 +561,7 @@ class IntegrationScriptUnifier(Unifier):
                 module_code
             )
             module_code = IntegrationScriptUnifier.insert_module_code(
-                module_code, tmp_imports_to_names, content_path
+                module_code, tmp_imports_to_names, content_path, inserted_modules
             )
 
             # the wrapper numbers represents the number of generated lines added

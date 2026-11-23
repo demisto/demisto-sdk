@@ -179,8 +179,87 @@ def test_module_level_finding_needs_comment_on_line_1():
     """
     later = suppressions_for('"""doc"""\n# pylint: disable=E9003\nx = 1\n')
     first_line = suppressions_for('# pylint: disable=E9003\n"""doc"""\nx = 1\n')
-    assert not later.is_disabled("E9003", 1)
-    assert first_line.is_disabled("E9003", 1)
+    assert not later.is_disabled_for_module("E9003")
+    assert first_line.is_disabled_for_module("E9003")
+
+
+@pytest.mark.parametrize(
+    "source, module_disabled",
+    [
+        pytest.param(
+            "import demistomock as demisto  # pylint: disable=E9003\n",
+            False,
+            id="trailing comment on line 1 does not suppress",
+        ),
+        pytest.param(
+            "# pylint: disable=E9003\nimport demistomock as demisto\n",
+            True,
+            id="own-line comment on line 1 suppresses",
+        ),
+        pytest.param(
+            "# pylint: disable=E9003\n# pylint: enable=E9003\nx = 1\n",
+            True,
+            id="own-line enable on line 2 does not undo the disable on line 1",
+        ),
+        pytest.param(
+            "# pylint: disable-next=E9003\nx = 1\n",
+            False,
+            id="disable-next does not suppress",
+        ),
+        pytest.param(
+            "import demistomock as demisto  # xsoar-lint: skip-file\n",
+            True,
+            id="skip-file suppresses",
+        ),
+    ],
+)
+def test_module_level_finding_suppression(source, module_disabled):
+    """
+    Given:
+        - A disable comment placed in different ways around line 1.
+    When:
+        - Checking a finding about the whole file.
+    Then:
+        - Ensure only an own-line comment covering line 1, or skip-file, suppresses it (same as pylint).
+          A trailing comment on line 1 still suppresses findings on line 1 itself.
+    """
+    suppressions = suppressions_for(source)
+    assert suppressions.is_disabled_for_module("E9003") is module_disabled
+
+
+def test_trailing_line_1_comment_still_covers_line_1_findings():
+    """
+    Given:
+        - A trailing disable comment on line 1.
+    When:
+        - Checking a finding on line 1 (not a whole-file finding).
+    Then:
+        - Ensure it is suppressed, while a whole-file finding is not.
+    """
+    suppressions = suppressions_for("sleep(20)  # pylint: disable=E9003\n")
+    assert suppressions.is_disabled("E9003", 1)
+    assert not suppressions.is_disabled_for_module("E9003")
+
+
+def test_w9005_trailing_line_1_comment_is_reported():
+    """
+    Given:
+        - An xsoar file without main(), with `# pylint: disable=W9005` at the end of line 1
+          (the MCPApiModule case), and the same file with the comment on its own line.
+    When:
+        - Linting the file with the ast engine.
+    Then:
+        - Ensure W9005 is reported for the trailing comment and suppressed for the own-line one.
+    """
+    settings = LintSettings(support="xsoar")
+    trailing = lint_source(
+        "import demistomock as demisto  # pylint: disable=W9005\n", "mod", settings
+    )
+    own_line = lint_source(
+        "# pylint: disable=W9005\nimport demistomock as demisto\n", "mod", settings
+    )
+    assert "W9005" in [finding.code for finding in trailing.findings]
+    assert "W9005" not in [finding.code for finding in own_line.findings]
 
 
 def test_scope_name_and_position():

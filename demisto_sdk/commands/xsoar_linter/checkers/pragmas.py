@@ -18,6 +18,9 @@ Where a comment applies:
       (the end of the file at top level), or until a later comment changes it.
       When it comes before the first statement of a function or class, it also covers
       the def/class line.
+    * Findings for the whole file (reported at line 1) are turned off only by a comment
+      on its own line that covers line 1, or by skip-file. A comment at the end of the
+      first code line does not turn them off (same as pylint).
 """
 
 import ast
@@ -54,17 +57,35 @@ class Suppressions:
     skip_file: bool = False
     # code -> list of (first line, last line, enabled), in the order they were applied.
     ranges: Dict[str, List[Tuple[int, int, bool]]] = field(default_factory=dict)
+    # The same, but only for comments on their own line. Used for whole-file findings.
+    own_line_ranges: Dict[str, List[Tuple[int, int, bool]]] = field(
+        default_factory=dict
+    )
 
     def is_disabled(self, code: str, line: int) -> bool:
         if self.skip_file:
             return True
-        for first, last, enabled in reversed(self.ranges.get(code, [])):
-            if first <= line <= last:
-                return not enabled
-        return False
+        return _latest_is_disabled(self.ranges.get(code, []), line)
 
-    def add_range(self, code: str, first: int, last: int, enabled: bool) -> None:
+    def is_disabled_for_module(self, code: str) -> bool:
+        """Is rule `code` turned off for a finding about the whole file (reported at line 1)?"""
+        if self.skip_file:
+            return True
+        return _latest_is_disabled(self.own_line_ranges.get(code, []), 1)
+
+    def add_range(
+        self, code: str, first: int, last: int, enabled: bool, own_line: bool = False
+    ) -> None:
         self.ranges.setdefault(code, []).append((first, last, enabled))
+        if own_line:
+            self.own_line_ranges.setdefault(code, []).append((first, last, enabled))
+
+
+def _latest_is_disabled(ranges: List[Tuple[int, int, bool]], line: int) -> bool:
+    for first, last, enabled in reversed(ranges):
+        if first <= line <= last:
+            return not enabled
+    return False
 
 
 def read_pragmas(source: str, known_names: Dict[str, str]) -> Tuple[List[Pragma], bool]:
@@ -119,8 +140,11 @@ def build_suppressions(
     blocks = BlockMap(tree, last_line) if tree else None
     for pragma in pragmas:
         first, last, enabled = _pragma_range(pragma, blocks, last_line)
+        own_line = pragma.own_line and pragma.keyword in (
+            DISABLE_KEYWORDS | ENABLE_KEYWORDS
+        )
         for code in pragma.codes:
-            suppressions.add_range(code, first, last, enabled)
+            suppressions.add_range(code, first, last, enabled, own_line)
     return suppressions
 
 

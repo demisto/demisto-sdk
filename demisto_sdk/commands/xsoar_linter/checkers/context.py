@@ -60,16 +60,19 @@ class FileContext:
     ) -> None:
         """
         Report a finding for an enabled rule, unless a disable comment turns it off.
-        Findings without a node are reported for the whole module, at line 1 column 0.
+        Findings without a node are reported for the whole module, at line 1 column 0,
+        and only an own-line comment covering line 1 (or skip-file) turns them off.
         """
         rule = self.rules.get(code)
         if not rule:
             return
         if node is None:
             line, col, obj = 1, 0, ""
+            disabled = self.suppressions.is_disabled_for_module(code)
         else:
             line, col, obj = node.lineno, node.col_offset, self.scope_name(node)  # type: ignore[attr-defined]
-        if self.suppressions.is_disabled(code, line):
+            disabled = self.suppressions.is_disabled(code, line)
+        if disabled:
             return
         message = rule.message % tuple(args) if args else rule.message
         self.findings.append(Finding(line, col, code, obj, message))

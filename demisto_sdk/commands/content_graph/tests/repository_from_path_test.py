@@ -31,6 +31,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from demisto_sdk.commands.common.constants import (
+    DEMISTO_SDK_LOG_FILE_PATH,
     MARKDOWN_IMAGES_ARTIFACT_FILE_NAME,
     MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME,
     MarketplaceVersions,
@@ -445,6 +446,7 @@ def test_dump_many_pack_failure_raises_with_pack_id(
         - Dumping it with dump_many and zip=True.
     Then:
         - PackDumpError names PackB and carries its traceback, no zip is written, and _DUMP_STATE is cleared.
+        - With workers=1 the original exception is its __cause__ (a worker returns only the traceback text).
     """
     content_dto = _build_content_dto(repo)
     original_dump = PackModel.dump
@@ -466,6 +468,42 @@ def test_dump_many_pack_failure_raises_with_pack_id(
     assert error_info.value.pack_id == "PackB"
     assert "PackB" in str(error_info.value)
     assert "PackB dump failure" in error_info.value.traceback_text
+    if workers == 1:
+        assert isinstance(error_info.value.__cause__, ValueError)
+    else:
+        assert error_info.value.__cause__ is None
     assert not (tmp_path / "content_packs.zip").exists()
     assert not list(tmp_path.glob(".content_packs.zip*"))
     assert repository_module._DUMP_STATE is None
+
+
+@pytest.mark.skipif(FORK_UNAVAILABLE, reason="the 'fork' start method is unavailable")
+def test_dump_many_with_two_workers_writes_a_log_file_per_worker(
+    repo: Repo, tmp_path, monkeypatch
+):
+    """
+    Given:
+        - A repository with 3 packs and DEMISTO_SDK_LOG_FILE_PATH pointing to a temporary log dir.
+    When:
+        - Dumping it with dump_many, workers=2, and a custom worker_log_prefix.
+    Then:
+        - <prefix>_1.log and <prefix>_2.log exist in the log dir (at least one is non-empty),
+          and every result names the worker (1 or 2) that dumped its pack.
+    """
+    log_dir = tmp_path / "logs"
+    monkeypatch.setenv(DEMISTO_SDK_LOG_FILE_PATH, str(log_dir))
+    monkeypatch.delenv("ARTIFACTS_FOLDER", raising=False)
+    content_dto = _build_content_dto(repo)
+
+    report = ContentDTO.dump_many(
+        [DumpOutput(content_dto, tmp_path / "out")],
+        MarketplaceVersions.XSOAR,
+        workers=2,
+        worker_log_prefix="test_dump_worker",
+    )
+
+    worker_logs = [log_dir / f"test_dump_worker_{index}.log" for index in (1, 2)]
+    assert all(worker_log.exists() for worker_log in worker_logs)
+    assert any(worker_log.stat().st_size > 0 for worker_log in worker_logs)
+    assert {result.worker_index for result in report.results} <= {1, 2}
+    assert repository_module._WORKER_INDEX == 0

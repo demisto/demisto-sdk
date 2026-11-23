@@ -2,6 +2,7 @@ import gc
 import multiprocessing
 import os
 import shutil
+import sys
 import threading
 import time
 import traceback
@@ -9,7 +10,7 @@ import zipfile
 from collections import Counter
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from concurrent.futures.process import BrokenProcessPool
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple
@@ -17,10 +18,20 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple
 import tqdm
 from pydantic import BaseModel, DirectoryPath
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    DEMISTO_SDK_LOG_FILE_PATH,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.logger import (
+    DEFAULT_FILE_THRESHOLD,
+    FILE_FORMAT,
+    LOGURU_DIAGNOSE,
+    calculate_log_dir,
+    logger,
+)
+from demisto_sdk.commands.common.string_to_bool import string_to_bool
 from demisto_sdk.commands.content_graph.common import (
     PackDestination,
 )
@@ -224,6 +235,10 @@ class PackDumpResult:
     worker_pid: int = 0
     # ``ru_maxrss`` of the dumping process (KiB on Linux, bytes on macOS).
     max_rss: Optional[int] = None
+    # 1..N for a fork pool worker, 0 for the in-process (``workers=1``) dump.
+    worker_index: int = 0
+    # The exception ``Pack.dump`` raised; in-process only (a worker returns ``None``, it may not pickle).
+    exception: Optional[BaseException] = field(default=None, compare=False, repr=False)
 
 
 @dataclass
@@ -240,7 +255,11 @@ class DumpReport:
 
 
 class PackDumpError(Exception):
-    """A pack dump failed; carries the pack id, the output index, and the formatted traceback."""
+    """A pack dump failed; carries the pack id, the output index, and the formatted traceback.
+
+    With ``workers=1`` the exception ``Pack.dump`` raised is its ``__cause__``; a fork pool worker only
+    returns the traceback text, so there it has no cause.
+    """
 
     def __init__(
         self,
@@ -278,6 +297,59 @@ class _DumpState:
 
 # Set by ``dump_many`` only while its fork pool runs (cleared in ``finally``); read by the forked workers.
 _DUMP_STATE: Optional[_DumpState] = None
+
+# This process's dump worker number: set by ``_dump_worker_init`` in a forked worker, 0 in the parent.
+_WORKER_INDEX = 0
+
+DEFAULT_WORKER_LOG_PREFIX = "dump_worker"
+
+
+def _worker_log_dir(outputs: Sequence[DumpOutput]) -> Path:
+    """The SDK log directory (``DEMISTO_SDK_LOG_FILE_PATH``); without it, the parent of the first output dir."""
+    if os.getenv(DEMISTO_SDK_LOG_FILE_PATH):
+        return calculate_log_dir(None)
+    log_dir = Path(outputs[0].dir).resolve().parent
+    logger.info(
+        f"{DEMISTO_SDK_LOG_FILE_PATH} is not set, writing the dump worker logs to {log_dir}"
+    )
+    return log_dir
+
+
+def _worker_log_path(log_dir: Path, worker_log_prefix: str, worker_index: int) -> Path:
+    return log_dir / f"{worker_log_prefix}_{worker_index}.log"
+
+
+def _dump_worker_init(
+    worker_counter: Any, log_dir: str, worker_log_prefix: str
+) -> None:
+    """Fork pool initializer: take the next worker number, then log to this worker's own file.
+
+    The inherited sinks are removed: several processes writing (and rotating) the parent's log file is unsafe.
+    WARNING and above also go to stderr, so failures still show in the job output. The file is line-buffered:
+    a pool worker ends with ``os._exit``, which would drop a buffered tail.
+    """
+    global _WORKER_INDEX
+    with worker_counter.get_lock():
+        worker_counter.value += 1
+        _WORKER_INDEX = worker_counter.value
+    diagnose = string_to_bool(os.getenv(LOGURU_DIAGNOSE, "False"))
+    logger.remove()
+    logger.add(
+        _worker_log_path(Path(log_dir), worker_log_prefix, _WORKER_INDEX),
+        format=FILE_FORMAT,
+        level=DEFAULT_FILE_THRESHOLD,
+        colorize=False,
+        diagnose=diagnose,
+        enqueue=False,
+        buffering=1,
+    )
+    logger.add(
+        sys.stderr,
+        format=f"[dump-worker {_WORKER_INDEX}] {{message}}",
+        level="WARNING",
+        colorize=False,
+        diagnose=diagnose,
+    )
 
 
 def _max_rss() -> Optional[int]:
@@ -348,6 +420,7 @@ def _run_dump_task(state: _DumpState, task_index: int) -> PackDumpResult:
     output, pack = state.task_pack(task_index)
     collector = MarkdownImagesCollector()
     error_text = ""
+    dump_exception: Optional[BaseException] = None
     start = time.monotonic()
     try:
         with collect_markdown_images(collector):
@@ -356,8 +429,9 @@ def _run_dump_task(state: _DumpState, task_index: int) -> PackDumpResult:
                 state.marketplace,
                 **state.pack_dump_kwargs,
             )
-    except Exception:
+    except Exception as error:
         error_text = traceback.format_exc()
+        dump_exception = error
     seconds = time.monotonic() - start
     logger.debug(f"dump of pack {pack.object_id} took {seconds:.1f}s")
     return PackDumpResult(
@@ -370,6 +444,8 @@ def _run_dump_task(state: _DumpState, task_index: int) -> PackDumpResult:
         markdown_images=collector.export(),
         worker_pid=os.getpid(),
         max_rss=_max_rss(),
+        worker_index=_WORKER_INDEX,
+        exception=dump_exception,
     )
 
 
@@ -381,7 +457,8 @@ def _run_dump_task_in_worker(task_index: int) -> PackDumpResult:
             "_DUMP_STATE is not set: dump workers must be forked by ContentDTO.dump_many"
         )
     try:
-        return _run_dump_task(state, task_index)
+        # The exception object stays in the worker: it may not pickle; the traceback text is returned.
+        return replace(_run_dump_task(state, task_index), exception=None)
     except (
         BaseException
     ):  # e.g. SystemExit raised by a pack dump: report it with the pack id
@@ -394,6 +471,7 @@ def _run_dump_task_in_worker(task_index: int) -> PackDumpResult:
             seconds=0.0,
             error_text=traceback.format_exc(),
             worker_pid=os.getpid(),
+            worker_index=_WORKER_INDEX,
         )
 
 
@@ -510,8 +588,18 @@ class _DumpSession:
     def pack_error(self, result: PackDumpResult) -> PackDumpError:
         # Format arguments are not parsed for color markup (a traceback may contain "<module>").
         logger.error("Failed dumping pack {}:\n{}", result.pack_id, result.error_text)
-        return PackDumpError(
+        error = PackDumpError(
             result.pack_id, result.output_index, result.error_text, self._report()
+        )
+        error.__cause__ = result.exception
+        return error
+
+    def log_pack_worker(self, result: PackDumpResult) -> None:
+        """Which worker dumped the pack, so its log lines can be found in that worker's log file."""
+        output = self.state.outputs[result.output_index]
+        logger.info(
+            f"dump[{output.output_stem}] pack {result.pack_id} -> worker {result.worker_index} "
+            f"(pid {result.worker_pid}) took {result.seconds:.1f}s"
         )
 
     def worker_died_error(self, task_index: int, error: BaseException) -> PackDumpError:
@@ -590,9 +678,15 @@ def _dump_serially(state: _DumpState, session: _DumpSession) -> None:
             raise session.pack_error(result)
 
 
-def _dump_in_fork_pool(state: _DumpState, session: _DumpSession, workers: int) -> None:
-    """Fork ``workers`` processes that inherit ``state`` and dump packs by task index; stop at the first failure."""
+def _dump_in_fork_pool(
+    state: _DumpState, session: _DumpSession, workers: int, worker_log_prefix: str
+) -> None:
+    """Fork ``workers`` processes that inherit ``state`` and dump packs by task index; stop at the first failure.
+
+    Each worker logs to ``<log dir>/<worker_log_prefix>_<n>.log`` (n = 1..workers).
+    """
     global _DUMP_STATE
+    log_dir = _worker_log_dir(state.outputs)
     _DUMP_STATE = state
     gc.collect()
     gc.freeze()  # keep the GC from writing to inherited objects, which would copy their pages in every worker
@@ -602,8 +696,12 @@ def _dump_in_fork_pool(state: _DumpState, session: _DumpSession, workers: int) -
         )
     executor: Optional[ProcessPoolExecutor] = None
     try:
+        mp_context = multiprocessing.get_context("fork")
         executor = ProcessPoolExecutor(
-            max_workers=workers, mp_context=multiprocessing.get_context("fork")
+            max_workers=workers,
+            mp_context=mp_context,
+            initializer=_dump_worker_init,
+            initargs=(mp_context.Value("i", 0), str(log_dir), worker_log_prefix),
         )
         for output_index in range(len(state.outputs)):
             session.mark_output_started(output_index)
@@ -616,6 +714,7 @@ def _dump_in_fork_pool(state: _DumpState, session: _DumpSession, workers: int) -
                 result = future.result()
             except BrokenProcessPool as error:
                 raise session.worker_died_error(futures[future], error) from error
+            session.log_pack_worker(result)
             session.handle(result)
             if not result.ok:
                 raise session.pack_error(result)
@@ -624,6 +723,11 @@ def _dump_in_fork_pool(state: _DumpState, session: _DumpSession, workers: int) -
             executor.shutdown(wait=True, cancel_futures=True)
         gc.unfreeze()
         _DUMP_STATE = None
+        worker_log_paths = [
+            str(_worker_log_path(log_dir, worker_log_prefix, worker_index))
+            for worker_index in range(1, workers + 1)
+        ]
+        logger.info(f"dump worker log files: {worker_log_paths}")
 
 
 @lru_cache
@@ -739,6 +843,7 @@ class ContentDTO(BaseModel):
         outputs: Sequence[DumpOutput],
         marketplace: MarketplaceVersions,
         workers: int = 1,
+        worker_log_prefix: str = DEFAULT_WORKER_LOG_PREFIX,
         **kwargs,
     ) -> DumpReport:
         """Dump several outputs (e.g. regular and managed packs) as one flat task list, optionally with a fork pool.
@@ -753,9 +858,14 @@ class ContentDTO(BaseModel):
         match the serial output. A zipped output is streamed into a deterministic zip at
         ``dir.parent / f"{output_stem}.zip"`` as its packs finish, and ``dir`` is removed afterwards.
 
+        With ``workers>1``, each worker logs to ``<log dir>/<worker_log_prefix>_<n>.log`` (n = 1..workers),
+        where the log dir is ``DEMISTO_SDK_LOG_FILE_PATH``, or, when it is unset, the parent of the first
+        output dir; the parent logs which worker dumped each pack.
+
         Raises:
-            PackDumpError: on the first failed pack (with its id and traceback). The remaining packs are not
-                dumped, no zip is written, and the dumped directories are kept.
+            PackDumpError: on the first failed pack (with its id and traceback; with ``workers=1`` the
+                original exception is its ``__cause__``). The remaining packs are not dumped, no zip is
+                written, and the dumped directories are kept.
         """
         _validate_output_dirs(outputs)
         started_at = time.monotonic()
@@ -769,7 +879,7 @@ class ContentDTO(BaseModel):
             if effective_workers == 1:
                 _dump_serially(state, session)
             else:
-                _dump_in_fork_pool(state, session, effective_workers)
+                _dump_in_fork_pool(state, session, effective_workers, worker_log_prefix)
         except BaseException as error:
             session.abort(error)
             raise

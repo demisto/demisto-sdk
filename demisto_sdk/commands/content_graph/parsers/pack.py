@@ -25,6 +25,7 @@ from demisto_sdk.commands.common.tools import (
     get_json,
     get_pack_ignore_content,
     get_pack_latest_rn_version,
+    remove_ci_injected_keys,
 )
 from demisto_sdk.commands.content_graph.common import (
     DEFAULT_DERIVED_PACK_SOURCE,
@@ -41,10 +42,7 @@ from demisto_sdk.commands.content_graph.common import (
     is_deprecated_pack,
     resolve_derived_pack_source,
 )
-from demisto_sdk.commands.content_graph.parsers.base_content import (
-    BaseContentParser,
-    remove_ci_injected_keys,
-)
+from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
     InvalidContentItemException,
@@ -218,7 +216,6 @@ class PackMetadataParser:
         self.source: str = metadata.get("source", "")
         self.managed: bool = metadata.get("managed", False)
         self.internal: bool = metadata.get("internal", False)
-        # Strict: only a real JSON ``true`` counts (e.g. the string "false" must not become True).
         self.is_content_private_only: bool = (
             metadata.get(IS_CONTENT_PRIVATE_ONLY_KEY) is True
         )
@@ -694,7 +691,6 @@ class DerivedPackParser:
         self.disable_monthly = original_parser.disable_monthly
         self.content_commit_hash = original_parser.content_commit_hash
         self.hybrid = original_parser.hybrid
-        # A twin of a private-only pack is private-only too.
         self.is_content_private_only = original_parser.is_content_private_only
         self.pack_metadata_dict = original_parser.pack_metadata_dict.copy()
         self.supportedModules = original_parser.supportedModules

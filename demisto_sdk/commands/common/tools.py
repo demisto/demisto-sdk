@@ -61,6 +61,7 @@ from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,
     API_MODULES_PACK,
     ASSETS_MODELING_RULES_DIR,
+    CI_INJECTED_KEYS,
     CLASSIFIERS_DIR,
     CONF_JSON_FILE_NAME,
     CONNECTORS_FOLDER,
@@ -4229,6 +4230,13 @@ def parse_int_or_default(value: Any, default: int) -> int:
 
 def get_all_repo_pack_ids() -> list:
     return [path.name for path in (Path(get_content_path()) / PACKS_DIR).iterdir()]
+
+
+def remove_ci_injected_keys(raw_data):
+    """Returns the data without the CI-injected keys (non-dict data is returned as is)."""
+    if not isinstance(raw_data, dict):
+        return raw_data
+    return {k: v for k, v in raw_data.items() if k not in CI_INJECTED_KEYS}
 
 
 def get_value(obj: dict, paths: Union[str, List[str]], defaultParam=None):

@@ -308,7 +308,6 @@ class ContentItem(BaseContent):
                 del data["supportedModules"]
         # SDK-only build-time flag - must never be uploaded to the server.
         data.pop(EXCLUDE_FROM_TIGHTLY_COUPLED_KEY, None)
-        # CI-injected flag - must never be uploaded or written to artifacts.
         data.pop(IS_CONTENT_PRIVATE_KEY, None)
         return MarketplaceSuffixPreparer.prepare(data, current_marketplace)
 

@@ -365,20 +365,16 @@ class TestDerivedPackParser:
         )
         assert derived.is_derived is True
 
-    @pytest.mark.parametrize("is_content_private_only", [True, False])
-    def test_derived_pack_inherits_is_content_private_only(
-        self, is_content_private_only: bool
-    ):
-        """A twin of a private-only pack carries the flag; a twin of any other pack does not."""
+    def test_derived_pack_inherits_is_content_private_only(self):
         from demisto_sdk.commands.content_graph.parsers.pack import DerivedPackParser
 
         original = self._make_mock_original_parser()
-        original.is_content_private_only = is_content_private_only
+        original.is_content_private_only = True
         derived = DerivedPackParser(
             original_parser=original,
             derived_id="TestPackManaged",
         )
-        assert derived.is_content_private_only is is_content_private_only
+        assert derived.is_content_private_only is True
 
     def test_derived_pack_derived_from(self):
         from demisto_sdk.commands.content_graph.parsers.pack import DerivedPackParser

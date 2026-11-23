@@ -113,7 +113,7 @@ class IntegrationScript(ContentItem):
         **kwargs,
     ) -> dict:
         if kwargs.get("unify_only"):
-            # ``super().prepare_for_upload`` is bypassed, so strip the SDK-only and CI-injected flags here, on a copy.
+            # ``super().prepare_for_upload`` is bypassed, so strip the SDK-only and CI-injected flags here, on a copy (``self.data`` may be shared).
             data = dict(self.data)
             data.pop(EXCLUDE_FROM_TIGHTLY_COUPLED_KEY, None)
             data.pop(IS_CONTENT_PRIVATE_KEY, None)

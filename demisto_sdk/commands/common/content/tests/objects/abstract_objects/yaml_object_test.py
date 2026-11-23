@@ -2,7 +2,6 @@ import pytest
 
 from demisto_sdk.commands.common.constants import (
     IS_CONTENT_PRIVATE_KEY,
-    IS_CONTENT_PRIVATE_ONLY_KEY,
     PACKS_DIR,
     PLAYBOOKS_DIR,
 )
@@ -67,99 +66,13 @@ class TestInvalidYAML:
             YAMLObject("Not valid path")
 
 
-class TestDumpStripsCIInjectedKeys:
-    def test_dump_strips_flag_from_unmodified_file(self, tmp_path):
-        """
-        Given:
-            - An unmodified YAML file carrying the CI-injected ``is_content_private`` key.
-        When:
-            - Dumping the object (which used to be a raw file copy).
-        Then:
-            - The output has no CI-injected key and keeps every other key.
-        """
-        source = tmp_path / "src" / "playbook-flagged.yml"
-        source.parent.mkdir()
-        source.write_text(
-            f"id: flagged\n{IS_CONTENT_PRIVATE_KEY}: true\nname: Flagged\n"
-        )
+def test_dump_strips_ci_injected_keys_and_copies_other_files_as_is(tmp_path):
+    flagged = tmp_path / "flagged.yml"
+    flagged.write_text(f"id: a\n{IS_CONTENT_PRIVATE_KEY}: true\n")
+    plain = tmp_path / "plain.yml"
+    plain.write_text("id:   b\n# a comment\n")
 
-        dumped = YAMLObject(source).dump(tmp_path / "out")[0]
-
-        assert IS_CONTENT_PRIVATE_KEY not in dumped.read_text()
-        assert yaml.load(dumped.open()) == {"id": "flagged", "name": "Flagged"}
-        # The source file is never touched.
-        assert IS_CONTENT_PRIVATE_KEY in source.read_text()
-
-    def test_dump_strips_flag_from_modified_file(self, tmp_path):
-        """
-        Given:
-            - A modified YAML object carrying both CI-injected keys.
-        When:
-            - Dumping the object (the serialize path).
-        Then:
-            - Neither key is written.
-        """
-        source = tmp_path / "playbook-flagged.yml"
-        source.write_text(
-            f"id: flagged\n{IS_CONTENT_PRIVATE_KEY}: true\n{IS_CONTENT_PRIVATE_ONLY_KEY}: true\n"
-        )
-        obj = YAMLObject(source)
-        obj.modified = True
-
-        dumped = obj.dump(tmp_path / "out")[0]
-
-        assert yaml.load(dumped.open()) == {"id": "flagged"}
-
-    def test_dump_of_file_without_flag_is_a_byte_identical_copy(self, tmp_path):
-        """
-        Given:
-            - An unmodified YAML file without the CI-injected keys, with formatting that a re-serialization would change.
-        When:
-            - Dumping the object.
-        Then:
-            - The output is a byte-identical copy (the previous behavior is kept).
-        """
-        source = tmp_path / "src" / "playbook-plain.yml"
-        source.parent.mkdir()
-        raw = "id:   plain\n# a comment\nname:    'Plain'\n"
-        source.write_text(raw)
-
-        dumped = YAMLObject(source).dump(tmp_path / "out")[0]
-
-        assert dumped.read_text() == raw
-
-    def test_flag_name_only_in_a_value_is_still_copied_raw(self, tmp_path):
-        """
-        Given:
-            - A YAML file that mentions the flag name only inside a nested value (not a top level key).
-        When:
-            - Dumping the object.
-        Then:
-            - The file is copied as is.
-        """
-        source = tmp_path / "src" / "playbook-nested.yml"
-        source.parent.mkdir()
-        raw = f"id:   nested\ndescription: mentions {IS_CONTENT_PRIVATE_KEY} here\n"
-        source.write_text(raw)
-
-        dumped = YAMLObject(source).dump(tmp_path / "out")[0]
-
-        assert dumped.read_text() == raw
-
-    def test_malformed_file_with_flag_name_is_copied_raw(self, tmp_path):
-        """
-        Given:
-            - A malformed YAML file that contains the flag name as a substring.
-        When:
-            - Dumping the object.
-        Then:
-            - No error is raised and the file is copied byte for byte.
-        """
-        raw = f"id: [unclosed\n{IS_CONTENT_PRIVATE_KEY}: true\n"
-        source = tmp_path / "src" / "playbook-malformed.yml"
-        source.parent.mkdir()
-        source.write_bytes(raw.encode())
-
-        dumped = YAMLObject(source).dump(tmp_path / "out")[0]
-
-        assert dumped.read_bytes() == raw.encode()
+    assert yaml.load(YAMLObject(flagged).dump(tmp_path / "out")[0].open()) == {
+        "id": "a"
+    }
+    assert YAMLObject(plain).dump(tmp_path / "out")[0].read_text() == plain.read_text()

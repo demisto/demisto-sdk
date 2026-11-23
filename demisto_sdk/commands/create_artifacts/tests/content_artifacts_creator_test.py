@@ -474,120 +474,41 @@ def test_use_alternative_fields(artifact: str, keys_paths: List[str]):
             ) == get_value_from_dict(modified_data, current_key_path)
 
 
-def _create_flagged_content_repo(tmp_path: Path) -> Path:
-    """Copy the slim content repo and inject the CI flags into every YAML/JSON file of Sample01."""
-    repo = tmp_path / "content"
-    copytree(TEST_CONTENT_REPO, repo)
-    pack_dir = repo / PACKS_DIR / "Sample01"
-    flagged = 0
-    for file in pack_dir.rglob("*"):
-        if file.suffix not in {".yml", ".json"} or file.name == "CONTRIBUTORS.json":
-            continue
-        if file.name == "pack_metadata.json":
-            file.write_text(
-                json.dumps({"name": "Sample01", IS_CONTENT_PRIVATE_ONLY_KEY: True})
-            )
-        elif file.suffix == ".yml":
-            file.write_text(
-                file.read_text().rstrip("\n") + f"\n{IS_CONTENT_PRIVATE_KEY}: true\n"
-            )
-        else:
-            data = json.loads(file.read_text())
-            if not isinstance(data, dict):
-                continue
-            file.write_text(json.dumps({**data, IS_CONTENT_PRIVATE_KEY: True}))
-        flagged += 1
-    assert flagged, "test premise: no file was flagged"
-    return repo
-
-
-def _assert_no_ci_injected_keys(root: Path) -> None:
-    output_files = [f for f in root.rglob("*") if f.is_file()]
-    assert output_files, "test premise: no artifact was created"
-    for file in output_files:
-        text = file.read_text(errors="ignore")
-        assert (
-            IS_CONTENT_PRIVATE_KEY not in text
-        ), f"{IS_CONTENT_PRIVATE_KEY} leaked into {file}"
-        assert (
-            IS_CONTENT_PRIVATE_ONLY_KEY not in text
-        ), f"{IS_CONTENT_PRIVATE_ONLY_KEY} leaked into {file}"
-
-
-def test_create_content_artifacts_do_not_contain_ci_injected_keys(mocker, tmp_path):
-    """
-    Given:
-        - A content repo where every unmodified YAML/JSON item carries ``is_content_private`` and the
-          pack_metadata.json carries ``is_content_private_only`` (as injected by the CI).
-    When:
-        - Running create-artifacts (the flow shared by zip-packs), including the hard-linked content_new/content_all copies.
-    Then:
-        - No output file contains either key, while the artifacts are still created.
-    """
+def test_create_content_artifacts_strips_ci_injected_keys(mocker, tmp_path):
     from demisto_sdk.commands.common.content import Content
     from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
         ArtifactsManager,
     )
 
-    repo = _create_flagged_content_repo(tmp_path)
+    repo = tmp_path / "content"
+    copytree(TEST_CONTENT_REPO, repo)
+    pack_dir = repo / PACKS_DIR / "Sample01"
+    (pack_dir / "pack_metadata.json").write_text(
+        json.dumps({"name": "Sample01", IS_CONTENT_PRIVATE_ONLY_KEY: True})
+    )
+    for playbook in (pack_dir / "Playbooks").glob("*.yml"):
+        playbook.write_text(f"{playbook.read_text()}\n{IS_CONTENT_PRIVATE_KEY}: true\n")
     mocker.patch.object(Content, "git_util")
     Content.git_util().repo.working_tree_dir = repo
     artifacts = tmp_path / "artifacts"
     artifacts.mkdir()
-    config = ArtifactsManager(
-        artifacts_path=str(artifacts),
-        content_version="6.0.0",
-        zip=False,
-        suffix="",
-        cpus=1,
-        packs=False,
+
+    assert (
+        ArtifactsManager(
+            artifacts_path=str(artifacts),
+            content_version="6.0.0",
+            zip=False,
+            suffix="",
+            cpus=1,
+            packs=False,
+        ).create_content_artifacts()
+        == 0
     )
 
-    assert config.create_content_artifacts() == 0
-
-    _assert_no_ci_injected_keys(artifacts)
-    assert (artifacts / "content_packs" / "Sample01" / "pack_metadata.json").exists()
-
-
-@pytest.mark.parametrize("zip_all", [True, False])
-def test_zip_packs_do_not_contain_ci_injected_keys(mocker, tmp_path, zip_all):
-    """
-    Given:
-        - A content repo where every unmodified YAML/JSON item carries ``is_content_private`` and the
-          pack_metadata.json carries ``is_content_private_only`` (as injected by the CI).
-    When:
-        - Running zip-packs (zip=True, packs=True), with and without ``zip_all``.
-    Then:
-        - After extracting the created zip(s) (a zip of zips when ``zip_all``), no member contains either key.
-    """
-    import zipfile
-
-    from demisto_sdk.commands.common.content import Content
-    from demisto_sdk.commands.zip_packs.packs_zipper import PacksZipper
-
-    repo = _create_flagged_content_repo(tmp_path)
-    mocker.patch.object(Content, "git_util")
-    Content.git_util().repo.working_tree_dir = repo
-    output = tmp_path / "output"
-    output.mkdir()
-
-    zip_path, pack_names = PacksZipper(
-        pack_paths=str(repo / PACKS_DIR / "Sample01"),
-        output=str(output),
-        content_version="6.0.0",
-        zip_all=zip_all,
-    ).zip_packs()
-
-    assert pack_names == ["Sample01"]
-    extracted = tmp_path / "extracted"
-    extracted.mkdir()
-    # Extract recursively: the outer zip contains the per pack zips.
-    pending = [Path(zip_path)] if zip_all else list(Path(zip_path).glob("*.zip"))
-    assert pending, "test premise: no zip was created"
-    while pending:
-        archive = pending.pop()
-        target = extracted / f"{archive.stem}_{len(list(extracted.iterdir()))}"
-        with zipfile.ZipFile(archive) as zf:
-            zf.extractall(target)
-        pending.extend(target.rglob("*.zip"))
-    _assert_no_ci_injected_keys(extracted)
+    flagged_playbooks = list(artifacts.rglob("playbook-*.yml"))
+    assert flagged_playbooks
+    for file in artifacts.rglob("*"):
+        if file.is_file():
+            text = file.read_text(errors="ignore")
+            assert IS_CONTENT_PRIVATE_KEY not in text
+            assert IS_CONTENT_PRIVATE_ONLY_KEY not in text

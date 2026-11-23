@@ -43,7 +43,6 @@ class ModelingRule(ContentItemXSIAM, content_type=ContentType.MODELING_RULE):  #
         if not kwargs.get("unify_only"):
             data = super().prepare_for_upload(current_marketplace)
         else:
-            # ``super().prepare_for_upload`` is bypassed, so strip the CI-injected flag here, on a copy.
             data = dict(self.data)
             data.pop(IS_CONTENT_PRIVATE_KEY, None)
         data = RuleUnifier.unify(self.path, data, current_marketplace)

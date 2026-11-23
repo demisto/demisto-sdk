@@ -261,8 +261,6 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
 
     @property
     def is_content_private(self) -> bool:
-        """True when the CI injected the content-private flag into the item file."""
-        # Strict: only a real ``true`` counts (e.g. the string "false" must not become True).
         return get_value(self.raw_data, IS_CONTENT_PRIVATE_KEY, False) is True
 
     def get_marketplaces(self, data: dict) -> List[MarketplaceVersions]:

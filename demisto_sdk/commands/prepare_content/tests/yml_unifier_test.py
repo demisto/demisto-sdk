@@ -597,7 +597,9 @@ def test_insert_module_code__shared_sub_module_inserted_once(mocker):
     assert code.count("register_module_line('CApiModule', 'start'") == 1
     assert code.count("register_module_line('AApiModule', 'start'") == 1
     assert code.count("register_module_line('BApiModule', 'start'") == 1
-    assert code.index("class C:") < code.index("class A(C):") < code.index("class B(C):")
+    assert (
+        code.index("class C:") < code.index("class A(C):") < code.index("class B(C):")
+    )
     assert "from CApiModule import *" not in code.replace(
         "### GENERATED CODE ###: from CApiModule import *", ""
     )

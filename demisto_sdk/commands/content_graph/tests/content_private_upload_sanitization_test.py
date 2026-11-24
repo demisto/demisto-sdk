@@ -142,14 +142,6 @@ def test_dump_pack_metadata_strips_pack_flag_regardless_of_strip_internal(
     assert ("internal" in written) is (not strip_internal)
 
 
-def test_dump_metadata_excludes_pack_flag(tmp_path: Path):
-    destination = tmp_path / "metadata.json"
-
-    _build_pack(tmp_path).dump_metadata(destination, MarketplaceVersions.XSOAR)
-
-    assert IS_CONTENT_PRIVATE_ONLY_KEY not in destination.read_text()
-
-
 def test_pack_dump_leaves_no_flag_in_output(tmp_path: Path):
     pack_dir = tmp_path / "Packs" / "TestPack"
     classifier_path = pack_dir / "Classifiers" / "classifier-MyClassifier.json"

@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.common.constants import (
+    IS_CONTENT_PRIVATE_KEY,
     NATIVE_IMAGE_FILE_NAME,
     Auto,
     MarketplaceVersions,
@@ -112,9 +113,10 @@ class IntegrationScript(ContentItem):
         **kwargs,
     ) -> dict:
         if kwargs.get("unify_only"):
-            # ``super().prepare_for_upload`` is bypassed, so strip the SDK-only flag here, on a copy (``self.data`` may be shared).
+            # ``super().prepare_for_upload`` is bypassed, so strip the SDK-only and CI-injected flags here, on a copy (``self.data`` may be shared).
             data = dict(self.data)
             data.pop(EXCLUDE_FROM_TIGHTLY_COUPLED_KEY, None)
+            data.pop(IS_CONTENT_PRIVATE_KEY, None)
         else:
             data = super().prepare_for_upload(current_marketplace)
         if self.content_type != ContentType.SCRIPT or (

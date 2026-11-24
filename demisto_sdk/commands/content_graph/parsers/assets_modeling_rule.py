@@ -2,7 +2,7 @@ from typing import List
 
 import pydantic
 
-from demisto_sdk.commands.common.tools import get_file
+from demisto_sdk.commands.common.tools import get_file, remove_ci_injected_keys
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.modeling_rule import ModelingRuleParser
 from demisto_sdk.commands.content_graph.strict_objects.asset_modeling_rule import (
@@ -40,7 +40,9 @@ class AssetsModelingRuleParser(
         for file in directory.iterdir():
             try:
                 if file.suffix == ".yml":
-                    StrictAssetsModelingRule.parse_obj(get_file(file))
+                    StrictAssetsModelingRule.parse_obj(
+                        remove_ci_injected_keys(get_file(file))
+                    )
                 elif file.suffix == ".json":
                     StrictAssetsModelingRuleSchema.parse_obj(get_file(file))
             except pydantic.error_wrappers.ValidationError as e:

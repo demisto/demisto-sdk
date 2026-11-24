@@ -44,6 +44,8 @@ mapping:
     - type: str
   excludefromtightlycoupled:
     type: bool
+  is_content_private:
+    type: bool
   name:xsoar:
     type: str
   name:marketplacev2:

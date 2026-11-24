@@ -5,7 +5,11 @@ from typing import List, Optional, Set
 import pydantic
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.tools import get_file, get_value
+from demisto_sdk.commands.common.tools import (
+    get_file,
+    get_value,
+    remove_ci_injected_keys,
+)
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
     YAMLContentItemParser,
@@ -75,7 +79,9 @@ class ModelingRuleParser(YAMLContentItemParser, content_type=ContentType.MODELIN
                 continue
             try:
                 if file.suffix == ".yml":
-                    StrictModelingRule.parse_obj(get_file(file))
+                    StrictModelingRule.parse_obj(
+                        remove_ci_injected_keys(get_file(file))
+                    )
                 elif file.suffix == ".json":
                     StrictModelingRuleSchema.parse_obj(get_file(file))
             except pydantic.error_wrappers.ValidationError as e:

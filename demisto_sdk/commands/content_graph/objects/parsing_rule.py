@@ -1,7 +1,10 @@
 from functools import cached_property
 from pathlib import Path
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    IS_CONTENT_PRIVATE_KEY,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item_xsiam import (
     ContentItemXSIAM,
@@ -22,7 +25,8 @@ class ParsingRule(ContentItemXSIAM, content_type=ContentType.PARSING_RULE):  # t
         if not kwargs.get("unify_only"):
             data = super().prepare_for_upload(current_marketplace)
         else:
-            data = self.data
+            data = dict(self.data)
+            data.pop(IS_CONTENT_PRIVATE_KEY, None)
         data = RuleUnifier.unify(self.path, data, current_marketplace)
         return data
 

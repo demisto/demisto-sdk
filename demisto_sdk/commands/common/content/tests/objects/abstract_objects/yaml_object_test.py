@@ -1,6 +1,10 @@
 import pytest
 
-from demisto_sdk.commands.common.constants import PACKS_DIR, PLAYBOOKS_DIR
+from demisto_sdk.commands.common.constants import (
+    IS_CONTENT_PRIVATE_KEY,
+    PACKS_DIR,
+    PLAYBOOKS_DIR,
+)
 from demisto_sdk.commands.common.content.errors import (
     ContentInitializeError,
     ContentSerializeError,
@@ -60,3 +64,15 @@ class TestInvalidYAML:
     def test_malformed_yaml_path(self, datadir):
         with pytest.raises(ContentInitializeError):
             YAMLObject("Not valid path")
+
+
+def test_dump_strips_ci_injected_keys_and_copies_other_files_as_is(tmp_path):
+    flagged = tmp_path / "flagged.yml"
+    flagged.write_text(f"id: a\n{IS_CONTENT_PRIVATE_KEY}: true\n")
+    plain = tmp_path / "plain.yml"
+    plain.write_text("id:   b\n# a comment\n")
+
+    assert yaml.load(YAMLObject(flagged).dump(tmp_path / "out")[0].open()) == {
+        "id": "a"
+    }
+    assert YAMLObject(plain).dump(tmp_path / "out")[0].read_text() == plain.read_text()

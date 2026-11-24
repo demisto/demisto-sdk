@@ -4,6 +4,10 @@ from typing import Any, Dict, Optional, Union
 from wcmatch.pathlib import Path
 
 import demisto_sdk.commands.common.content.errors as exc
+from demisto_sdk.commands.common.constants import (
+    CI_INJECTED_KEYS,
+    IS_CONTENT_PRIVATE_KEY,
+)
 from demisto_sdk.commands.common.tools import get_id
 
 from .general_object import GeneralObject
@@ -17,6 +21,13 @@ class DictionaryBasedObject(GeneralObject):
     @abstractmethod
     def _deserialize(self):
         pass
+
+    def _contains_ci_injected_keys(self) -> bool:
+        # The raw check avoids parsing every file on create-artifacts.
+        if IS_CONTENT_PRIVATE_KEY.encode() not in self._path.read_bytes():
+            return False
+        data = self.to_dict()
+        return isinstance(data, dict) and not CI_INJECTED_KEYS.isdisjoint(data)
 
     def to_dict(self) -> dict:
         """Parse object file content to dictionary."""

@@ -7,6 +7,8 @@ from typing import List
 import pytest
 
 from demisto_sdk.commands.common.constants import (
+    IS_CONTENT_PRIVATE_KEY,
+    IS_CONTENT_PRIVATE_ONLY_KEY,
     PACKS_DIR,
     TEST_PLAYBOOKS_DIR,
     MarketplaceVersions,
@@ -470,3 +472,43 @@ def test_use_alternative_fields(artifact: str, keys_paths: List[str]):
                 original_data,
                 current_key_path + ":" + MarketplaceVersions.MarketplaceV2.value,
             ) == get_value_from_dict(modified_data, current_key_path)
+
+
+def test_create_content_artifacts_strips_ci_injected_keys(mocker, tmp_path):
+    from demisto_sdk.commands.common.content import Content
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
+        ArtifactsManager,
+    )
+
+    repo = tmp_path / "content"
+    copytree(TEST_CONTENT_REPO, repo)
+    pack_dir = repo / PACKS_DIR / "Sample01"
+    (pack_dir / "pack_metadata.json").write_text(
+        json.dumps({"name": "Sample01", IS_CONTENT_PRIVATE_ONLY_KEY: True})
+    )
+    for playbook in (pack_dir / "Playbooks").glob("*.yml"):
+        playbook.write_text(f"{playbook.read_text()}\n{IS_CONTENT_PRIVATE_KEY}: true\n")
+    mocker.patch.object(Content, "git_util")
+    Content.git_util().repo.working_tree_dir = repo
+    artifacts = tmp_path / "artifacts"
+    artifacts.mkdir()
+
+    assert (
+        ArtifactsManager(
+            artifacts_path=str(artifacts),
+            content_version="6.0.0",
+            zip=False,
+            suffix="",
+            cpus=1,
+            packs=False,
+        ).create_content_artifacts()
+        == 0
+    )
+
+    flagged_playbooks = list(artifacts.rglob("playbook-*.yml"))
+    assert flagged_playbooks
+    for file in artifacts.rglob("*"):
+        if file.is_file():
+            text = file.read_text(errors="ignore")
+            assert IS_CONTENT_PRIVATE_KEY not in text
+            assert IS_CONTENT_PRIVATE_ONLY_KEY not in text

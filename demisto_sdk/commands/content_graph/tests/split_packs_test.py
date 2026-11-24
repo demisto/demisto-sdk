@@ -313,6 +313,7 @@ class TestDerivedPackParser:
         mock.disable_monthly = False
         mock.content_commit_hash = ""
         mock.hybrid = False
+        mock.is_content_private_only = False
         mock.pack_metadata_dict = {"name": "Test Pack"}
         mock.supportedModules = None
         mock.derived_source = None
@@ -363,6 +364,17 @@ class TestDerivedPackParser:
             derived_id="TestPackManaged",
         )
         assert derived.is_derived is True
+
+    def test_derived_pack_inherits_is_content_private_only(self):
+        from demisto_sdk.commands.content_graph.parsers.pack import DerivedPackParser
+
+        original = self._make_mock_original_parser()
+        original.is_content_private_only = True
+        derived = DerivedPackParser(
+            original_parser=original,
+            derived_id="TestPackManaged",
+        )
+        assert derived.is_content_private_only is True
 
     def test_derived_pack_derived_from(self):
         from demisto_sdk.commands.content_graph.parsers.pack import DerivedPackParser
@@ -3092,6 +3104,7 @@ def _make_pack_parser(
     parser.disable_monthly = False
     parser.content_commit_hash = ""
     parser.hybrid = False
+    parser.is_content_private_only = False
     parser.supportedModules = None
     parser.internal = False
     parser.source = ""

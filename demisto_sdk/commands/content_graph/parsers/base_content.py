@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import (
     CONTENT_PATH,
 )
+from demisto_sdk.commands.common.tools import remove_ci_injected_keys
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     StructureError,
@@ -87,7 +88,7 @@ def validate_structure(
     which will be read during the ST110 validation run.
     """
     try:
-        strict_object(**raw_data)
+        strict_object(**remove_ci_injected_keys(raw_data))
     except pydantic.error_wrappers.ValidationError as e:
         return [StructureError(path=path, **error) for error in e.errors()]
     return []

@@ -1,6 +1,11 @@
 import pytest
 
-from demisto_sdk.commands.common.constants import INDICATOR_TYPES_DIR, PACKS_DIR
+from demisto_sdk.commands.common.constants import (
+    INDICATOR_TYPES_DIR,
+    IS_CONTENT_PRIVATE_KEY,
+    IS_CONTENT_PRIVATE_ONLY_KEY,
+    PACKS_DIR,
+)
 from demisto_sdk.commands.common.content.errors import (
     ContentInitializeError,
     ContentSerializeError,
@@ -65,3 +70,23 @@ class TestInvalidJSON:
     def test_malformed_json_path(self):
         with pytest.raises(ContentInitializeError):
             JSONObject("Not valid path")
+
+
+def test_dump_strips_ci_injected_keys_and_copies_other_files_as_is(tmp_path):
+    flagged = tmp_path / "flagged.json"
+    flagged.write_text(
+        json.dumps(
+            {
+                "id": "a",
+                IS_CONTENT_PRIVATE_KEY: True,
+                IS_CONTENT_PRIVATE_ONLY_KEY: True,
+            }
+        )
+    )
+    plain = tmp_path / "plain.json"
+    plain.write_text('{\n  "id":   "b"\n}\n')
+
+    assert json.loads(JSONObject(flagged).dump(tmp_path / "out")[0].read_text()) == {
+        "id": "a"
+    }
+    assert JSONObject(plain).dump(tmp_path / "out")[0].read_text() == plain.read_text()

@@ -2,7 +2,7 @@
 
 import ast
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
@@ -24,14 +24,6 @@ from demisto_sdk.commands.xsoar_linter.checkers.registry import (
     all_rule_names,
     checkers_for_support_level,
     rules_for_checkers,
-)
-
-GOLDEN_SAMPLES_DIR = (
-    Path(__file__).resolve().parent.parent
-    / "tests"
-    / "test_files"
-    / "golden"
-    / "samples"
 )
 
 
@@ -118,12 +110,3 @@ def settings_from_integration_script(integration_script: Any) -> LintSettings:
         py2=bool(python_version and Version(python_version).major < 3),
         commands=commands,
     )
-
-
-def run_golden_case(sample: str, settings: Dict[str, Any]) -> Dict[str, Any]:
-    """Run one golden test case. `sample` is a file name in the golden samples folder."""
-    result = lint_file(GOLDEN_SAMPLES_DIR / sample, LintSettings(**settings))
-    return {
-        "fails": result.fails,
-        "findings": [finding.to_dict() for finding in result.findings],
-    }

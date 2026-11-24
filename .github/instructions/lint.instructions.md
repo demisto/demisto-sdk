@@ -1,5 +1,5 @@
 ---
-applyTo: "demisto_sdk/commands/lint/**/*.py,demisto_sdk/commands/xsoar_linter/**/*.py,demisto_sdk/commands/pre_commit/resources/pylint_plugins/**/*.py"
+applyTo: "demisto_sdk/commands/lint/**/*.py,demisto_sdk/commands/xsoar_linter/**/*.py"
 ---
 
 # Copilot instructions — content linters (`lint`, `xsoar_linter`)
@@ -20,12 +20,13 @@ SDK's own source).
 | Path | What it lints / what it is |
 |---|---|
 | [`demisto_sdk/commands/lint/`](../../demisto_sdk/commands/lint) | Legacy `demisto-sdk lint` orchestrator (largely superseded by [`pre_commit`](../../demisto_sdk/commands/pre_commit) but still consumed). Runs flake8 / pylint / mypy / bandit / pytest inside per-image Docker containers. |
-| [`demisto_sdk/commands/xsoar_linter/`](../../demisto_sdk/commands/xsoar_linter) | XSOAR-specific pylint wrapper. Runs the custom XSOAR pylint plugins against integration / script Python and reports `E`/`W` codes. |
-| [`demisto_sdk/commands/pre_commit/resources/pylint_plugins/`](../../demisto_sdk/commands/pre_commit/resources/pylint_plugins) | The actual pylint plugins (`base_checker`, `community_level_checker`, `partner_level_checker`, `certified_partner_level_checker`, `xsoar_level_checker`). The xsoar_linter and pre_commit hooks both import these. |
+| [`demisto_sdk/commands/xsoar_linter/`](../../demisto_sdk/commands/xsoar_linter) | XSOAR-specific linter (`demisto-sdk xsoar-lint`). Parses integration / script Python with the standard library `ast` module and reports `E`/`W` codes. Does not use pylint. |
+| [`demisto_sdk/commands/xsoar_linter/checkers/`](../../demisto_sdk/commands/xsoar_linter/checkers) | The rules, one checker class per support level (`base_checker`, `partner_checker`, `certified_partner_checker`, `xsoar_checker`), plus the shared runner, disable-comment (`pragmas`) and name-resolution code. |
 
 Authoritative orchestrator: [`xsoar_linter.py`](../../demisto_sdk/commands/xsoar_linter/xsoar_linter.py)
-shows how the pylint command line is composed per support level
-(`base` ⊂ `community` ⊂ `partner` ⊂ `certified partner` ⊂ `xsoar`).
+runs the checkers per file in a process pool. Which checkers run for each support level
+(`base` ⊂ `community` ⊂ `partner` ⊂ `certified partner` ⊂ `xsoar`) is defined in
+[`checkers/registry.py`](../../demisto_sdk/commands/xsoar_linter/checkers/registry.py).
 
 ## Hard rules
 
@@ -46,35 +47,31 @@ shows how the pylint command line is composed per support level
 4. **Honour `DEMISTO_SDK_OFFLINE_ENV`** and `--no-docker`. Linters that
    require a Docker image must skip cleanly with a clear log message
    when Docker is unavailable.
-5. **Errors are codes, not free text.** Pylint plugin messages must use
-   stable `E####` / `W####` IDs (or `C####`/`R####`) so content authors
-   can suppress them precisely. Do not change an existing code's meaning.
-6. **No SDK self-linting from inside content linters.** The plugins run
-   inside the *content* Python environment (in a Docker image). They
-   must not depend on SDK-only modules.
+5. **Errors are codes, not free text.** xsoar-linter rules must use
+   stable `E####` / `W####` IDs and symbols so content authors can
+   suppress them precisely (`# xsoar-lint: disable=<code or symbol>`).
+   Do not change an existing code's meaning.
+6. **Never import pylint or astroid in xsoar-linter.** They are not SDK
+   dependencies. The checkers only parse the file with `ast`; they never
+   import or execute content code.
 
-## Adding a pylint check
+## Adding an xsoar-linter rule
 
-1. Decide which support level it belongs to (`base` is the strictest
-   floor — every integration runs it). Pick the matching module under
-   [`commands/pre_commit/resources/pylint_plugins/`](../../demisto_sdk/commands/pre_commit/resources/pylint_plugins).
-2. Add a `BaseChecker` subclass with a fresh `name`, `priority`, and a
-   `msgs` dict mapping a new code (`E####` for errors, `W####` for
-   warnings) to `(message, symbol, description)`.
-3. Implement the appropriate `visit_<node>` methods (astroid).
-4. Register it in the module's `register(linter)` function.
-5. Update the corresponding `<level>_msg` constant exposed for the
-   xsoar_linter (`base_msg`, `community_msg`, `partner_msg`,
-   `cert_partner_msg`, `xsoar_msg`) so
-   [`xsoar_linter.py`](../../demisto_sdk/commands/xsoar_linter/xsoar_linter.py)
-   surfaces the new code.
-6. Add tests under
-   [`commands/xsoar_linter/tests/test_pylint_plugin/`](../../demisto_sdk/commands/xsoar_linter/tests/test_pylint_plugin)
-   following the existing pylint-test pattern (load a sample
-   integration, run the checker, assert messages).
-7. Document the new code in the relevant content-author docs (xsoar.pan.dev
+1. Decide which support level it belongs to (`base` is the floor: every
+   integration runs it). Pick the matching checker under
+   [`commands/xsoar_linter/checkers/`](../../demisto_sdk/commands/xsoar_linter/checkers).
+2. Add a `Rule(code, symbol, message)` to the checker's `RULES` list,
+   with a new code (`E####` for errors, `W####` for warnings).
+3. Implement the check in a `visit_<NodeType>` method (or `leave_module`
+   for whole-file rules) and call `self.report(code, node)`.
+4. Add tests next to the existing ones in
+   [`commands/xsoar_linter/tests/`](../../demisto_sdk/commands/xsoar_linter/tests):
+   a positive and a negative source snippet. For golden cases, add a
+   sample under `tests/test_files/golden/samples/` and write the expected
+   result in `golden.json` by hand.
+5. Document the new code in the relevant content-author docs (xsoar.pan.dev
    linked from [`xsoar_linter/README.md`](../../demisto_sdk/commands/xsoar_linter/README.md)).
-8. Add a `feature` (or `fix`) changelog entry.
+6. Add a `feature` (or `fix`) changelog entry.
 
 ## Adding a Docker-based check (`lint` orchestrator)
 
@@ -105,7 +102,7 @@ for a bug fix:
 - **Don't broaden the "skip" list** silently. If a path or pattern is
   excluded, it must be documented in the README and in a changelog
   entry.
-- **Don't change the regex used to parse pylint output**
+- **Don't change the regex used to parse the linter output**
   ([`ERROR_AND_WARNING_CODE_PATTERN`](../../demisto_sdk/commands/xsoar_linter/xsoar_linter.py))
   without updating downstream consumers (CI report parsers, the content
   build).
@@ -116,9 +113,7 @@ for a bug fix:
 ## Tests
 
 - Use the small fixture content under
-  [`commands/xsoar_linter/tests/test_linter/`](../../demisto_sdk/commands/xsoar_linter/tests/test_linter)
-  and
-  [`commands/xsoar_linter/tests/test_pylint_plugin/`](../../demisto_sdk/commands/xsoar_linter/tests/test_pylint_plugin).
+  [`commands/xsoar_linter/tests/test_files/`](../../demisto_sdk/commands/xsoar_linter/tests/test_files).
 - Mock Docker — never pull an image in a unit test. The
   [`tests.instructions.md`](tests.instructions.md) ban applies here.
 - A check is considered tested when (a) a positive sample triggers the

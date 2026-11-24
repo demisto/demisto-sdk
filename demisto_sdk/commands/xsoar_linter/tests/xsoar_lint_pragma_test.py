@@ -1,7 +1,7 @@
 """
-End-to-end tests for the `# xsoar-lint:` disable comment, which only the ast engine reads.
+End-to-end tests for the `# xsoar-lint:` disable comment.
 
-pylint ignores this prefix, so these cases cannot be recorded into golden.json.
+The former pylint-based xsoar-linter ignored this prefix, so these cases are not in golden.json.
 The expected findings are written by hand.
 """
 

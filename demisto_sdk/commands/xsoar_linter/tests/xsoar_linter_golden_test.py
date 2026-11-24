@@ -11,11 +11,12 @@ and the same pass / fail outcome.
 """
 
 from pathlib import Path
-from typing import Any, Callable, Dict, List
+from typing import Any, Dict, List
 
 import pytest
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.xsoar_linter.checkers.runner import run_golden_case
 
 GOLDEN_DIR = Path(__file__).parent / "test_files" / "golden"
 json = JSON_Handler()
@@ -25,39 +26,22 @@ GOLDEN_CASES: List[Dict[str, Any]] = json.loads(
 )
 
 
-def get_engine_runner(engine: str) -> Callable[[str, Dict[str, Any]], Dict[str, Any]]:
-    if engine == "pylint":
-        import sys
-
-        sys.path.insert(0, str(GOLDEN_DIR))
-        from record_golden import run_pylint_engine  # type: ignore[import-not-found]
-
-        return run_pylint_engine
-
-    runner = pytest.importorskip("demisto_sdk.commands.xsoar_linter.checkers.runner")
-    return runner.run_golden_case
-
-
-@pytest.mark.parametrize("engine", ["pylint", "ast"])
 @pytest.mark.parametrize(
     "case", GOLDEN_CASES, ids=[case["id"] for case in GOLDEN_CASES]
 )
-def test_xsoar_linter_engine_matches_golden(engine: str, case: Dict[str, Any]):
+def test_xsoar_linter_matches_golden(case: Dict[str, Any]):
     """
     Given:
         - A sample python file and the integration / script settings it is linted with
           (support level, script or integration, long running, python 2, yml commands).
         - The findings the pylint-based xsoar-linter reported for it, recorded in golden.json.
     When:
-        - Running the given xsoar-linter engine on the sample with the same settings.
+        - Running the xsoar-linter on the sample with the same settings.
     Then:
-        - The engine reports exactly the recorded findings and the same pass / fail outcome.
+        - It reports exactly the recorded findings and the same pass / fail outcome.
     """
-    # Given
-    run_engine = get_engine_runner(engine)
-
     # When
-    result = run_engine(case["sample"], case["settings"])
+    result = run_golden_case(case["sample"], case["settings"])
 
     # Then
     assert result["findings"] == case["expected"]["findings"]

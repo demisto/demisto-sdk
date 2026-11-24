@@ -467,7 +467,7 @@ def test_format_finding_outside_content_root_keeps_absolute_path(tmp_path):
         pytest.param(
             "/builds/content/Packs/A/Integrations/A/A.py:1:0: W9010 main: msg",
             "/builds/content/Packs/A/Integrations/A/A.py",
-            id="absolute path (pylint engine)",
+            id="absolute path",
         ),
     ],
 )
@@ -500,14 +500,9 @@ def test_checkers_do_not_import_pylint_or_astroid():
     When:
         - Scanning every module for imports.
     Then:
-        - Ensure nothing imports pylint, astroid or the pylint plugins, so the package
-          keeps working unchanged once pylint is removed.
+        - Ensure nothing imports pylint or astroid, which are not dependencies of the SDK.
     """
-    forbidden = (
-        "pylint",
-        "astroid",
-        "demisto_sdk.commands.pre_commit.resources.pylint_plugins",
-    )
+    forbidden = ("pylint", "astroid")
     offenders = []
     for module_path in CHECKERS_DIR.glob("*.py"):
         for node in ast.walk(ast.parse(module_path.read_text())):

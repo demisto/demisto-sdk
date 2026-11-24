@@ -777,36 +777,11 @@ class TestGetMatchingRegex:
         ({"breakingChanges": False, "breakingChangesNotes": "BC"}, True),
         ({"breakingChanges": "true", "breakingChangesNotes": "BC"}, False),
         ({"breakingChanges": True, "breakingChangesNotes": True}, False),
-        # forceUpdate object (ConnectUS / Managed Content) - CIAC-17085 / CIAC-17086.
+        # forceUpdate is no longer supported (CIAC-18913 / CIAC-18915).
         (
             {
                 "breakingChanges": True,
                 "forceUpdate": {"breakingChangesNotesLoosely": "Loosely BC note."},
-            },
-            True,
-        ),
-        (
-            {
-                "breakingChanges": True,
-                "forceUpdate": {"breakingChangesNotesTightly": "Tightly BC note."},
-            },
-            True,
-        ),
-        (
-            {
-                "breakingChanges": True,
-                "forceUpdate": {
-                    "breakingChangesNotesLoosely": "Loosely BC note.",
-                    "breakingChangesNotesTightly": "Tightly BC note.",
-                },
-            },
-            True,
-        ),
-        # An unknown field nested in forceUpdate must be rejected (Extra.forbid).
-        (
-            {
-                "breakingChanges": True,
-                "forceUpdate": {"unknownField": "value"},
             },
             False,
         ),
@@ -852,6 +827,24 @@ class TestXSIAMStructureValidator(TestStructureValidator):
         """Given a valid modeling rule schema, make sure its schema is valid."""
         modeling_rule_schema = pack.create_modeling_rule("modeling_rule").schema
         validator = StructureValidator(modeling_rule_schema.path)
+        assert validator.is_valid_scheme()
+
+    def test_valid_modeling_rule_schema_with_descriptions(self, pack: Pack):
+        """Given a valid modeling rule schema with descriptions, make sure its schema is valid."""
+        schema_content = {
+            "test_audit_raw": {
+                "dataset_description": "Audit logs.",
+                "name": {
+                    "type": "string",
+                    "is_array": False,
+                    "field_description": "User name",
+                },
+            }
+        }
+        modeling_rule = pack.create_modeling_rule(
+            "modeling_rule_desc", schema=schema_content
+        )
+        validator = StructureValidator(modeling_rule.schema.path)
         assert validator.is_valid_scheme()
 
     def test_invalid_modeling_rule_schema_bad_type(self, pack: Pack):

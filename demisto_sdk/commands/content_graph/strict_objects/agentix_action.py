@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import Field
+from pydantic import Extra, Field
 
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     AgentixBase,
@@ -37,6 +37,14 @@ class UnderlyingContentItem(BaseStrictModel):
 
 
 class AgentixAction(AgentixBase):
+    class Config:
+        """
+        Unknown top-level fields are ignored (not forbidden), so an action carrying
+        a field not yet defined in this schema does not fail ST110.
+        """
+
+        extra = Extra.ignore
+
     display: str
     args: Optional[list[AgentixActionArgument]] = None
     outputs: Optional[list[AgentixActionOutput]] = None

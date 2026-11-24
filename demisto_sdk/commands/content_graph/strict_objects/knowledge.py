@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from pydantic import Field
+from pydantic import Extra, Field
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
@@ -17,6 +17,14 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
 
 
 class _StrictKnowledge(BaseStrictModel):
+    class Config:
+        """
+        Unknown top-level fields are ignored (not forbidden), so a knowledge item
+        carrying a field not yet defined in this schema does not fail ST110.
+        """
+
+        extra = Extra.ignore
+
     supportedFeatures: Optional[SupportedFeaturesList] = None
     common_fields: CommonFields = Field(..., alias="commonfields")  # type:ignore[valid-type]
     name: str

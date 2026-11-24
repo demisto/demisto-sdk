@@ -1,0 +1,528 @@
+import ast
+import textwrap
+from pathlib import Path
+
+import pytest
+
+from demisto_sdk.commands.xsoar_linter.checkers.context import FileContext
+from demisto_sdk.commands.xsoar_linter.checkers.models import LintSettings, Rule
+from demisto_sdk.commands.xsoar_linter.checkers.pragmas import build_suppressions
+from demisto_sdk.commands.xsoar_linter.checkers.runner import (
+    format_finding,
+    lint_source,
+)
+
+CHECKERS_DIR = Path(__file__).resolve().parent.parent / "checkers"
+KNOWN_NAMES = {"E9003": "E9003", "sleep-exists": "E9003", "E9002": "E9002"}
+
+
+def suppressions_for(source: str):
+    source = textwrap.dedent(source)
+    return build_suppressions(source, ast.parse(source), KNOWN_NAMES)
+
+
+@pytest.mark.parametrize(
+    "source, disabled_lines, enabled_lines",
+    [
+        pytest.param(
+            """
+            def helper():  # pylint: disable=E9003
+                sleep(20)
+                sleep(30)
+            sleep(40)
+            """,
+            [2, 3, 4],
+            [5],
+            id="trailing comment on def covers the whole function",
+        ),
+        pytest.param(
+            """
+            def helper():
+                sleep(20)
+                # pylint: disable=E9003
+                sleep(30)
+                # pylint: enable=E9003
+                sleep(40)
+            sleep(50)
+            """,
+            [5],
+            [3, 7, 8],
+            id="own-line comment covers until enable",
+        ),
+        pytest.param(
+            """
+            def helper():
+                sleep(20)
+                # pylint: disable=E9003
+                sleep(30)
+            sleep(40)
+            """,
+            [5],
+            [3, 6],
+            id="own-line comment stops at the end of its block",
+        ),
+        pytest.param(
+            """
+            sleep(10)
+            # pylint: disable-next=E9003
+            sleep(20)
+            sleep(30)
+            """,
+            [4],
+            [2, 5],
+            id="disable-next covers the next line only",
+        ),
+        pytest.param(
+            """
+            if True:  # pylint: disable=E9003
+                sleep(20)
+            sleep(30)
+            """,
+            [3],
+            [4],
+            id="trailing comment on if covers the if block",
+        ),
+        pytest.param(
+            """
+            values = [
+                sleep(20),  # pylint: disable=E9003
+                sleep(30),
+            ]
+            """,
+            [3],
+            [4],
+            id="trailing comment inside a literal covers that line only",
+        ),
+        pytest.param(
+            """
+            sleep(10)
+            # pylint: disable=E9003
+            def helper():
+                sleep(20)
+            sleep(30)
+            """,
+            [5, 6],
+            [2],
+            id="top-level own-line comment covers the rest of the file",
+        ),
+        pytest.param(
+            """
+            sleep(10)  # xsoar-lint: disable=sleep-exists
+            sleep(20)
+            """,
+            [2],
+            [3],
+            id="new xsoar-lint prefix and rule symbol",
+        ),
+        pytest.param(
+            """
+            sleep(10)  # some text # pylint: disable=E9003
+            """,
+            [2],
+            [],
+            id="comment after other comment text",
+        ),
+        pytest.param(
+            """
+            sleep(10)  # pylint: disable=e9003
+            """,
+            [],
+            [2],
+            id="codes are case sensitive",
+        ),
+    ],
+)
+def test_disable_comment_scope(source, disabled_lines, enabled_lines):
+    """
+    Given:
+        - Python source with disable comments placed in different ways.
+    When:
+        - Building the suppressions for the file.
+    Then:
+        - Ensure E9003 is turned off exactly on the expected lines.
+    """
+    suppressions = suppressions_for(source)
+    assert [
+        line for line in disabled_lines if not suppressions.is_disabled("E9003", line)
+    ] == []
+    assert [
+        line for line in enabled_lines if suppressions.is_disabled("E9003", line)
+    ] == []
+
+
+@pytest.mark.parametrize(
+    "comment",
+    ["# pylint: skip-file", "# pylint: disable=all", "# xsoar-lint: skip-file"],
+)
+def test_skip_file(comment):
+    """
+    Given:
+        - A file with a skip-file or disable=all comment.
+    When:
+        - Building the suppressions for the file.
+    Then:
+        - Ensure every rule is turned off on every line.
+    """
+    suppressions = suppressions_for(f"{comment}\nsleep(20)\n")
+    assert suppressions.is_disabled("E9003", 2)
+    assert suppressions.is_disabled("E9002", 2)
+
+
+def test_module_level_finding_needs_comment_on_line_1():
+    """
+    Given:
+        - A disable comment on its own line after the module docstring.
+    When:
+        - Checking a module-level finding, which is reported at line 1.
+    Then:
+        - Ensure it is not suppressed, while a comment on line 1 does suppress it.
+    """
+    later = suppressions_for('"""doc"""\n# pylint: disable=E9003\nx = 1\n')
+    first_line = suppressions_for('# pylint: disable=E9003\n"""doc"""\nx = 1\n')
+    assert not later.is_disabled_for_module("E9003")
+    assert first_line.is_disabled_for_module("E9003")
+
+
+@pytest.mark.parametrize(
+    "source, module_disabled",
+    [
+        pytest.param(
+            "import demistomock as demisto  # pylint: disable=E9003\n",
+            False,
+            id="trailing comment on line 1 does not suppress",
+        ),
+        pytest.param(
+            "# pylint: disable=E9003\nimport demistomock as demisto\n",
+            True,
+            id="own-line comment on line 1 suppresses",
+        ),
+        pytest.param(
+            "# pylint: disable=E9003\n# pylint: enable=E9003\nx = 1\n",
+            True,
+            id="own-line enable on line 2 does not undo the disable on line 1",
+        ),
+        pytest.param(
+            "# pylint: disable-next=E9003\nx = 1\n",
+            False,
+            id="disable-next does not suppress",
+        ),
+        pytest.param(
+            "import demistomock as demisto  # xsoar-lint: skip-file\n",
+            True,
+            id="skip-file suppresses",
+        ),
+    ],
+)
+def test_module_level_finding_suppression(source, module_disabled):
+    """
+    Given:
+        - A disable comment placed in different ways around line 1.
+    When:
+        - Checking a finding about the whole file.
+    Then:
+        - Ensure only an own-line comment covering line 1, or skip-file, suppresses it (same as pylint).
+          A trailing comment on line 1 still suppresses findings on line 1 itself.
+    """
+    suppressions = suppressions_for(source)
+    assert suppressions.is_disabled_for_module("E9003") is module_disabled
+
+
+def test_trailing_line_1_comment_still_covers_line_1_findings():
+    """
+    Given:
+        - A trailing disable comment on line 1.
+    When:
+        - Checking a finding on line 1 (not a whole-file finding).
+    Then:
+        - Ensure it is suppressed, while a whole-file finding is not.
+    """
+    suppressions = suppressions_for("sleep(20)  # pylint: disable=E9003\n")
+    assert suppressions.is_disabled("E9003", 1)
+    assert not suppressions.is_disabled_for_module("E9003")
+
+
+def test_w9005_trailing_line_1_comment_is_reported():
+    """
+    Given:
+        - An xsoar file without main(), with `# pylint: disable=W9005` at the end of line 1
+          (the MCPApiModule case), and the same file with the comment on its own line.
+    When:
+        - Linting the file with the ast engine.
+    Then:
+        - Ensure W9005 is reported for the trailing comment and suppressed for the own-line one.
+    """
+    settings = LintSettings(support="xsoar")
+    trailing = lint_source(
+        "import demistomock as demisto  # pylint: disable=W9005\n", "mod", settings
+    )
+    own_line = lint_source(
+        "# pylint: disable=W9005\nimport demistomock as demisto\n", "mod", settings
+    )
+    assert "W9005" in [finding.code for finding in trailing.findings]
+    assert "W9005" not in [finding.code for finding in own_line.findings]
+
+
+# Invalid on every Python version, so the tests do not depend on the Python running them.
+UNPARSABLE_CODE = "def broken(:\n    pass\n"
+
+
+@pytest.mark.parametrize(
+    "comment",
+    [
+        "# xsoar-lint: skip-parse-file\n",
+        "#xsoar-lint:skip-parse-file\n",
+        "    # xsoar-lint: skip-parse-file  # uses Python 3.12 syntax\n",
+    ],
+)
+def test_skip_parse_file_skips_unparsable_file(comment):
+    """
+    Given:
+        - A file that cannot be parsed, with a `# xsoar-lint: skip-parse-file` comment on its own line.
+    When:
+        - Linting the file with the ast engine.
+    Then:
+        - Ensure the file is skipped: no E0001, no findings, and the run does not fail.
+    """
+    result = lint_source(comment + UNPARSABLE_CODE, "sample", LintSettings())
+    assert result.findings == []
+    assert not result.fails
+
+
+@pytest.mark.parametrize(
+    "comment",
+    [
+        pytest.param("# xsoar-lint: skip-file\n", id="skip-file needs a parsable file"),
+        pytest.param("# pylint: skip-parse-file\n", id="pylint prefix is not accepted"),
+        pytest.param(
+            "x = 1  # xsoar-lint: skip-parse-file\n", id="trailing comment is ignored"
+        ),
+        pytest.param(
+            'x = "# xsoar-lint: skip-parse-file"\n',
+            id="text inside a string is ignored",
+        ),
+    ],
+)
+def test_skip_parse_file_only_for_own_line_xsoar_lint_comment(comment):
+    """
+    Given:
+        - A file that cannot be parsed, with skip-file, a pylint-prefixed skip-parse-file,
+          or skip-parse-file that is not a comment on its own line.
+    When:
+        - Linting the file with the ast engine.
+    Then:
+        - Ensure the file is still reported with E0001 and the run fails (same as pylint).
+    """
+    result = lint_source(comment + UNPARSABLE_CODE, "sample", LintSettings())
+    assert [finding.code for finding in result.findings] == ["E0001"]
+    assert result.fails
+
+
+def test_scope_name_and_position():
+    """
+    Given:
+        - Nodes at top level, inside a method, and a decorated function.
+    When:
+        - Reporting findings for them.
+    Then:
+        - Ensure positions and object names match the pylint output format.
+    """
+    source = textwrap.dedent(
+        """
+        class Client:
+            def __init__(self):
+                sleep(20)
+
+        @decorator
+        def helper():
+            pass
+
+        sleep(30)
+        """
+    )
+    tree = ast.parse(source)
+    rule = Rule("E9003", "sleep-exists", "Sleep is found")
+    context = FileContext(
+        tree,
+        LintSettings(),
+        {"E9003": rule},
+        build_suppressions(source, tree, KNOWN_NAMES),
+    )
+    calls = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call) and getattr(node.func, "id", "") == "sleep"
+    ]
+    helper = next(
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.FunctionDef) and node.name == "helper"
+    )
+    for node in calls + [helper]:
+        context.report("E9003", node)
+    context.report("E9003")
+
+    found = sorted((f.line, f.col, f.obj) for f in context.findings)
+    assert found == [
+        (1, 0, ""),
+        (4, 8, "Client.__init__"),
+        (7, 0, "helper"),
+        (10, 0, ""),
+    ]
+
+
+def test_parse_error_reports_e0001():
+    """
+    Given:
+        - Python 2 only syntax.
+    When:
+        - Linting the source.
+    Then:
+        - Ensure a single failing E0001 finding is reported, like pylint.
+    """
+    result = lint_source(
+        'def main():\n    print "x"\n', "sample", LintSettings(support="xsoar")
+    )
+    assert result.fails
+    assert [(f.line, f.col, f.code) for f in result.findings] == [(2, 5, "E0001")]
+    assert result.findings[0].message.startswith("Parsing failed: 'Missing parentheses")
+    assert result.findings[0].message.endswith("(sample, line 2)'")
+
+
+def test_unknown_support_level_fails_without_findings():
+    """
+    Given:
+        - An unknown support level.
+    When:
+        - Linting a file.
+    Then:
+        - Ensure no rules run and the run fails, like the pylint engine.
+    """
+    result = lint_source("x = 1\n", "sample", LintSettings(support="unknown-level"))
+    assert result.fails
+    assert result.findings == []
+
+
+def test_format_finding_matches_hook_pattern(tmp_path):
+    """
+    Given:
+        - A finding in a file under the content root.
+    When:
+        - Formatting it as an output line.
+    Then:
+        - Ensure the path is relative to the content root (no runner path like /builds/...).
+        - Ensure the hook's error/warning regex can parse it.
+    """
+    from demisto_sdk.commands.xsoar_linter.checkers.models import Finding
+    from demisto_sdk.commands.xsoar_linter.xsoar_linter import (
+        ERROR_AND_WARNING_CODE_PATTERN,
+    )
+
+    file_path = tmp_path / "Packs" / "MyPack" / "Integrations" / "MyInt" / "MyInt.py"
+    line = format_finding(
+        file_path,
+        Finding(3, 4, "E9003", "helper", "Sleep is found"),
+        content_root=tmp_path,
+    )
+    assert line == (
+        "Packs/MyPack/Integrations/MyInt/MyInt.py:3:4: E9003 helper: Sleep is found"
+    )
+    match = ERROR_AND_WARNING_CODE_PATTERN.match(line)
+    assert match
+    assert (match["path"], match["line"], match["col"], match["error_code"]) == (
+        "Packs/MyPack/Integrations/MyInt/MyInt.py",
+        "3",
+        "4",
+        "E9003",
+    )
+
+
+def test_format_finding_outside_content_root_keeps_absolute_path(tmp_path):
+    """
+    Given:
+        - A finding in a file that is not under the content root.
+    When:
+        - Formatting it as an output line.
+    Then:
+        - Ensure the absolute path is kept, as before.
+    """
+    from demisto_sdk.commands.xsoar_linter.checkers.models import Finding
+
+    file_path = tmp_path / "elsewhere" / "a.py"
+    line = format_finding(
+        file_path,
+        Finding(3, 4, "E9003", "helper", "Sleep is found"),
+        content_root=tmp_path / "content",
+    )
+    assert line.startswith(f"{file_path.resolve()}:3:4: E9003 ")
+
+
+@pytest.mark.parametrize(
+    "line, expected_path",
+    [
+        pytest.param(
+            "Packs/A/Integrations/A/A.py:1:0: W9010 main: msg",
+            "Packs/A/Integrations/A/A.py",
+            id="relative path",
+        ),
+        pytest.param(
+            "/builds/content/Packs/A/Integrations/A/A.py:1:0: W9010 main: msg",
+            "/builds/content/Packs/A/Integrations/A/A.py",
+            id="absolute path (pylint engine)",
+        ),
+    ],
+)
+def test_hook_pattern_matches_relative_and_absolute_paths(line, expected_path):
+    """
+    Given:
+        - An output line with a relative or an absolute path.
+    When:
+        - Matching it with the hook's error/warning regex.
+    Then:
+        - Ensure both are parsed, with the path as written.
+    """
+    from demisto_sdk.commands.xsoar_linter.xsoar_linter import (
+        ERROR_AND_WARNING_CODE_PATTERN,
+    )
+
+    match = ERROR_AND_WARNING_CODE_PATTERN.match(line)
+    assert match
+    assert (match["path"], match["type"], match["error_code"]) == (
+        expected_path,
+        "W",
+        "W9010",
+    )
+
+
+def test_checkers_do_not_import_pylint_or_astroid():
+    """
+    Given:
+        - The ast-based checkers package.
+    When:
+        - Scanning every module for imports.
+    Then:
+        - Ensure nothing imports pylint, astroid or the pylint plugins, so the package
+          keeps working unchanged once pylint is removed.
+    """
+    forbidden = (
+        "pylint",
+        "astroid",
+        "demisto_sdk.commands.pre_commit.resources.pylint_plugins",
+    )
+    offenders = []
+    for module_path in CHECKERS_DIR.glob("*.py"):
+        for node in ast.walk(ast.parse(module_path.read_text())):
+            if isinstance(node, ast.Import):
+                names = [alias.name for alias in node.names]
+            elif isinstance(node, ast.ImportFrom):
+                names = [node.module or ""]
+            else:
+                continue
+            offenders += [
+                f"{module_path.name}: {name}"
+                for name in names
+                if any(
+                    name == prefix or name.startswith(f"{prefix}.")
+                    for prefix in forbidden
+                )
+            ]
+    assert offenders == []

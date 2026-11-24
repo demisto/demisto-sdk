@@ -29,6 +29,7 @@ from demisto_sdk.commands.common.tools import (
     write_dict,
 )
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
+    API_MODULE_ALREADY_INSERTED_PREFIX,
     IntegrationScriptUnifier,
 )
 
@@ -375,6 +376,13 @@ class YmlSplitter:
                     self.update_api_module_contribution(lines, imported_line)
                 logger.debug(f"Replacing code block with `{imported_line}`")
                 script = script.replace(match.group(), imported_line)
+            # restore imports of API modules that were not inserted since they were already inserted
+            script = re.sub(
+                rf"^{re.escape(API_MODULE_ALREADY_INSERTED_PREFIX)}",
+                "",
+                script,
+                flags=re.MULTILINE,
+            )
         return script
 
     def replace_section_headers_code(self, script: str) -> str:

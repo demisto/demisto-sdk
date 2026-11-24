@@ -64,6 +64,8 @@ CONTRIBUTOR_COMMUNITY_DETAILED_DESC = (
 )
 
 INTEGRATIONS_DOCS_REFERENCE = "https://xsoar.pan.dev/docs/reference/integrations/"
+# prefixed to the import of an API module that was already inserted, split removes it to restore the import
+API_MODULE_ALREADY_INSERTED_PREFIX = "# ### API MODULE ALREADY INSERTED ###: "
 
 
 class IntegrationScriptUnifier(Unifier):
@@ -537,7 +539,7 @@ class IntegrationScriptUnifier(Unifier):
                 # (not the "### GENERATED CODE ###: <import>" header of the inserted code)
                 script_code = re.sub(
                     rf"^{re.escape(module_import)}",
-                    f"# {module_name} was already inserted above.",
+                    lambda _: f"{API_MODULE_ALREADY_INSERTED_PREFIX}{module_import}",
                     script_code,
                     flags=re.MULTILINE,
                 )

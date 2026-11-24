@@ -600,10 +600,11 @@ def test_insert_module_code__shared_sub_module_inserted_once(mocker):
     assert (
         code.index("class C:") < code.index("class A(C):") < code.index("class B(C):")
     )
-    assert "from CApiModule import *" not in code.replace(
-        "### GENERATED CODE ###: from CApiModule import *", ""
+    assert "\nfrom CApiModule import *" not in code
+    assert (
+        "# ### API MODULE ALREADY INSERTED ###: from CApiModule import *\nclass B(C):"
+        in code
     )
-    assert "# CApiModule was already inserted above." in code
 
 
 def test_insert_module_code__direct_and_transitive_import_inserted_once(mocker):

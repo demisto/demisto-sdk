@@ -603,6 +603,41 @@ def test_update_api_module_contribution(mocker):
     )
 
 
+def test_replace_imported_code__restores_deduplicated_import(mocker):
+    """
+    Given:
+     - An integration importing AApiModule (which imports CApiModule) and also importing CApiModule directly,
+       unified so that the direct import of CApiModule was deduplicated (CApiModule is inlined only once)
+
+    When:
+     - calling replace_imported_code (split)
+
+    Then:
+     - Ensure the direct import of CApiModule is restored
+    """
+    modules_code = {
+        "AApiModule": "from CApiModule import *\nclass A(C):\n    pass",
+        "CApiModule": "class C:\n    pass",
+    }
+    mocker.patch.object(
+        IntegrationScriptUnifier,
+        "_get_api_module_code",
+        side_effect=lambda module_name, _: modules_code[module_name],
+    )
+    script = "from AApiModule import *\nfrom CApiModule import *\ndef main():\n    pass"
+    unified = IntegrationScriptUnifier.insert_module_code(
+        script, IntegrationScriptUnifier.check_api_module_imports(script), Path()
+    )
+    yml_splitter = YmlSplitter(
+        input=f"{git_path()}/demisto_sdk/tests/test_files/modelingrule-OktaModelingRules.yml",
+        file_type="modelingrule",
+    )
+
+    split_code = yml_splitter.replace_imported_code(unified)
+
+    assert "from CApiModule import *" in split_code.splitlines()
+
+
 def test_input_file_data_parameter(mocker, monkeypatch):
     """
     Given: A unified YML file

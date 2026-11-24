@@ -36,9 +36,18 @@ class ModelingRuleParser(YAMLContentItemParser, content_type=ContentType.MODELIN
     @cached_property
     def field_mapping(self):
         super().field_mapping.update(
-            {"object_id": "id", "schema_key": "schema", "rules_key": "rules"}
+            {
+                "object_id": "id",
+                "schema_key": "schema",
+                "rules_key": "rules",
+                "original_pack_id": "original_pack_id",
+            }
         )
         return super().field_mapping
+
+    @property
+    def original_pack_id(self) -> Optional[str]:
+        return get_value(self.yml_data, self.field_mapping.get("original_pack_id", ""))
 
     @property
     def schema_key(self) -> Optional[str]:

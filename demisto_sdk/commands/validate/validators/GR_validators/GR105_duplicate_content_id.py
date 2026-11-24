@@ -11,6 +11,7 @@ from demisto_sdk.commands.common.regional_rules import (
 )
 from demisto_sdk.commands.common.tools import (
     get_content_item_supported_features,
+    get_pack_name,
     get_relative_path_from_packs_dir,
 )
 from demisto_sdk.commands.content_graph.objects import (
@@ -141,6 +142,8 @@ class DuplicateContentIdValidator(BaseValidator[ContentTypes], ABC):
             paths_of_content_items_to_validate
         ):
             for duplicate in duplicates:
+                if self._is_copy_of_original_pack(content_item, duplicate):
+                    continue
                 colliding_regions = self._colliding_regions(
                     content_item, duplicate, rules
                 )
@@ -161,6 +164,31 @@ class DuplicateContentIdValidator(BaseValidator[ContentTypes], ABC):
                     )
                 )
         return results
+
+    @staticmethod
+    def _is_copy_of_original_pack(
+        content_item: ContentTypes, duplicate: ContentTypes
+    ) -> bool:
+        """True when one modeling rule is a declared copy of the other, via `original_pack_id`.
+
+        A pack copy keeps the original modeling rule ids and points back to the original pack
+        through `original_pack_id`, so the pair is intentional and must not be reported.
+        """
+        if not (
+            isinstance(content_item, ModelingRule)
+            and isinstance(duplicate, ModelingRule)
+        ):
+            return False
+        for copied_item, original_item in (
+            (content_item, duplicate),
+            (duplicate, content_item),
+        ):
+            original_pack_id = copied_item.original_pack_id
+            if original_pack_id and original_pack_id == get_pack_name(
+                original_item.path
+            ):
+                return True
+        return False
 
     def _colliding_regions(
         self,

@@ -137,8 +137,9 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             pack_marketplaces = ContentItemParser._resolve_pack_defaults(path)
 
         # Skip test files under AgentixAgents - they are not content items
-        if AGENTIX_AGENTS_DIR in path.parts and ContentType._is_agentix_agent_test_path(
-            path
+        if (
+            AGENTIX_AGENTS_DIR in path.parts
+            and ContentType._is_agentix_agent_test_path(path)
         ):
             logger.debug(
                 f"Skipping {path} - test file under AgentixAgents is not a content item"
@@ -388,6 +389,8 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             source_type=self.content_type,
             source_fromversion=self.fromversion,
             source_marketplaces=self.marketplaces,
+            # Used to resolve the exact source node when several items share the same id
+            source_path=Path(self.path).as_posix(),
             target=target,
             target_type=target_type,
             **kwargs,

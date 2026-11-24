@@ -24,6 +24,7 @@ json = JSON_Handler()
 class ModelingRule(ContentItemXSIAM, content_type=ContentType.MODELING_RULE):  # type: ignore[call-arg]
     rules_key: Optional[str] = Field(default="", alias="rules")
     schema_key: Optional[str] = Field(default="", alias="schema")
+    original_pack_id: Optional[str] = None
 
     def summary(
         self,

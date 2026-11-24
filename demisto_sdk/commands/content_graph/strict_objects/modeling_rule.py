@@ -25,6 +25,7 @@ class _StrictModelingRule(BaseStrictModel):
         None, alias="excludefromtightlycoupled"
     )
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
+    original_pack_id: Optional[str] = None
 
 
 StrictModelingRule = create_model(

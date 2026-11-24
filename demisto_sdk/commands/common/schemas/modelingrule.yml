@@ -23,6 +23,9 @@ mapping:
     type: bool
   excludefromtightlycoupled:
     type: bool
+  original_pack_id:
+    type: str
+    required: false
   name:xsoar:
     type: str
   name:marketplacev2:

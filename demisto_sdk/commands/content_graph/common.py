@@ -567,6 +567,8 @@ class Relationship(BaseModel):
     source_type: Optional[ContentType] = None
     source_fromversion: Optional[str] = None
     source_marketplaces: Optional[List[MarketplaceVersions]]
+    # Disambiguates source nodes sharing id/type/fromversion/marketplaces (e.g. copied packs).
+    source_path: Optional[str] = None
     target: Optional[str] = None
     target_type: Optional[ContentType] = None
     target_min_version: Optional[str] = None

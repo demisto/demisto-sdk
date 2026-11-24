@@ -30,6 +30,29 @@ def build_source_properties() -> str:
     )
 
 
+def build_source_match(variable: str, label: str = ContentType.BASE_NODE) -> str:
+    """Matches the relationship source node and binds it to `variable`.
+
+    Nodes are matched by id, type, fromversion and marketplaces. When several nodes share
+    these properties (e.g. a copied pack keeping the original item ids), the candidates whose
+    stored `path` matches `rel_data.source_path` are preferred. If no candidate matches the
+    path (or `source_path` is absent), all candidates are kept - the original behavior.
+    """
+    path_matches_source = (
+        "rel_data.source_path IS NOT NULL AND candidate.path IS NOT NULL "
+        "AND (rel_data.source_path = candidate.path "
+        "OR rel_data.source_path ENDS WITH '/' + candidate.path)"
+    )
+    return f"""CALL {{
+    WITH rel_data
+    MATCH (candidate:{label}{build_source_properties()})
+    WITH rel_data, collect(candidate) AS candidates
+    WITH candidates, [candidate IN candidates WHERE {path_matches_source}] AS path_matches
+    UNWIND CASE WHEN size(path_matches) > 0 THEN path_matches ELSE candidates END AS {variable}
+    RETURN {variable}
+}}"""
+
+
 def build_target_properties(
     identifier: str = "object_id",
     with_content_type: bool = False,
@@ -45,7 +68,7 @@ def build_has_command_relationships_query() -> str:
 // Note: according to a constraint, two command nodes cannot have the same name.
 UNWIND $data AS rel_data
 
-MATCH (integration:{ContentType.INTEGRATION}{build_source_properties()})
+{build_source_match("integration", ContentType.INTEGRATION)}
 
 MERGE (cmd:{ContentType.COMMAND}{build_target_properties(with_content_type=True)})
 
@@ -80,7 +103,7 @@ def build_uses_relationships_query(
     return f"""// Creates USES relationships between parsed nodes.
 // Note: if a target node is created, it means the node does not exist in the repository.
 UNWIND $data AS rel_data
-MATCH (source:{ContentType.BASE_NODE}{build_source_properties()})
+{build_source_match("source")}
 // Get all content items with the specified properties
 CALL apoc.merge.node(
     [rel_data.target_type, "{ContentType.BASE_NODE}"],
@@ -159,7 +182,7 @@ def build_in_pack_relationships_query() -> str:
 UNWIND $data AS rel_data
 
 // Get the pack and the content item with the specified properties
-MATCH (content_item:{ContentType.BASE_NODE}{build_source_properties()})
+{build_source_match("content_item")}
 MATCH (pack:{ContentType.PACK}{build_target_properties()})
 
 // Get/create the relationship
@@ -172,7 +195,7 @@ def build_tested_by_relationships_query() -> str:
 UNWIND $data AS rel_data
 
 // Get the content item with the specified properties
-MATCH (content_item:{ContentType.BASE_NODE}{build_source_properties()})
+{build_source_match("content_item")}
 
 // Get or create the test playbook with the given id
 MERGE (tpb:{ContentType.TEST_PLAYBOOK}{build_target_properties()})
@@ -220,7 +243,7 @@ RETURN count(r) AS relationships_merged"""
 def build_default_relationships_query(relationship: RelationshipType) -> str:
     return f"""// A default method for creating relationships
 UNWIND $data AS rel_data
-MATCH (source:{ContentType.BASE_NODE}{build_source_properties()})
+{build_source_match("source")}
 MERGE (target:{ContentType.BASE_NODE}{build_target_properties()})
 ON CREATE
     SET target.not_in_repository = true,

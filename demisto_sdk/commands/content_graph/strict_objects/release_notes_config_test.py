@@ -6,66 +6,28 @@ from demisto_sdk.commands.content_graph.strict_objects.release_notes_config impo
 )
 
 
-class TestStrictReleaseNotesConfigForceUpdate:
-    """Coverage for the optional ``forceUpdate`` object in ReleaseNotes/x_x_x.json (CIAC-17085 / CIAC-17086)."""
+class TestStrictReleaseNotesConfig:
+    """Coverage for ReleaseNotes/x_x_x.json after the removal of ``forceUpdate`` (CIAC-18913 / CIAC-18915)."""
 
-    @pytest.mark.parametrize(
-        "config",
-        [
-            # Backward compatible: no forceUpdate at all.
-            {"breakingChanges": True, "breakingChangesNotes": "BC"},
-            # forceUpdate with only the loosely note.
-            {
-                "breakingChanges": True,
-                "forceUpdate": {"breakingChangesNotesLoosely": "Loosely BC note."},
-            },
-            # forceUpdate with only the tightly note (a Markdown string).
-            {
-                "breakingChanges": True,
-                "forceUpdate": {"breakingChangesNotesTightly": "Tightly BC note."},
-            },
-            # forceUpdate with both notes populated.
-            {
-                "breakingChanges": True,
-                "forceUpdate": {
-                    "breakingChangesNotesLoosely": "Loosely BC note.",
-                    "breakingChangesNotesTightly": "Tightly BC note.",
-                },
-            },
-            # forceUpdate with empty-string notes.
-            {
-                "breakingChanges": True,
-                "forceUpdate": {
-                    "breakingChangesNotesLoosely": "",
-                    "breakingChangesNotesTightly": "",
-                },
-            },
-        ],
-    )
-    def test_valid_force_update_configs(self, config: dict):
-        """A valid optional ``forceUpdate`` parses successfully."""
-        StrictReleaseNotesConfig.parse_obj(config)
+    def test_valid_config(self):
+        """A config without ``forceUpdate`` parses successfully."""
+        StrictReleaseNotesConfig.parse_obj(
+            {"breakingChanges": True, "breakingChangesNotes": "BC"}
+        )
 
     @pytest.mark.parametrize(
         "config",
         [
             # Unknown top-level field.
             {"breakingChanges": True, "unknownField": "value"},
-            # Unknown field nested inside forceUpdate.
-            {"breakingChanges": True, "forceUpdate": {"unknownField": "value"}},
-            # breakingChangesNotesTightly is a plain string - an object is rejected.
+            # forceUpdate is no longer supported.
             {
                 "breakingChanges": True,
-                "forceUpdate": {
-                    "breakingChangesNotesTightly": {
-                        "message": "Short banner text.",
-                        "moreInfo": "Detailed modal text.",
-                    }
-                },
+                "forceUpdate": {"breakingChangesNotesTightly": "Tightly BC note."},
             },
         ],
     )
-    def test_invalid_force_update_configs(self, config: dict):
-        """An unknown field, or a non-string ``breakingChangesNotesTightly``, raises ValidationError."""
+    def test_invalid_configs(self, config: dict):
+        """An unknown field, including the removed ``forceUpdate``, raises ValidationError."""
         with pytest.raises(ValidationError):
             StrictReleaseNotesConfig.parse_obj(config)

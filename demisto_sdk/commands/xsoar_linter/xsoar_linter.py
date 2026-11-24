@@ -13,6 +13,7 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
 from demisto_sdk.commands.xsoar_linter.checkers.runner import (
+    display_path,
     format_finding,
     lint_file,
     settings_from_integration_script,
@@ -32,6 +33,8 @@ class ProcessResults:
     errors: List[str] = field(default_factory=list)
     warnings: List[str] = field(default_factory=list)
     errors_and_warnings: str = ""
+    # The file path, if the file was skipped by `# xsoar-lint: skip-parse-file`.
+    skipped_file: str = ""
 
 
 def process_file(file_path: Path) -> ProcessResults:
@@ -56,6 +59,8 @@ def process_file(file_path: Path) -> ProcessResults:
         lint_result = lint_file(
             file, settings_from_integration_script(integration_script)
         )
+        if lint_result.skipped:
+            results.skipped_file = str(display_path(file))
         results.return_code = int(lint_result.fails)
         lines = [format_finding(file, finding) for finding in lint_result.findings]
         results.errors_and_warnings = "\n".join(lines)
@@ -87,6 +92,7 @@ def xsoar_linter_manager(file_paths: Optional[List[Path]]):
     errors = []
     warning = []
     errors_and_warnings = []
+    skipped_files = []
 
     if not file_paths:
         logger.info("[xsoar-lint] no files to lint.")
@@ -108,12 +114,18 @@ def xsoar_linter_manager(file_paths: Optional[List[Path]]):
         errors += result.errors
         warning += result.warnings
         errors_and_warnings.append(result.errors_and_warnings)
+        if result.skipped_file:
+            skipped_files.append(result.skipped_file)
     errors_and_warnings_concat = "\n".join(elem for elem in errors_and_warnings if elem)
     logger.info(errors_and_warnings_concat)
+    for skipped_file in skipped_files:
+        logger.info(
+            f"[xsoar-lint] skipped {skipped_file} ('# xsoar-lint: skip-parse-file')."
+        )
     logger.info(
         f"[xsoar-lint] finished {len(file_paths)} file(s) in {duration:.2f}s. "
         f"errors={len(list(filter(None, errors)))}, warnings={len(list(filter(None, warning)))}, "
-        f"failed files={sum(1 for code in return_codes if code)}."
+        f"failed files={sum(1 for code in return_codes if code)}, skipped={len(skipped_files)}."
     )
 
     if any(return_codes):  # An error was found

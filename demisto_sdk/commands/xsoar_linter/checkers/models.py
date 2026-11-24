@@ -57,3 +57,5 @@ class LintResult:
 
     findings: List[Finding] = field(default_factory=list)
     fails: bool = False
+    # The file was not parsed because of a `# xsoar-lint: skip-parse-file` comment.
+    skipped: bool = False

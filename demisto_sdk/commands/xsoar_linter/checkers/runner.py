@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Any, List, Optional
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.xsoar_linter.checkers.checker import run_checkers
 from demisto_sdk.commands.xsoar_linter.checkers.context import (
     FileContext,
@@ -41,8 +40,7 @@ def lint_source(source: str, module_name: str, settings: LintSettings) -> LintRe
         return LintResult(findings=[], fails=True)
 
     if has_skip_parse_file(source):
-        logger.debug(f"{module_name}: skipped by '# xsoar-lint: skip-parse-file'")
-        return LintResult()
+        return LintResult(skipped=True)
 
     try:
         tree = ast.parse(source)

@@ -281,11 +281,13 @@ def test_skip_parse_file_skips_unparsable_file(comment):
     When:
         - Linting the file with the ast engine.
     Then:
-        - Ensure the file is skipped: no E0001, no findings, and the run does not fail.
+        - Ensure the file is skipped: no E0001, no findings, the run does not fail,
+          and the result is marked as skipped.
     """
     result = lint_source(comment + UNPARSABLE_CODE, "sample", LintSettings())
     assert result.findings == []
     assert not result.fails
+    assert result.skipped
 
 
 @pytest.mark.parametrize(
@@ -310,11 +312,30 @@ def test_skip_parse_file_only_for_own_line_xsoar_lint_comment(comment):
     When:
         - Linting the file with the ast engine.
     Then:
-        - Ensure the file is still reported with E0001 and the run fails (same as pylint).
+        - Ensure the file is still reported with E0001, the run fails (same as pylint),
+          and the result is not marked as skipped.
     """
     result = lint_source(comment + UNPARSABLE_CODE, "sample", LintSettings())
     assert [finding.code for finding in result.findings] == ["E0001"]
     assert result.fails
+    assert not result.skipped
+
+
+def test_skip_file_is_not_marked_as_skipped():
+    """
+    Given:
+        - A parsable file with `# xsoar-lint: skip-file`.
+    When:
+        - Linting the file with the ast engine.
+    Then:
+        - Ensure there are no findings, and the result is not marked as skipped
+          (only skip-parse-file is reported as a skipped file).
+    """
+    result = lint_source(
+        '# xsoar-lint: skip-file\nprint("x")\n', "sample", LintSettings()
+    )
+    assert result.findings == []
+    assert not result.skipped
 
 
 def test_scope_name_and_position():

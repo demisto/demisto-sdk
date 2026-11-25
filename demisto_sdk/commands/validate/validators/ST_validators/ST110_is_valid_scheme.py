@@ -21,6 +21,7 @@ from demisto_sdk.commands.content_graph.objects import (
     IndicatorField,
     IndicatorType,
     Job,
+    JobCenter,
     Knowledge,
     Layout,
     LayoutRule,
@@ -86,6 +87,7 @@ ContentTypes = Union[
     AgentixActionTest,
     AgentixSkill,
     Knowledge,
+    JobCenter,
 ]
 
 

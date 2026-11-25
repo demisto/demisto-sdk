@@ -30,6 +30,7 @@ from demisto_sdk.commands.content_graph.objects.integration import (
     Integration,
     Parameter,
 )
+from demisto_sdk.commands.content_graph.objects.job_center import JobCenter
 from demisto_sdk.commands.content_graph.objects.knowledge import Knowledge
 from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
 from demisto_sdk.commands.content_graph.objects.pack import Pack
@@ -359,7 +360,14 @@ def should_skip_rn_check(content_item: ContentItem) -> bool:
         return not is_pack_move(content_item)
     if isinstance(
         content_item,
-        (AgentixAction, AgentixActionTest, AgentixAgent, AgentixSkill, Knowledge),
+        (
+            AgentixAction,
+            AgentixActionTest,
+            AgentixAgent,
+            AgentixSkill,
+            Knowledge,
+            JobCenter,
+        ),
     ) or (isinstance(content_item, Script) and content_item.is_llm):
         return True
     return content_item.git_status is None

@@ -27,6 +27,7 @@ from demisto_sdk.commands.content_graph.objects.generic_type import GenericType
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.content_graph.objects.incident_type import IncidentType
 from demisto_sdk.commands.content_graph.objects.job import Job
+from demisto_sdk.commands.content_graph.objects.job_center import JobCenter
 from demisto_sdk.commands.content_graph.objects.knowledge import Knowledge
 from demisto_sdk.commands.content_graph.objects.layout import Layout
 from demisto_sdk.commands.content_graph.objects.layout_rule import LayoutRule
@@ -81,6 +82,7 @@ ContentTypes = Union[
     AgentixAgent,
     AgentixSkill,
     Knowledge,
+    JobCenter,
 ]
 
 FROM_VERSION_DICT: Dict[ContentType, str] = {
@@ -116,6 +118,7 @@ FROM_VERSION_DICT: Dict[ContentType, str] = {
     ContentType.AGENTIX_AGENT: "8.12.0",
     ContentType.AGENTIX_SKILL: "8.15.0",
     ContentType.KNOWLEDGE: "8.15.0",
+    ContentType.JOB_CENTER: "8.10.0",
 }
 
 

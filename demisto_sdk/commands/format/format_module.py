@@ -109,6 +109,7 @@ FILE_TYPE_AND_LINKED_CLASS = {
     "agentixagent": GenericAgentixFormat,
     "agentixskill": GenericAgentixFormat,
     "knowledge": GenericAgentixFormat,
+    "jobcenter": GenericAgentixFormat,
 }
 
 UNFORMATTED_FILES = [

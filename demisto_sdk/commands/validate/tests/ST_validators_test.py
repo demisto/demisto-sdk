@@ -1,8 +1,10 @@
 from pathlib import Path
+from typing import Any
 
 import pytest
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.content_graph.objects.job_center import JobCenter
 from demisto_sdk.commands.content_graph.parsers import (
     IntegrationParser,
     ModelingRuleParser,
@@ -26,6 +28,7 @@ from demisto_sdk.commands.content_graph.tests.test_tools import load_yaml
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
     create_integration_object,
+    create_job_center_object,
     create_playbook_object,
     create_script_object,
 )
@@ -1517,3 +1520,66 @@ class TestStandardizedIdAndNameFields:
                 from_xdr_version="1.0.0",
                 yaml_template="template_content",
             )
+
+
+def test_SchemaValidator_job_center_valid():
+    """
+    Given:
+        - A valid JobCenter content item.
+    When:
+        - Running the SchemaValidator (ST110).
+    Then:
+        - Ensure no validation errors are returned.
+    """
+    job_center = create_job_center_object()
+    assert not SchemaValidator().obtain_invalid_content_items([job_center])
+
+
+def test_SchemaValidator_job_center_invalid_missing_agent_id():
+    """
+    Given:
+        - A JobCenter content item whose only violation is a metadata block
+          missing agent_id.
+    When:
+        - Running the SchemaValidator (ST110).
+    Then:
+        - Ensure exactly one structure error is reported, for the agent_id rule.
+    """
+    job_center = create_job_center_object(
+        paths=["metadata"], values=[{"prompt_id": "followup-prompt"}]
+    )
+    assert len(job_center.structure_errors) == 1
+    results = SchemaValidator().obtain_invalid_content_items([job_center])
+    assert len(results) == 1
+    assert (
+        "metadata must contain non-empty string(s) ['agent_id']" in results[0].message
+    )
+
+
+@pytest.mark.parametrize(
+    "field, malformed_value, expected_field_name",
+    [
+        pytest.param("metadata", ["a"], ("metadata",), id="metadata is a list"),
+        pytest.param("triggerSpec", "soon", ("triggerSpec",), id="triggerSpec is str"),
+    ],
+)
+def test_SchemaValidator_job_center_malformed_nested_value(
+    field: str, malformed_value: Any, expected_field_name: tuple
+):
+    """
+    Given:
+        - A JobCenter YAML whose metadata/triggerSpec is not a mapping.
+    When:
+        - Parsing it into a JobCenter object and running the SchemaValidator (ST110).
+    Then:
+        - Ensure the item still parses into a JobCenter object (no model failure).
+        - Ensure the problem is reported as a single ST110 structure error on that field.
+    """
+    job_center = create_job_center_object(paths=[field], values=[malformed_value])
+    assert isinstance(job_center, JobCenter)
+    assert [error.field_name for error in job_center.structure_errors] == [
+        expected_field_name
+    ]
+    results = SchemaValidator().obtain_invalid_content_items([job_center])
+    assert len(results) == 1
+    assert "must be a mapping" in results[0].message

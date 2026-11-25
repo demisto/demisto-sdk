@@ -1,6 +1,7 @@
 __all__ = [
     "ClassifierParser",
     "KnowledgeParser",
+    "JobCenterParser",
     "CorrelationRuleParser",
     "DashboardParser",
     "GenericDefinitionParser",
@@ -87,6 +88,7 @@ from demisto_sdk.commands.content_graph.parsers.indicator_type import (
 )
 from demisto_sdk.commands.content_graph.parsers.integration import IntegrationParser
 from demisto_sdk.commands.content_graph.parsers.job import JobParser
+from demisto_sdk.commands.content_graph.parsers.job_center import JobCenterParser
 from demisto_sdk.commands.content_graph.parsers.knowledge import KnowledgeParser
 from demisto_sdk.commands.content_graph.parsers.layout import LayoutParser
 from demisto_sdk.commands.content_graph.parsers.layout_rule import LayoutRuleParser

@@ -323,6 +323,7 @@ class OldValidateManager:
             FileType.AGENTIX_ACTION,
             FileType.AGENTIX_AGENT,
             FileType.AGENTIX_SKILL,
+            FileType.JOB_CENTER,
         )
 
         self.is_external_repo = is_external_repo

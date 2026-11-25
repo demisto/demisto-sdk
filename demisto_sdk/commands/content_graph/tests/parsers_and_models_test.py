@@ -3822,3 +3822,386 @@ class TestAgentixBaseParser:
         # then
         assert parser.is_long_running is False
         assert parser.long_running_timeout_seconds is None
+
+
+class TestJobCenterParser:
+    """Tests for the AgentiX Job Center ``JobCenter`` content item parser and model."""
+
+    def test_job_center_parser_and_model(self, pack: Pack):
+        """
+        Given:
+            - A pack with a Job Center job under JobCenters/.
+        When:
+            - Creating the content item's parser and model.
+        Then:
+            - Verify the generic properties (top-level id/version, platform only) are parsed.
+            - Verify the job-specific properties are parsed.
+            - Verify normalize_name uses the 'jobcenter-' server prefix.
+            - Verify no structure errors are reported for a valid job.
+        """
+        from demisto_sdk.commands.content_graph.objects.job_center import JobCenter
+        from demisto_sdk.commands.content_graph.parsers.job_center import (
+            JobCenterParser,
+        )
+
+        job_center = pack.create_job_center("CaseFollowup", load_yaml("job_center.yml"))
+        job_center_path = Path(job_center.path)
+        parser = JobCenterParser(
+            job_center_path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        assert not parser.relationships
+        assert not parser.structure_errors
+        model = JobCenter.from_orm(parser)
+        ContentItemModelVerifier.run(
+            model,
+            expected_id="job-case-followup",
+            expected_name="Case Followup",
+            expected_path=job_center_path,
+            expected_content_type=ContentType.JOB_CENTER,
+            expected_fromversion="8.10.0",
+            expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
+        )
+        assert model.marketplaces == [MarketplaceVersions.PLATFORM]
+        assert model.version == -1
+        assert model.system is True
+        assert model.locked is False
+        assert model.job_type == "agent_to_entity"
+        assert model.job_name == "Case Followup"
+        assert model.uniqueness_key == "case-followup"
+        assert model.job_metadata == {
+            "agent_id": "followup-agent",
+            "prompt_id": "followup-prompt",
+        }
+        assert model.entity_type == "case"
+        assert model.entity_id == "1234"
+        assert model.assignee == "analyst@example.com"
+        assert model.status == "ENABLED"
+        assert model.trigger_type == "interval"
+        assert model.trigger_spec == {"intervalMinutes": 30, "count": 6}
+        assert model.queue_policy == "skip"
+        assert model.supportedModules == ["agentix"]
+        assert model.normalize_name == "jobcenter-CaseFollowup.yml"
+
+    def test_job_center_normalize_name_strips_existing_prefix(self, pack: Pack):
+        """
+        Given:
+            - A Job Center job file already named with the 'jobcenter-' prefix.
+        When:
+            - Calling normalize_name.
+        Then:
+            - Verify the prefix is not doubled.
+        """
+        from demisto_sdk.commands.content_graph.objects.job_center import JobCenter
+        from demisto_sdk.commands.content_graph.parsers.job_center import (
+            JobCenterParser,
+        )
+
+        job_center = pack.create_job_center("jobcenter-followup")
+        parser = JobCenterParser(
+            Path(job_center.path), list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        assert JobCenter.from_orm(parser).normalize_name == "jobcenter-followup.yml"
+
+    def test_job_center_from_path(self, pack: Pack):
+        """
+        Given:
+            - A default Job Center job created via the TestSuite builder.
+        When:
+            - Loading it with BaseContent.from_path.
+        Then:
+            - Verify a JobCenter model is returned.
+        """
+        from demisto_sdk.commands.content_graph.objects.job_center import JobCenter
+
+        job_center = pack.create_job_center()
+        model = BaseContent.from_path(Path(job_center.path))
+        assert isinstance(model, JobCenter)
+        assert model.object_id == "job-case-followup"
+
+    @pytest.mark.parametrize(
+        "path, expected",
+        [
+            pytest.param(
+                Path("Packs/X/JobCenters/foo.yml"),
+                ContentType.JOB_CENTER,
+                id="job center",
+            ),
+            pytest.param(
+                Path("Packs/X/Jobs/job-foo.json"), ContentType.JOB, id="legacy job"
+            ),
+        ],
+    )
+    def test_content_type_by_path(self, path: Path, expected: ContentType):
+        """
+        Given:
+            - A path under JobCenters/ and a legacy path under Jobs/.
+        When:
+            - Calling ContentType.by_path.
+        Then:
+            - Verify JobCenters resolves to JOB_CENTER and Jobs still resolves to JOB.
+        """
+        assert ContentType.by_path(path) == expected
+
+    def test_job_center_server_names(self):
+        """
+        Given:
+            - The JOB_CENTER content type.
+        When:
+            - Reading its server/metadata names, folder and release-notes header.
+        Then:
+            - Verify the expected values (zip files are named 'jobcenter-*.yml').
+        """
+        assert ContentType.JOB_CENTER.server_name == "jobcenter"
+        assert ContentType.JOB_CENTER.metadata_name == "jobcenter"
+        assert ContentType.JOB_CENTER.as_folder == "JobCenters"
+        assert ContentType.JOB_CENTER.as_rn_header == "Job Center Jobs"
+        assert (
+            ContentType.convert_header_to_content_type("Job Center Jobs")
+            == ContentType.JOB_CENTER
+        )
+
+    def test_job_center_match_does_not_steal_other_items(self):
+        """
+        Given:
+            - A Job Center dict under a Playbooks folder, and a playbook-like dict under JobCenters.
+        When:
+            - Calling JobCenter.match.
+        Then:
+            - Verify only a yml directly under JobCenters carrying 'jobType' is matched
+              (nested JobCenters sub-folders are not matched).
+        """
+        from demisto_sdk.commands.content_graph.objects.job_center import JobCenter
+
+        job_dict = load_yaml("job_center.yml")
+        assert JobCenter.match(job_dict, Path("Packs/X/JobCenters/foo.yml"))
+        assert not JobCenter.match(job_dict, Path("Packs/X/Playbooks/foo.yml"))
+        assert not JobCenter.match(
+            {"id": "pb", "tasks": {}}, Path("Packs/X/JobCenters/foo.yml")
+        )
+        assert not JobCenter.match(job_dict, Path("Packs/X/JobCenters/foo.json"))
+        assert not JobCenter.match(job_dict, Path("Packs/X/JobCenters/foo/foo.yml"))
+
+    def test_job_center_match_requires_top_level_id(self):
+        """
+        Given:
+            - A Job Center dict without a top-level 'id' (only a legacy
+              'commonfields.id', or no id at all).
+        When:
+            - Calling JobCenter.match on a yml directly under JobCenters.
+        Then:
+            - Verify it is not matched.
+        """
+        from demisto_sdk.commands.content_graph.objects.job_center import JobCenter
+
+        path = Path("Packs/X/JobCenters/foo.yml")
+        job_dict = load_yaml("job_center.yml")
+        job_dict.pop("id")
+        assert not JobCenter.match(job_dict, path)
+        job_dict["commonfields"] = {"id": "job-case-followup", "version": -1}
+        assert not JobCenter.match(job_dict, path)
+
+    def test_job_center_top_level_id_parses_and_passes_st110(self, pack: Pack):
+        """
+        Given:
+            - A Job Center job with a top-level id and version.
+        When:
+            - Parsing it with JobCenterParser and building the model.
+        Then:
+            - Verify object_id/version are read from the top level and there are no
+              structure (ST110) errors.
+        """
+        from demisto_sdk.commands.content_graph.objects.job_center import JobCenter
+        from demisto_sdk.commands.content_graph.parsers.job_center import (
+            JobCenterParser,
+        )
+
+        yml = load_yaml("job_center.yml")
+        yml["id"] = "my-job"
+        yml["version"] = -1
+        job_center = pack.create_job_center("my-job", yml)
+        parser = JobCenterParser(
+            Path(job_center.path), list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        assert parser.object_id == "my-job"
+        assert parser.version == -1
+        assert parser.name == "Case Followup"
+        assert not parser.structure_errors
+        model = JobCenter.from_orm(parser)
+        assert model.object_id == "my-job"
+        assert model.version == -1
+
+    def test_job_center_commonfields_only_fails_st110(self, pack: Pack):
+        """
+        Given:
+            - A Job Center job carrying its id/version only under the legacy
+              'commonfields' key.
+        When:
+            - Parsing it with JobCenterParser.
+        Then:
+            - Verify structure (ST110) errors are reported for the missing top-level
+              id and version.
+        """
+        from demisto_sdk.commands.content_graph.parsers.job_center import (
+            JobCenterParser,
+        )
+
+        yml = load_yaml("job_center.yml")
+        yml["commonfields"] = {"id": yml.pop("id"), "version": yml.pop("version")}
+        job_center = pack.create_job_center("legacy-job", yml)
+        parser = JobCenterParser(
+            Path(job_center.path), list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        error_fields = {error.field_name for error in parser.structure_errors}
+        assert ("id",) in error_fields
+        assert ("version",) in error_fields
+
+    def test_job_center_default_fromversion(self, pack: Pack):
+        """
+        Given:
+            - A Job Center job without a fromversion.
+        When:
+            - Parsing it with JobCenterParser and building the model.
+        Then:
+            - Verify fromversion defaults to the Job Center default (8.10.0).
+        """
+        from demisto_sdk.commands.content_graph.objects.job_center import JobCenter
+        from demisto_sdk.commands.content_graph.parsers.job_center import (
+            JobCenterParser,
+        )
+
+        yml = load_yaml("job_center.yml")
+        yml.pop("fromversion")
+        job_center = pack.create_job_center("no-fromversion", yml)
+        parser = JobCenterParser(
+            Path(job_center.path), list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        assert parser.fromversion == "8.10.0"
+        assert JobCenter.from_orm(parser).fromversion == "8.10.0"
+
+    @pytest.mark.parametrize(
+        "field, attribute, expected_model_value",
+        [
+            pytest.param("jobType", "job_type", "", id="jobType null"),
+            pytest.param("jobName", "job_name", "", id="jobName null"),
+            pytest.param("triggerType", "trigger_type", "", id="triggerType null"),
+            pytest.param("uniquenessKey", "uniqueness_key", None, id="uniquenessKey"),
+            pytest.param("entityId", "entity_id", None, id="entityId null"),
+            pytest.param("assignee", "assignee", None, id="assignee null"),
+            pytest.param("status", "status", None, id="status null"),
+            pytest.param("queuePolicy", "queue_policy", None, id="queuePolicy null"),
+        ],
+    )
+    def test_job_center_null_scalar_builds_model(
+        self, pack: Pack, field: str, attribute: str, expected_model_value
+    ):
+        """
+        Given:
+            - A Job Center job where a scalar field is explicitly null.
+        When:
+            - Parsing it with JobCenterParser and building the model.
+        Then:
+            - Verify the model builds without raising, with a normalized value.
+            - Verify the problem is reported as an ST110 structure error on that field.
+        """
+        from demisto_sdk.commands.content_graph.objects.job_center import JobCenter
+        from demisto_sdk.commands.content_graph.parsers.job_center import (
+            JobCenterParser,
+        )
+
+        yml = load_yaml("job_center.yml")
+        yml[field] = None
+        job_center = pack.create_job_center("null-field", yml)
+        parser = JobCenterParser(
+            Path(job_center.path), list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        model = JobCenter.from_orm(parser)
+        assert getattr(model, attribute) == expected_model_value
+        assert (field,) in {error.field_name for error in parser.structure_errors}
+
+    @pytest.mark.parametrize(
+        "field, value, attribute, expected_model_value",
+        [
+            pytest.param("jobType", 5, "job_type", "5", id="jobType int"),
+            pytest.param("jobName", 123, "job_name", "123", id="jobName int"),
+            pytest.param("entityId", 1234, "entity_id", "1234", id="entityId int"),
+            pytest.param("system", "yes", "system", None, id="system not bool"),
+        ],
+    )
+    def test_job_center_wrongly_typed_scalar_builds_model(
+        self,
+        pack: Pack,
+        field: str,
+        value,
+        attribute: str,
+        expected_model_value,
+    ):
+        """
+        Given:
+            - A Job Center job where a scalar field has a non-string / non-bool value.
+        When:
+            - Parsing it with JobCenterParser and building the model.
+        Then:
+            - Verify the model builds without raising, with a normalized value.
+        """
+        from demisto_sdk.commands.content_graph.objects.job_center import JobCenter
+        from demisto_sdk.commands.content_graph.parsers.job_center import (
+            JobCenterParser,
+        )
+
+        yml = load_yaml("job_center.yml")
+        yml[field] = value
+        job_center = pack.create_job_center("typed-field", yml)
+        parser = JobCenterParser(
+            Path(job_center.path), list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        assert getattr(JobCenter.from_orm(parser), attribute) == expected_model_value
+
+    @pytest.mark.parametrize(
+        "file_name",
+        [
+            pytest.param("job-foo", id="legacy 'job-' prefix"),
+            pytest.param("jobcenter-foo", id="'jobcenter-' prefix"),
+            pytest.param("foo", id="no prefix"),
+        ],
+    )
+    def test_job_center_normalize_name(self, pack: Pack, file_name: str):
+        """
+        Given:
+            - A Job Center job file named 'job-foo.yml', 'jobcenter-foo.yml' or 'foo.yml'.
+        When:
+            - Calling normalize_name on the parsed JobCenter model.
+        Then:
+            - Verify all three yield 'jobcenter-foo.yml' ('job' is a prefix of the
+              'jobcenter' server name, so a 'job-' prefix is replaced, not doubled).
+        """
+        from demisto_sdk.commands.content_graph.objects.job_center import JobCenter
+        from demisto_sdk.commands.content_graph.parsers.job_center import (
+            JobCenterParser,
+        )
+
+        job_center = pack.create_job_center(file_name)
+        parser = JobCenterParser(
+            Path(job_center.path), list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        assert JobCenter.from_orm(parser).normalize_name == "jobcenter-foo.yml"
+
+    def test_job_center_in_pack_parser(self, pack: Pack):
+        """
+        Given:
+            - A TestSuite pack containing a single Job Center job.
+        When:
+            - Parsing the pack with PackParser (no graph/neo4j involved).
+        Then:
+            - Verify the job is collected under content_items.job_center as a JobCenter parser.
+        """
+        from demisto_sdk.commands.content_graph.parsers.job_center import (
+            JobCenterParser,
+        )
+
+        job_center = pack.create_job_center("CaseFollowup")
+        pack_parser = PackParser(Path(pack.path))
+        job_centers = pack_parser.content_items.job_center
+        assert len(job_centers) == 1
+        assert isinstance(job_centers[0], JobCenterParser)
+        assert job_centers[0].path == Path(job_center.path)
+        assert job_centers[0].object_id == "job-case-followup"

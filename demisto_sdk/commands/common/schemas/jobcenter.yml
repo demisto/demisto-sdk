@@ -1,0 +1,87 @@
+type: map
+mapping:
+  id:
+    type: str
+    required: true
+  version:
+    type: int
+    required: true
+  name:
+    type: str
+    required: true
+  description:
+    type: str
+  fromversion:
+    type: str
+  toversion:
+    type: str
+  system:
+    type: bool
+  locked:
+    type: bool
+  marketplaces:
+    type: seq
+    sequence:
+    - type: str
+      enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem', 'platform']
+  supportedModules:
+    type: seq
+    sequence:
+    - type: str
+  jobType:
+    type: str
+    required: true
+    enum: ['agent_to_entity']
+  jobName:
+    type: str
+    required: true
+  uniquenessKey:
+    type: str
+  metadata:
+    type: map
+    required: true
+    allowempty: true
+  entityType:
+    type: str
+    enum: ['case']
+  entityId:
+    type: str
+  assignee:
+    type: str
+  status:
+    type: str
+    enum: ['ENABLED', 'DISABLED', 'DONE', 'DONE_MANUALLY', 'TERMINATED']
+  triggerType:
+    type: str
+    required: true
+    enum: ['interval', 'onetime']
+  triggerSpec:
+    type: map
+    allowempty: true
+  queuePolicy:
+    type: str
+    enum: ['skip', 'cancel_prev', 'concurrent']
+  name:xsoar:
+    type: str
+  name:marketplacev2:
+    type: str
+  name:xpanse:
+    type: str
+  name:xsoar_saas:
+    type: str
+  name:xsoar_on_prem:
+    type: str
+  description:xsoar:
+    type: str
+  description:marketplacev2:
+    type: str
+  description:xpanse:
+    type: str
+  description:xsoar_saas:
+    type: str
+  description:xsoar_on_prem:
+    type: str
+  supportedFeatures:
+    type: seq
+    sequence:
+    - type: str

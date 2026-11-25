@@ -28,6 +28,7 @@ from demisto_sdk.commands.common.constants import (
     INCIDENT_TYPES_DIR,
     INDICATOR_FIELDS_DIR,
     INDICATOR_TYPES_DIR,
+    JOB_CENTERS_DIR,
     JOBS_DIR,
     KNOWLEDGE_DIR,
     LAYOUT_RULES_DIR,
@@ -108,6 +109,7 @@ DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES = frozenset(
         RELEASE_NOTES_DIR,
         DOC_FILES_DIR,
         JOBS_DIR,
+        JOB_CENTERS_DIR,
         PRE_PROCESS_RULES_DIR,
         LISTS_DIR,
         PARSING_RULES_DIR,
@@ -259,6 +261,13 @@ class InvalidKnowledgeFileName(InvalidPathException):
     )
 
 
+class InvalidJobCenterFileName(InvalidPathException):
+    message = (
+        "JobCenter files must be placed directly under JobCenters "
+        "with a .yml suffix, e.g. `JobCenters/{JobName}.yml`"
+    )
+
+
 class ExemptedPath(Exception, ABC):
     message: ClassVar[str]
 
@@ -341,6 +350,10 @@ def _validate(path: Path) -> None:
     if depth == 2:
         _validate_depth_two(path, first_level_folder, parts_after_packs)
 
+    if depth > 2 and first_level_folder == JOB_CENTERS_DIR:
+        # JobCenters is flat: Packs/myPack/JobCenters/<job>.yml
+        raise InvalidJobCenterFileName
+
 
 def _validate_depth_one(
     path: Path, pack_folder_name: str, first_level_folder: str
@@ -384,6 +397,9 @@ def _validate_depth_one(
             and path.suffix in xsiam_constraints.allowed_suffixes
         ):
             raise xsiam_constraints.exception
+
+    if first_level_folder == JOB_CENTERS_DIR and path.suffix != ".yml":
+        raise InvalidJobCenterFileName
 
     if first_level_folder == DOC_FILES_DIR and path.suffix in SUPPORTED_IMAGE_FORMATS:
         _validate_image_file_name(path.stem)
@@ -444,6 +460,10 @@ def _validate_depth_two(
         path.stem == path.parent.name and path.suffix == ".yml"
     ):
         raise InvalidKnowledgeFileName
+
+    elif first_level_folder == JOB_CENTERS_DIR:
+        # JobCenters is flat: Packs/myPack/JobCenters/<job>.yml
+        raise InvalidJobCenterFileName
 
 
 def _validate_image_file_name(image_name: str):

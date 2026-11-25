@@ -17,6 +17,7 @@ from demisto_sdk.commands.content_graph.objects.generic_type import GenericType
 from demisto_sdk.commands.content_graph.objects.incident_type import IncidentType
 from demisto_sdk.commands.content_graph.objects.indicator_field import IndicatorField
 from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.job_center import JobCenter
 from demisto_sdk.commands.content_graph.objects.knowledge import Knowledge
 from demisto_sdk.commands.content_graph.objects.layout import Layout
 from demisto_sdk.commands.content_graph.objects.layout_rule import LayoutRule
@@ -67,6 +68,7 @@ ContentTypes = Union[
     XSIAMDashboard,
     XSIAMReport,
     Knowledge,
+    JobCenter,
 ]
 
 

@@ -1,0 +1,4 @@
+changes:
+- description: Added support for the **JobCenter** content item type (Job Center jobs, platform marketplace).
+  type: feature
+pr_number: 5574

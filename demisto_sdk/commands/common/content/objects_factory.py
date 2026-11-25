@@ -29,6 +29,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     IndicatorType,
     Integration,
     Job,
+    JobCenter,
     Knowledge,
     Layout,
     LayoutRule,
@@ -109,6 +110,7 @@ TYPE_CONVERSION_BY_FileType = {
     FileType.AGENTIX_AGENT: AgentixAgent,
     FileType.AGENTIX_SKILL: AgentixSkill,
     FileType.KNOWLEDGE: Knowledge,
+    FileType.JOB_CENTER: JobCenter,
 }
 
 TYPE_CONVERSION_BY_FILE_NAME = {

@@ -48,6 +48,7 @@ from .agentix_agent.agentix_agent import AgentixAgent
 from .agentix_action.agentix_action import AgentixAction
 from .agentix_skill.agentix_skill import AgentixSkill
 from .knowledge.knowledge import Knowledge
+from .job_center.job_center import JobCenter
 
 __all__ = [
     name

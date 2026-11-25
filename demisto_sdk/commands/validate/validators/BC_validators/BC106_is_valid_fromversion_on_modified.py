@@ -10,6 +10,7 @@ from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.content_graph.objects.incident_type import IncidentType
 from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.job_center import JobCenter
 from demisto_sdk.commands.content_graph.objects.knowledge import Knowledge
 from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.script import Script
@@ -29,6 +30,7 @@ ContentTypes = Union[
     AgentixAgent,
     AgentixSkill,
     Knowledge,
+    JobCenter,
 ]
 
 

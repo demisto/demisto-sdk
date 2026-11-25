@@ -2627,6 +2627,8 @@ def test_string_to_bool_error(value: str):
         ("Packs/myPack/ReleaseNotes/1_0_0.json", FileType.RELEASE_NOTES_CONFIG),
         ("Packs/myPack/Lists/list.json", FileType.LISTS),
         ("Packs/myPack/Jobs/job.json", FileType.JOB),
+        ("Packs/myPack/JobCenters/jobcenter-x.yml", FileType.JOB_CENTER),
+        ("Packs/myPack/JobCenters/foo/foo.yml", None),
         (f"Packs/myPack/{INDICATOR_TYPES_DIR}/indicator.json", FileType.REPUTATION),
         (
             f"Packs/myPack/{XSIAM_DASHBOARDS_DIR}/dashboard.json",
@@ -2677,6 +2679,21 @@ def test_string_to_bool_error(value: str):
 )
 def test_find_type_by_path(path: Path, expected_type: Optional[FileType]):
     assert find_type_by_path(path) == expected_type
+
+
+def test_find_type_job_center(pack):
+    """
+    Given:
+        - A Job Center job under JobCenters/ and a legacy job under Jobs/.
+    When:
+        - Calling find_type.
+    Then:
+        - The Job Center resolves to FileType.JOB_CENTER and the legacy job to FileType.JOB.
+    """
+    job_center = pack.create_job_center("jobcenter-x")
+    legacy_job = pack.create_job(is_feed=False)
+    assert find_type(job_center.path, clear_cache=True) == FileType.JOB_CENTER
+    assert find_type(legacy_job.path, clear_cache=True) == FileType.JOB
 
 
 @pytest.mark.parametrize(

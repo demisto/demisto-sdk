@@ -11,6 +11,7 @@ from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
+    API_MODULE_ALREADY_INSERTED_PREFIX,
     IntegrationScriptUnifier,
 )
 from demisto_sdk.commands.prepare_content.tests.yml_unifier_test import (
@@ -629,13 +630,14 @@ def test_replace_imported_code__restores_deduplicated_import(mocker):
         script, IntegrationScriptUnifier.check_api_module_imports(script), Path()
     )
     yml_splitter = YmlSplitter(
-        input=f"{git_path()}/demisto_sdk/tests/test_files/modelingrule-OktaModelingRules.yml",
-        file_type="modelingrule",
+        input=f"{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml",
+        file_type="integration",
     )
 
     split_code = yml_splitter.replace_imported_code(unified)
 
     assert "from CApiModule import *" in split_code.splitlines()
+    assert API_MODULE_ALREADY_INSERTED_PREFIX not in split_code
 
 
 def test_input_file_data_parameter(mocker, monkeypatch):

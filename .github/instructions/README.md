@@ -21,7 +21,7 @@ loads it for any file in the workspace that matches.
 | [`validators.instructions.md`](validators.instructions.md) | `demisto_sdk/commands/validate/**/*.py` (new framework) |
 | [`legacy-validators.instructions.md`](legacy-validators.instructions.md) | `demisto_sdk/commands/common/hook_validations/**/*.py`, `validate/old_validate_manager.py`, `validate/tests/old_validators_test.py` |
 | [`integration-authoring.instructions.md`](integration-authoring.instructions.md) | `commands/{init,split,generate_integration,generate_yml_from_python,openapi_codegen,postman_codegen,generate_unit_tests,integration_diff}/**/*.py` |
-| [`lint.instructions.md`](lint.instructions.md) | `commands/lint/**/*.py`, `commands/xsoar_linter/**/*.py`, `commands/pre_commit/resources/pylint_plugins/**/*.py` |
+| [`lint.instructions.md`](lint.instructions.md) | `commands/lint/**/*.py`, `commands/xsoar_linter/**/*.py` |
 | [`scripts.instructions.md`](scripts.instructions.md) | `demisto_sdk/scripts/**/*.py` |
 | [`tests.instructions.md`](tests.instructions.md) | `**/tests/**/*.py`, `**/*_test.py`, `conftest.py` |
 | [`test-suite.instructions.md`](test-suite.instructions.md) | `TestSuite/**/*.py` |

@@ -1,0 +1,4 @@
+changes:
+- description: The ***xsoar-lint*** command no longer uses pylint. It runs the same rules with Python's built-in `ast` module, and reports the same codes and messages. pylint and the pylint plugins were removed, and `pylint` is no longer installed with demisto-sdk.
+  type: breaking
+pr_number: 5573

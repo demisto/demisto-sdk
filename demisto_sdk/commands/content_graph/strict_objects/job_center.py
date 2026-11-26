@@ -1,17 +1,18 @@
 """Strict (ST110) schema for the AgentiX Job Center ``JobCenter`` content item.
 
-The rules mirror the server-side validation (``domain/jobCenter.go`` and
-``services/jobcenter/validation.go``).
+The rules are based on the server's Job Center register validation
+(``domain/jobCenter.go`` and ``services/jobcenter/validation.go``).
 """
 
 from typing import Any, Dict, List, Optional
 
-from pydantic import Extra, Field, constr, root_validator, validator
+from pydantic import Field, constr, root_validator, validator
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     BaseOptionalVersionYaml,
+    CommonFields,
 )
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
@@ -21,7 +22,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     create_model,
 )
 
-# Server bounds are tenant-configurable; these are the server defaults.
+# Limits below are the server's default values.
 JOB_NAME_MAX_LENGTH = 128
 # Port of the server's RE2 jobNamePattern. Two Python/RE2 differences are bridged:
 # RE2's ``\s`` is ASCII-only, so it is spelled out as ``[\t\n\f\r ]`` (Python's
@@ -85,17 +86,11 @@ def _is_present(value: Any) -> bool:
 
 
 class _StrictJobCenter(BaseStrictModel):
-    class Config:
-        """
-        Unknown top-level fields are ignored (not forbidden), consistent with
-        Knowledge, so a job carrying a field not yet modeled here does not fail ST110.
-        """
-
-        extra = Extra.ignore
+    # No Config override: unknown keys are rejected (BaseStrictModel's
+    # Extra.forbid), since the exported schema is the contract handed to the server.
 
     supportedFeatures: Optional[SupportedFeaturesList] = None
-    id_: str = Field(..., alias="id")
-    version: int
+    common_fields: CommonFields = Field(..., alias="commonfields")  # type:ignore[valid-type]
     name: str
     description: Optional[str] = None
     system: Optional[bool] = None
@@ -119,10 +114,13 @@ class _StrictJobCenter(BaseStrictModel):
     trigger_spec: Optional[Dict[str, Any]] = Field(None, alias="triggerSpec")
     queue_policy: Optional[JobCenterQueuePolicy] = Field(None, alias="queuePolicy")
 
-    @validator("id_")
+    @validator("common_fields")
     def validate_id_not_empty(cls, value):
-        """Ensure the top-level ``id`` is a non-empty, non-whitespace string."""
-        assert isinstance(value, str) and value.strip(), "id must be a non-empty string"
+        """Ensure ``commonfields.id`` is a non-empty, non-whitespace string."""
+        job_id = getattr(value, "id", None)
+        assert (
+            isinstance(job_id, str) and job_id.strip()
+        ), "commonfields.id must be a non-empty string"
         return value
 
     @validator("job_metadata", "trigger_spec", pre=True)

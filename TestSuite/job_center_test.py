@@ -55,15 +55,15 @@ def test_create_job_center_default_content(pack: Pack):
     When:
         - Calling pack.create_job_center without yml.
     Then:
-        - The written content matches the default sample, with a top-level id and
-          version and no commonfields section.
+        - The written content matches the default sample, with id and version under
+          commonfields and not at the top level.
     """
     job_center = pack.create_job_center()
     data = get_file(job_center.path)
     assert data == _load_default_job_center()
-    assert data["id"] == "job-case-followup"
-    assert data["version"] == -1
-    assert "commonfields" not in data
+    assert data["commonfields"] == {"id": "job-case-followup", "version": -1}
+    assert "id" not in data
+    assert "version" not in data
 
 
 def test_create_default_job_center_overrides(pack: Pack):
@@ -73,16 +73,17 @@ def test_create_default_job_center_overrides(pack: Pack):
     When:
         - Calling create_default_job_center with a custom name and job_id.
     Then:
-        - The custom name and top-level id are written; the rest matches the sample.
+        - The custom name and commonfields.id are written; the rest matches the sample.
     """
     job_center = pack.create_job_center("custom")
     job_center.create_default_job_center(name="My Job", job_id="my-job-id")
     data = get_file(job_center.path)
     assert data["name"] == "My Job"
-    assert data["id"] == "my-job-id"
-    assert "commonfields" not in data
+    assert data["commonfields"]["id"] == "my-job-id"
+    assert "id" not in data
     expected = _load_default_job_center()
-    expected.update({"name": "My Job", "id": "my-job-id"})
+    expected["name"] = "My Job"
+    expected["commonfields"]["id"] = "my-job-id"
     assert data == expected
 
 

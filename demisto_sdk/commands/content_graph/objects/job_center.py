@@ -33,11 +33,12 @@ class JobCenter(ContentItem, content_type=ContentType.JOB_CENTER):  # type: igno
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:
-        """Match a ``.yml`` file located directly under a ``JobCenters`` folder."""
+        """Match a ``.yml`` file directly under a ``JobCenters`` folder that has
+        ``commonfields`` and ``jobType``."""
         return (
             isinstance(_dict, dict)
             and path.parent.name == JOB_CENTERS_DIR
             and path.suffix == ".yml"
-            and "id" in _dict
+            and "commonfields" in _dict
             and "jobType" in _dict
         )

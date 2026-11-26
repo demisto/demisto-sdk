@@ -1,11 +1,15 @@
 type: map
 mapping:
-  id:
-    type: str
+  commonfields:
+    type: map
     required: true
-  version:
-    type: int
-    required: true
+    mapping:
+      id:
+        type: str
+        required: true
+      version:
+        type: int
+        required: true
   name:
     type: str
     required: true

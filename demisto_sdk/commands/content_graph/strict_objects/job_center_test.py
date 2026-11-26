@@ -1,6 +1,6 @@
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import pytest
 from pydantic import ValidationError
@@ -19,14 +19,23 @@ def valid_job() -> Dict[str, Any]:
         return deepcopy(dict(yaml.load(f)))
 
 
-def build(**overrides: Any) -> Dict[str, Any]:
-    """Return a valid job with top-level overrides; a value of ``...`` removes the key."""
+def build(
+    common_fields: Optional[Dict[str, Any]] = None, **overrides: Any
+) -> Dict[str, Any]:
+    """Return a valid job with overrides; a value of ``...`` removes the key.
+
+    ``overrides`` apply to the top level, ``common_fields`` to ``commonfields``.
+    """
     data = valid_job()
-    for key, value in overrides.items():
-        if value is ...:
-            data.pop(key, None)
-        else:
-            data[key] = value
+    for target, changes in (
+        (data["commonfields"], common_fields or {}),
+        (data, overrides),
+    ):
+        for key, value in changes.items():
+            if value is ...:
+                target.pop(key, None)
+            else:
+                target[key] = value
     return data
 
 
@@ -89,18 +98,18 @@ class TestStrictJobCenterValid:
         """
         parse(build(triggerType="onetime", triggerSpec=..., queuePolicy=...))
 
-    def test_top_level_id_and_version(self):
+    def test_commonfields_id_and_version(self):
         """
         Given:
-            - The valid Job Center sample, which carries a top-level id and version.
+            - The valid Job Center sample, which carries id and version under commonfields.
         When:
             - Parsing it with StrictJobCenter.
         Then:
-            - No error is raised, and id/version are read from the top level.
+            - No error is raised, and id/version are read from commonfields.
         """
         parsed = StrictJobCenter(**valid_job())  # type:ignore[operator]
-        assert parsed.id_ == "job-case-followup"
-        assert parsed.version == -1
+        assert parsed.common_fields.id == "job-case-followup"
+        assert parsed.common_fields.version == -1
 
     def test_valid_sample_includes_queue_policy(self):
         """
@@ -116,22 +125,23 @@ class TestStrictJobCenterValid:
         assert data["queuePolicy"] == "skip"
 
 
-def test_commonfields_only_id_is_rejected():
+def test_top_level_id_and_version_are_rejected():
     """
     Given:
-        - A job carrying its id/version only under the legacy 'commonfields' key
-          (no top-level id/version).
+        - A job carrying its id/version at the top level instead of under commonfields.
     When:
         - Parsing it with StrictJobCenter.
     Then:
-        - A ValidationError is raised for the missing top-level id and version.
+        - A ValidationError is raised for the missing commonfields and for the
+          top-level id/version, which are unknown keys.
     """
-    data = build(id=..., version=...)
-    data["commonfields"] = {"id": "job-case-followup", "version": -1}
+    data = build(commonfields=..., id="job-case-followup", version=-1)
     with pytest.raises(ValidationError) as exc_info:
         parse(data)
-    missing = {error["loc"] for error in exc_info.value.errors()}
-    assert {("id",), ("version",)} <= missing
+    errors = {(error["loc"], error["type"]) for error in exc_info.value.errors()}
+    assert (("commonfields",), "value_error.missing") in errors
+    assert (("id",), "value_error.extra") in errors
+    assert (("version",), "value_error.extra") in errors
 
 
 def test_interval_without_queue_policy():
@@ -167,16 +177,42 @@ def test_interval_with_null_or_empty_queue_policy(queue_policy: Any):
         parse(build(queuePolicy=queue_policy))
 
 
-def test_unknown_top_level_field_is_ignored():
+@pytest.mark.parametrize(
+    "unknown_key",
+    [
+        pytest.param("someFutureField", id="unknown field"),
+        pytest.param("triggerSpecs", id="typo of triggerSpec"),
+    ],
+)
+def test_unknown_top_level_field_is_rejected(unknown_key: str):
     """
     Given:
-        - A job with an unknown top-level field.
+        - A job with an unknown top-level key.
     When:
         - Parsing it with StrictJobCenter.
     Then:
-        - No error is raised (Extra.ignore, consistent with Knowledge).
+        - A ValidationError (the ST110 source) reports the extra field.
     """
-    parse(build(someFutureField="x"))
+    with pytest.raises(ValidationError) as exc_info:
+        parse(build(**{unknown_key: "x"}))
+    assert {
+        "loc": (unknown_key,),
+        "msg": "extra fields not permitted",
+        "type": "value_error.extra",
+    } in exc_info.value.errors()
+
+
+def test_unknown_commonfields_key_is_rejected():
+    """
+    Given:
+        - A job with an unknown key under commonfields.
+    When:
+        - Parsing it with StrictJobCenter.
+    Then:
+        - A ValidationError reports the extra field.
+    """
+    with pytest.raises(ValidationError, match="extra fields not permitted"):
+        parse(build(common_fields={"unknownKey": "x"}))
 
 
 @pytest.mark.parametrize(
@@ -227,11 +263,8 @@ def test_unknown_top_level_field_is_ignored():
         pytest.param({"uniquenessKey": ""}, id="uniquenessKey empty"),
         pytest.param({"uniquenessKey": "k" * 257}, id="uniquenessKey 257 chars"),
         pytest.param({"name": ...}, id="name missing"),
-        pytest.param({"id": ""}, id="empty id"),
-        pytest.param({"id": "   "}, id="whitespace-only id"),
-        pytest.param({"id": ...}, id="id missing"),
-        pytest.param({"version": ...}, id="version missing"),
-        pytest.param({"version": "latest"}, id="version not int"),
+        pytest.param({"commonfields": ...}, id="commonfields missing"),
+        pytest.param({"commonfields": "x"}, id="commonfields not a mapping"),
         pytest.param({"system": "maybe"}, id="system not bool"),
         # RE2 parity for jobName
         pytest.param({"jobName": "Case Followup\n"}, id="jobName trailing newline"),
@@ -260,6 +293,35 @@ def test_invalid_job_center(overrides: Dict[str, Any]):
     """
     with pytest.raises(ValidationError):
         parse(build(**overrides))
+
+
+@pytest.mark.parametrize(
+    "common_fields, expected_message",
+    [
+        pytest.param({"id": ""}, "commonfields.id must be", id="empty id"),
+        pytest.param({"id": "   "}, "commonfields.id must be", id="whitespace-only id"),
+        pytest.param({"id": ...}, "commonfields.id must be", id="id missing"),
+        pytest.param({"version": ...}, "field required", id="version missing"),
+        pytest.param(
+            {"version": "latest"}, "not a valid integer", id="version not int"
+        ),
+    ],
+)
+def test_invalid_job_center_commonfields(
+    common_fields: Dict[str, Any], expected_message: str
+):
+    """
+    Given:
+        - A Job Center job with an invalid or missing commonfields.id/version.
+    When:
+        - Parsing it with StrictJobCenter.
+    Then:
+        - A ValidationError located under commonfields is raised.
+    """
+    with pytest.raises(ValidationError) as exc_info:
+        parse(build(common_fields=common_fields))
+    assert all(error["loc"][0] == "commonfields" for error in exc_info.value.errors())
+    assert expected_message in str(exc_info.value)
 
 
 @pytest.mark.parametrize(

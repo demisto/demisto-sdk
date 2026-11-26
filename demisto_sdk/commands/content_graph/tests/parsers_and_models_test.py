@@ -3834,7 +3834,7 @@ class TestJobCenterParser:
         When:
             - Creating the content item's parser and model.
         Then:
-            - Verify the generic properties (top-level id/version, platform only) are parsed.
+            - Verify the generic properties (commonfields id/version, platform only) are parsed.
             - Verify the job-specific properties are parsed.
             - Verify normalize_name uses the 'jobcenter-' server prefix.
             - Verify no structure errors are reported for a valid job.
@@ -3981,33 +3981,34 @@ class TestJobCenterParser:
         assert not JobCenter.match(job_dict, Path("Packs/X/JobCenters/foo.json"))
         assert not JobCenter.match(job_dict, Path("Packs/X/JobCenters/foo/foo.yml"))
 
-    def test_job_center_match_requires_top_level_id(self):
+    def test_job_center_match_requires_commonfields(self):
         """
         Given:
-            - A Job Center dict without a top-level 'id' (only a legacy
-              'commonfields.id', or no id at all).
+            - A valid Job Center dict (with 'commonfields'), and the same dict with
+              'commonfields' replaced by a top-level id/version.
         When:
             - Calling JobCenter.match on a yml directly under JobCenters.
         Then:
-            - Verify it is not matched.
+            - Verify only the dict carrying 'commonfields' is matched.
         """
         from demisto_sdk.commands.content_graph.objects.job_center import JobCenter
 
         path = Path("Packs/X/JobCenters/foo.yml")
         job_dict = load_yaml("job_center.yml")
-        job_dict.pop("id")
+        assert JobCenter.match(job_dict, path)
+        common_fields = job_dict.pop("commonfields")
         assert not JobCenter.match(job_dict, path)
-        job_dict["commonfields"] = {"id": "job-case-followup", "version": -1}
+        job_dict.update(common_fields)
         assert not JobCenter.match(job_dict, path)
 
-    def test_job_center_top_level_id_parses_and_passes_st110(self, pack: Pack):
+    def test_job_center_commonfields_id_parses_and_passes_st110(self, pack: Pack):
         """
         Given:
-            - A Job Center job with a top-level id and version.
+            - A Job Center job with id and version under commonfields.
         When:
             - Parsing it with JobCenterParser and building the model.
         Then:
-            - Verify object_id/version are read from the top level and there are no
+            - Verify object_id/version are read from commonfields and there are no
               structure (ST110) errors.
         """
         from demisto_sdk.commands.content_graph.objects.job_center import JobCenter
@@ -4016,8 +4017,7 @@ class TestJobCenterParser:
         )
 
         yml = load_yaml("job_center.yml")
-        yml["id"] = "my-job"
-        yml["version"] = -1
+        yml["commonfields"] = {"id": "my-job", "version": -1}
         job_center = pack.create_job_center("my-job", yml)
         parser = JobCenterParser(
             Path(job_center.path), list(MarketplaceVersions), pack_supported_modules=[]
@@ -4030,30 +4030,54 @@ class TestJobCenterParser:
         assert model.object_id == "my-job"
         assert model.version == -1
 
-    def test_job_center_commonfields_only_fails_st110(self, pack: Pack):
+    def test_job_center_top_level_id_fails_st110(self, pack: Pack):
         """
         Given:
-            - A Job Center job carrying its id/version only under the legacy
-              'commonfields' key.
+            - A Job Center job carrying its id/version at the top level instead of
+              under 'commonfields'.
         When:
             - Parsing it with JobCenterParser.
         Then:
-            - Verify structure (ST110) errors are reported for the missing top-level
-              id and version.
+            - Verify structure (ST110) errors are reported for the missing commonfields
+              and for the unknown top-level id and version keys.
         """
         from demisto_sdk.commands.content_graph.parsers.job_center import (
             JobCenterParser,
         )
 
         yml = load_yaml("job_center.yml")
-        yml["commonfields"] = {"id": yml.pop("id"), "version": yml.pop("version")}
-        job_center = pack.create_job_center("legacy-job", yml)
+        yml.update(yml.pop("commonfields"))
+        job_center = pack.create_job_center("top-level-id-job", yml)
         parser = JobCenterParser(
             Path(job_center.path), list(MarketplaceVersions), pack_supported_modules=[]
         )
         error_fields = {error.field_name for error in parser.structure_errors}
+        assert ("commonfields",) in error_fields
         assert ("id",) in error_fields
         assert ("version",) in error_fields
+
+    def test_job_center_unknown_key_fails_st110(self, pack: Pack):
+        """
+        Given:
+            - A Job Center job with an unknown top-level key ('triggerSpecs').
+        When:
+            - Parsing it with JobCenterParser.
+        Then:
+            - Verify an ST110 structure error is reported for that key.
+        """
+        from demisto_sdk.commands.content_graph.parsers.job_center import (
+            JobCenterParser,
+        )
+
+        yml = load_yaml("job_center.yml")
+        yml["triggerSpecs"] = {"intervalMinutes": 30, "count": 6}
+        job_center = pack.create_job_center("unknown-key-job", yml)
+        parser = JobCenterParser(
+            Path(job_center.path), list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        assert ("triggerSpecs",) in {
+            error.field_name for error in parser.structure_errors
+        }
 
     def test_job_center_default_fromversion(self, pack: Pack):
         """

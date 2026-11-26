@@ -1,5 +1,6 @@
-id: job-case-followup
-version: -1
+commonfields:
+  id: job-case-followup
+  version: -1
 name: Case Followup
 system: true
 locked: false

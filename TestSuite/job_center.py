@@ -16,7 +16,6 @@ class JobCenter(YAML):
 
     def __init__(self, tmpdir: Path, name: str, repo):
         self.name = name
-        self._repo = repo
         self.repo_path = repo.path
         super().__init__(
             tmp_path=tmpdir / f"{self.name}.yml",
@@ -37,10 +36,10 @@ class JobCenter(YAML):
 
         Args:
             name: The ``name`` of the job.
-            job_id: The top-level ``id`` of the job.
+            job_id: The ``commonfields.id`` of the job.
         """
         with open(DEFAULT_JOB_CENTER_PATH) as yml_file:
             yml = yaml.load(yml_file)
-        yml["id"] = job_id
+        yml["commonfields"]["id"] = job_id
         yml["name"] = name
         self.build(yml=yml)

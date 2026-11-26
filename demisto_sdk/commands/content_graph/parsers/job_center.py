@@ -75,8 +75,8 @@ class JobCenterParser(YAMLContentItemParser, content_type=ContentType.JOB_CENTER
     def field_mapping(self):
         super().field_mapping.update(
             {
-                "object_id": "id",
-                "version": "version",
+                "object_id": "commonfields.id",
+                "version": "commonfields.version",
             }
         )
         return super().field_mapping

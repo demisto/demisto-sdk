@@ -1,4 +1,4 @@
 changes:
-- description: Added the AgentixFlow content type, with graph parsing and preparation for upload. A flow is a `<Flow>.yml` content item with a `<Flow>_flow.json` flow-engine file and LangGraph code under `src/`; on dump, the SDK ships `agentixflow-<Flow>.yml`, `agentixflow-<Flow>.json` (with `zip_path` set) and a deterministic `agentixflow-<Flow>.zip` of the `src/` code.
+- description: Added the AgentixFlow content type, with graph parsing and preparation for upload. A flow is a `<Flow>.yml` content item with a `<Flow>_flow.json` flow-engine file and LangGraph code under `src/`. On dump, the SDK ships `agentixflow-<Flow>.yml`, a deterministic `agentixflow-<Flow>.zip` of the `src/` code, and `agentixflow-<Flow>.json`, which holds the flow's content fields (the shipped YAML, plus `fromversion`, `toversion` and `supportedModules` when the YAML leaves them out), the author's flow-engine keys, and `zip_path`.
   type: feature
 pr_number: 5559

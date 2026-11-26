@@ -1,7 +1,7 @@
 import zipfile
 from fnmatch import fnmatch
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import DirectoryPath
 
@@ -21,6 +21,9 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import write_dict
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.agentix_base import AgentixBase
+from demisto_sdk.commands.content_graph.strict_objects.agentix_flow import (
+    StrictAgentixFlow,
+)
 
 json = JSON_Handler()
 
@@ -28,6 +31,38 @@ json = JSON_Handler()
 _ZIP_DATE_TIME = (1980, 1, 1, 0, 0, 0)
 _ZIP_FILE_MODE = 0o644 << 16
 _ZIP_COMPRESSION = zipfile.ZIP_DEFLATED
+
+# Every flow YAML schema key; an author can't set these through ``_flow.json``.
+_SCHEMA_KEYS = frozenset(f.alias for f in StrictAgentixFlow.__fields__.values())
+
+
+def build_flow_json(
+    content: Dict[str, Any],
+    author_fields: Dict[str, Any],
+    zip_path: str,
+    source: str = "",
+) -> Dict[str, Any]:
+    """Merge the shipped flow JSON: content, then author keys, then ``zip_path``.
+
+    Reserved keys (flow YAML schema keys, keys in ``content`` and ``zip_path``)
+    win over same-named author keys, with a warning; any other author key
+    (e.g. ``langgraph_version``) is kept unchanged, in its original order.
+
+    Today ``author_fields`` comes from ``<FlowName>_flow.json``. If the JSON
+    becomes fully build-generated, callers pass the build-time values instead.
+    """
+    reserved = _SCHEMA_KEYS | set(content) | {AGENTIX_FLOW_ZIP_PATH_KEY}
+    if overridden := [k for k in author_fields if k in reserved]:
+        logger.warning(
+            f"AgentixFlow {source}: ignoring author-set "
+            f"{', '.join(repr(k) for k in overridden)}; these keys are generated "
+            "from the flow YAML at build time"
+        )
+    return {
+        **content,
+        **{k: v for k, v in author_fields.items() if k not in reserved},
+        AGENTIX_FLOW_ZIP_PATH_KEY: zip_path,
+    }
 
 
 class AgentixFlow(AgentixBase, content_type=ContentType.AGENTIX_FLOW):
@@ -39,8 +74,10 @@ class AgentixFlow(AgentixBase, content_type=ContentType.AGENTIX_FLOW):
     - ``<FlowName>_flow.json``: flow-engine metadata (``langgraph_version``).
     - ``src/**``: the LangGraph code.
 
-    ``dump`` writes the YAML plus ``agentixflow-<FlowName>.json`` (with
-    ``zip_path`` injected) and ``agentixflow-<FlowName>.zip`` (the code).
+    ``dump`` writes the YAML plus ``agentixflow-<FlowName>.json`` (the shipped
+    YAML, any missing ``fromversion`` / ``toversion`` / ``supportedModules``,
+    the author keys and ``zip_path``) and ``agentixflow-<FlowName>.zip``
+    (the code).
     """
 
     supportedModules: Optional[list[str]] = None
@@ -78,6 +115,11 @@ class AgentixFlow(AgentixBase, content_type=ContentType.AGENTIX_FLOW):
     ) -> None:
         """Dump the flow YAML, its companion JSON and the zipped ``src/`` code.
 
+        The YAML data is prepared once and is both the shipped YAML and the
+        start of the JSON, so the two never disagree. The JSON then gets
+        ``fromversion``, ``toversion`` and ``supportedModules`` when missing,
+        the author keys from ``<FlowName>_flow.json`` and ``zip_path``.
+
         Raises:
             ValueError: if the companion JSON is missing/invalid, has no
                 non-empty ``langgraph_version``, or ``src/`` has no code files.
@@ -86,20 +128,40 @@ class AgentixFlow(AgentixBase, content_type=ContentType.AGENTIX_FLOW):
             logger.warning(f"Could not find file {self.path}, skipping dump")
             return
         # Validate the companion files before writing anything.
-        flow_json = self._read_flow_json()
+        author_fields = self._read_flow_json()
         code_files = self._collect_code_files()
 
-        super().dump(dir, marketplace, **kwargs)
+        # Prepare once and write the result twice (the YAML, and the start of
+        # the JSON), as BaseScript.dump / ContentItemXSIAM.dump do; the base
+        # ContentItem.dump makes this same call internally.
+        prepared = self.prepare_for_upload(current_marketplace=marketplace, **kwargs)
+        dir.mkdir(exist_ok=True, parents=True)
+        write_dict(dir / self.normalize_name, data=prepared, handler=self.handler)
+
+        # Add the values the shipped YAML may leave out, in this order:
+        # - fromversion / toversion: the flow engine requires them, so the
+        #   model's values (parser defaults if unset) are added.
+        # - supportedModules: append_supported_modules strips it when it covers
+        #   the pack's list. Read from the model (item, else pack), because
+        #   prepare_for_upload mutated self.data in place.
+        content = dict(prepared)
+        modules = self.supportedModules or (
+            self.in_pack.supportedModules if self.in_pack else None
+        )
+        for key, value in (
+            ("fromversion", self.fromversion),
+            ("toversion", self.toversion),
+            ("supportedModules", modules),
+        ):
+            if value and key not in content:
+                content[key] = value
 
         zip_name = self.flow_zip_name
-        if flow_json.get(AGENTIX_FLOW_ZIP_PATH_KEY) not in (None, zip_name):
-            logger.debug(
-                f"Overwriting {AGENTIX_FLOW_ZIP_PATH_KEY} in {self.flow_json_path}"
-            )
-        flow_json[AGENTIX_FLOW_ZIP_PATH_KEY] = zip_name
         write_dict(
             dir / f"{Path(self.normalize_name).stem}.json",
-            data=flow_json,
+            data=build_flow_json(
+                content, author_fields, zip_name, source=str(self.flow_json_path)
+            ),
             handler=json,
             indent=4,
         )

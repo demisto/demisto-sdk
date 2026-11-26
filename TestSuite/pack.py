@@ -906,20 +906,36 @@ class Pack(TestSuiteBase):
         self,
         name: Optional[str] = None,
         yml: Optional[dict] = None,
+        flow_json: Optional[dict] = None,
+        src_files: Optional[Dict[str, str]] = None,
     ) -> AgentixFlow:
-        """Create a TestSuite ``AgentixFlow`` at ``AgentixFlows/<name>/<name>.yml``.
+        """Create a TestSuite ``AgentixFlow`` under ``AgentixFlows/<name>/``.
 
-        If ``yml`` is None, the default asset
-        ``assets/default_agentix_flow/agentix_flow-sample.yml`` is used.
+        Writes ``<name>.yml``, ``<name>_flow.json`` and ``src/**``. Any of
+        ``yml``, ``flow_json`` and ``src_files`` (relative path under ``src/``
+        to content) that is None falls back to the default assets in
+        ``assets/default_agentix_flow/``.
         """
         if name is None:
             name = f"agentix_flow-{len(self.agentix_flows)}"
         agentix_flow = AgentixFlow(self._agentix_flows_path, name, self._repo)
         if yml is None:
-            agentix_flow.create_default_agentix_flow()
+            agentix_flow.create_default_agentix_flow(
+                flow_json=flow_json, src_files=src_files
+            )
         else:
             agentix_flow.build(
                 yml,
+                flow_json=(
+                    flow_json
+                    if flow_json is not None
+                    else AgentixFlow.default_flow_json()
+                ),
+                src_files=(
+                    src_files
+                    if src_files is not None
+                    else AgentixFlow.default_src_files()
+                ),
             )
         self.agentix_flows.append(agentix_flow)
         return agentix_flow

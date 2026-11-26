@@ -1315,6 +1315,16 @@ DOCS_DIRECTORIES = [
 
 TESTS_AND_DOC_DIRECTORIES = TESTS_DIRECTORIES + DOCS_DIRECTORIES
 
+# AgentixFlow companion files, packaged next to the flow YAML at dump time.
+AGENTIX_FLOW_JSON_SUFFIX = "_flow.json"  # <FlowName>_flow.json
+AGENTIX_FLOW_CODE_DIR = "src"  # <FlowName>/src/**
+AGENTIX_FLOW_ZIP_PATH_KEY = "zip_path"
+AGENTIX_FLOW_LANGGRAPH_VERSION_KEY = "langgraph_version"
+# Matched recursively under src/. Extend later (e.g. "requirements.txt").
+AGENTIX_FLOW_ZIP_INCLUDE_GLOBS = ("*.py",)
+AGENTIX_FLOW_ZIP_EXCLUDE_FILE_GLOBS = ("test_*.py", "*_test.py", "conftest.py", ".*")
+AGENTIX_FLOW_ZIP_EXCLUDE_DIRS = frozenset(("__pycache__", *TESTS_DIRECTORIES))
+
 VALIDATION_USING_GIT_IGNORABLE_DATA = (
     "Pipfile",
     "Pipfile.lock",

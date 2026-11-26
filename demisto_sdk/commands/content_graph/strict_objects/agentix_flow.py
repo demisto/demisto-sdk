@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Union
+from typing import List, Optional, Union
 
 from pydantic import Extra, Field
 
@@ -15,8 +15,7 @@ class StrictAgentixFlow(BaseStrictModel):
     Unlike the other Agentix types, a flow has a top-level ``id`` and
     ``version`` and no ``commonfields`` block, so it does not inherit
     ``AgentixBase``. The remaining ``AgentixBase`` fields are redeclared here
-    and must be kept in sync with it by hand. ``definition`` is passed through
-    without deep validation.
+    and must be kept in sync with it by hand.
     """
 
     class Config:
@@ -43,4 +42,3 @@ class StrictAgentixFlow(BaseStrictModel):
     to_version: Optional[str] = Field(None, alias="toversion")
     marketplaces: Optional[Union[MarketplaceVersions, List[MarketplaceVersions]]] = None
     supportedModules: Optional[List[str]] = None
-    definition: Optional[Any] = None

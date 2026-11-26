@@ -752,6 +752,54 @@ def test_agentix_skill_file_at_depth_one_invalid():
         _validate(DUMMY_PACK_PATH / AGENTIX_SKILLS_DIR / "TestSkill.yml")
 
 
+@pytest.mark.parametrize(
+    "rel_path",
+    [
+        "TestFlow/TestFlow.yml",
+        "TestFlow/TestFlow_flow.json",
+        "TestFlow/src/graph.py",
+        "TestFlow/src/nodes/triage.py",
+    ],
+)
+def test_agentix_flow_file_valid(rel_path: str):
+    """
+    Given:
+        A valid agentix flow file: the YAML, the companion ``<F>_flow.json``,
+        or LangGraph code under ``src/`` (subfolders allowed).
+    When:
+        Running validate_path
+    Then:
+        Make sure the validation passes
+    """
+    _validate(DUMMY_PACK_PATH / AGENTIX_FLOWS_DIR / rel_path)
+
+
+@pytest.mark.parametrize(
+    "rel_path, exception",
+    [
+        ("TestFlow/graph.py", InvalidAgentixFlowFileName),
+        ("TestFlow/other.json", InvalidAgentixFlowFileName),
+        ("TestFlow/TestFlow.json", InvalidAgentixFlowFileName),
+        ("TestFlow/Other_flow.json", InvalidAgentixFlowFileName),
+        ("TestFlow/TestFlow.zip", InvalidSuffix),
+        ("TestFlow/src/a.zip", InvalidSuffix),
+        ("TestFlow.yml", InvalidAgentixFlowFileName),
+    ],
+)
+def test_agentix_flow_file_invalid(rel_path: str, exception):
+    """
+    Given:
+        An invalid agentix flow path: code or other JSON next to the YAML, a
+        wrongly named companion JSON, a zip, or a file at depth 1.
+    When:
+        Running validate_path
+    Then:
+        Make sure the expected exception is raised
+    """
+    with pytest.raises(exception):
+        _validate(DUMMY_PACK_PATH / AGENTIX_FLOWS_DIR / rel_path)
+
+
 def test_knowledge_file_valid():
     """
     Given:

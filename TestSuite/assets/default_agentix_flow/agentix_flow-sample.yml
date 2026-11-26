@@ -5,13 +5,3 @@ description: |-
     A sample agentix flow for testing purposes.
 marketplaces:
 - platform
-definition:
-  schema_version: '0.1'
-  flow_id: sample-agentix-flow
-  trigger:
-    type: sample-trigger
-  nodes:
-  - id: start
-    type: agent
-    config:
-      agent: sample-agent

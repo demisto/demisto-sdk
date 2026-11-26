@@ -12,8 +12,6 @@ mapping:
   description:
     type: str
     required: true
-  definition:
-    type: any
   tags:
     type: seq
     sequence:

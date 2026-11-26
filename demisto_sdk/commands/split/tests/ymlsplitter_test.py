@@ -640,6 +640,53 @@ def test_replace_imported_code__restores_deduplicated_import(mocker):
     assert API_MODULE_ALREADY_INSERTED_PREFIX not in split_code
 
 
+@pytest.mark.parametrize(
+    "script",
+    [
+        pytest.param(
+            "from AApiModule import *\ndef main():\n    pass",
+            id="API module importing another API module",
+        ),
+        pytest.param(
+            "from AApiModule import *\nfrom CApiModule import *\ndef main():\n    pass",
+            id="nested API module also imported directly",
+        ),
+    ],
+)
+def test_replace_imported_code__nested_api_modules(mocker, script):
+    """
+    Given:
+     - A unified integration in which AApiModule was inserted with CApiModule nested inside its generated code
+
+    When:
+     - calling replace_imported_code (split)
+
+    Then:
+     - Ensure the integration code is restored to its original imports, without leftovers of AApiModule code
+    """
+    modules_code = {
+        "AApiModule": "from CApiModule import *\nclass A(C):\n    pass",
+        "CApiModule": "class C:\n    pass",
+    }
+    mocker.patch.object(
+        IntegrationScriptUnifier,
+        "_get_api_module_code",
+        side_effect=lambda module_name, _: modules_code[module_name],
+    )
+    unified = IntegrationScriptUnifier.insert_module_code(
+        script, IntegrationScriptUnifier.check_api_module_imports(script), Path()
+    )
+    yml_splitter = YmlSplitter(
+        input=f"{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml",
+        file_type="integration",
+    )
+
+    split_code = yml_splitter.replace_imported_code(unified)
+
+    # unify adds a new line before the generated code
+    assert split_code == f"\n{script}"
+
+
 def test_input_file_data_parameter(mocker, monkeypatch):
     """
     Given: A unified YML file

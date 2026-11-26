@@ -33,7 +33,8 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
 
-REGEX_MODULE = r"### GENERATED CODE ###((.|\s)+?)### END GENERATED CODE ###"
+# matches a generated code block that does not contain another generated code block (the innermost one)
+REGEX_MODULE = r"### GENERATED CODE ###((?:(?!### GENERATED CODE ###)[\s\S])+?)### END GENERATED CODE ###"
 INTEGRATIONS_DOCS_REFERENCE = "https://xsoar.pan.dev/docs/reference/integrations/"
 
 
@@ -365,8 +366,15 @@ class YmlSplitter:
             "### GENERATED CODE ###:" in script
             and "### END GENERATED CODE ###" in script
         ):
-            matches = re.finditer(REGEX_MODULE, script)
-            for match in matches:
+            # restore imports of API modules that were not inserted since they were already inserted
+            script = re.sub(
+                rf"^{re.escape(API_MODULE_ALREADY_INSERTED_PREFIX)}",
+                "",
+                script,
+                flags=re.MULTILINE,
+            )
+            # replace the innermost generated code blocks first, to handle API modules nested in other API modules
+            while match := re.search(REGEX_MODULE, script):
                 code = match.group(1)
                 lines = code.split("\n")
                 imported_line = lines[0][
@@ -376,13 +384,6 @@ class YmlSplitter:
                     self.update_api_module_contribution(lines, imported_line)
                 logger.debug(f"Replacing code block with `{imported_line}`")
                 script = script.replace(match.group(), imported_line)
-            # restore imports of API modules that were not inserted since they were already inserted
-            script = re.sub(
-                rf"^{re.escape(API_MODULE_ALREADY_INSERTED_PREFIX)}",
-                "",
-                script,
-                flags=re.MULTILINE,
-            )
         return script
 
     def replace_section_headers_code(self, script: str) -> str:

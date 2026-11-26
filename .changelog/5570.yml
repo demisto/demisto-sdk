@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where the **prepare-content** command inlined the same API module more than once when it was also imported by another API module.
+  type: fix
+pr_number: 5570

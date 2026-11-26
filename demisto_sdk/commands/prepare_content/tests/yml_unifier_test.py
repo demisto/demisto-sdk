@@ -564,6 +564,81 @@ def test_insert_hierarchy_api_module(mocker):
     )
 
 
+def test_insert_module_code__shared_sub_module_inserted_once(mocker):
+    """
+    Given:
+     - An integration importing AApiModule and BApiModule, both of which import CApiModule
+
+    When:
+     - calling insert_module_code
+
+    Then:
+     - Ensure CApiModule is inlined exactly once
+     - Ensure CApiModule is inlined before both AApiModule and BApiModule code
+     - Ensure the duplicate import of CApiModule in BApiModule is replaced with a comment (same line count)
+    """
+    modules_code = {
+        "AApiModule": "from CApiModule import *\nclass A(C):\n    pass",
+        "BApiModule": "from CApiModule import *\nclass B(C):\n    pass",
+        "CApiModule": "class C:\n    pass",
+    }
+    mocker.patch.object(
+        IntegrationScriptUnifier,
+        "_get_api_module_code",
+        side_effect=lambda module_name, _: modules_code[module_name],
+    )
+    script = "from AApiModule import *\nfrom BApiModule import *\ndef main():\n    pass"
+
+    code = IntegrationScriptUnifier.insert_module_code(
+        script, IntegrationScriptUnifier.check_api_module_imports(script), Path()
+    )
+
+    assert code.count("class C:") == 1
+    assert code.count("register_module_line('CApiModule', 'start'") == 1
+    assert code.count("register_module_line('AApiModule', 'start'") == 1
+    assert code.count("register_module_line('BApiModule', 'start'") == 1
+    assert (
+        code.index("class C:") < code.index("class A(C):") < code.index("class B(C):")
+    )
+    assert "\nfrom CApiModule import *" not in code
+    assert (
+        "# ### API MODULE ALREADY INSERTED ###: from CApiModule import *\nclass B(C):"
+        in code
+    )
+
+
+def test_insert_module_code__direct_and_transitive_import_inserted_once(mocker):
+    """
+    Given:
+     - An integration importing AApiModule (which imports CApiModule) and also importing CApiModule directly
+
+    When:
+     - calling insert_module_code
+
+    Then:
+     - Ensure CApiModule is inlined exactly once
+     - Ensure the generated-code header of CApiModule is not corrupted (so split can still restore it)
+    """
+    modules_code = {
+        "AApiModule": "from CApiModule import *\nclass A(C):\n    pass",
+        "CApiModule": "class C:\n    pass",
+    }
+    mocker.patch.object(
+        IntegrationScriptUnifier,
+        "_get_api_module_code",
+        side_effect=lambda module_name, _: modules_code[module_name],
+    )
+    script = "from AApiModule import *\nfrom CApiModule import *\ndef main():\n    pass"
+
+    code = IntegrationScriptUnifier.insert_module_code(
+        script, IntegrationScriptUnifier.check_api_module_imports(script), Path()
+    )
+
+    assert code.count("class C:") == 1
+    assert code.count("### GENERATED CODE ###: from CApiModule import *\n") == 1
+    assert code.count("### GENERATED CODE ###: from AApiModule import *\n") == 1
+
+
 def test_insert_pack_version_and_script_to_yml_js_and_ps1():
     """
     Given:

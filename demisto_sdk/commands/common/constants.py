@@ -142,6 +142,7 @@ AGENTIX_ACTIONS_DIR = "AgentixActions"
 AGENTIX_AGENTS_DIR = "AgentixAgents"
 AGENTIX_SKILLS_DIR = "AgentixSkills"
 KNOWLEDGE_DIR = "Knowledge"
+JOB_CENTERS_DIR = "JobCenters"
 
 # NAMES OF ENTITIES
 
@@ -303,6 +304,7 @@ class FileType(StrEnum):
     AGENTIX_ACTION = "agentixaction"
     AGENTIX_SKILL = "agentixskill"
     KNOWLEDGE = "knowledge"
+    JOB_CENTER = "jobcenter"
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -347,6 +349,7 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.AGENTIX_ACTION: "Actions",
     FileType.AGENTIX_SKILL: "Skills",
     FileType.KNOWLEDGE: "Knowledge",
+    FileType.JOB_CENTER: "Job Center Jobs",
 }
 
 FILE_TYPE_BY_RN_HEADER = {
@@ -392,6 +395,7 @@ ENTITY_TYPE_TO_DIR = {
     FileType.CASE_LAYOUT.value: CASE_LAYOUTS_DIR,
     FileType.CASE_LAYOUT_RULE.value: CASE_LAYOUT_RULES_DIR,
     FileType.KNOWLEDGE.value: KNOWLEDGE_DIR,
+    FileType.JOB_CENTER.value: JOB_CENTERS_DIR,
 }
 
 SIEM_ONLY_ENTITIES = [
@@ -459,6 +463,7 @@ CONTENT_ENTITIES_DIRS = [
     AGENTIX_AGENTS_DIR,
     AGENTIX_SKILLS_DIR,
     KNOWLEDGE_DIR,
+    JOB_CENTERS_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -1672,6 +1677,7 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.AGENTIX_AGENT: "8.12.0",
     FileType.AGENTIX_SKILL: "8.15.0",
     FileType.KNOWLEDGE: "8.15.0",
+    FileType.JOB_CENTER: "8.10.0",
 }
 
 DEFAULT_PYTHON_VERSION = "3.11"

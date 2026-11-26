@@ -1,0 +1,26 @@
+commonfields:
+  id: job-case-followup
+  version: -1
+name: Case Followup
+system: true
+locked: false
+fromversion: 8.10.0
+marketplaces:
+- platform
+supportedModules:
+- agentix
+jobType: agent_to_entity
+jobName: Case Followup
+uniquenessKey: case-followup
+metadata:
+  agent_id: followup-agent
+  prompt_id: followup-prompt
+entityType: case
+entityId: "1234"
+assignee: analyst@example.com
+status: ENABLED
+triggerType: interval
+triggerSpec:
+  intervalMinutes: 30
+  count: 6
+queuePolicy: skip

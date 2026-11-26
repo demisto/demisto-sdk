@@ -12,6 +12,8 @@ from demisto_sdk.commands.common.constants import (
     DOC_FILES_DIR,
     DOCS_DIRECTORIES,
     INTEGRATIONS_DIR,
+    JOB_CENTERS_DIR,
+    JOBS_DIR,
     KNOWLEDGE_DIR,
     LAYOUTS_DIR,
     PACKS_FOLDER,
@@ -40,6 +42,7 @@ from demisto_sdk.scripts.validate_content_path import (
     InvalidImageFileName,
     InvalidIntegrationScriptFileName,
     InvalidIntegrationScriptFileType,
+    InvalidJobCenterFileName,
     InvalidKnowledgeFileName,
     InvalidLayoutFileName,
     InvalidModelingRuleFileName,
@@ -229,7 +232,7 @@ def test_content_entities_dir_length():
     If this test failed, it's likely you modified either CONTENT_ENTITIES_DIRS or FOLDERS_ALLOWED_TO_CONTAIN_FILES.
     Update the test values accordingly.
     """
-    assert len(set(DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES)) == 35
+    assert len(set(DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES)) == 36
 
     # change this one if you added a content item folder that can't have files directly under it
     assert (
@@ -238,7 +241,7 @@ def test_content_entities_dir_length():
                 CONTENT_ENTITIES_DIRS
             )
         )
-        == 27
+        == 28
     )
 
 
@@ -324,6 +327,7 @@ def test_depth_one_pass(folder: str):
         InvalidAgentixActionFileName,
         InvalidAgentixSkillFileName,
         InvalidKnowledgeFileName,
+        InvalidJobCenterFileName,
     ):
         # In Integration/script, InvalidIntegrationScriptFileType will be raised but is irrelevant for this test.
         # InvalidXDRCTemplatesFileName will be raised but it is irrelevant for this test.
@@ -913,3 +917,61 @@ class TestAgentixActionsPathValidation:
 
         with pytest.raises(InvalidAgentixActionFileName):
             _validate(path)
+
+
+def test_job_center_file_valid():
+    """
+    Given:
+        - A Job Center job placed directly under JobCenters/.
+    When:
+        - Running validate_path.
+    Then:
+        - Make sure the validation passes.
+    """
+    _validate(DUMMY_PACK_PATH / JOB_CENTERS_DIR / "jobcenter-case-followup.yml")
+
+
+@pytest.mark.parametrize("file_name", ["jobcenter-x.json", "jobcenter-x.md"])
+def test_job_center_file_invalid_suffix(file_name: str):
+    """
+    Given:
+        - A file directly under JobCenters/ with a non-yml suffix.
+    When:
+        - Running validate_path.
+    Then:
+        - Make sure the validation raises InvalidJobCenterFileName.
+    """
+    with pytest.raises(InvalidJobCenterFileName):
+        _validate(DUMMY_PACK_PATH / JOB_CENTERS_DIR / file_name)
+
+
+@pytest.mark.parametrize(
+    "relative_path",
+    [
+        pytest.param(("foo", "foo.yml"), id="depth two"),
+        pytest.param(("foo", "bar", "foo.yml"), id="depth three"),
+    ],
+)
+def test_job_center_nested_file_invalid(relative_path: tuple):
+    """
+    Given:
+        - A Job Center yml nested in a sub-folder of JobCenters/.
+    When:
+        - Running validate_path.
+    Then:
+        - Make sure the validation raises InvalidJobCenterFileName (JobCenters is flat).
+    """
+    with pytest.raises(InvalidJobCenterFileName):
+        _validate(DUMMY_PACK_PATH / JOB_CENTERS_DIR / Path(*relative_path))
+
+
+def test_legacy_job_file_still_valid():
+    """
+    Given:
+        - A legacy XSOAR job json directly under Jobs/.
+    When:
+        - Running validate_path.
+    Then:
+        - Make sure the validation still passes.
+    """
+    _validate(DUMMY_PACK_PATH / JOBS_DIR / "job-foo.json")

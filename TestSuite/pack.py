@@ -11,6 +11,7 @@ from demisto_sdk.commands.common.constants import (
     CASE_LAYOUTS_DIR,
     CORRELATION_RULES_DIR,
     DEFAULT_IMAGE_BASE64,
+    JOB_CENTERS_DIR,
     KNOWLEDGE_DIR,
     LAYOUT_RULES_DIR,
     MODELING_RULES_DIR,
@@ -41,6 +42,7 @@ from TestSuite.indicator_field import IndicatorField
 from TestSuite.indicator_type import IndicatorType
 from TestSuite.integration import Integration
 from TestSuite.job import Job
+from TestSuite.job_center import JobCenter
 from TestSuite.json_based import JSONBased
 from TestSuite.knowledge import Knowledge
 from TestSuite.layout import Layout
@@ -130,6 +132,7 @@ class Pack(TestSuiteBase):
         self.agentix_agents: List[AgentixAgent] = list()
         self.agentix_skills: List[AgentixSkill] = list()
         self.knowledges: List[Knowledge] = list()
+        self.job_centers: List[JobCenter] = list()
 
         # Create base pack
         self._pack_path = packs_dir / self.name
@@ -281,6 +284,9 @@ class Pack(TestSuiteBase):
 
         self._knowledges_path = self._pack_path / KNOWLEDGE_DIR
         self._knowledges_path.mkdir(exist_ok=True)
+
+        self._job_centers_path = self._pack_path / JOB_CENTERS_DIR
+        self._job_centers_path.mkdir(exist_ok=True)
 
         super().__init__(self._pack_path)
 
@@ -909,3 +915,24 @@ class Pack(TestSuiteBase):
         )
         self.knowledges.append(knowledge)
         return knowledge
+
+    def create_job_center(
+        self,
+        name: Optional[str] = None,
+        yml: Optional[dict] = None,
+    ) -> JobCenter:
+        """Create a TestSuite ``JobCenter`` under this pack's ``JobCenters/`` folder.
+
+        Args:
+            name: The file name (without suffix). Defaults to ``jobcenter-<index>``.
+            yml: Optional yml content. When omitted, the default job is written.
+        """
+        if name is None:
+            name = f"jobcenter-{len(self.job_centers)}"
+        job_center = JobCenter(self._job_centers_path, name, self._repo)
+        if yml is None:
+            job_center.create_default_job_center()
+        else:
+            job_center.build(yml)
+        self.job_centers.append(job_center)
+        return job_center

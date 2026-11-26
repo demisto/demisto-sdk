@@ -27,6 +27,7 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_indicator_field_object,
     create_indicator_type_object,
     create_integration_object,
+    create_job_center_object,
     create_job_object,
     create_layout_object,
     create_list_object,
@@ -5089,3 +5090,66 @@ def test_InvalidSupportedModulesForFetchTypeValidator_all_required_params_have_t
         f"Required params missing a SERVER_LEVEL_PARAM_TEMPLATES entry: "
         f"{sorted(missing_templates)}"
     )
+
+
+@pytest.mark.parametrize(
+    "fromversion, expected_number_of_failures",
+    [
+        pytest.param("8.10.0", 0, id="minimum 8.10.0 passes"),
+        pytest.param("8.15.0", 0, id="above minimum passes"),
+        pytest.param("8.9.0", 1, id="below minimum fails"),
+    ],
+)
+def test_IsFromVersionSufficientAllItemsValidator_job_center(
+    fromversion: str, expected_number_of_failures: int
+):
+    """
+    Given:
+        - A JobCenter content item with fromversion 8.10.0, 8.15.0 or 8.9.0.
+    When:
+        - Calling the IsFromVersionSufficientAllItemsValidator (BA106) obtain_invalid_content_items function.
+    Then:
+        - 8.10.0 (the JobCenter minimum) and above pass.
+        - 8.9.0 fails with a message requiring at least 8.10.0.
+    """
+    job_center = create_job_center_object(paths=["fromversion"], values=[fromversion])
+    results = IsFromVersionSufficientAllItemsValidator().obtain_invalid_content_items(
+        [job_center]
+    )
+    assert len(results) == expected_number_of_failures
+    if expected_number_of_failures:
+        assert results[0].message == (
+            "The JobCenter from version field is either missing or insufficient, "
+            f"need at least 8.10.0, current is {fromversion}."
+        )
+
+
+@pytest.mark.parametrize(
+    "supported_modules, expected_number_of_failures",
+    [
+        pytest.param(["agentix"], 0, id="agentix valid"),
+        pytest.param(["xsiam", "edr", "cloud"], 0, id="any platform module valid"),
+        pytest.param(["not_a_module"], 1, id="unknown module invalid"),
+        pytest.param(["agentix", "not_a_module"], 1, id="mixed valid and unknown"),
+    ],
+)
+def test_InvalidSupportedModulesValidator_job_center(
+    supported_modules: List[str], expected_number_of_failures: int
+):
+    """
+    Given:
+        - A platform JobCenter content item declaring the given supportedModules.
+    When:
+        - Calling the InvalidSupportedModulesValidator (BA131) obtain_invalid_content_items function.
+    Then:
+        - Any value of PlatformSupportedModules passes (JobCenter allows the full set,
+          like AgentixAgent/AgentixAction).
+        - An unknown module fails, and the message names it.
+    """
+    content_item = _platform_item(create_job_center_object, supported_modules)
+    results = InvalidSupportedModulesValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == expected_number_of_failures
+    if expected_number_of_failures:
+        assert "not_a_module" in results[0].message

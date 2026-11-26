@@ -24,6 +24,7 @@ from demisto_sdk.commands.content_graph.objects.indicator_field import Indicator
 from demisto_sdk.commands.content_graph.objects.indicator_type import IndicatorType
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.job import Job
+from demisto_sdk.commands.content_graph.objects.job_center import JobCenter
 from demisto_sdk.commands.content_graph.objects.layout import Layout
 from demisto_sdk.commands.content_graph.objects.layout_rule import LayoutRule
 from demisto_sdk.commands.content_graph.objects.list import List as ListObject
@@ -56,6 +57,7 @@ ContentTypes = Union[
     IndicatorType,
     Integration,
     Job,
+    JobCenter,
     Layout,
     LayoutRule,
     ListObject,
@@ -83,6 +85,7 @@ ALLOWED_MODULES_BY_TYPE: Dict[type, Set[str]] = {
     Trigger: ALL_SUPPORTED_MODULES,
     AgentixAgent: ALL_SUPPORTED_MODULES,
     AgentixAction: ALL_SUPPORTED_MODULES,
+    JobCenter: ALL_SUPPORTED_MODULES,
     ListObject: ALL_SUPPORTED_MODULES,
     # xsiam + agentix.
     Classifier: XSIAM_AND_AGENTIX_MODULES,

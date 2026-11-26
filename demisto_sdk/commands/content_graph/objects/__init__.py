@@ -44,6 +44,7 @@ __all__ = [
     "AgentixActionTest",
     "AgentixSkill",
     "Knowledge",
+    "JobCenter",
 ]
 
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
@@ -75,6 +76,7 @@ from demisto_sdk.commands.content_graph.objects.indicator_field import Indicator
 from demisto_sdk.commands.content_graph.objects.indicator_type import IndicatorType
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.job import Job
+from demisto_sdk.commands.content_graph.objects.job_center import JobCenter
 from demisto_sdk.commands.content_graph.objects.knowledge import Knowledge
 from demisto_sdk.commands.content_graph.objects.layout import Layout
 from demisto_sdk.commands.content_graph.objects.layout_rule import LayoutRule

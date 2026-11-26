@@ -35,6 +35,7 @@ from demisto_sdk.commands.content_graph.objects.indicator_field import Indicator
 from demisto_sdk.commands.content_graph.objects.indicator_type import IndicatorType
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.job import Job
+from demisto_sdk.commands.content_graph.objects.job_center import JobCenter
 from demisto_sdk.commands.content_graph.objects.layout import Layout
 from demisto_sdk.commands.content_graph.objects.list import List as ListObject
 from demisto_sdk.commands.content_graph.objects.mapper import Mapper
@@ -57,6 +58,7 @@ from demisto_sdk.commands.content_graph.parsers.agentix_action import (
 from demisto_sdk.commands.content_graph.parsers.agentix_agent import AgentixAgentParser
 from demisto_sdk.commands.content_graph.parsers.agentix_skill import AgentixSkillParser
 from demisto_sdk.commands.content_graph.parsers.connector import ConnectorParser
+from demisto_sdk.commands.content_graph.parsers.job_center import JobCenterParser
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.parsers.parsing_rule import (
     ParsingRuleParser,
@@ -1036,6 +1038,35 @@ def create_agentix_skill_object(
         Path(agentix_skill.path), list(MarketplaceVersions), pack_supported_modules=[]
     )
     return AgentixSkill.from_orm(parser)
+
+
+def create_job_center_object(
+    paths: Optional[List[str]] = None,
+    values: Optional[List[Any]] = None,
+    pack_info: Optional[Dict[str, Any]] = None,
+    job_name: Optional[str] = None,
+) -> JobCenter:
+    """Create a JobCenter object with altered fields from the default job_center.yml fixture.
+
+    Args:
+        paths: Dotted key paths to update.
+        values: Values matching ``paths``.
+        pack_info: Optional pack metadata overrides.
+        job_name: Optional file name of the job.
+
+    Returns:
+        The JobCenter object.
+    """
+    yml_content = load_yaml("job_center.yml")
+    update_keys(yml_content, paths, values)
+    pack = REPO.create_pack()
+    if pack_info:
+        pack.set_data(**pack_info)
+    job_center = pack.create_job_center(name=job_name, yml=yml_content)
+    parser = JobCenterParser(
+        Path(job_center.path), list(MarketplaceVersions), pack_supported_modules=[]
+    )
+    return JobCenter.from_orm(parser)
 
 
 def create_connector_object(

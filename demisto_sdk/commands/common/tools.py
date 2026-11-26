@@ -86,6 +86,7 @@ from demisto_sdk.commands.common.constants import (
     INDICATOR_TYPES_DIR,
     INTEGRATIONS_DIR,
     ISO_TIMESTAMP_FORMAT,
+    JOB_CENTERS_DIR,
     JOBS_DIR,
     KNOWLEDGE_DIR,
     LAYOUT_RULES_DIR,
@@ -1862,6 +1863,10 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
         elif KNOWLEDGE_DIR in path.parts:
             return FileType.KNOWLEDGE
 
+        elif path.parent.name == JOB_CENTERS_DIR:
+            # Packs/myPack/JobCenters/<job>.yml (flat folder, no sub-folders)
+            return FileType.JOB_CENTER
+
     elif path.name == FileType.PACK_IGNORE:
         return FileType.PACK_IGNORE
 
@@ -1941,6 +1946,7 @@ def find_type(
         IndicatorType,
         Integration,
         Job,
+        JobCenter,
         Knowledge,
         Layout,
         LayoutRule,
@@ -2131,6 +2137,9 @@ def find_type(
 
     if Knowledge.match(_dict, Path(path)):
         return FileType.KNOWLEDGE
+
+    if JobCenter.match(_dict, Path(path)):
+        return FileType.JOB_CENTER
 
     return None
 

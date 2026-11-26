@@ -4,6 +4,7 @@ from typing import Dict, List, Optional
 from demisto_sdk.commands.common.constants import (
     AGENTIX_ACTIONS_DIR,
     AGENTIX_AGENTS_DIR,
+    AGENTIX_FLOWS_DIR,
     AGENTIX_SKILLS_DIR,
     ASSETS_MODELING_RULES_DIR,
     CASE_FIELDS_DIR,
@@ -22,6 +23,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from TestSuite.agentix_action import AgentixAction
 from TestSuite.agentix_agent import AgentixAgent
+from TestSuite.agentix_flow import AgentixFlow
 from TestSuite.agentix_skill import AgentixSkill
 from TestSuite.case_field import CaseField
 from TestSuite.case_layout import CaseLayout
@@ -129,6 +131,7 @@ class Pack(TestSuiteBase):
         self.agentix_actions: List[AgentixAction] = list()
         self.agentix_agents: List[AgentixAgent] = list()
         self.agentix_skills: List[AgentixSkill] = list()
+        self.agentix_flows: List[AgentixFlow] = list()
         self.knowledges: List[Knowledge] = list()
 
         # Create base pack
@@ -278,6 +281,9 @@ class Pack(TestSuiteBase):
 
         self._agentix_skills_path = self._pack_path / AGENTIX_SKILLS_DIR
         self._agentix_skills_path.mkdir(exist_ok=True)
+
+        self._agentix_flows_path = self._pack_path / AGENTIX_FLOWS_DIR
+        self._agentix_flows_path.mkdir(exist_ok=True)
 
         self._knowledges_path = self._pack_path / KNOWLEDGE_DIR
         self._knowledges_path.mkdir(exist_ok=True)
@@ -895,6 +901,44 @@ class Pack(TestSuiteBase):
         )
         self.agentix_skills.append(agentix_skill)
         return agentix_skill
+
+    def create_agentix_flow(
+        self,
+        name: Optional[str] = None,
+        yml: Optional[dict] = None,
+        flow_json: Optional[dict] = None,
+        src_files: Optional[Dict[str, str]] = None,
+    ) -> AgentixFlow:
+        """Create a TestSuite ``AgentixFlow`` under ``AgentixFlows/<name>/``.
+
+        Writes ``<name>.yml``, ``<name>_flow.json`` and ``src/**``. Any of
+        ``yml``, ``flow_json`` and ``src_files`` (relative path under ``src/``
+        to content) that is None falls back to the default assets in
+        ``assets/default_agentix_flow/``.
+        """
+        if name is None:
+            name = f"agentix_flow-{len(self.agentix_flows)}"
+        agentix_flow = AgentixFlow(self._agentix_flows_path, name, self._repo)
+        if yml is None:
+            agentix_flow.create_default_agentix_flow(
+                flow_json=flow_json, src_files=src_files
+            )
+        else:
+            agentix_flow.build(
+                yml,
+                flow_json=(
+                    flow_json
+                    if flow_json is not None
+                    else AgentixFlow.default_flow_json()
+                ),
+                src_files=(
+                    src_files
+                    if src_files is not None
+                    else AgentixFlow.default_src_files()
+                ),
+            )
+        self.agentix_flows.append(agentix_flow)
+        return agentix_flow
 
     def create_knowledge(
         self,

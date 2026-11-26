@@ -22,6 +22,7 @@ from demisto_sdk.commands.content_graph.objects.agentix_action_test import (
     AgentixActionTest,
 )
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
+from demisto_sdk.commands.content_graph.objects.agentix_flow import AgentixFlow
 from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
@@ -359,7 +360,14 @@ def should_skip_rn_check(content_item: ContentItem) -> bool:
         return not is_pack_move(content_item)
     if isinstance(
         content_item,
-        (AgentixAction, AgentixActionTest, AgentixAgent, AgentixSkill, Knowledge),
+        (
+            AgentixAction,
+            AgentixActionTest,
+            AgentixAgent,
+            AgentixFlow,
+            AgentixSkill,
+            Knowledge,
+        ),
     ) or (isinstance(content_item, Script) and content_item.is_llm):
         return True
     return content_item.git_status is None

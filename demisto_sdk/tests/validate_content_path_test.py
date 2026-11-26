@@ -5,6 +5,7 @@ import pytest
 from demisto_sdk.commands.common.constants import (
     AGENTIX_ACTIONS_DIR,
     AGENTIX_AGENTS_DIR,
+    AGENTIX_FLOWS_DIR,
     AGENTIX_SKILLS_DIR,
     CLASSIFIERS_DIR,
     CONTENT_ENTITIES_DIRS,
@@ -31,6 +32,7 @@ from demisto_sdk.scripts.validate_content_path import (
     ZERO_DEPTH_FILES,
     InvalidAgentixActionFileName,
     InvalidAgentixAgentFileName,
+    InvalidAgentixFlowFileName,
     InvalidAgentixSkillFileName,
     InvalidClassifier,
     InvalidCorrelationRuleFileName,
@@ -247,6 +249,7 @@ folders_not_allowed_to_contain_files = (
 ).difference(DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES) - {
     AGENTIX_ACTIONS_DIR,
     AGENTIX_AGENTS_DIR,
+    AGENTIX_FLOWS_DIR,
     AGENTIX_SKILLS_DIR,
     KNOWLEDGE_DIR,
 }
@@ -323,6 +326,7 @@ def test_depth_one_pass(folder: str):
         InvalidAgentixAgentFileName,
         InvalidAgentixActionFileName,
         InvalidAgentixSkillFileName,
+        InvalidAgentixFlowFileName,
         InvalidKnowledgeFileName,
     ):
         # In Integration/script, InvalidIntegrationScriptFileType will be raised but is irrelevant for this test.
@@ -331,6 +335,7 @@ def test_depth_one_pass(folder: str):
         # InvalidAgentixAgentFileName will be raised but it is irrelevant for this test.
         # InvalidAgentixActionFileName will be raised but it is irrelevant for this test.
         # InvalidAgentixSkillFileName will be raised but it is irrelevant for this test.
+        # InvalidAgentixFlowFileName will be raised but it is irrelevant for this test.
         pass
 
 
@@ -745,6 +750,54 @@ def test_agentix_skill_file_at_depth_one_invalid():
     """
     with pytest.raises(InvalidAgentixSkillFileName):
         _validate(DUMMY_PACK_PATH / AGENTIX_SKILLS_DIR / "TestSkill.yml")
+
+
+@pytest.mark.parametrize(
+    "rel_path",
+    [
+        "TestFlow/TestFlow.yml",
+        "TestFlow/TestFlow_flow.json",
+        "TestFlow/src/graph.py",
+        "TestFlow/src/nodes/triage.py",
+    ],
+)
+def test_agentix_flow_file_valid(rel_path: str):
+    """
+    Given:
+        A valid agentix flow file: the YAML, the companion ``<F>_flow.json``,
+        or LangGraph code under ``src/`` (subfolders allowed).
+    When:
+        Running validate_path
+    Then:
+        Make sure the validation passes
+    """
+    _validate(DUMMY_PACK_PATH / AGENTIX_FLOWS_DIR / rel_path)
+
+
+@pytest.mark.parametrize(
+    "rel_path, exception",
+    [
+        ("TestFlow/graph.py", InvalidAgentixFlowFileName),
+        ("TestFlow/other.json", InvalidAgentixFlowFileName),
+        ("TestFlow/TestFlow.json", InvalidAgentixFlowFileName),
+        ("TestFlow/Other_flow.json", InvalidAgentixFlowFileName),
+        ("TestFlow/TestFlow.zip", InvalidSuffix),
+        ("TestFlow/src/a.zip", InvalidSuffix),
+        ("TestFlow.yml", InvalidAgentixFlowFileName),
+    ],
+)
+def test_agentix_flow_file_invalid(rel_path: str, exception):
+    """
+    Given:
+        An invalid agentix flow path: code or other JSON next to the YAML, a
+        wrongly named companion JSON, a zip, or a file at depth 1.
+    When:
+        Running validate_path
+    Then:
+        Make sure the expected exception is raised
+    """
+    with pytest.raises(exception):
+        _validate(DUMMY_PACK_PATH / AGENTIX_FLOWS_DIR / rel_path)
 
 
 def test_knowledge_file_valid():

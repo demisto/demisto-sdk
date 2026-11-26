@@ -11,6 +11,9 @@ from typing_extensions import Annotated
 from demisto_sdk.commands.common.constants import (
     AGENTIX_ACTIONS_DIR,
     AGENTIX_AGENTS_DIR,
+    AGENTIX_FLOW_CODE_DIR,
+    AGENTIX_FLOW_JSON_SUFFIX,
+    AGENTIX_FLOWS_DIR,
     AGENTIX_SKILLS_DIR,
     AUTHOR_IMAGE_FILE_NAME,
     CASE_FIELDS_DIR,
@@ -252,6 +255,15 @@ class InvalidAgentixSkillFileName(InvalidPathException):
     )
 
 
+class InvalidAgentixFlowFileName(InvalidPathException):
+    message = (
+        "AgentixFlow files must be placed in a subfolder under AgentixFlows, "
+        f"e.g. `AgentixFlows/{{FlowName}}/{{FlowName}}.yml`, "
+        f"`AgentixFlows/{{FlowName}}/{{FlowName}}{AGENTIX_FLOW_JSON_SUFFIX}`, "
+        f"or code under `AgentixFlows/{{FlowName}}/{AGENTIX_FLOW_CODE_DIR}/`"
+    )
+
+
 class InvalidKnowledgeFileName(InvalidPathException):
     message = (
         "Knowledge files must be placed in a subfolder under Knowledge, "
@@ -357,6 +369,9 @@ def _validate_depth_one(
     if first_level_folder == AGENTIX_SKILLS_DIR:
         raise InvalidAgentixSkillFileName
 
+    if first_level_folder == AGENTIX_FLOWS_DIR:
+        raise InvalidAgentixFlowFileName
+
     if first_level_folder == KNOWLEDGE_DIR:
         raise InvalidKnowledgeFileName
 
@@ -439,6 +454,12 @@ def _validate_depth_two(
         or (path.name == f"{path.parent.name}_skill.md")
     ):
         raise InvalidAgentixSkillFileName
+
+    elif first_level_folder == AGENTIX_FLOWS_DIR and not (
+        (path.stem == path.parent.name and path.suffix == ".yml")
+        or path.name == f"{path.parent.name}{AGENTIX_FLOW_JSON_SUFFIX}"
+    ):
+        raise InvalidAgentixFlowFileName
 
     elif first_level_folder == KNOWLEDGE_DIR and not (
         path.stem == path.parent.name and path.suffix == ".yml"

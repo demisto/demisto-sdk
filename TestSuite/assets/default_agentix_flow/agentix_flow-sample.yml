@@ -1,0 +1,7 @@
+id: sample-agentix-flow
+version: -1
+name: Sample Agentix Flow
+description: |-
+    A sample agentix flow for testing purposes.
+marketplaces:
+- platform
